@@ -53,6 +53,13 @@ body {
   font-weight: 700;
   font-style: normal;
 }
+
+@font-face {
+  font-family: 'gilroy-medium';
+  src: url('/fonts/gilroy-medium.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
 @layer utilities {
   .outline-text {
     -webkit-text-stroke: 2px #D91FFF;
@@ -72,6 +79,14 @@ body {
   }
   .outline-text-white-2 {
     -webkit-text-stroke: 1px #7E3CE0;
+    text-shadow:
+     -1px -1px 0 #000,  
+      1px -1px 0 #000,
+     -1px  1px 0 #000,
+      1px  1px 0 #000;
+  }
+  .outline-invest-text {
+    -webkit-text-stroke: 2px #3C1272;
     text-shadow:
      -1px -1px 0 #000,  
       1px -1px 0 #000,

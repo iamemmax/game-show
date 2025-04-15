@@ -16,6 +16,8 @@ const config: Config = {
       },
       fontFamily: {
         verdana: ['verdana', 'sans-serif'],
+        gilroyMedium: ['gilroy-medium', 'sans-serif'],
+        gilroyHeavy: ['gilroy-heavy', 'sans-serif'],
         sans: ['var(--font-sans)'],
         heading: ['var(--font-heading)'],
         display: ['var(--font-display)'],
