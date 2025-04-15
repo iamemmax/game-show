@@ -20,312 +20,62 @@ html {
   font-weight: 700; /* Bold */
   font-style: normal;
 }
+/* @theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
 
-@layer base {
+@media (prefers-color-scheme: dark) {
   :root {
-    --light-bg: rgb(246, 248, 253);
-    --dash-dark-bg: #07112d;
-    --dash-light-bg: #f8f9fb;
-    --success: #18a201;
-    --divider-line: #d6d6d6;
-
-    --light-accent-bg: #eaf2ff;
-
-    --dark-text: #242424;
-    --light-text: #37474f;
-    --light-dark-text: #e8e8e8;
-
-    --label-text: #4e4e4e;
-
-    --solid-underline: #5879fd;
-
-    --main: #02010D;
-    --main-light: #080D27;
-    --main-bg: #f2f5ff;
-    --helper: #CAC9D4B2;
-    --helper-dark: #8C8CA1;
-    --body: #4A4A68;
-
-    --input-bg: #f5f7f9;
-    --input-placeholder: #818181;
-
-    --card-border: #ececec;
-
-    --sidebar-link-active: #192749;
-
-    --sb-track-color: #d1d5db;
-    --sb-thumb-color: #6b7280;
-    --sb-size: 10px;
-
-    --marketing-dark: #002756;
-    --marketing-light: #eaf2ff;
-    --marketing-light-2: #eaf2ff;
-    --marketing-light-text: #768eaa;
-
-    --test-gradient: #9a580d;
-
-    /* Shadcn Colors */
-
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 100% 50%;
-    --destructive-foreground: 210 40% 98%;
-
-    --ring: 215 20.2% 65.1%;
+    --background: #0a0a0a;
+    --foreground: #ededed;
   }
-}
-
-@layer utilities {
-
-  /* Chrome, Safari and Opera */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .borderr {
-    width: 200px;
-    height: 100px;
-    background-image: url("data:image/svg+xml,<svg width='100%' height='100%' xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' fill='transparent' stroke='black' stroke-width='2' stroke-dasharray='10, 5' stroke-dashoffset='5' /></svg>");
-  }
-
-  .no-scrollbar {
-    overflow: auto;
-    -ms-overflow-style: none;
-    /* IE and Edge */
-    scrollbar-width: none;
-    /* Firefox */
-  }
-
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  .items-safe-center {
-    align-items: safe center;
-  }
-}
-
-/* Hide textual date representation in React Day Picker. Selects are used instead. */
-/* https://github.com/shadcn-ui/ui/issues/546#issuecomment-1633100711 */
-.rdp-vhidden {
-  @apply hidden;
-}
-
-
-* {
-  scroll-behavior: smooth;
-}
-
-.blue__white__gradient {
-  border-radius: 10px;
-  background: linear-gradient(27deg, #ebeffb 0%, #fff 100%);
-}
-
-.light__blue__gradient {
-  border-radius: 12px !important;
-  background: linear-gradient(45deg,
-      #5879fd -16.26%,
-      #5879fd 51.75%) !important;
-}
-
-
-
-input[type='number']::-webkit-outer-spin-button,
-input[type='number']::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type='number'] {
-  -moz-appearance: textfield;
-}
-
-input[type='radio'] {
-  appearance: none;
-  background-color: #fff;
-  margin: 0;
-  width: 1rem;
-  height: 1rem;
-  border: 0.095rem solid var(--main-solid);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-input[type='radio']::before {
-  content: '';
-  display: block;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  transform: scale(0);
-  transition: 120ms transform ease-in-out;
-  background-color: var(--main-solid);
-}
-
-input[type='radio']:checked::before {
-  transform: scale(1);
-}
-
-ol.disc>li {
-  list-style-type: disc;
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin-bottom: -0.25rem;
-
-  /* list-style-image: ; */
-  &::marker {
-    font-size: 1.35rem;
-    color: #032282;
-  }
-}
-
-
-.login-gradient {
-  background: linear-gradient(224deg, #000 50.08%, #032282 104.44%);
-}
-
-input.login-no-chrome-autofill-bg:-webkit-autofill,
-input.login-no-chrome-autofill-bg:-webkit-autofill:hover,
-input.login-no-chrome-autofill-bg:-webkit-autofill:focus,
-input.login-no-chrome-autofill-bg:-webkit-autofill:active {
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: #ffffff;
-  transition: background-color 5000s ease-in-out 0s;
-  box-shadow: inset 0 0 0px 30px rgba(255, 255, 255, 0.3);
-}
-
-input.login-autofill-text:-webkit-autofill::first-line {
-  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
-    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-    'Noto Color Emoji';
-  font-size: 1rem;
-}
-
-
-
-::-webkit-scrollbar {
-  width: 0px !important;
-  height: 10px !important;
-}
-
-::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 5px white !important;
-  border-radius: 10px !important;
-}
-
-::-webkit-scrollbar-thumb {
-  background: radial-gradient(59.67% 59.67% at 53.97% 40.33%,
-      #4c1961 0%,
-      #270336 100%) !important;
-  border-radius: 10px !important;
-}
-
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
-
-.trapezium {
-  width: 200px;
-  /* Adjust the width as needed */
-  height: 100px;
-  /* Adjust the height as needed */
-  background-color: #320808;
-  /* Adjust the background color as needed */
-  position: relative;
-}
-
-.trapezium::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  border-top: 50px solid transparent;
-  /* Adjust the top-left corner angle */
-  border-right: 200px solid #2a1c78;
-  /* Adjust the background color */
-  border-bottom: 50px solid transparent;
-  /* Adjust the bottom-left corner angle */
-  width: 0;
-}
-
-.trapezium::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  border-top: 50px solid transparent;
-  /* Adjust the top-right corner angle */
-  border-left: 200px solid #58761b;
-  /* Adjust the background color */
-  border-bottom: 50px solid transparent;
-  /* Adjust the bottom-right corner angle */
-  width: 0;
-}
-
-.marquee {
-  animation: scroll 15s linear infinite;
-}
-
-.marquee-container:hover .marquee {
-  animation-play-state: paused;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
-  scrollbar-width: none; /* Firefox */
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
-}
-
-/* .heala-root-button{
-  bottom:60px !important;
-  background-color: #a82118 !important;
 } */
 
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
 
+@font-face {
+  font-family: 'verdana';
+  src: url('/fonts/verdana.ttf') format('truetype');
+  font-weight: 400; /* Normal */
+  font-style: normal;
+}
 
-
-
-.ios-height-fix {
-  height: 100%;
-  height: -webkit-fill-available;
+@font-face {
+  font-family: 'verdana';
+  src: url('/fonts/verdana-bold.ttf') format('truetype');
+  font-weight: 700; /* Bold */
+  font-style: normal;
+}
+@layer utilities {
+  .outline-text {
+    -webkit-text-stroke: 2px #D91FFF;
+    text-shadow:
+     -1px -1px 0 #000,  
+      1px -1px 0 #000,
+     -1px  1px 0 #000,
+      1px  1px 0 #000;
+  }
+  .outline-text-white {
+    -webkit-text-stroke: 0.8px #D91FFF;
+    text-shadow:
+     -1px -1px 0 #000,  
+      1px -1px 0 #000,
+     -1px  1px 0 #000,
+      1px  1px 0 #000;
+  }
+  .outline-text-white-2 {
+    -webkit-text-stroke: 0.8px #7E3CE0;
+    text-shadow:
+     -1px -1px 0 #000,  
+      1px -1px 0 #000,
+     -1px  1px 0 #000,
+      1px  1px 0 #000;
+  }
 }
