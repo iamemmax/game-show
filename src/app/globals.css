@@ -50,7 +50,7 @@ body {
 @font-face {
   font-family: 'verdana';
   src: url('/fonts/verdana-bold.ttf') format('truetype');
-  font-weight: 700; /* Bold */
+  font-weight: 700;
   font-style: normal;
 }
 @layer utilities {
