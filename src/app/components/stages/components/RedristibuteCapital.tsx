@@ -53,17 +53,26 @@ export default function RedistributeCapital(): JSX.Element {
     setInvestors(updatedInvestors);
   };
 
-  const handlePercentageChange = (index: number, newPercentage: string): void => {
+  const handlePercentageChange = (
+    index: number,
+    newPercentage: string
+  ): void => {
     const updatedInvestors = [...investors];
     const parsedValue = parseFloat(newPercentage) || 0;
     updatedInvestors[index].percentage = parsedValue;
 
-    let newTotal = updatedInvestors.reduce((sum, inv) => sum + inv.percentage, 0);
+    let newTotal = updatedInvestors.reduce(
+      (sum, inv) => sum + inv.percentage,
+      0
+    );
 
     if (newTotal > 100) {
       const excess = newTotal - 100;
       const otherInvestors = updatedInvestors.filter((_, i) => i !== index);
-      const otherTotal = otherInvestors.reduce((sum, inv) => sum + inv.percentage, 0);
+      const otherTotal = otherInvestors.reduce(
+        (sum, inv) => sum + inv.percentage,
+        0
+      );
 
       if (otherTotal > 0) {
         updatedInvestors.forEach((inv, i) => {
@@ -74,7 +83,9 @@ export default function RedistributeCapital(): JSX.Element {
           }
         });
 
-        setMessage("Total exceeded 100%. Other percentages were adjusted automatically.");
+        setMessage(
+          "Total exceeded 100%. Other percentages were adjusted automatically."
+        );
         setMessageType("warning");
       } else {
         updatedInvestors[index].percentage = 100;
@@ -110,7 +121,7 @@ export default function RedistributeCapital(): JSX.Element {
 
   return (
     <>
-     {/* <div className="p-4 max-w-4xl mx-auto bg-white rounded-lg shadow-md">
+      {/* <div className="p-4 max-w-4xl mx-auto bg-white rounded-lg shadow-md"> 
     //   <h1 className="text-2xl font-bold mb-4 text-blue-700">Capital Distribution Calculator</h1>
 
     //   <div className="mb-6">
@@ -187,28 +198,31 @@ export default function RedistributeCapital(): JSX.Element {
     //         </tfoot>
     //       </table>
       </div> */}
-   <div className="flex mt-6 items-center gap-3 justify-center text-white">
-        {
-            investors?.map((investor,idx:number)=>(
-                <div className="" key={idx}>
-<div className="py-2 px-4 flex items-center justify-center flex-nowrap bg-[#1e083b] rounded-10">
-    <h2 className="text-center capitalize text-base text-nowrap font-verdana font-extrabold outline-invest-text text-white ">{investor?.name}</h2>
-</div>
-<div className="border border-[#9E5CFF] rounded-10 p-[.6875rem] flex justify-center items-center mt-4 flex-col">
-    <h3 className="font-extrabold text-[1.75rem] font-gilroyHeavy outline-invest-text">{investor?.percentage}%</h3>
-    <div className="bg-[#231438] rounded-[1.25rem] px-4 py-1 flex justify-center items-center">
-    <p className="text-[#E00FFF] text-sm font-medium font-gilroyMedium">₦{investor?.amount}</p>
-    </div>
-    <div className="flex">
-        <Button className="p-0">-</Button>
-        <Button className="p-0">+</Button>
-    </div>
-</div>
-                </div>
-            ))
-        }
-    </div>
-   
+      <div className="flex mt-6 items-center gap-3 justify-center text-white">
+        {investors?.map((investor, idx: number) => (
+          <div className="" key={idx}>
+            <div className="py-2 px-4 flex items-center justify-center flex-nowrap bg-[#1e083b] rounded-10">
+              <h2 className="text-center capitalize text-base text-nowrap font-verdana font-extrabold outline-invest-text text-white ">
+                {investor?.name}
+              </h2>
+            </div>
+            <div className="border border-[#9E5CFF] rounded-10 p-[.6875rem] flex justify-center items-center mt-4 flex-col">
+              <h3 className="font-extrabold text-[1.75rem] font-gilroyHeavy outline-invest-text">
+                {investor?.percentage}%
+              </h3>
+              <div className="bg-[#231438] rounded-[1.25rem] px-4 py-1 flex justify-center items-center">
+                <p className="text-[#E00FFF] text-sm font-medium font-gilroyMedium">
+                  ₦{investor?.amount}
+                </p>
+              </div>
+              <div className="flex">
+                <Button className="p-0">-</Button>
+                <Button className="p-0">+</Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </>
   );
 }
