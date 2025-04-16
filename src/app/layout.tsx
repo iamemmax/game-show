@@ -3,6 +3,7 @@
 import { DM_Sans, Wix_Madefor_Display,Outfit } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/utils/classNames";
+import FullscreenWrapper from "./components/AutoFullScreenMode";
 
 
 const sans = DM_Sans({
@@ -33,7 +34,7 @@ export default function RootLayout({
         
       >
        <div className=" w-[100dw] h-[100dvh] overflow-y-auto  bg-[url('/images/salary-bg.png')] bg-no-repeat bg-cover bg-bottom">
-
+<FullscreenWrapper/>
         {children}
 
         </div>

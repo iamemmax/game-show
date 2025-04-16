@@ -1,4 +1,8 @@
+import AddIcon from "@/app/icons/AddIcon";
+import MinusIcon from "@/app/icons/MinusIcon";
 import { Button } from "@/components/core";
+import { convertNumberToNaira } from "@/utils/currency";
+import { addCommasToNumber } from "@/utils/numbers";
 import { useState, useEffect } from "react";
 
 type Investor = {
@@ -10,7 +14,7 @@ type Investor = {
 type MessageType = "success" | "error" | "warning" | "";
 
 export default function RedistributeCapital(): JSX.Element {
-  const initialCapital = 120000;
+  const initialCapital = 900000;
   const [totalCapital, setTotalCapital] = useState<number>(initialCapital);
   const [investors, setInvestors] = useState<Investor[]>([
     { name: "Caterer", percentage: 20, amount: 0 },
@@ -113,91 +117,40 @@ export default function RedistributeCapital(): JSX.Element {
   };
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-NG", {
       style: "currency",
-      currency: "USD",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const incrementPercentage = (index: number): void => {
+    const updatedInvestors = [...investors];
+    updatedInvestors[index].percentage += 1;
+    if (updatedInvestors[index].percentage > 100) {
+      updatedInvestors[index].percentage = 100;
+    }
+    handlePercentageChange(
+      index,
+      updatedInvestors[index].percentage.toString()
+    );
+  };
+
+  const decrementPercentage = (index: number): void => {
+    const updatedInvestors = [...investors];
+    updatedInvestors[index].percentage -= 1;
+    if (updatedInvestors[index].percentage < 0) {
+      updatedInvestors[index].percentage = 0;
+    }
+    handlePercentageChange(
+      index,
+      updatedInvestors[index].percentage.toString()
+    );
   };
 
   return (
     <>
-      {/* <div className="p-4 max-w-4xl mx-auto bg-white rounded-lg shadow-md"> 
-    //   <h1 className="text-2xl font-bold mb-4 text-blue-700">Capital Distribution Calculator</h1>
-
-    //   <div className="mb-6">
-    //     <label className="block font-medium mb-1">Total Capital:</label>
-    //     <input
-    //       type="number"
-    //       value={totalCapital}
-    //       onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCapitalChange(e.target.value)}
-    //       className="w-full p-2 border rounded"
-    //     />
-    //   </div>
-
-    //   <div className="mb-4">
-    //     <div className="flex justify-between items-center mb-2">
-    //       <h2 className="text-xl font-semibold">Investors</h2>
-    //       <button
-    //         onClick={resetPercentages}
-    //         className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-    //       >
-    //         Reset to Equal
-    //       </button>
-    //     </div>
-
-    //     <div className="overflow-x-auto">
-    //       <table className="w-full border-collapse">
-    //         <thead className="bg-gray-100">
-    //           <tr>
-    //             <th className="p-2 text-left">Name</th>
-    //             <th className="p-2 text-left">Percentage (%)</th>
-    //             <th className="p-2 text-left">Amount</th>
-    //           </tr>
-    //         </thead>
-    //         <tbody>
-    //           {investors.map((investor, index) => (
-    //             <tr key={index} className="border-b">
-    //               <td className="p-2">
-    //                 <input
-    //                   type="text"
-    //                   value={investor.name}
-    //                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-    //                     handleNameChange(index, e.target.value)
-    //                   }
-    //                   className="w-full p-1 border rounded"
-    //                 />
-    //               </td>
-    //               <td className="p-2">
-    //                 <input
-    //                   type="number"
-    //                   min="0"
-    //                   max="100"
-    //                   value={investor.percentage}
-    //                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-    //                     handlePercentageChange(index, e.target.value)
-    //                   }
-    //                   className="w-full p-1 border rounded"
-    //                 />
-    //               </td>
-    //               <td className="p-2 font-medium">{formatCurrency(investor.amount)}</td>
-    //             </tr>
-    //           ))}
-    //         </tbody>
-    //         <tfoot className="bg-gray-50">
-    //           <tr>
-    //             <td className="p-2 font-bold">Total</td>
-    //             <td
-    //               className={`p-2 font-bold ${
-    //                 Math.abs(totalPercentage - 100) > 0.01 ? "text-red-600" : "text-green-600"
-    //               }`}
-    //             >
-    //               {totalPercentage.toFixed(2)}%
-    //             </td>
-    //             <td className="p-2 font-bold">{formatCurrency(totalCapital)}</td>
-    //           </tr>
-    //         </tfoot>
-    //       </table>
-      </div> */}
       <div className="flex mt-6 items-center gap-3 justify-center text-white">
         {investors?.map((investor, idx: number) => (
           <div className="" key={idx}>
@@ -212,12 +165,32 @@ export default function RedistributeCapital(): JSX.Element {
               </h3>
               <div className="bg-[#231438] rounded-[1.25rem] px-4 py-1 flex justify-center items-center">
                 <p className="text-[#E00FFF] text-sm font-medium font-gilroyMedium">
-                  ₦{investor?.amount}
+                  ₦
+                  {addCommasToNumber(
+                    Number(investor?.amount?.toFixed(0)) ?? "0"
+                  )}
                 </p>
               </div>
-              <div className="flex">
-                <Button className="p-0">-</Button>
-                <Button className="p-0">+</Button>
+              <div className="flex gap-3 items-center mt-2">
+                <Button
+                  className="w-[3rem] h-[1.6875rem] p-0 border border-[#9E5CFF] flex justify-center items-center rounded-[7px]"
+                  onClick={() => decrementPercentage(idx)}
+                >
+                  <div className=" h-4 mt-2 flex justify-center items-center">
+                    {" "}
+                    <MinusIcon />
+                  </div>
+                </Button>
+
+                <Button
+                  className="w-[3rem] h-[1.6875rem] p-0 border border-[#9E5CFF]  rounded-[7px]"
+                  onClick={() => incrementPercentage(idx)}
+                >
+                  <div className=" h-4 mt-2 flex justify-center items-center">
+                    {" "}
+                    <AddIcon />
+                  </div>
+                </Button>
               </div>
             </div>
           </div>

@@ -56,7 +56,7 @@ const Hustle = () => {
       </div>
 
        <div className="flex justify-center w-full">
-       <div className="border-[9px] border-[#d91fff] w-full py-[1rem]   2xl:py-[3rem] max-2xl:max-w-[40rem] rounded-[.875rem] max-xl:px-[2rem] 2xl:px-[3rem] bg-[#13051E] -mt-3">
+       <div className="border-[9px] border-[#d91fff] w-full py-[1rem]   2xl:py-[3rem] max-2xl:max-w-[46.5rem] rounded-[.875rem] max-xl:px-[2rem] 2xl:px-[3rem] bg-[#13051E] -mt-3">
           <div className="flex  justify-center flex-col items-center">
             <div>
               <h2 className="text-[2.125rem] text-center font-extrabold outline-text text-black">
@@ -85,7 +85,7 @@ const Hustle = () => {
                             </div>
                             <div className="">
                               <p className='text-white font-normal text-sm font-gilroyMedium'>Startup capital</p>
-                              <h2 className='text-base font-medium font-gilroyMedium text-white outline-text-white-2'>₦120,000</h2>
+                              <h2 className='text-base font-medium font-gilroyMedium text-white outline-text-white-2'>₦900,000</h2>
                             </div>
               </div>
             
