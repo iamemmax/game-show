@@ -36,7 +36,7 @@ export const CustomTabs = ({
         {/* Tabs List: avoid growing/shrinking */}
         <TabsList
           className={cn(
-            "shrink-0 flex justify-center items-center py-1 px-[.375rem] rounded-[6.25rem] border-[4px] border-[#7E3CE0]",
+            "shrink-0 flex justify-center bg-transparent text-white items-center py-1 px-[.375rem] rounded-[6.25rem] border-[4px] border-[#7E3CE0]",
             tabsListClassName
           )}
         >
