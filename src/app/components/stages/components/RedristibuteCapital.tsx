@@ -161,7 +161,7 @@ export default function RedistributeCapital(): JSX.Element {
             </div>
             <div className="border border-[#9E5CFF] rounded-10 p-[.6875rem] flex justify-center items-center mt-4 flex-col">
               <h3 className="font-extrabold text-[1.75rem] font-gilroyHeavy outline-invest-text">
-                {investor?.percentage}%
+                {investor?.percentage.toFixed(2)??0}%
               </h3>
               <div className="bg-[#231438] rounded-[1.25rem] px-4 py-1 flex justify-center items-center">
                 <p className="text-[#E00FFF] text-sm font-medium font-gilroyMedium">

@@ -7,6 +7,7 @@ import React from 'react'
 import { CustomTabs, TabItem } from '../HustleTab'
 import KeepCapitalTab from './components/KeepCapitalTab'
 import RedristibuteCapital from './components/RedristibuteCapital'
+import MedalIcon from '@/app/icons/MedalIcon'
 
 const Hustle = () => {
   const tabs: TabItem[] = [
@@ -28,12 +29,15 @@ const Hustle = () => {
           <div className="flex justify-center items-center h-3.5 w-full pt-[1.4375rem]">
             <Logo/>
           </div>
-          <div className=""></div>
-          <div className="w-full p-[1.4375rem] gap-y-1.5 flex-col rounded-t-[1.75rem] flex justify-center items-center bg-[linear-gradient(to_right,_#2D0304,_#EE24B8,_#1E0227)] text-white">
-<Trophy/>
-<div className="flex flex-col  justify-center items-center">
+          <div className="">
+<MedalIcon text='3'/>
+
+          </div>
+          <div className="w-full p-[1.4375rem] gap-y-1.2 flex-col rounded-t-[1.75rem] flex justify-center items-center bg-[linear-gradient(to_right,_#2D0304,_#EE24B8,_#1E0227)] text-white">
+<Trophy height={50} width={50}/>
+<div className="flex flex-col  justify-center pt-1 items-center">
   <p className='uppercase font-bold text-xs font-verdana text-white'>Stage 1 of 6</p>
-  <p className=' max-w-[100px] text-center mt-2 font-display  font-bold text-xs text-white'>Hustle: Fashion Designer</p>
+  <p className=' max-w-[100px] text-center mt-1 font-display  font-bold text-xs text-white'>Hustle: Fashion Designer</p>
 </div>
 </div>
 
@@ -87,9 +91,7 @@ const Hustle = () => {
                               <p className='text-white font-normal text-sm font-gilroyMedium'>Startup capital</p>
                               <h2 className='text-base font-medium font-gilroyMedium text-white outline-text-white-2'>₦900,000</h2>
                             </div>
-              </div>
-            
-             
+              </div> 
             </div>
         
 
