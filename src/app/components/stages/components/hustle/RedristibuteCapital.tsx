@@ -151,7 +151,7 @@ export default function RedistributeCapital(): JSX.Element {
 
   return (
     <>
-      <div className="flex mt-6 items-center gap-3 justify-center text-white">
+      <div className="flex mt-4 items-center gap-3 justify-center text-white">
         {investors?.map((investor, idx: number) => (
           <div className="" key={idx}>
             <div className="py-2 px-4 flex items-center justify-center flex-nowrap bg-[#1e083b] rounded-10">
@@ -159,12 +159,12 @@ export default function RedistributeCapital(): JSX.Element {
                 {investor?.name}
               </h2>
             </div>
-            <div className="border border-[#9E5CFF] rounded-10 p-[.6875rem] flex justify-center items-center mt-4 flex-col">
-              <h3 className="font-extrabold text-[1.75rem] font-gilroyHeavy outline-invest-text">
+            <div className="border border-[#9E5CFF] rounded-10 p-[.6875rem] flex justify-center items-center mt-2 flex-col">
+              <h3 className="font-extrabold text-[1.5rem] font-gilroyHeavy outline-invest-text"  style={{ WebkitTextStroke: "1.2px #E00FFF" }}>
                 {investor?.percentage.toFixed(2)??0}%
               </h3>
-              <div className="bg-[#231438] rounded-[1.25rem] px-4 py-1 flex justify-center items-center">
-                <p className="text-[#E00FFF] text-sm font-medium font-gilroyMedium">
+              <div className="bg-[#231438] rounded-[1.25rem] px-4  py-1 flex justify-center items-center">
+                <p className="text-[#E00FFF]  text-sm font-medium font-gilroyMedium">
                   ₦
                   {addCommasToNumber(
                     Number(investor?.amount?.toFixed(0)) ?? "0"
@@ -176,7 +176,7 @@ export default function RedistributeCapital(): JSX.Element {
                   className="w-[3rem] h-[1.6875rem] p-0 border border-[#9E5CFF] flex justify-center items-center rounded-[7px]"
                   onClick={() => decrementPercentage(idx)}
                 >
-                  <div className=" h-4 mt-2 flex justify-center items-center">
+                  <div className=" h-3 mt-2 flex justify-center items-center">
                     {" "}
                     <MinusIcon />
                   </div>
@@ -186,7 +186,7 @@ export default function RedistributeCapital(): JSX.Element {
                   className="w-[3rem] h-[1.6875rem] p-0 border border-[#9E5CFF]  rounded-[7px]"
                   onClick={() => incrementPercentage(idx)}
                 >
-                  <div className=" h-4 mt-2 flex justify-center items-center">
+                  <div className=" h-3 mt-2 flex justify-center items-center">
                     {" "}
                     <AddIcon />
                   </div>

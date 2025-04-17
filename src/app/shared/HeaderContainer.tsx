@@ -107,6 +107,7 @@ const HeaderTitleContainer = ({
         fill="url(#textGradient)"
         style={{
           fill: textColor,
+         WebkitTextStroke: `20px ${textStrokeColor}`
         }}
       >
         {masked}

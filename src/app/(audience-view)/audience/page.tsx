@@ -1,5 +1,5 @@
 import HustleCard from '@/app/shared/HustleCard'
-import { PATTERN_PURPLE_BLACK, PATTERN_PURPLE_GREY, PATTERN_PURPLE_WHITE } from '@/app/shared/HustleCard.PatternTypes'
+import { PATTERN_PURPLE_BLACK, PATTERN_PURPLE_GREY, PATTERN_PURPLE_WHITE,PATTERN_ORANGE_BLACK } from '@/app/shared/HustleCard.PatternTypes'
 import React from 'react'
 
 const page = () => {
@@ -22,25 +22,25 @@ const page = () => {
             /> */}
             
             <HustleCard
-                title='Hairdressing'
+                id="gaming-card"
+                title="Gaming"
                 number={"25"}
                 amount={"$250"}
                 pattern={PATTERN_PURPLE_WHITE}
-
             />
             <HustleCard
-                title='Hairdressing'
+                id="furniture-card"
+                title="Furniture"
                 number={"25"}
-                amount={"$250"}
+                amount={"$450"}
                 pattern={PATTERN_PURPLE_GREY}
-
             />
             <HustleCard
-                title='Hairdressing'
+                id="welder-card"
+                title="Welder"
                 number={"25"}
-                amount={"$250"}
-                pattern={PATTERN_PURPLE_BLACK}
-
+                amount={"$750"}
+                pattern={PATTERN_ORANGE_BLACK}
             />
         </div>
     )

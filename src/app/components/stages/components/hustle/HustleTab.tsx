@@ -18,22 +18,24 @@ interface CustomTabsProps {
   tabsContentClassName?: string;
   onChange?: (value: string) => void;
 }
+
 export const CustomTabs = ({
-    tabs,
-    defaultValue,
-    className,
-    tabsListClassName,
-    tabsTriggerClassName,
-    tabsContentClassName,
-    onChange,
-  }: CustomTabsProps) => {
-    return (
-      <Tabs
-        defaultValue={defaultValue || tabs[0]?.value}
-        className={cn("w-full", className)}
-        onValueChange={onChange}
-      >
-        {/* Tabs List: avoid growing/shrinking */}
+  tabs,
+  defaultValue,
+  className,
+  tabsListClassName,
+  tabsTriggerClassName,
+  tabsContentClassName,
+  onChange,
+}: CustomTabsProps) => {
+  return (
+    <Tabs
+      defaultValue={defaultValue || tabs[0]?.value}
+      className={cn("w-full", className)}
+      onValueChange={onChange}
+    >
+      {/* TabsList with constrained width but centered */}
+      <div className="flex justify-center w-full">
         <TabsList
           className={cn(
             "shrink-0 flex justify-center bg-transparent text-white items-center py-1 px-[.375rem] rounded-[6.25rem] border-[4px] border-[#7E3CE0]",
@@ -58,20 +60,20 @@ export const CustomTabs = ({
             </TabsTrigger>
           ))}
         </TabsList>
-  
-        {/* Tabs Content: optionally fixed height to avoid layout shift */}
-        <div className="mt-4 w-full">
-          {tabs.map((tab) => (
-            <TabsContent
-              key={tab.value}
-              value={tab.value}
-              className={cn("w-full", tabsContentClassName)}
-            >
-              {tab.content}
-            </TabsContent>
-          ))}
-        </div>
-      </Tabs>
-    );
-  };
-  
+      </div>
+
+      {/* Full-width content container */}
+      <div className="mt-4 w-full">
+        {tabs.map((tab) => (
+          <TabsContent
+            key={tab.value}
+            value={tab.value}
+            className={cn("w-full", tabsContentClassName)}
+          >
+            {tab.content}
+          </TabsContent>
+        ))}
+      </div>
+    </Tabs>
+  );
+};
