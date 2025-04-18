@@ -63,7 +63,7 @@ const HustleBottomCard = () => {
                   {contestant?.name}
                 </p>
               </div>
-              <div className="w-[1.25rem] h-[20px] bg-[#04DA6A] rounded-10"></div>
+              <div className="w-[.9375rem] h-[.9375rem] bg-[#04DA6A] rounded-10"></div>
             </div>
 
             <div className="flex gap-2 mt-1">

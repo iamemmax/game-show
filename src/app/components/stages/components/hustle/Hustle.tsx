@@ -68,7 +68,7 @@ const Hustle = () => {
             />
           </div>
 
-          <div className="border-[9px] border-[#d91fff] w-full py-[1rem] 2xl:py-[3rem] max-2xl:max-w-[46.5rem] rounded-[.875rem] 2xl:px-[3rem] bg-[#13051E] ">
+          <div className="border-[9px] border-[#d91fff] w-full py-[0.5rem] 2xl:py-[2.5rem] max-2xl:max-w-[46.5rem] rounded-[.875rem] 2xl:px-[3rem] bg-[#13051E] ">
             <div className="flex justify-center flex-col items-center">
               <div>
                 <h2 className="text-[2.125rem] text-center font-extrabold outline-text text-black">
@@ -79,9 +79,9 @@ const Hustle = () => {
                 </p>
               </div>
 
-              <div className="flex mt-3 items-center gap-[1.375rem]">
+              <div className="flex mt-2 items-center gap-[1.375rem]">
                 {/* Player Info */}
-                <div className="flex bg-black rounded-10 gap-4 px-[1.125rem] pr-[5rem] items-center py-3">
+                <div className="flex bg-black rounded-10 gap-4 px-[1.125rem] pr-[5rem] items-center py-2">
                   <div className="relative h-[2.8rem] w-[2.8rem] bg-[#bf7222] border-[5px] border-[#dba531] rounded-full overflow-hidden">
                     <Image
                       alt="User avatar"
@@ -101,7 +101,7 @@ const Hustle = () => {
                 </div>
 
                 {/* Startup Capital */}
-                <div className="flex bg-black rounded-10 gap-4 px-[1.125rem] pr-[4rem] items-center py-3">
+                <div className="flex bg-black rounded-10 gap-4 px-[1.125rem] pr-[4rem] items-center py-2">
                   <div className="relative h-[2.8rem] w-[2.8rem] flex justify-center items-center bg-[#3C127299] bg-opacity-60 rounded-full overflow-hidden">
                     <StartUpIcon />
                   </div>
@@ -117,7 +117,7 @@ const Hustle = () => {
               </div>
 
               {/* Tabs */}
-              <div className="mt-3 relative w-full flex justify-center items-center">
+              <div className="mt-2 relative w-full flex justify-center items-center">
                 <CustomTabs
                   tabs={tabs}
                   defaultValue="Keep"
@@ -130,7 +130,7 @@ const Hustle = () => {
         </div>
 
         {/* Bottom Card (sticks to bottom) */}
-        <div className="w-full md:max-w-[46.5rem] 2xl:max-w-[80rem] mt-3">
+        <div className="w-full max-w-[35rem] lg:max-w-[46.5rem] 2xl:max-w-[80rem] mt-2">
           <HustleBottomCard />
         </div>
       </div>

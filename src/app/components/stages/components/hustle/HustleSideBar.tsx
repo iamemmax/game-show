@@ -2,6 +2,8 @@ import BarIcon from "@/app/icons/BarIcon";
 import SettingsIcon from "@/app/icons/SettingIcon";
 import ContestantCard from "@/app/shared/ContestantCard";
 import IconBoard from "@/app/shared/IconBoard";
+import JackpotContainer from "@/app/shared/JackpotContainer";
+import { Button } from "@/components/core";
 import React from "react";
 
 const HustleSideBar = () => {
@@ -9,8 +11,12 @@ const HustleSideBar = () => {
     <div className="flex justify-between h-full items-center flex-col">
       <div className="py-4 flex justify-center items-center">
         <div className="flex gap-2 items-center">
-          <IconBoard icon={<BarIcon />} />
+         <Button className="p-0 bg-transparent">
+         <IconBoard icon={<BarIcon />} />
+         </Button>
+         <Button className="p-0 bg-transparent">
           <IconBoard icon={<SettingsIcon />} />
+          </Button>
         </div>
       </div>
 
@@ -71,7 +77,9 @@ const HustleSideBar = () => {
           borderColor="transparent"
         />
       </div>
-      <div className=""></div>
+      <div className="">
+        <JackpotContainer text="₦100m"/>
+      </div>
     </div>
   );
 };

@@ -34,7 +34,7 @@ const HustleCard = ({
     const imageId = `image-${id}`;
     
     return (
-        <article className={cn("flex flex-col border-[3px] border-[#7E3CE0] rounded-3xl max-w-[250px] aspect-video", className)}>
+        <article className={cn("flex flex-col border-[3px] border-[#7E3CE0] rounded-2xl max-w-[250px] aspect-video", className)}>
             <header
                 className={cn("text-3xl text-white font-bold p-2 text-center font-verdana", titleClassName)}
                 style={{ WebkitTextStroke: "1.2px black" }}
