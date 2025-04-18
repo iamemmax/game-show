@@ -178,6 +178,8 @@ const ContestantCard = ({
           fontWeight="bold"
           fill="white"
           fontFamily="Arial, sans-serif"
+          
+          style={{textTransform:"uppercase"}}
         >
           {title}
         </text>
