@@ -66,6 +66,7 @@ const KeepCapitalTab = () => {
          numberClassName="text-[2.5rem] text-white"
         className=" text-xs border-[1px] py-0"
         titleClassName="text-base font-extrabold"
+        
       />
     </div>
   );

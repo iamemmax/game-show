@@ -6,22 +6,27 @@ import { motion } from "framer-motion";
 const HustleBottomCard = () => {
   const contestantNumbers = [
     {
+      img:"/images/userImage.png",
       name: "Demola",
       numbers: [1, 2, 13, 4, 51],
     },
-    {
+    { 
+      img:"/images/userImage2.png",
       name: "Idris",
       numbers: [16, 7, 38, 29, 40],
     },
     {
+      img:"/images/userImage3.png",
       name: "Chizoba",
       numbers: [21, 22, 43, 4, 35],
     },
     {
+      img:"/images/userImage4.png",   
       name: "Emmanuel",
       numbers: [6, 7, 8, 9, 10],
     },
     {
+      img:"/images/userImage5.png",
       name: "Stephen",
       numbers: [26, 47, 48, 29, 10],
     },
@@ -51,7 +56,7 @@ const HustleBottomCard = () => {
                 <div className="relative h-[1.3rem] w-[1.3rem] bg-[#bf7222] border-[0px] border-[#dba531] rounded-full overflow-hidden">
                   <Image
                     alt="User avatar"
-                    src="/images/userImage.png"
+                    src={contestant?.img??""}
                     fill
                     className="object-cover"
                   />

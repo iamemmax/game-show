@@ -34,9 +34,7 @@ export default function RedistributeCapital(): JSX.Element {
 
   // Add new state for tracking view mode
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
-  const [showDetailedView, setShowDetailedView] = useState<boolean>(false);
-  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
-
+  
   const handleCardClick = (idx: number) => {
     if (selectedCards.includes(idx)) {
       // If card is already selected, remove it
@@ -45,11 +43,6 @@ export default function RedistributeCapital(): JSX.Element {
       // Add new card to selected cards
       setSelectedCards([...selectedCards, idx]);
     }
-  };
-
-  const handleBackToCards = () => {
-    setShowDetailedView(false);
-    setSelectedCardIndex(null);
   };
 
   useEffect(() => {
@@ -76,11 +69,6 @@ export default function RedistributeCapital(): JSX.Element {
     }
   };
 
-  const handleNameChange = (index: number, newName: string): void => {
-    const updatedInvestors = [...investors];
-    updatedInvestors[index].name = newName;
-    setInvestors(updatedInvestors);
-  };
 
   const handlePercentageChange = (
     index: number,
@@ -126,14 +114,7 @@ export default function RedistributeCapital(): JSX.Element {
     setInvestors(updatedInvestors);
   };
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+
 
   const incrementPercentage = (index: number): void => {
     const updatedInvestors = [...investors];
@@ -170,7 +151,7 @@ const patterTypes =  [PATTERN_GREEN_BLACK, PATTERN_ORANGE_BLACK, PATTERN_PURPLE_
         >
           {selectedCards.includes(idx) ? (
             // Show percentage container for selected card
-            <div className="border border-[#9E5CFF] rounded-10 p-[.6875rem] flex justify-center items-center flex-col">
+            <div className="border border-[#9E5CFF] rounded-10 p-[.6875rem] py-2 flex justify-center items-center flex-col">
               <h2 className="text-center capitalize text-sm text-nowrap font-verdana font-extrabold text-white" style={{ WebkitTextStroke: "1.5px #000" }}>
                 {investor.name}
               </h2>
