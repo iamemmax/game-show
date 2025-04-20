@@ -3,7 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import {motion} from "framer-motion"
 import Stage1 from "./components/stages/Stage1";
-import Hustle from "./components/stages/Hustle";
+import Hustle from "./components/stages/components/hustle/Hustle";
 
 
 export interface resetprop {

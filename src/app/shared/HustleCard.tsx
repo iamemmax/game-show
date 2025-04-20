@@ -1,16 +1,19 @@
 import * as React from "react";
-import HustleCardPattern from "./HustleCard.Pattern";
 import { cn } from "@/utils/classNames";
-
 
 type HustleCardPatternProps = {
     className?: string;
+    titleClassName?: string;
+    numberClassName?: string;
+    amountClassName?: string;
     title?: string;
     number?: string | number;
     amount?: string | number;
     pattern: string;
+    numberSize?: string;
+    amountSize?: string;
     svgProps?: React.SVGProps<SVGSVGElement>;
-    id?: string; // Added unique ID prop
+    id?: string;
 }
 
 const HustleCard = ({
@@ -18,32 +21,37 @@ const HustleCard = ({
     number = "00",
     amount = "00.00",
     className,
+    titleClassName,
+    numberClassName,
+    amountClassName,
     pattern,
+    amountSize = "text-4xl",
+    numberSize = "text-8xl",
     svgProps,
-    id = `hustlecard-${Math.random().toString(36).substring(2, 9)}`, // Generate a unique ID if not provided
-    ...props
+    id = `hustlecard-${Math.random().toString(36).substring(2, 9)}`,     ...props
 }: HustleCardPatternProps) => {
     const patternId = `pattern-${id}`;
     const imageId = `image-${id}`;
     
     return (
-        <article className={cn("flex flex-col border-[3px] border-[#7E3CE0] rounded-3xl max-w-[250px] aspect-video", className)}>
+        <article className={cn("flex flex-col border-[3px] border-[#7E3CE0] rounded-2xl max-w-[250px] aspect-video", className)}>
             <header
-                className="text-3xl text-white font-bold p-2 text-center"
+                className={cn("text-3xl text-white font-bold p-2 text-center font-verdana", titleClassName)}
+                style={{ WebkitTextStroke: "1.2px black" }}
             >
                 {title}
             </header>
             <div className="mt-auto relative">
-                <div className="absolute top-0 size-full left-0 right-0 bottom-0 flex flex-col items-center justify-center">
+                <div className="absolute max-2xl:top-2 size-full left-0 right-0 bottom-0 flex flex-col items-center justify-center">
                     <h5
-                        style={{ WebkitTextStroke: "7px black" }}
-                        className="text-8xl text-white font-black"
+                        style={{ WebkitTextStroke: "3px black" }}
+                        className={cn(numberSize, "text-white font-bold font-gilroyHeavy", numberClassName)}
                     >
                         {number}
                     </h5>
                     <p
-                        className="text-4xl text-white font-black"
-                        style={{ WebkitTextStroke: "2px black" }}
+                        className={cn(amountSize, "text-white mt-4 2xl:mt-7 font-bold font-gilroyHeavy", amountClassName)}
+                        style={{ WebkitTextStroke: "1.7px black" }}
                     >
                         {amount}
                     </p>
