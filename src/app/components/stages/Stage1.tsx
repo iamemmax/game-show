@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Button } from "@/components/core";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import NumberCardContainer from "@/app/shared/NumberContainer";
+import { motion } from "framer-motion";
 interface prop{
   onNext: () => void
 }
@@ -73,38 +74,67 @@ const Stage1 = ({onNext}:prop) => {
 
       <div className="flex justify-center  flex-col items-center max-lg:px-3">
         {/* Selection Grid */}
-        <div className="border-[9px] border-[#d91fff] w-full py-[1rem]   max-xl:max-w-[65rem] 2xl:py-[3rem] max-w-[56.25rem] rounded-[.875rem] max-xl:px-[2rem] 2xl:px-[3rem] bg-[#13051E] -mt-3">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-[2.125rem]  font-extrabold outline-text text-black">
-                Stage 1: Hustle Kick-off
-              </h2>
-            </div>
-            <div>
-              <h2 className="font-extrabold text-[2.75rem] text-white">{`0:${timeLeft.toString().padStart(2, "0")}`}</h2>
-            </div>
+        <div className="w-full py-[1rem] max-xl:max-w-[65rem] 2xl:py-[3rem] max-w-[56.25rem] rounded-[.875rem] max-xl:px-[2rem] 2xl:px-[3rem] bg-[#13051E] -mt-3 relative overflow-hidden">
+          {/* Animated border */}
+          <div className="absolute inset-0">
+            <motion.div
+              className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+              style={{
+                background: `conic-gradient(from 0deg at 50% 50%,
+                  transparent 0deg,
+                  #d91fff 10deg,
+                  #d91fff 60deg,
+                  #00ffff 90deg,
+                  #00ffff 140deg,
+                  transparent 180deg,
+                  transparent 360deg
+                )`,
+              }}
+              animate={{
+                rotate: [0, 360]
+              }}
+              transition={{
+                duration: 3,
+                ease: "linear",
+                repeat: Infinity
+              }}
+            />
           </div>
-
-          <div className="flex flex-wrap max-md:gap-[18px] gap-[8px] 2xl:gap-[.875rem] max-xl:gap-y-5 2xl:gap-y-8  2xl:mt-8">
-            {Array.from({ length: 49 }, (_, i) => i + 1).map(num => (
-              <div
-                key={num}
-                onClick={() => handleNumberClick(num)}
-                className="cursor-pointer transition-transform hover:scale-105"
-              >
-                <NumberCardContainer
-                  text={String(num)}
-                  textColor="#F2C94C"
-                  secondaryGradientStartColor={isSelected(num) ? "#FF00FF" : "#7E3CE0"}
-                  secondaryGradientMiddleColor={isSelected(num) ? "#FF00FF" : "#760F1B"}
-                  secondaryGradientEndColor={isSelected(num) ? "#FF00FF" : "#3C1272"}
-                  primaryGradientStartColor={isSelected(num) ? "#FF00FF" : "#7E3CE0"}
-                  primaryGradientEndColor={isSelected(num) ? "#FF00FF" : "#3C1272"}
-                  // width={62}
-                  // height={45}
-                />
+          
+          {/* Content container */}
+          <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
+          <div className="relative">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-[2.125rem] font-extrabold outline-text text-black">
+                  Stage 1: Hustle Kick-off
+                </h2>
               </div>
-            ))}
+              <div>
+                <h2 className="font-extrabold text-[2.75rem] text-white">{`0:${timeLeft.toString().padStart(2, "0")}`}</h2>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap max-md:gap-[18px] gap-[8px] 2xl:gap-[.875rem] max-xl:gap-y-5 2xl:gap-y-8  2xl:mt-8">
+              {Array.from({ length: 49 }, (_, i) => i + 1).map(num => (
+                <div
+                  key={num}
+                  onClick={() => handleNumberClick(num)}
+                  className="cursor-pointer transition-transform hover:scale-105"
+                >
+                  <NumberCardContainer
+                    text={String(num)}
+                    textColor={isSelected(num) ? "#fff" : "#F2C94C"}
+                    // secondaryGradientStartColor={isSelected(num) ? "#FF00FF" : "#7E3CE0"}
+                    // secondaryGradientMiddleColor={isSelected(num) ? "#FF00FF" : "#760F1B"}
+                    // secondaryGradientEndColor={isSelected(num) ? "#FF00FF" : "#3C1272"}
+                    // primaryGradientStartColor={isSelected(num) ? "#FF00FF" : "#7E3CE0"}
+                    primaryGradientEndColor={isSelected(num) ? "#FF00FF" : "#3C1272"}
+                    backgroundColor={isSelected(num) ? "#FEC124" : "black"}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

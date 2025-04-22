@@ -16,8 +16,10 @@ number:number
 };
 
 type MessageType = "success" | "error" | "warning" | "";
-
-export default function RedistributeCapital(): JSX.Element {
+interface Prop{
+  setShowInvestResult: React.Dispatch<React.SetStateAction<boolean>>
+}
+export default function RedistributeCapital({setShowInvestResult}:Prop): JSX.Element {
   const initialCapital = 900000;
   const [totalCapital, setTotalCapital] = useState<number>(initialCapital);
   const [investors, setInvestors] = useState<Investor[]>([
@@ -207,8 +209,8 @@ const patterTypes =  [PATTERN_GREEN_BLACK, PATTERN_ORANGE_BLACK, PATTERN_PURPLE_
         </div>
       ))}
     </div>
-   <div className=" mt-2 flex w-full justify-center items-center">
-  <Button className="p-0 bg-transparent"> <GradientButton text="invest" className="uppercase" height={35}/></Button>
+   <div className=" mt-2 py-3 flex w-full justify-center items-center">
+  <Button className="p-0 bg-transparent" onClick={()=>setShowInvestResult(true)}> <GradientButton text="invest" className="uppercase" height={35}/></Button>
    </div>
     </>
   );

@@ -44,6 +44,7 @@ const HustleStages = () => {
           subTitle="Buyout or Draw"
         borderColor="#FFC125" iconText="5"
         finalStage={true}
+        
          />
 
     
