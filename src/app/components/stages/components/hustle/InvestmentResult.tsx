@@ -1,14 +1,18 @@
 import Logo from "@/app/icons/Logo";
 // import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import StartUpIcon from "@/app/icons/StartupIcon";
 import { convertNumberToNaira } from "@/utils/currency";
 import { addCommasToNumber } from "@/utils";
+import StageTallyCard from "@/app/shared/StageTallyCard";
+import { Button } from "@/components/core";
+import StageOneTally from "./StageOneTally";
 
 const InvestmentResult = () => {
+  const [showStageOneTally, setShowStageOneTally] = useState(false)
   const investmentArray = [
     {
       name: "Caterer",
@@ -31,13 +35,17 @@ const InvestmentResult = () => {
       inverment_profit: "4x",
     },
     {
-      name:"Barber",
-      amount:60000,
-      inverment_profit:"-50%"
-    }
-  ]
+      name: "Barber",
+      amount: 60000,
+      inverment_profit: "-50%",
+    },
+  ];
+
+  if(showStageOneTally){
+    return <StageOneTally/>
+  }
   return (
-    <div className="grid grid-cols-[1fr_5fr_1fr] h-full">
+    <div className="grid grid-cols-[1fr_5.2fr_1fr] h-full">
       {/* Left Sidebar */}
       <div className="flex flex-col justify-between">
         <div className="flex justify-center items-center h-3.5 w-full mt-8">
@@ -150,25 +158,65 @@ const InvestmentResult = () => {
                   </div>
                 </div>
 
-<div className="flex items-center justify-center mt-6 text-white gap-4">
-
-                    {
-                      investmentArray?.map((invest,idx:number)=>(
-                        <div className="" key={idx}>
-                          <div className="bg-[#231438] rounded-[0.6rem] px-4 py-[0.5rem] flex justify-center items-center">
-                            <p className="text-sm font-verdana text-white" style={{ WebkitTextStroke: "0.8px #E00FFF" }}>{invest?.name}</p>
-                          </div>
-                          <div className="border border-[#9E5CFF]  mt-4 rounded-10 py-2 px-4 flex justify-center items-center flex-col">
-                            <p className="font-gilroyHeavy text-xl font-semibold" style={{ WebkitTextStroke: "0.5px #E00FFF",textShadow: "0 0 15px rgba(255, 255, 255, 0.7)" }}> ₦{addCommasToNumber(Number(invest?.amount?.toFixed(0)))}</p>
-                            <p className="font-gilroyHeavy text-[22px] font-bold shadow-" style={{ WebkitTextStroke: "0.8px #E00FFF",textShadow: "0 0 15px rgba(255, 255, 255, 0.7)"}}>{invest?.inverment_profit}</p>
-                          </div>
-                        </div>
-                      ))
-                    }
+                <div className="flex items-center justify-center mt-6 text-white gap-4">
+                  {investmentArray?.map((invest, idx: number) => (
+                    <div className="" key={idx}>
+                      <div className="bg-[#1E083B] rounded-[0.6rem] px-4 py-[0.5rem] flex justify-center items-center">
+                        {/* <p className="text-sm font-verdana text-white" style={{ WebkitTextStroke: "0.5px rgba(60, 18, 114, 1" }}>{invest?.name}</p> */}
+                        <p
+                          className="text-sm font-verdana font-extrabold"
+                          style={{
+                            WebkitTextStroke: "1px #3C1272",
+                            WebkitTextFillColor: "white", // Force fill color
+                          }}
+                        >
+                          {invest?.name}
+                        </p>
+                      </div>
+                      <div className="border border-[#9E5CFF]  mt-4 rounded-10 py-[.875rem] px-[1.36rem] flex justify-center items-center flex-col">
+                        <p
+                          className="font-gilroyHeavy text-xl font-semibold"
+                          style={{
+                            WebkitTextStroke: "0.5px #E00FFF",
+                            textShadow:
+                              "0 4.54px 20.42px 0px rgba(158, 92, 255, 1)",
+                          }}
+                        >
+                          {" "}
+                          ₦
+                          {addCommasToNumber(
+                            Number(invest?.amount?.toFixed(0))
+                          )}
+                        </p>
+                        <p
+                          className="font-gilroyHeavy text-[24px] font-bold mt-2"
+                          style={{
+                            WebkitTextStroke: "0.8px #E00FFF",
+                            textShadow:
+                              "0 4.54px 20.42px 0px rgba(158, 92, 255, 1)",
+                          }}
+                        >
+                          {invest?.inverment_profit}
+                        </p>
+                      </div>
                     </div>
+                  ))}
+                </div>
               </div>
+
+
+
+           <div className="py-3 flex justify-center items-center">
+           <Button className="bg-red-700" onClick={()=>setShowStageOneTally(true)}>Proceed</Button>
+           </div>
             </div>
+
           </div>
+
+          {/* <StageTallyCard text="PRO HUSTLER" fontSize={36} color="#fff" amount={" ₦30000"} 
+badgeColor="#035D2E"
+backgroundGradient={{endColor:"#03984A",startColor:"#8EFE9B"}}
+/> */}
         </div>
 
         {/* Bottom Card */}
