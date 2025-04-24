@@ -74,7 +74,7 @@ const Stage1 = ({onNext}:prop) => {
 
       <div className="flex justify-center  flex-col items-center max-lg:px-3">
         {/* Selection Grid */}
-        <div className="w-full py-[1rem] max-xl:max-w-[65rem] 2xl:py-[3rem] max-w-[56.25rem] rounded-[.875rem] max-xl:px-[2rem] 2xl:px-[3rem] bg-[#13051E] -mt-3 relative overflow-hidden">
+        <div className="w-full py-[1rem] max-xl:max-w-[65rem] 2xl:py-[3rem] max-w-[56.25rem] rounded-[.875rem] px-[2rem] 2xl:px-[3rem] bg-[#13051E] -mt-3 relative overflow-hidden">
           {/* Animated border */}
           <div className="absolute inset-0">
             <motion.div
