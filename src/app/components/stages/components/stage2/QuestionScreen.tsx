@@ -7,23 +7,71 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import HustleStages from "../hustle/HustleStages";
 import HustleSideBar from "../hustle/HustleSideBar";
+import NumberCardContainer from "@/app/shared/NumberContainer";
 
 const QuestionScreen = () => {
-  const [ShowInvestResult, setShowInvestResult] = useState(false)
    const [timeLeft, setTimeLeft] = useState<number>(15);
-    const [autoPicked, setAutoPicked] = useState<boolean>(false);
   
     // Countdown Timer
     useEffect(() => {
-      
-  
-      const interval = setInterval(() => {
+      let interval: NodeJS.Timeout;
+  if(timeLeft  >0){
+       interval = setInterval(() => {
         setTimeLeft(prev => prev - 1);
       }, 1000);
+    }else{
+      setTimeLeft(0)
+
+  }
   
       return () => clearInterval(interval);
     }, [timeLeft]);
   
+const constestandArray = [
+    {
+        name: "Demola",
+        number_pick :2,
+        img: "/images/userImage3.png",  
+    },
+    {
+        name: "Idris",
+        number_pick :7,
+        img: "/images/userImage2.png",  
+    },
+    {
+        name: "Ola",
+        number_pick :14,
+        img: "/images/userImage.png",  
+  },
+    {
+        name: "Demola",
+        number_pick :9,
+        img: "/images/userImage3.png",  
+    },
+    {
+        name: "Edmund",
+        number_pick :10,
+        img: "/images/userImage4.png",  
+    },
+    {
+        name: "Idris",
+        number_pick :12,
+        img: "/images/userImage3.png",  
+    },
+    {
+        name: "Edmund",
+        number_pick :18,
+        img: "/images/userImage4.png",  
+    },
+
+
+    {
+        name: "Ola",
+        number_pick :24,
+        img: "/images/userImage.png",  
+    },
+]
+
   return (
     <div className="grid grid-cols-[1fr_5fr_1fr] h-full ">
       {/* Left Sidebar */}
@@ -102,22 +150,54 @@ const QuestionScreen = () => {
                 <h2 className="text-[2.125rem] font-extrabold outline-text text-black">
                   Stage 2: Prove your hustle
                 </h2>
+                <p  className="text-sm font-normal text-[#D5B9FF]">Select minimum of 2 number to determine the trivia questions for this round</p>
               </div>
               <div>
                 <h2 className="font-extrabold text-[2.75rem] text-white">{`0:${timeLeft.toString().padStart(2, "0")}`}</h2>
               </div>
             </div>
 
-            <div className="flex flex-wrap max-md:gap-[18px] gap-[8px] 2xl:gap-[.875rem] max-xl:gap-y-5 2xl:gap-y-8  2xl:mt-8">
-              {Array.from({ length: 49 }, (_, i) => i + 1).map(num => (
-                <div
-                  key={num}
-                  className="cursor-pointer transition-transform hover:scale-105"
-                >
-                
-                </div>
-              ))}
+          
+
+          <div className="grid mt-5 grid-cols-[1fr_3fr_1fr]">
+            <div className="flex gap-2 flex-col">
+{
+    constestandArray?.map((contestant,idx:number)=>(
+        <div className="flex gap-2 items-center" key={idx}>
+            <div className="">
+            <NumberCardContainer
+                    text={String(contestant?.number_pick)}
+                    textColor="#F2C94C"
+                    width={35}
+                    height={35}
+                  />
             </div>
+            <div className="flex items-center gap-2">
+                <div className="relative h-[1.6875rem] w-[1.6875rem]">
+                    <Image
+                        alt="" 
+                        src={contestant?.img}
+                        fill
+                        className="object-cover rounded-full"
+                    />
+                </div>
+                <p className="text-white text-xs font-gilroyMedium">{contestant?.name}</p>
+            </div>
+
+        </div>
+))}
+
+            </div>
+            <div className="relative">
+                <div className="border-[.3125rem] relative border-[#D71BFA] flex justify-center px-[2.125rem] items-center py-[3rem] rounded-[1.5rem] bg-[#000000]">
+                    <h2 className="text-white text-[1.5rem] text-center font-gilroyHeavy font-extrabold">What is the Biggest market in West Africa?</h2>
+                    <div className="absolute -bottom-10 rounded-[1rem] bg-[#fddd0d] border-[2px] border-[#C76000] py-[1.25rem] px-[2.5rem]">
+                        <h2 className="text-white">₦120,000</h2>
+                    </div>
+                </div>
+            </div>
+            <div className="">3</div>
+          </div>
           </div>
           </div>
         </div>
