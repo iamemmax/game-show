@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import HustleStages from "../hustle/HustleStages";
 import HustleSideBar from "../hustle/HustleSideBar";
 import NumberCardContainer from "@/app/shared/NumberContainer";
+import PrizeCard from "@/app/shared/PrizeCard";
 
 const QuestionScreen = () => {
    const [timeLeft, setTimeLeft] = useState<number>(15);
@@ -191,9 +192,42 @@ const constestandArray = [
             <div className="relative">
                 <div className="border-[.3125rem] relative border-[#D71BFA] flex justify-center px-[2.125rem] items-center py-[3rem] rounded-[1.5rem] bg-[#000000]">
                     <h2 className="text-white text-[1.5rem] text-center font-gilroyHeavy font-extrabold">What is the Biggest market in West Africa?</h2>
-                    <div className="absolute -bottom-10 rounded-[1rem] bg-[#fddd0d] border-[2px] border-[#C76000] py-[1.25rem] px-[2.5rem]">
-                        <h2 className="text-white">₦120,000</h2>
-                    </div>
+                    <div className="absolute -bottom-8 "
+    
+>
+
+<PrizeCard 
+  title="Win amount" 
+  amount="₦500,000"
+  width={250}
+  height={60}
+  backgroundColor="#C76000"
+  gradientColors={{
+    start: "#FFD700",
+    end: "#FFA500"
+  }}
+  titleStyle={{
+    fontSize: 16,
+    fontFamily: "gilroyHeavy",
+    fontWeight: "bold",
+    fill: "#1E1E1E",
+    // strokeWidth: 1,
+    yPosition: 30  // Changed from 35 to 25
+  }}
+  amountStyle={{
+    fontSize: 28,
+    fontFamily: "gilroyHeavy",
+    fontWeight: "700",
+    fill: "#FFFFFF",
+    strokeWidth: 2,
+    strokeColor: "#C76000",
+    yPosition: 68  // Changed from 70 to 80
+  }}
+  className="transform transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+  titleClassName="text-[#1E1E1E]"
+  amountClassName=""
+/>
+</div>
                 </div>
             </div>
             <div className="">3</div>
@@ -212,4 +246,5 @@ const constestandArray = [
 };
 
 export default QuestionScreen;
+
 
