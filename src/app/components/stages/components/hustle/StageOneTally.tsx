@@ -10,9 +10,11 @@ import Image from "next/image";
 import StageTallyCard from "@/app/shared/StageTallyCard";
 import { addCommasToNumber } from "@/utils";
 import { cn } from "@/utils/classNames";
+import { Button } from "@/components/core";
+import ProveHustle from "../stage2/ProveHustle";
 
 const StageOneTally = () => {
-  const [ShowInvestResult, setShowInvestResult] = useState(false);
+  const [goToStage2 , setGoToStage2 ] = useState(false);
 
   const tallyArray = [
     {
@@ -65,8 +67,12 @@ const StageOneTally = () => {
     },
   ];
 
+
+  if(goToStage2){
+    return <ProveHustle/>
+  }
   return (
-    <div className="grid grid-cols-[1fr_3fr_1fr] h-full ">
+    <div className="grid grid-cols-[1fr_2.5fr_1fr] 2xl:grid-cols-[1fr_1.5fr_1fr] h-full ">
       {/* Left Sidebar */}
       <div className="flex flex-col justify-between">
         <div className="flex justify-center items-center h-3.5 w-full mt-8">
@@ -109,7 +115,13 @@ const StageOneTally = () => {
             />
           </div>
 
-          <div className="relative w-full py-[1rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
+          <div
+            className="relative w-full py-[1rem] 2xl:py-[2.5rem] max-xl:max-w-[40.5rem] 2xl:max-w-[60rem] px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
+            style={{
+              backdropFilter: "blur(74px)",
+              WebkitBackdropFilter: "blur(74px)", // For Safari support
+            }}
+          >
             {/* Animated border */}
             <div className="absolute inset-0">
               <motion.div
@@ -124,6 +136,8 @@ const StageOneTally = () => {
                     #FFD700 360deg,
                     #d91fff 340deg
                   )`,
+                  backdropFilter: "blur(74px)",
+                  WebkitBackdropFilter: "blur(74px)",
                 }}
                 animate={{
                   rotate: [0, 360],
@@ -146,36 +160,58 @@ const StageOneTally = () => {
                   </h2>
                 </div>
 
-                <div className="flex items-center gap-1 flex-col">
+                <motion.div
+                  className="flex items-center gap-1 2xl:gap-2 flex-col"
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    visible: {
+                      transition: {
+                        staggerChildren: 0.5, // Increased from 0.2 to 0.5 seconds
+                      },
+                    },
+                  }}
+                >
                   {tallyArray.map((tally) => (
-                    <div
+                    <motion.div
                       key={tally.name}
-                      className={`flex justify-center gap-[.6875rem] items-center ${tally.isEliminated ? "opacity-50" : ""}`}
+                      variants={{
+                        hidden: { opacity: 0, y: 20 },
+                        visible: {
+                          opacity: 1,
+                          y: 0,
+                          transition: {
+                            duration: 0.8, // Added longer duration for each item
+                            ease: "easeOut",
+                          },
+                        },
+                      }}
+                      className={`flex justify-center gap-[.6875rem] 2xl:gap-1 items-center ${tally.isEliminated ? "opacity-50" : ""}`}
                     >
-                        <div className=" h-[50px] grid grid-cols-[1fr_3fr] w-[7.8125rem] bg-[#1C0240] p-2  border border-[#7E3CE0] rounded-[.4594rem] ">
-                            <Image
-                              alt=""
-                              src={tally?.img}
-                              width={18}
-                              height={18}
-                              className="rounded-full shrink-0"
-                            />
-                      <div
-                        className={`${cn(` flex flex-col`)}`}
-                      >
-                        <p className="text-xs  font-gilroyMedium font-normal text-white ">
-                          {tally.name}
-                        </p>
-                        <p className="text-xs  font-gilroyMedium font-normal text-white ">
-                          {tally.capital}
-                        </p>
-                      </div>
-
+                      <div className="h-[3.125rem] grid grid-cols-[1fr_3fr]  2xl:grid-cols-[1fr_2fr] w-[7.8125rem] bg-[#1C0240] 2xl:h-[3.8rem] p-2 border border-[#7E3CE0] rounded-[.4594rem]">
+                        <div className="shrink-0">
+                        <Image
+                          alt=""
+                          src={tally?.img}
+                          width={18}
+                          height={18}
+                          className="rounded-full shrink-0 2xl:w-[30px] 2xl:h-[30px]"
+                        />
                         </div>
+                        <div className={`${cn(` flex flex-col`)}`}>
+                          <p className="text-xs 2xl:text-sm font-gilroyMedium font-normal text-white">
+                            {tally.name}
+                          </p>
+                          <p className="text-xs 2xl:text-sm font-gilroyMedium font-normal text-white">
+                            {tally.capital}
+                          </p>
+                        </div>
+                      </div>
                       <div className="">
                         <StageTallyCard
                           text={tally?.title}
                           fontSize={30}
+                          className="2xl:w-[700px] 2xl:h-[90px]"
                           color="#fff"
                           amount={`₦${addCommasToNumber(Number(tally?.amount) ?? 0)}`}
                           badgeColor={
@@ -189,16 +225,17 @@ const StageOneTally = () => {
                               ? "#FE8E8E"
                               : "#8EFE9B",
                           }}
-                          gradientId={`gradient-${tally.name}`} // ← unique ID here
+                          gradientId={`gradient-${tally.name}`}
                         />
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               </div>
             </div>
           </div>
         </div>
+            <Button className="bg-red-700 text-white" onClick={()=>setGoToStage2(true)}>Proceed</Button>
 
         {/* Bottom Card (sticks to bottom) */}
         <div className="w-full max-w-[35rem] lg:max-w-[46.5rem] 2xl:max-w-[80rem] mt-2">

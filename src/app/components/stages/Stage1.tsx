@@ -125,10 +125,7 @@ const Stage1 = ({onNext}:prop) => {
                   <NumberCardContainer
                     text={String(num)}
                     textColor={isSelected(num) ? "#fff" : "#F2C94C"}
-                    // secondaryGradientStartColor={isSelected(num) ? "#FF00FF" : "#7E3CE0"}
-                    // secondaryGradientMiddleColor={isSelected(num) ? "#FF00FF" : "#760F1B"}
-                    // secondaryGradientEndColor={isSelected(num) ? "#FF00FF" : "#3C1272"}
-                    // primaryGradientStartColor={isSelected(num) ? "#FF00FF" : "#7E3CE0"}
+                   
                     primaryGradientEndColor={isSelected(num) ? "#FF00FF" : "#3C1272"}
                     backgroundColor={isSelected(num) ? "#FEC124" : "black"}
                   />
