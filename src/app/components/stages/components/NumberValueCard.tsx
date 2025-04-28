@@ -21,7 +21,7 @@ export const NumberValueCard: React.FC<NumberValueCardProps> = ({
   secondaryColor = "#D91FFF"
 }) => {
   const uniqueId = React.useId();
-  const gradientId = `number_value_gradient_${uniqueId}`;
+  // const gradientId = `number_value_gradient_${uniqueId}`;
 
   return (
     <div 

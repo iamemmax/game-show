@@ -12,26 +12,26 @@ type Investor = {
   name: string;
   percentage: number;
   amount: number;
-number:number
+  initialAmount: number;
+  number: number;
 };
 
 type MessageType = "success" | "error" | "warning" | "";
-
-export default function RedistributeCapital(): JSX.Element {
-  const initialCapital = 900000;
-  const [totalCapital, setTotalCapital] = useState<number>(initialCapital);
+interface Prop {
+  setShowInvestResult: React.Dispatch<React.SetStateAction<boolean>>;
+}
+export default function RedistributeCapital({ setShowInvestResult }: Prop): JSX.Element {
   const [investors, setInvestors] = useState<Investor[]>([
-    { name: "Caterer", percentage: 20, amount: 0,number:22 },
-    { name: "Agri tech", percentage: 20, amount: 0,number:30 },
-    { name: "Fashion", percentage: 20, amount: 0 ,number:17},
-    { name: "Fintech", percentage: 20, amount: 0,number:54 },
-    { name: "Barber", percentage: 20, amount: 0 ,number:10},
+    { name: "Caterer", percentage: 100, amount: 200000, initialAmount: 200000, number: 22 },
+    { name: "Agri tech", percentage: 100, amount: 15000, initialAmount: 15000, number: 30 },
+    { name: "Fashion", percentage: 100, amount: 200000, initialAmount: 200000, number: 17 },
+    { name: "Fintech", percentage: 100, amount: 150000, initialAmount: 150000, number: 54 },
+    { name: "Barber", percentage: 100, amount: 200000, initialAmount: 200000, number: 10 },
   ]);
   const [totalPercentage, setTotalPercentage] = useState<number>(100);
   const [message, setMessage] = useState<string>("");
   const [messageType, setMessageType] = useState<MessageType>("");
   
-
   // Add new state for tracking view mode
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
   
@@ -45,104 +45,78 @@ export default function RedistributeCapital(): JSX.Element {
     }
   };
 
+  const calculateAmounts = (): void => {
+    // For the purpose of showing total percentages
+    let totalPercent = investors.reduce((sum, inv) => sum + inv.percentage, 0);
+    setTotalPercentage(totalPercent / investors.length); // Average percentage
+  };
+
   useEffect(() => {
     calculateAmounts();
-  }, [investors, totalCapital]);
-
-  const calculateAmounts = (): void => {
-    let total = 0;
-    const updatedInvestors = investors.map((investor) => {
-      const amount = (investor.percentage / 100) * totalCapital;
-      total += investor.percentage;
-      return { ...investor, amount };
-    });
-
-    setInvestors(updatedInvestors);
-    setTotalPercentage(total);
-
-    if (Math.abs(total - 100) > 0.01) {
-      setMessage("Percentages must sum to 100%");
-      setMessageType("error");
-    } else {
-      setMessage("Total is exactly 100%");
-      setMessageType("success");
-    }
-  };
-
-
-  const handlePercentageChange = (
-    index: number,
-    newPercentage: string
-  ): void => {
-    const updatedInvestors = [...investors];
-    const parsedValue = parseFloat(newPercentage) || 0;
-    updatedInvestors[index].percentage = parsedValue;
-
-    let newTotal = updatedInvestors.reduce(
-      (sum, inv) => sum + inv.percentage,
-      0
-    );
-
-    if (newTotal > 100) {
-      const excess = newTotal - 100;
-      const otherInvestors = updatedInvestors.filter((_, i) => i !== index);
-      const otherTotal = otherInvestors.reduce(
-        (sum, inv) => sum + inv.percentage,
-        0
-      );
-
-      if (otherTotal > 0) {
-        updatedInvestors.forEach((inv, i) => {
-          if (i !== index) {
-            const proportion = inv.percentage / otherTotal;
-            inv.percentage = Math.max(0, inv.percentage - excess * proportion);
-            inv.percentage = Math.round(inv.percentage * 100) / 100;
-          }
-        });
-
-        setMessage(
-          "Total exceeded 100%. Other percentages were adjusted automatically."
-        );
-        setMessageType("warning");
-      } else {
-        updatedInvestors[index].percentage = 100;
-        setMessage("Maximum percentage is 100%. Value has been capped.");
-        setMessageType("warning");
-      }
-    }
-
-    setInvestors(updatedInvestors);
-  };
-
-
+  }, [investors]);
 
   const incrementPercentage = (index: number): void => {
     const updatedInvestors = [...investors];
-    updatedInvestors[index].percentage += 1;
-    if (updatedInvestors[index].percentage > 100) {
-      updatedInvestors[index].percentage = 100;
+    const currentInvestor = updatedInvestors[index];
+    
+    // Already at maximum (100%)
+    if (currentInvestor.percentage >= 100) {
+      setMessage(`${currentInvestor.name} already at maximum allocation (100%)`);
+      setMessageType("warning");
+      return;
     }
-    handlePercentageChange(
-      index,
-      updatedInvestors[index].percentage.toString()
-    );
+    
+    // Step is 10%
+    const step = 10;
+    const newPercentage = Math.min(currentInvestor.percentage + step, 100);
+    
+    // Calculate new amount based on percentage of initial amount
+    const newAmount = (newPercentage / 100) * currentInvestor.initialAmount;
+    
+    // Update investor
+    currentInvestor.percentage = newPercentage;
+    currentInvestor.amount = newAmount;
+    
+    setInvestors(updatedInvestors);
+    setMessage(`Increased ${currentInvestor.name} to ${newPercentage}% of allocation`);
+    setMessageType("success");
   };
-
+  
   const decrementPercentage = (index: number): void => {
     const updatedInvestors = [...investors];
-    updatedInvestors[index].percentage -= 1;
-    if (updatedInvestors[index].percentage < 0) {
-      updatedInvestors[index].percentage = 0;
+    const currentInvestor = updatedInvestors[index];
+    
+    // Minimum percentage (10%)
+    const minPercentage = 10;
+    
+    // Already at minimum
+    if (currentInvestor.percentage <= minPercentage) {
+      setMessage(`${currentInvestor.name} already at minimum allocation (${minPercentage}%)`);
+      setMessageType("warning");
+      return;
     }
-    handlePercentageChange(
-      index,
-      updatedInvestors[index].percentage.toString()
-    );
+    
+    // Step is 10%
+    const step = 10;
+    const newPercentage = Math.max(currentInvestor.percentage - step, minPercentage);
+    
+    // Calculate new amount based on percentage of initial amount
+    const newAmount = (newPercentage / 100) * currentInvestor.initialAmount;
+    
+    // Update investor
+    currentInvestor.percentage = newPercentage;
+    currentInvestor.amount = newAmount;
+    
+    setInvestors(updatedInvestors);
+    setMessage(`Decreased ${currentInvestor.name} to ${newPercentage}% of allocation`);
+    setMessageType("success");
   };
-const patterTypes =  [PATTERN_GREEN_BLACK, PATTERN_ORANGE_BLACK, PATTERN_PURPLE_BLACK, PATTERN_PURPLE_GREY, PATTERN_PURPLE_WHITE]
+
+  const patterTypes = [PATTERN_GREEN_BLACK, PATTERN_ORANGE_BLACK, PATTERN_PURPLE_BLACK, PATTERN_PURPLE_GREY, PATTERN_PURPLE_WHITE];
+  
   return (
     <>
-     <div className="grid grid-cols-5 gap-3 px-2  text-white ">
+     <div className="grid grid-cols-5 gap-3 px-2 text-white">
       {investors.map((investor, idx) => (
         <div 
           key={investor.name} 
@@ -156,7 +130,7 @@ const patterTypes =  [PATTERN_GREEN_BLACK, PATTERN_ORANGE_BLACK, PATTERN_PURPLE_
                 {investor.name}
               </h2>
               <h3 className="font-extrabold text-[1.2rem] font-gilroyHeavy outline-invest-text" style={{ WebkitTextStroke: "1.2px #E00FFF" }}>
-                {investor.percentage.toFixed(2)}%
+                {investor.percentage}%
               </h3>
               <div className="bg-[#231438] rounded-[1.25rem] px-4 py-[3px] flex justify-center items-center">
                 <p className="text-[#E00FFF] text-xs font-medium font-gilroyMedium mt-1">
@@ -165,7 +139,7 @@ const patterTypes =  [PATTERN_GREEN_BLACK, PATTERN_ORANGE_BLACK, PATTERN_PURPLE_
               </div>
               <div className="flex gap-3 items-center mt-[5px]">
                 <Button
-                  className="w-[3rem] h-[1.6rem] p-0 border border-[#9E5CFF]  flex justify-center items-center rounded-[7px]"
+                  className="w-[3rem] h-[1.6rem] p-0 border border-[#9E5CFF] flex justify-center items-center rounded-[7px]"
                   onClick={(e) => {
                     e.stopPropagation();
                     decrementPercentage(idx);
@@ -190,10 +164,9 @@ const patterTypes =  [PATTERN_GREEN_BLACK, PATTERN_ORANGE_BLACK, PATTERN_PURPLE_
             </div>
           ) : (
             // Show original card if not selected
-
             <HustleCard
-            id={investor?.name?.replace(/\s+/g, "")}
-            className="text-sm border-[1px] rounded-10  py-0"
+              id={investor?.name?.replace(/\s+/g, "")}
+              className="text-sm border-[1px] rounded-10 py-0"
               title={investor?.name}
               number={investor?.number}
               amount={`₦${addCommasToNumber(Number(investor.amount.toFixed(0)))}`}
@@ -201,15 +174,16 @@ const patterTypes =  [PATTERN_GREEN_BLACK, PATTERN_ORANGE_BLACK, PATTERN_PURPLE_
               numberClassName="text-[2.5rem] text-white"
               titleClassName="text-sm font-extrabold"
               pattern={patterTypes[idx]}
-              
             />
           )}
         </div>
       ))}
     </div>
-   <div className=" mt-2 flex w-full justify-center items-center">
-  <Button className="p-0 bg-transparent"> <GradientButton text="invest" className="uppercase" height={35}/></Button>
-   </div>
+    <div className="mt-2 py-3 flex w-full justify-center items-center">
+      <Button className="p-0 bg-transparent" onClick={() => setShowInvestResult(true)}>
+        <GradientButton text="invest" className="uppercase" height={35} />
+      </Button>
+    </div>
     </>
   );
 }

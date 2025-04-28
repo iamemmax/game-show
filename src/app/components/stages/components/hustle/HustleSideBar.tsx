@@ -25,7 +25,7 @@ const HustleSideBar = () => {
           title="Hustler 1"
           subtitle="Active"
           isActive={true}
-          imageUrl={`/images/userImage1.png`}
+          imageUrl={`/images/userImage5.png`}
           backgroundColor="transparent" // Use "gradient" to enable gradient background
           borderColor="transparent"
         />

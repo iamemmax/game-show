@@ -6,6 +6,7 @@ export interface ZtCardProps {
   height?: number;
   className?: string;
   text?: string;
+  backgroundColor?: string;
   primaryGradientStartColor?: string;
   primaryGradientEndColor?: string;
   secondaryGradientStartColor?: string;
@@ -25,6 +26,7 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
   height = 58,
   className,
   text = "ZT",
+  backgroundColor = "black",
   primaryGradientStartColor = "#7E3CE0",
   primaryGradientEndColor = "#3C1272",
   secondaryGradientStartColor = "#7E3CE0",
@@ -64,7 +66,7 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
         width="62" 
         height="46" 
         rx="8" 
-        fill="black" 
+        fill={backgroundColor} 
         stroke={`url(#${secondaryGradientId})`} 
         strokeWidth="4"
       />

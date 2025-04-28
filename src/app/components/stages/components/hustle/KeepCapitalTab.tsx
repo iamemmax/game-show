@@ -1,3 +1,5 @@
+import React from "react";
+import GradientButton from "@/app/shared/GradientButton";
 import HustleCard from "@/app/shared/HustleCard";
 import {
   PATTERN_ORANGE_BLACK,
@@ -6,10 +8,14 @@ import {
   PATTERN_GREEN_BLACK,
   PATTERN_PURPLE_BLACK,
 } from "@/app/shared/HustleCard.PatternTypes";
-import React from "react";
+import { Button } from "@/components/core";
 
-const KeepCapitalTab = () => {
+interface Prop{
+  setShowInvestResult: React.Dispatch<React.SetStateAction<boolean>>
+}
+const KeepCapitalTab = ({setShowInvestResult}:Prop) => {
   return (
+    <>
     <div className="grid grid-cols-5  items-center gap-3 px-2  text-white ">
       <HustleCard
         id="Caterer"
@@ -69,6 +75,11 @@ const KeepCapitalTab = () => {
         
       />
     </div>
+
+    <div className=" mt-2 flex w-full justify-center py-2 items-center">
+  <Button className="p-0 bg-transparent" onClick={()=>setShowInvestResult(true)}> <GradientButton text="invest" className="uppercase" height={35}/></Button>
+   </div>
+    </>
   );
 };
 
