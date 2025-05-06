@@ -13,7 +13,8 @@ interface StagesCardProps extends SVGProps<SVGSVGElement> {
   backgroundFill?: string;
   customDefs?: React.ReactNode;
   isActive?: boolean; // new!
-  finalStage?:boolean
+  finalStage?:boolean;
+  showIcon?:boolean;
 }
 
 const StagesCard = ({
@@ -27,6 +28,7 @@ const StagesCard = ({
   backgroundFill,
   customDefs,
   isActive = false,
+  showIcon = true,
   ...props
 }: StagesCardProps) => {
   const width = 157;
@@ -78,7 +80,7 @@ const StagesCard = ({
       />
 
       {/* Medal */}
-      <g transform="translate(10, 10)">
+      {showIcon&&<g transform="translate(10, 10)">
         {
             finalStage?
             <Trophy height={32} width={32} />:
@@ -86,7 +88,7 @@ const StagesCard = ({
 
         }
       
-      </g>
+      </g>}
 
       {/* Text */}
       <text

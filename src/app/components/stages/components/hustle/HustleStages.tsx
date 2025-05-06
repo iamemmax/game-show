@@ -4,7 +4,7 @@ import React from "react";
 const HustleStages = () => {
   return (
     <div>
-      <div className="  flex flex-col items-center justify-center gap-2 p-4">
+      <div className="  flex flex-col items-center justify-center gap-4 p-4">
         <StagesCard
           borderColor="#5d400b"
           iconText="1"
@@ -31,16 +31,9 @@ const HustleStages = () => {
           subTitle="Pick a Number"
 
         borderColor="#FFC125" iconText="3" />
+        
         <StagesCard 
          title="Stage 4"
-          subTitle="Wildcards"
-        borderColor="#FFC125" iconText="4" />
-        <StagesCard 
-         title="Stage 5"
-          subTitle="Pick and Flip"
-        borderColor="#FFC125" iconText="5" />
-        <StagesCard 
-         title="Stage 6"
           subTitle="Buyout or Draw"
         borderColor="#FFC125" iconText="5"
         finalStage={true}

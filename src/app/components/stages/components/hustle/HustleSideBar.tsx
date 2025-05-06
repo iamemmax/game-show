@@ -3,10 +3,15 @@ import SettingsIcon from "@/app/icons/SettingIcon";
 import ContestantCard from "@/app/shared/ContestantCard";
 import IconBoard from "@/app/shared/IconBoard";
 import JackpotContainer from "@/app/shared/JackpotContainer";
+import StagesCard from "@/app/shared/StagesCard";
 import { Button } from "@/components/core";
 import React from "react";
-
-const HustleSideBar = () => {
+interface prop{
+  showJackpot?:boolean;
+  showEmptyCard?:boolean;
+  showHustlerCard?:boolean;
+}
+const HustleSideBar = ({showJackpot=true, showEmptyCard=false, showHustlerCard=true}:prop) => {
   return (
     <div className="flex justify-between h-full items-center flex-col">
       <div className="py-4 flex justify-center items-center">
@@ -20,7 +25,7 @@ const HustleSideBar = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex px-3 h-full flex-col justify-center items-center">
+ {showHustlerCard&&     <div className="flex-1 flex px-3 h-full flex-col justify-center items-center">
         <ContestantCard
           title="Hustler 1"
           subtitle="Active"
@@ -76,9 +81,26 @@ const HustleSideBar = () => {
           backgroundColor="transparent"
           borderColor="transparent"
         />
-      </div>
-      <div className="">
+      </div>}
+
+      {
+        showEmptyCard&& <div className="flex-1 flex px-3 h-full 2xl:gap-4  flex-col justify-center items-center">
+       {Array.from({length:6}).map((_,index)=>(
+         <StagesCard 
+         key={index}
+         title=""
+          subTitle=""
+        borderColor="#FFC125" iconText="" showIcon={false} 
+        width={130}
+        className="2xl:w-[260px]"
+        />
+       ))}
+        </div>
+      }
+    <div className="min-h-[100px]">
+    {showJackpot&&  
         <JackpotContainer text="₦100m"/>
+      }
       </div>
     </div>
   );

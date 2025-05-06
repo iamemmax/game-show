@@ -5,7 +5,7 @@ export interface ZtCardProps {
   width?: number;
   height?: number;
   className?: string;
-  text?: string;
+  text?: string | React.ReactNode;  // Modified to accept ReactNode
   backgroundColor?: string;
   primaryGradientStartColor?: string;
   primaryGradientEndColor?: string;
@@ -18,7 +18,8 @@ export interface ZtCardProps {
   textColor?: string;
   textStrokeColor?: string;
   bgBlurColor?: string;
-  centerBackgroundColor?: string; // New prop for center background
+  centerBackgroundColor?: string;
+  active?: boolean; // New prop for active state
 }
 
 const NumberCardContainer: React.FC<ZtCardProps> = ({
@@ -38,13 +39,61 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
   textColor = "#FFFFFF",
   textStrokeColor = "#000000",
   bgBlurColor = "#280458",
-  centerBackgroundColor = "transparent" // Default is transparent
+  centerBackgroundColor = "transparent",
+  active = false // Default to false
 }) => {
   const uniqueId = React.useId();
   const primaryGradientId = `primary_gradient_${uniqueId}`;
   const secondaryGradientId = `secondary_gradient_${uniqueId}`;
   const tertiaryGradientId = `tertiary_gradient_${uniqueId}`;
   const clipPathId = `bgblur_clip_path_${uniqueId}`;
+
+  const renderContent = () => {
+    if (React.isValidElement(text)) {
+      // If text is a React element (icon), render it in the center
+      return (
+        <g transform={`translate(${33 - 8}, ${active ? 35 - 8 : 38 - 8})`}>
+          {text}
+        </g>
+      );
+    }
+    
+    // If text is a string, render it with the text element
+    return (
+      <>
+        {/* Text stroke outline (rendered first) */}
+        <text 
+          x="33"
+          y={active ? "35" : "38"}
+          fontSize="19"
+          fontFamily="sans-serif"
+          fontWeight="900"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={textStrokeColor}
+          stroke={textStrokeColor}
+          strokeWidth="3"
+          paintOrder="stroke"
+        >
+          {text}
+        </text>
+        
+        {/* Text fill (rendered second) */}
+        <text 
+          x="33"
+          y={active ? "35" : "38"}
+          fontSize="19"
+          fontFamily="sans-serif"
+          fontWeight="900"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={textColor}
+        >
+          {text}
+        </text>
+      </>
+    );
+  };
 
   return (
     <svg 
@@ -96,38 +145,9 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
           }}
         ></div>
       </foreignObject>
-      <path data-figma-bg-blur-radius="184" d="M5 15H61V22H5V15Z"  fill={bgBlurColor} />
+      {!active && <path data-figma-bg-blur-radius="184" d="M5 15H61V22H5V15Z" fill={bgBlurColor} />}
       
-      {/* Text stroke outline (rendered first) */}
-      <text 
-        x="33"
-        y="38"
-        fontSize="19"
-        fontFamily="sans-serif"
-        fontWeight="900"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill={textStrokeColor}
-        stroke={textStrokeColor}
-        strokeWidth="3"
-        paintOrder="stroke"
-      >
-        {text}
-      </text>
-      
-      {/* Text fill (rendered second) */}
-      <text 
-        x="33"
-        y="38"
-        fontSize="19"
-        fontFamily="sans-serif"
-        fontWeight="900"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill={textColor}
-      >
-        {text}
-      </text>
+      {renderContent()}
       
       <clipPath id={clipPathId}>
         <path d="M5 15H61V22H5V15Z"/>
@@ -159,7 +179,7 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
           <stop offset="1" stopColor={secondaryGradientEndColor} />
         </linearGradient>
         
-        <linearGradient 
+        {!active && <linearGradient 
           id={tertiaryGradientId} 
           x1="6" 
           y1="17" 
@@ -170,7 +190,7 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
           <stop stopColor={tertiaryGradientStartColor} />
           <stop offset="0.5" stopColor={tertiaryGradientMiddleColor} />
           <stop offset="1" stopColor={tertiaryGradientEndColor} />
-        </linearGradient>
+        </linearGradient>}
       </defs>
     </svg>
   );
