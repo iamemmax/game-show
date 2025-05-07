@@ -13,7 +13,7 @@ interface TextStyle {
 }
 
 interface PrizeCardProps {
-  title: string;
+  title?: string;
   amount: string;
   width?: number;
   height?: number;
@@ -85,7 +85,7 @@ const PrizeCard: React.FC<PrizeCardProps> = ({
       />
 
       {/* Title Text */}
-      <text
+      {title&&<text
         x="50%"
         y={`${titleStyle.yPosition}%`}
         dominantBaseline="middle"
@@ -99,7 +99,7 @@ const PrizeCard: React.FC<PrizeCardProps> = ({
         className={cn('select-none', titleClassName)}
       >
         {title}
-      </text>
+      </text>}
 
       {/* Amount Text */}
       <text

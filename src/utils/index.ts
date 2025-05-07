@@ -1,10 +1,10 @@
-import type { ToastNotification } from "@/types";
 
 import type { AxiosError } from "axios";
 
 import { format } from "date-fns";
 
 import toast from "react-hot-toast";
+export type ToastNotification = 'success' | 'error' | 'neutral';
 
 /**
  * @param string A user's (full, first or last) name.

@@ -1,38 +1,32 @@
+"use client"
 import Logo from "@/app/icons/Logo";
 import StartUpIcon from "@/app/icons/StartupIcon";
 import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import Image from "next/image";
 import React, { useState } from "react";
-import { CustomTabs, TabItem } from "./HustleTab";
-import KeepCapitalTab from "./KeepCapitalTab";
-import RedristibuteCapital from "./RedristibuteCapital";
+import KeepCapitalTab from "./InvestCapital";
 import HustleStages from "./HustleStages";
 import HustleSideBar from "./HustleSideBar";
 import HustleBottomCard from "./HustleBottomCard";
 import { motion } from "framer-motion";
-import InvestmentResult from "./InvestmentResult";
+import InvestCapital from "./InvestCapital";
+import QuestionScreen from "../stage2/QuestionScreen";
+import { tokenStorage } from "@/utils/auth";
+import { useGetHustleReveal } from "../../api/stage1/getHustleReveal";
+import { addCommasToNumber } from "@/utils";
 
 const Hustle = () => {
-  const [ShowInvestResult, setShowInvestResult] = useState(false)
-  const tabs: TabItem[] = [
-    {
-      value: "Keep",
-      label: "Keep capital overlay",
-      content: <KeepCapitalTab setShowInvestResult={setShowInvestResult}/>,
-    },
-    {
-      value: "Redistribute",
-      label: "Redistribute capital",
-      content: <RedristibuteCapital setShowInvestResult={setShowInvestResult}/>,
-    },
-  ];
+  const [ShowQuestionScreen, setShowQuestionScreen] = useState(false)
+  const user = tokenStorage.getUser();
+  const {data,isLoading} = useGetHustleReveal(user?.game_episode as number);
 
-  if (ShowInvestResult) {
-    return <InvestmentResult />;
+  const  contestant = data?.data?.find((contestant) => contestant.contestant_id === user?.contestant_id);
+  if (ShowQuestionScreen) {
+    return <QuestionScreen />;
   }
   return (
-    <div className="grid grid-cols-[1fr_5fr_1fr] h-full ">
+    <div className="grid grid-cols-[1fr_5fr_1fr] h-full w-full overflow-x-hidden ">
       {/* Left Sidebar */}
       <div className="flex flex-col justify-between">
         <div className="flex justify-center items-center h-3.5 w-full mt-8">
@@ -73,8 +67,11 @@ const Hustle = () => {
               textStrokeWidth={4.4}
             />
           </div>
+          {
 
-          <div className="relative w-full py-[1rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
+          }
+
+          <div className="relative w-full py-[2.5rem] 2xl:py-[4rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
             {/* Animated border */}
             <div className="absolute inset-0">
               <motion.div
@@ -102,35 +99,39 @@ const Hustle = () => {
             </div>
             
             {/* Content container - increased border width from 5px to 8px for bolder appearance */}
-            <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
+            <div className="absolute inset-[8px] bg-[#13051E]  rounded-[.675rem]" />
             <div className="relative">
               <div className="flex justify-center flex-col items-center">
                 <div>
-                  <h2 className="text-[2.125rem] text-center font-extrabold outline-text text-black">
+                  <h2 className="text-[2.125rem] text-center font-gilroyHeavy font-extrabold outline-text text-black">
                     Stage 1: Hustle Kick-off
                   </h2>
-                  <p className="text-sm font-normal text-[#D5B9FF]">
-                    Tap each hustle card below to determine how you want to invest
+                  <p className="text-sm font-normal max-w-[23.25rem] text-center text-[#D5B9FF]">
+                  Tap each of the opportunities to determine how much of your start up capital you will like to Risk/Wager
                   </p>
                 </div>
-
-                <div className="flex mt-2 items-center gap-[1.375rem]">
+{
+  isLoading? <div className="flex justify-center items-center h-full w-full">
+  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+</div>:
+<>
+                <div className="flex mt-4 items-center gap-[1.375rem]">
                   {/* Player Info */}
                   <div className="flex bg-black rounded-10 gap-4 px-[1.125rem] pr-[5rem] items-center py-2">
-                    <div className="relative h-[2.8rem] w-[2.8rem] bg-[#bf7222] border-[5px] border-[#dba531] rounded-full overflow-hidden">
+                    <div className="relative h-[2.8rem] w-[2.8rem] bg-[#bf7222] border-[2px] border-[#dba531] rounded-full overflow-hidden">
                       <Image
                         alt="User avatar"
-                        src="/images/userImage3.png"
+                        src="/images/userImage5.png"
                         fill
                         className="object-cover"
                       />
                     </div>
                     <div>
                       <p className="text-white font-normal text-xs font-gilroyMedium">
-                        Demola
+                       {contestant?.contestant_details?.name??""}
                       </p>
                       <h2 className="text-sm font-medium font-gilroyMedium text-white outline-text-white-2">
-                        Player 1
+                        Player {user?.contestant_attr ? user?.contestant_attr.split('_')[1] : ''}
                       </h2>
                     </div>
                   </div>
@@ -145,23 +146,22 @@ const Hustle = () => {
                         Startup capital
                       </p>
                       <h2 className="text-sm font-medium font-gilroyMedium text-white outline-text-white-2">
-                        ₦900,000
+                        ₦{addCommasToNumber(Number(contestant?.reveals?.reduce((sum, reveal) => sum + reveal.hustle_amount, 0)?.toFixed(0)?.toLocaleString()))}
                       </h2>
                     </div>
                   </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="mt-2 relative w-full flex justify-center items-center">
-                  <CustomTabs
-                    tabs={tabs}
-                    defaultValue="Keep"
-                    tabsListClassName=""
-                    tabsContentClassName="w-full px-0"
-                  />
+                <div className="mt-6 relative w-full flex justify-center items-center">
+                
+
+                  <InvestCapital setShowQuestionScreen={setShowQuestionScreen} hustleReveal={contestant?.reveals}/>
 
                  
                 </div>
+</>
+}
               </div>
             </div>
           </div>
@@ -175,7 +175,7 @@ const Hustle = () => {
 
       {/* Right Sidebar */}
       <div>
-        <HustleSideBar />
+        <HustleSideBar showEmptyCard={true} showHustlerCard={false} />
       </div>
     </div>
   );
