@@ -22,7 +22,7 @@ export const useGetAllHustleNumbers = (episode_id: number) =>
     queryKey: ["all-hustle-picks", episode_id],
     queryFn: () => getAllHustleNumbers(episode_id),
     enabled: !!episode_id,
-    // refetchInterval: 1000, // Refetch every second
+    refetchInterval: 1000, // Refetch every second
     staleTime: 0, // Consider data stale immediately
     cacheTime: 0, // Don't cache the data
   });

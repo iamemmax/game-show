@@ -20,6 +20,8 @@ export interface ZtCardProps {
   bgBlurColor?: string;
   centerBackgroundColor?: string;
   active?: boolean; // New prop for active state
+  iconPosition?: { x?: number; y?: number }; // Control icon position
+  iconSize?: number; // Control icon size
 }
 
 const NumberCardContainer: React.FC<ZtCardProps> = ({
@@ -40,7 +42,9 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
   textStrokeColor = "#000000",
   bgBlurColor = "#280458",
   centerBackgroundColor = "transparent",
-  active = false // Default to false
+  active = false, // Default to false
+  iconPosition = { x: 33, y: 25 }, // Default position
+  iconSize = 16 // Default size
 }) => {
   const uniqueId = React.useId();
   const primaryGradientId = `primary_gradient_${uniqueId}`;
@@ -50,21 +54,29 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
 
   const renderContent = () => {
     if (React.isValidElement(text)) {
-      // If text is a React element (icon), render it in the center
+      // If text is a React element (icon), render it with custom position and size
+      const iconX = iconPosition.x ?? 33;
+      const iconY = iconPosition.y ?? 25;
+      const halfSize = iconSize / 2;
+      
       return (
-        <g transform={`translate(${33 - 8}, ${active ? 35 - 8 : 38 - 8})`}>
-          {text}
+        <g transform={`translate(${iconX - halfSize}, ${iconY - halfSize})`}>
+          {React.cloneElement(text as React.ReactElement, {
+            width: iconSize,
+            height: iconSize
+          })}
         </g>
       );
     }
     
     // If text is a string, render it with the text element
+    // Use fixed position for text, independent of iconPosition
     return (
       <>
         {/* Text stroke outline (rendered first) */}
         <text 
           x="33"
-          y={active ? "35" : "38"}
+          y="37" // Fixed position for text
           fontSize="19"
           fontFamily="sans-serif"
           fontWeight="900"
@@ -81,7 +93,7 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
         {/* Text fill (rendered second) */}
         <text 
           x="33"
-          y={active ? "35" : "38"}
+          y="37" // Fixed position for text
           fontSize="19"
           fontFamily="sans-serif"
           fontWeight="900"
