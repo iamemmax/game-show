@@ -89,3 +89,12 @@ export const  maskPhoneNumber = (phoneNumber:string)=> {
     const end = phoneNumber.slice(-3);
     return start + '****' + end;
 }
+
+/**
+ * Removes all whitespace characters from a string
+ * @param str - The string to remove spaces from
+ * @returns A new string with all spaces removed
+ */
+export function removeAllSpaces(str: string): string {
+  return str.replace(/\s+/g, '');
+}

@@ -4,14 +4,21 @@ import ContestantCard from "@/app/shared/ContestantCard";
 import IconBoard from "@/app/shared/IconBoard";
 import JackpotContainer from "@/app/shared/JackpotContainer";
 import StagesCard from "@/app/shared/StagesCard";
+import UserBadge from "@/app/shared/UserBadge";
 import { Button } from "@/components/core";
 import React from "react";
+import { contestantImages } from "../mocks/contestantImages";
+import { useGetWalletBalance } from "../../api/stage1/getbalance";
+import { tokenStorage } from "@/utils/auth";
+import { addCommasToNumber } from "@/utils";
 interface prop{
   showJackpot?:boolean;
   showEmptyCard?:boolean;
   showHustlerCard?:boolean;
 }
-const HustleSideBar = ({showJackpot=true, showEmptyCard=false, showHustlerCard=true}:prop) => {
+const HustleSideBar = ({showJackpot=true, showEmptyCard=false, showHustlerCard=false}:prop) => {
+  const user = tokenStorage.getUser();
+  const {data:dataBalance, isLoading}=useGetWalletBalance(user?.game_episode as number)
   return (
     <div className="flex justify-between h-full items-center flex-col">
       <div className="py-4 flex justify-center items-center">
@@ -24,67 +31,50 @@ const HustleSideBar = ({showJackpot=true, showEmptyCard=false, showHustlerCard=t
           </Button>
         </div>
       </div>
+      
+ {showHustlerCard&& <>
+ {
+  isLoading?<div className="flex-1 flex px-3 h-full flex-col justify-center items-center">
+  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+</div>:   <div className="flex-1 flex px-3 gap-3 h-full flex-col justify-center items-center">
+  {
+    dataBalance?.data?.balances?.map((bal,idx:number)=>(
+      <UserBadge 
+        username={`₦${addCommasToNumber(Number(bal?.balance?.toFixed(0)))}`}
+        amount={bal?.contestant_name?.split(' ')[0]}
+        avatarUrl={contestantImages[idx]}
+        isOnline={true}
+        isActive={user?.contestant_id === bal?.contestant_id?true:false}
+        borderColor={user?.contestant_id === bal?.contestant_id?"#D71BFA":"#FFC125"}
+        borderWidth={user?.contestant_id === bal?.contestant_id?1:0.4}
+        backgroundGradient={{
+          middleColor: "#D71BFA",
+          endColor: "#D71BFA",
+          startColor: "#D71BFA",
+          direction: "vertical"
+        }}
+        textGradient={{
+          startColor: "#FFFFFF",
+          endColor: "#FFC125",
+          direction: "horizontal"
+        }}
+        correctAnswerColor={"#04DA6A"}
+        usernameClassName={"text-[14px] mt-[4px] text-white"}
+        amountClassName={"text-[12px] text-white/80 mt-[4px]"}
+        dotPosition={{y:37,x:25}}
+        key={idx}
+      />
+    ))
+  }
+        </div>
 
- {showHustlerCard&&     <div className="flex-1 flex px-3 h-full flex-col justify-center items-center">
-        <ContestantCard
-          title="Hustler 1"
-          subtitle="Active"
-          isActive={true}
-          imageUrl={`/images/userImage5.png`}
-          backgroundColor="transparent" // Use "gradient" to enable gradient background
-          borderColor="transparent"
-        />
-        <ContestantCard
-          title="Hustler 2"
-          subtitle="Active"
-          isActive={true}
-          imageUrl="/images/userImage.png"
-          backgroundColor="gradient" // Use "gradient" to enable gradient background
-          gradientColors={{
-            startColor: "#FFB804",
-            startOpacity: 0.8,
-            midColor: "#FEC124",
-            endColor: "#E5AA18",
-          }}
-          borderColor="transparent"
-        />
-        <ContestantCard
-          title="Hustler 3"
-          subtitle="Active"
-          isActive={true}
-          imageUrl={`${process.env.NEXT_PUBLIC_BASE_URL || ""}/images/userImage3.png`}
-          borderColor="transparent"
-          backgroundColor="transparent"
-          borderWidth={0.5}
-        />
-        <ContestantCard
-          title="Hustler 4"
-          subtitle="Active"
-          isActive={true}
-          imageUrl={`${process.env.NEXT_PUBLIC_BASE_URL || ""}/images/userImage4.png`}
-          backgroundColor="transparent"
-          borderColor="transparent"
-        />
-        <ContestantCard
-          title="Hustler 5"
-          subtitle="Active"
-          isActive={true}
-          imageUrl={`${process.env.NEXT_PUBLIC_BASE_URL || ""}/images/userImage5.png`}
-          backgroundColor="transparent"
-          borderColor="transparent"
-        />
-        <ContestantCard
-          title="Hustler 6"
-          subtitle="Active"
-          isActive={true}
-          imageUrl={`${process.env.NEXT_PUBLIC_BASE_URL || ""}/images/userImage2.png`}
-          backgroundColor="transparent"
-          borderColor="transparent"
-        />
-      </div>}
+ }
+ </>
+  
+      }
 
       {
-        showEmptyCard&& <div className="flex-1 flex px-3 h-full 2xl:gap-4  flex-col justify-center items-center">
+          showEmptyCard&& <div className="flex-1 flex px-3 h-full 2xl:gap-4  flex-col justify-center items-center">
        {Array.from({length:6}).map((_,index)=>(
          <StagesCard 
          key={index}

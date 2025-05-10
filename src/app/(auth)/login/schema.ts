@@ -8,7 +8,7 @@ export const loginSchema = z.object({
     .regex(
       /^[a-zA-Z0-9]+$/,
       "Contestant ID must contain only letters and numbers"
-    ),
+    ).trim(),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;

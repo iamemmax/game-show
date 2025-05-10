@@ -9,7 +9,7 @@ import { AuthProvider } from "@/contexts/authentication";
 import ProtectedRouteGuard from "@/contexts/ProtectedRouteGuard";
 import { Suspense } from "react";
 import { Wrapper } from "@/contexts/Wrapper";
-import { MqttProvider } from "@/contexts/MqttContext";
+import { MQTTProvider } from "@/hooks/useMqttService";
 
 const sans = DM_Sans({
   subsets: ["latin"],
@@ -38,17 +38,17 @@ export default function RootLayout({
       lang="en"
     >
       <body>
-        <div className="w-[100dw] h-[100dvh] overflow-y-auto bg-[url('/images/salary-bg.png')] bg-no-repeat bg-cover bg-bottom">
+        <div className="w-[100dw] h-[100vh] overflow-y-auto bg-[url('/images/salary-bg.png')] bg-no-repeat bg-cover bg-bottom">
           <ReactQueryProvider>
             <AuthProvider>
-              <MqttProvider>
+              <MQTTProvider>
                 <ProtectedRouteGuard>
                   <Suspense fallback={<></>}>
                     <FullscreenWrapper />
                     <Wrapper>{children}</Wrapper>
                   </Suspense>
                 </ProtectedRouteGuard>
-              </MqttProvider>
+              </MQTTProvider>
             </AuthProvider>
           </ReactQueryProvider>
         </div>
@@ -56,4 +56,8 @@ export default function RootLayout({
     </html>
   );
 }
+
+
+
+
 

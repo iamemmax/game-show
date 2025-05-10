@@ -1,7 +1,9 @@
+
+
 import Logo from "@/app/icons/Logo";
 import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import HustleStages from "./HustleStages";
 import HustleSideBar from "./HustleSideBar";
 import HustleBottomCard from "./HustleBottomCard";
@@ -12,65 +14,43 @@ import { addCommasToNumber } from "@/utils";
 import { cn } from "@/utils/classNames";
 import { Button } from "@/components/core";
 import ProveHustle from "../stage2/ProveHustle";
+import { tokenStorage } from "@/utils/auth";
+import { useGetWalletBalance } from "../../api/stage1/getbalance";
+import { contestantImages } from "../mocks/contestantImages";
 
 const StageOneTally = () => {
-  const [goToStage2 , setGoToStage2 ] = useState(false);
+  const [goToStage2, setGoToStage2] = useState(false);
+  const user = tokenStorage.getUser();
+  const { data: dataBalance, isLoading } = useGetWalletBalance(user?.game_episode as number);
+  const [processedBalances, setProcessedBalances] = useState<any[]>([]);
+  
+  // Process balances to mark last two as eliminated
+  useEffect(() => {
+    if (dataBalance?.data?.balances) {
+      // Sort balances by amount (descending)
+      const sortedBalances = [...dataBalance.data.balances].sort(
+        (a, b) => parseFloat(String(b.balance)) - parseFloat(String(a.balance))
+      );
+      
+      // Mark the last two contestants as eliminated
+      const markedBalances = sortedBalances.map((balance, index) => ({
+        ...balance,
+        isEliminated: index >= sortedBalances.length - 2 // Last two are eliminated
+      }));
+      
+      setProcessedBalances(markedBalances);
+      console.log("Processed balances:", markedBalances); // Debug log
+    }
+  }, [dataBalance]);
 
   const tallyArray = [
-    {
-      name: "Demola",
-      capital: "120000",
-      img: "/images/userImage3.png",
-      title: "PRO HUSTLER",
-      amount: "250000",
-      isEliminated: false,
-    },
-    {
-      name: "Idris",
-      capital: "120000",
-      img: "/images/userImage2.png",
-      title: "SUPER HUSTLER",
-      amount: "170000",
-      isEliminated: false,
-    },
-    {
-      name: "Chizoba",
-      capital: "140000",
-      img: "/images/userImage3.png",
-      title: "MINI HUSTLER",
-      amount: "140000",
-      isEliminated: false,
-    },
-    {
-      name: "Edmund",
-      capital: "160000",
-      img: "/images/userImage4.png",
-      title: "MICRO HUSTLER",
-      amount: "250000",
-      isEliminated: false,
-    },
-    {
-      name: "Temidayo",
-      capital: "190000",
-      img: "/images/userImage5.png",
-      title: "ELIMINATED",
-      amount: "700000",
-      isEliminated: true,
-    },
-    {
-      name: "Adekunle",
-      capital: "1200000",
-      img: "/images/userImage2.png",
-      title: "ELIMINATED",
-      amount: "50000",
-      isEliminated: true,
-    },
+    "PRO HUSTLER", "SUPER HUSTLER", "MINI HUSTLER", "MICRO HUSTLER", "ELIMINATED", "ELIMINATED", ""
   ];
 
-
-  if(goToStage2){
-    return <ProveHustle/>
+  if (goToStage2) {
+    return <ProveHustle />;
   }
+  
   return (
     <div className="grid grid-cols-[1fr_2.5fr_1fr] 2xl:grid-cols-[1fr_1.5fr_1fr] h-full ">
       {/* Left Sidebar */}
@@ -95,7 +75,7 @@ const StageOneTally = () => {
       </div>
 
       {/* Center Content */}
-      <div className="flex  flex-col justify-between items-center min-h-full">
+      <div className="flex flex-col justify-between items-center min-h-full">
         {/* Top section */}
         <div className="flex flex-col w-full items-center">
           <div className="w-full h-[100px] flex items-center justify-center">
@@ -167,65 +147,66 @@ const StageOneTally = () => {
                   variants={{
                     visible: {
                       transition: {
-                        staggerChildren: 0.5, // Increased from 0.2 to 0.5 seconds
+                        staggerChildren: 0.5,
                       },
                     },
                   }}
                 >
-                  {tallyArray.map((tally) => (
+                  {processedBalances?.map((tally, idx: number) => (
                     <motion.div
-                      key={tally.name}
+                      key={idx}
                       variants={{
                         hidden: { opacity: 0, y: 20 },
                         visible: {
                           opacity: 1,
                           y: 0,
                           transition: {
-                            duration: 0.8, // Added longer duration for each item
+                            duration: 0.8,
                             ease: "easeOut",
                           },
                         },
                       }}
                       className={`flex justify-center gap-[.6875rem] 2xl:gap-1 items-center ${tally.isEliminated ? "opacity-50" : ""}`}
                     >
-                      <div className="h-[3.125rem] grid grid-cols-[1fr_3fr]  2xl:grid-cols-[1fr_2fr] w-[7.8125rem] bg-[#1C0240] 2xl:h-[3.8rem] p-2 border border-[#7E3CE0] rounded-[.4594rem]">
+                      <div className="h-[3.125rem] grid grid-cols-[1fr_3fr] 2xl:grid-cols-[1fr_2fr] w-[7.8125rem] bg-[#1C0240] 2xl:h-[3.8rem] p-2 border border-[#7E3CE0] rounded-[.4594rem]">
                         <div className="shrink-0">
-                        <Image
-                          alt=""
-                          src={tally?.img}
-                          width={18}
-                          height={18}
-                          className="rounded-full shrink-0 2xl:w-[30px] 2xl:h-[30px]"
-                        />
+                          <Image
+                            alt=""
+                            src={contestantImages[idx]}
+                            width={18}
+                            height={18}
+                            className="rounded-full shrink-0 2xl:w-[30px] 2xl:h-[30px]"
+                          />
                         </div>
                         <div className={`${cn(` flex flex-col`)}`}>
                           <p className="text-xs 2xl:text-sm font-gilroyMedium font-normal text-white">
-                            {tally.name}
+                            {tally.contestant_name?.split(' ')[0]}
                           </p>
                           <p className="text-xs 2xl:text-sm font-gilroyMedium font-normal text-white">
-                            {tally.capital}
+                           {`₦${addCommasToNumber(Number(tally?.balance?.toFixed(0)) ?? 0)}`}
                           </p>
                         </div>
                       </div>
                       <div className="">
                         <StageTallyCard
-                          text={tally?.title}
+                          text={tally.isEliminated ? "ELIMINATED" : tallyArray[idx]}
                           fontSize={30}
                           className="2xl:w-[700px] 2xl:h-[90px]"
                           color="#fff"
-                          amount={`₦${addCommasToNumber(Number(tally?.amount) ?? 0)}`}
+                          amount={`₦${addCommasToNumber(Number(tally?.balance?.toFixed(0)) ?? 0)}`}
                           badgeColor={
-                            tally?.isEliminated ? "#760F1B" : "#035D2E"
+                            tally.isEliminated ? "#760F1B" : "#035D2E"
                           }
                           backgroundGradient={{
-                            endColor: tally?.isEliminated
+                            endColor: tally.isEliminated
                               ? "#980306"
                               : "#03984A",
-                            startColor: tally?.isEliminated
+                            startColor: tally.isEliminated
                               ? "#FE8E8E"
                               : "#8EFE9B",
                           }}
-                          gradientId={`gradient-${tally.name}`}
+                          // innerBackgroundColor={tally.isEliminated ? "#2D0304" : "#13051E"}
+                          gradientId={`gradient-${idx}-${tally.contestant_id}`}
                         />
                       </div>
                     </motion.div>
@@ -235,7 +216,7 @@ const StageOneTally = () => {
             </div>
           </div>
         </div>
-            <Button className="bg-red-700 text-white" onClick={()=>setGoToStage2(true)}>Proceed</Button>
+        <Button className="bg-red-700 text-white" onClick={() => setGoToStage2(true)}>Proceed</Button>
 
         {/* Bottom Card (sticks to bottom) */}
         <div className="w-full max-w-[35rem] lg:max-w-[46.5rem] 2xl:max-w-[80rem] mt-2">
@@ -245,7 +226,7 @@ const StageOneTally = () => {
 
       {/* Right Sidebar */}
       <div>
-        <HustleSideBar />
+        <HustleSideBar showHustlerCard={true} />
       </div>
     </div>
   );
