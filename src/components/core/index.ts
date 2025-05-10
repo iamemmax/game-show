@@ -14,7 +14,7 @@ export * from './BottomSheetVaul';
 export * from './Icon';
 
 // Named export used in place of star exports below to avoid conflicts.
-
+export { GlowyStrokeText } from './GlowyText'
 export { ClientOnly } from './ClientOnly';
 export { ErrorModal } from './ErrorModal';
 export { SuccessModalWithLink } from './SuccessModalWithLink';
@@ -106,7 +106,7 @@ export { Combobox } from './Combobox';
 
 export { Checkbox } from './Checkbox';
 
-export {default as DataTable } from "./DataTable"
+export { default as DataTable } from "./DataTable"
 
 export {
   Table,

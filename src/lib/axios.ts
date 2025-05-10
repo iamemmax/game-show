@@ -10,6 +10,12 @@ export const salaryAxios = Axios.create({
     'Content-Type': 'application/json',
   }
 });
+export const tokenlessAxios = Axios.create({
+  baseURL: ADMIN_API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
 
 export const setAxiosDefaultToken = (
   token: string,

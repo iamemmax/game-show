@@ -16,3 +16,12 @@ export function createEnumFromOptions<T extends { value: V }, V>(
 
   return VALUES as [Option, ...Option[]];
 }
+
+
+
+
+export const GAME_STATUSES_ENUMS: Record<string,string> = {
+  'IN_ACTIVE' : "Inactive",
+  'IN_PROGESS': "In Progress",
+  'IS_COMPLETED': 'Completed'
+}
