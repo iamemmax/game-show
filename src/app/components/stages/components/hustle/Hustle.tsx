@@ -175,7 +175,7 @@ const Hustle = () => {
 
       {/* Right Sidebar */}
       <div>
-        <HustleSideBar showEmptyCard={true} showHustlerCard={false} />
+        <HustleSideBar showEmptyCard={false} showHustlerCard={true} />
       </div>
     </div>
   );

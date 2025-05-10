@@ -22,6 +22,7 @@ import { useAnswerStageOneQuestion } from "../../api/stage1/question/answerQuest
 import { useErrorModalState } from "@/hooks";
 import { AxiosError } from "axios";
 import { useGetQuestionAnswer } from "../../api/stage1/question/getQuestionAnswer";
+import StageOneTally from "../hustle/StageOneTally";
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -108,6 +109,7 @@ const QuestionScreen = () => {
   const [shouldFetchAnswer, setShouldFetchAnswer] = useState(false);
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
   const [timerActive, setTimerActive] = useState(false);
+  const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
 
   // Initialize with the question array data
   const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
@@ -259,10 +261,14 @@ useEffect(() => {
   // Handle next question
   const handleNextQuestion = () => {
     if (currentQuestionIndex < selectedQuestions?.length - 1) {
+      // Not the last question, move to next
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedOption(null);
       setIsSubmitted(false);
       resetTimerState(); // Reset timer state for next question
+    } else {
+      // This was the last question, mark all questions as completed
+      setAllQuestionsCompleted(true);
     }
   };
 
@@ -312,378 +318,385 @@ useEffect(() => {
     setTimeLeft(10); // Reset timer to 10 seconds
   };
 
+
+  
   return (
     <>
-    <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full ">
-      {/* Left Sidebar */}
-      <div className="flex flex-col justify-between">
-        <div className="flex justify-center items-center h-3.5 w-full mt-8">
-          <Logo />
-        </div>
-        <div>
-          <HustleStages />
-        </div>
-        <div className="w-full p-[1.4375rem] flex-col rounded-t-[1.75rem] flex justify-center items-center bg-[linear-gradient(to_right,_#2D0304,_#EE24B8,_#1E0227)] text-white">
-          <Trophy height={50} width={50} />
-          <div className="flex flex-col justify-center pt-1 items-center">
-            <p className="uppercase font-bold text-xs font-verdana text-white">
-              Stage 2 of 6
-            </p>
-            <p className="max-w-[100px] text-center mt-1 font-display font-bold text-xs text-white">
-              Hustle: Fashion Designer
-            </p>
+    {allQuestionsCompleted ? (
+      <StageOneTally />
+    ) : (
+      <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full ">
+        {/* Left Sidebar */}
+        <div className="flex flex-col justify-between">
+          <div className="flex justify-center items-center h-3.5 w-full mt-8">
+            <Logo />
+          </div>
+          <div>
+            <HustleStages />
+          </div>
+          <div className="w-full p-[1.4375rem] flex-col rounded-t-[1.75rem] flex justify-center items-center bg-[linear-gradient(to_right,_#2D0304,_#EE24B8,_#1E0227)] text-white">
+            <Trophy height={50} width={50} />
+            <div className="flex flex-col justify-center pt-1 items-center">
+              <p className="uppercase font-bold text-xs font-verdana text-white">
+                Stage 2 of 6
+              </p>
+              <p className="max-w-[100px] text-center mt-1 font-display font-bold text-xs text-white">
+                Hustle: Fashion Designer
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Center Content */}
-      <div className="flex flex-col justify-between items-center min-h-full">
-        {/* Top section */}
-        <div className="flex flex-col w-full items-center">
-          <div className="w-full h-[100px] flex items-center justify-center">
-            <HeaderTitleContainer
-              backgroundColor="#791192"
-              color="#ed99ff"
-              text="Pick-Pad"
-              textGradientEnd="#8E17AA"
-              textGradientStart="#8E17AA"
-              borderGradientStart="#f712fc"
-              borderGradientEnd="#e151fe"
-              fontSize={45}
-              fontFamily="Verdana"
-              textStrokeColor="#a219c1"
-              textStrokeWidth={4.4}
-            />
-          </div>
-
-          <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
-            {/* Animated border */}
-            <div className="absolute inset-0">
-              <motion.div
-                className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
-                style={{
-                  background: `conic-gradient(from 0deg at 50% 50%,
-                    #d91fff 0deg,
-                    #d91fff 120deg,
-                    #00ffff 100deg,
-                    #00ffff 240deg,
-                    #FFD700 220deg,
-                    #FFD700 360deg,
-                    #d91fff 340deg
-                  )`,
-                }}
-                animate={{
-                  rotate: [0, 360],
-                }}
-                transition={{
-                  duration: 4,
-                  ease: "linear",
-                  repeat: Infinity,
-                }}
+        {/* Center Content */}
+        <div className="flex flex-col justify-between items-center min-h-full">
+          {/* Top section */}
+          <div className="flex flex-col w-full items-center">
+            <div className="w-full h-[100px] flex items-center justify-center">
+              <HeaderTitleContainer
+                backgroundColor="#791192"
+                color="#ed99ff"
+                text="Pick-Pad"
+                textGradientEnd="#8E17AA"
+                textGradientStart="#8E17AA"
+                borderGradientStart="#f712fc"
+                borderGradientEnd="#e151fe"
+                fontSize={45}
+                fontFamily="Verdana"
+                textStrokeColor="#a219c1"
+                textStrokeWidth={4.4}
               />
             </div>
 
-            {/* Content container - increased border width from 5px to 8px for bolder appearance */}
-            <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
-            <div className="relative">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-[2.75rem] font-extrabold outline-text text-black">
-                    Stage 2: Prove your hustle
-                  </h2>
-                  <p className="text-sm font-normal text-[#D5B9FF]">
-                    Select minimum of 2 number to determine the trivia questions
-                    for this round
-                  </p>
-                </div>
-
-               {timerActive ? (
-                 <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
-                   <span
-                     className="text-[20px] font-extrabold font-verdana text-white"
-                     style={{
-                       WebkitTextStroke: "1.5px #C76000",
-                       textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
-                     }}
-                   >
-                     {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
-                   </span>
-                 </div>
-               ) : (
-                 <Button
-                   className="p-0 bg-transparent"
-                   onClick={handleStartTimer}
-                 >
-                   <GradientButton
-                     text="Start Timer"
-                     className="uppercase"
-                     width={150}
-                     startColor="#8EFE9B"
-                     endColor="#03984A"
-                     baseColor="#035D2E"
-                   />
-                 </Button>
-               )}
+            <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
+              {/* Animated border */}
+              <div className="absolute inset-0">
+                <motion.div
+                  className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+                  style={{
+                    background: `conic-gradient(from 0deg at 50% 50%,
+                      #d91fff 0deg,
+                      #d91fff 120deg,
+                      #00ffff 100deg,
+                      #00ffff 240deg,
+                      #FFD700 220deg,
+                      #FFD700 360deg,
+                      #d91fff 340deg
+                    )`,
+                  }}
+                  animate={{
+                    rotate: [0, 360],
+                  }}
+                  transition={{
+                    duration: 4,
+                    ease: "linear",
+                    repeat: Infinity,
+                  }}
+                />
               </div>
 
-              <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">
-                <div className="flex  flex-col">
-                  {selectedQuestions?.map((contestant, idx: number) => (
-                    <div className="flex gap-2 items-center" key={idx}>
-                      <div className="">
-                        <NumberCardContainer
-                          text={isQuestionAttempted(idx)?<CheckIcon size={160}/>: contestant?.hustle_reveal?.hustle_number}
-                          textColor={
-                            currentQuestionIndex === idx
-                              ? "#FFFFFF"
-                              : isQuestionAttempted(idx)
-                                ? "#fff"
-                                : "#F2C94C"
-                          }
-                          backgroundColor={
-                            currentQuestionIndex === idx
-                              ? "#FEC124"
-                              : isQuestionAttempted(idx)
-                                ? "#04DA6A"
-                                : "black"
-                          }
-                          width={30}
-                          height={35}
-                          active={
-                            currentQuestionIndex === idx ||
-                            isQuestionAttempted(idx)
-                          }
-                          iconPosition={{y:33}}
-                          iconSize={30}
-                          
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-2">
-                          <div className="h-[1.2rem] w-[1.2rem] relative">
-                            <Image
-                              alt="User avatar"
-                              src={contestantImages[idx] || "/images/userImage.png"}
-                              fill
-                              className="object-cover rounded-full"
-                            />
-                          </div>
-                          <p className="text-white text-xs font-bold font-gilroyBold" style={{WebkitTextStroke:"1.3px #7E3CE0"}}>
-                            {contestant?.contestant?.contestant_name?.split(' ')[0]}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-               {isLoading ? <div className="flex justify-center items-center h-full w-full">
-  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-</div>:
-                <div className="relative">
-                <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4  px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
-                  <div className="">
-                    <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
-                      Question{" "}
-                      {
-                        selectedQuestions[currentQuestionIndex]
-                          ?.question_number || (currentQuestionIndex + 1)
-                      }
+              {/* Content container - increased border width from 5px to 8px for bolder appearance */}
+              <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
+              <div className="relative">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-[2.75rem] font-extrabold outline-text text-black">
+                      Stage 2: Prove your hustle
+                    </h2>
+                    <p className="text-sm font-normal text-[#D5B9FF]">
+                      Select minimum of 2 number to determine the trivia questions
+                      for this round
                     </p>
                   </div>
-                  <div className="">
-                    <h2 className="text-white text-2xl text-center font-gilroyMedium font-extrabold">
-                      {
-                        selectedQuestions[currentQuestionIndex]?.questions?.question 
-                      }
-                    </h2>
-                  </div>
-                  <div className="flex justify-center items-center w-full gap-4">
-                    <div className="bg-[#011B0D] rounded-[12px] py-1 px-4 max-xl:max-w-[130px] w-full">
-                      <p
-                        className="text-[25px] text-white font-extrabold font- text-center"
-                        style={{
-                          WebkitTextStroke: "2px #04DA6A",
-                          textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
-                        }}
-                      >
-                        {
-                          selectedQuestions[currentQuestionIndex]?.questions?.question_booster 
-                        }{" "}
-                        <span
-                          className="text-base font-outfit font-normal text-[#04DA6A]"
-                          style={{
-                            WebkitTextStroke: "0px",
-                            textShadow: "none",
-                          }}
-                        >
-                          Booster
-                        </span>
-                      </p>
-                    </div>
-                    <div className="bg-[#011B0D] rounded-[12px] py-2 px-4 w-full">
-                      <p className="text-xs font-outfit font-normal text-[#04DA6A] ">
-                        Capital:{" "}
-                        <span
-                          className="text-lg text-white font-extrabold font-verdana text-center"
-                          style={{
-                            WebkitTextStroke: "1px #04DA6A",
-                            textShadow: "1px 2px 3px rgba(4, 218, 106, 0.4)",
-                          }}
-                        >
-                        ₦{addCommasToNumber(Number(selectedQuestions[currentQuestionIndex]?.hustle_reveal?.hustle_amount.toFixed(0)?.toLocaleString()))}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
+
+                 {timerActive ? (
+                   <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+                     <span
+                       className="text-[20px] font-extrabold font-verdana text-white"
+                       style={{
+                         WebkitTextStroke: "1.5px #C76000",
+                         textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
+                       }}
+                     >
+                       {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
+                     </span>
+                   </div>
+                 ) : (
+                   <Button
+                     className="p-0 bg-transparent"
+                     onClick={handleStartTimer}
+                   >
+                     <GradientButton
+                       text="Start Timer"
+                       className="uppercase"
+                       width={150}
+                       startColor="#8EFE9B"
+                       endColor="#03984A"
+                       baseColor="#035D2E"
+                     />
+                   </Button>
+                 )}
                 </div>
 
-                {selectedQuestions.length > 0 ? (
-                  <>
-                    <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
-                      {(
-                        [
-                          "option_a",
-                          "option_b",
-                          "option_c",
-                          "option_d",
-                        ] as OptionKey[]
-                      ).map((option, index) => {
-                        const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-                        const currentQuestions = selectedQuestions[currentQuestionIndex]?.questions || {};
-                        
-                        return (
-                          <button
-                            key={option}
-                            onClick={() => handleOptionSelect(option)}
-                            disabled={!timerActive || isSubmitted}
-                            className={cn(
-                              "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
-                              selectedOption === option &&
-                                "bg-[#FCCE19] border-none text-[#745300]",
-                              (isSubmitted || !timerActive) && "opacity-70 cursor-not-allowed"
-                            )}
-                          >
-                            {optionLetter}:
-                            <span 
-                              className={`${selectedOption === option ? "text-white font-bold" : ""}`}
-                              style={{
-                                marginLeft: "9px",
-                                WebkitTextStroke:
-                                  selectedOption === option
-                                    ? "1px #C76000"
-                                    : "",
-                              }}
-                            >
-                              {" "}
-                              {currentQuestions[option]}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Range slider, Submit and Next buttons */}
-                    <div className="flex items-center gap-3 justify-between mt-7">
-                      <div className="flex justify-between items-center max-w-[250px] bg-[#011B0D] px-2 py-1 rounded-[40px]">
-                        <input
-                          ref={rangeRef}
-                          type="range"
-                          min="10"
-                          max="100"
-                          step="10"
-                          value={selectedPercentage}
-                          onChange={handleRangeChange}
-                          className="custom-range w-full"
-                          disabled={!timerActive || isSubmitted || timeLeft <= 0}
-                        />
-                        <div className="flex flex-col items-end ml-3">
-                          <p className=" text-xxs font-gilroyMedium text-[#04DA6A]" style={{ textShadow: "0px 1px 2px rgba(0, 0, 0, 0.8)" }}>
-                            ₦{selectedAmount.toLocaleString()}
-                          </p>
-                         
+                <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">
+                  <div className="flex  flex-col">
+                    {selectedQuestions?.map((contestant, idx: number) => (
+                      <div className="flex gap-2 items-center" key={idx}>
+                        <div className="">
+                          <NumberCardContainer
+                            text={isQuestionAttempted(idx)?<CheckIcon size={160}/>: contestant?.hustle_reveal?.hustle_number}
+                            textColor={
+                              currentQuestionIndex === idx
+                                ? "#FFFFFF"
+                                : isQuestionAttempted(idx)
+                                  ? "#fff"
+                                  : "#F2C94C"
+                            }
+                            backgroundColor={
+                              currentQuestionIndex === idx
+                                ? "#FEC124"
+                                : isQuestionAttempted(idx)
+                                  ? "#04DA6A"
+                                  : "black"
+                            }
+                            width={30}
+                            height={35}
+                            active={
+                              currentQuestionIndex === idx ||
+                              isQuestionAttempted(idx)
+                            }
+                            iconPosition={{y:33}}
+                            iconSize={30}
+                            
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-2">
+                            <div className="h-[1.2rem] w-[1.2rem] relative">
+                              <Image
+                                alt="User avatar"
+                                src={contestantImages[idx] || "/images/userImage.png"}
+                                fill
+                                className="object-cover rounded-full"
+                              />
+                            </div>
+                            <p className="text-white text-xs font-bold font-gilroyBold" style={{WebkitTextStroke:"1.3px #7E3CE0"}}>
+                              {contestant?.contestant?.contestant_name?.split(' ')[0]}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <div className="">
-                      <p 
-                            className="text-white text-[1.75rem] font-gilroyBold font-bold" 
-                            style={{ 
-                              textShadow: "0px 0px 10px rgba(4, 218, 106, 0.5)",
-                              WebkitTextStroke: "1.4px #04DA6A"
+                    ))}
+                  </div>
+                 {isLoading ? <div className="flex justify-center items-center h-full w-full">
+  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+</div>:
+                  <div className="relative">
+                  <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4  px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
+                    <div className="">
+                      <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
+                        Question{" "}
+                        {
+                          selectedQuestions[currentQuestionIndex]
+                            ?.question_number || (currentQuestionIndex + 1)
+                        }
+                      </p>
+                    </div>
+                    <div className="">
+                      <h2 className="text-white text-2xl text-center font-gilroyMedium font-extrabold">
+                        {
+                          selectedQuestions[currentQuestionIndex]?.questions?.question 
+                        }
+                      </h2>
+                    </div>
+                    <div className="flex justify-center items-center w-full gap-4">
+                      <div className="bg-[#011B0D] rounded-[12px] py-1 px-4 max-xl:max-w-[130px] w-full">
+                        <p
+                          className="text-[25px] text-white font-extrabold font- text-center"
+                          style={{
+                            WebkitTextStroke: "2px #04DA6A",
+                            textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
+                          }}
+                        >
+                          {
+                            selectedQuestions[currentQuestionIndex]?.questions?.question_booster 
+                          }{" "}
+                          <span
+                            className="text-base font-outfit font-normal text-[#04DA6A]"
+                            style={{
+                              WebkitTextStroke: "0px",
+                              textShadow: "none",
                             }}
                           >
-                            {selectedPercentage}%
-                          </p>
+                            Booster
+                          </span>
+                        </p>
+                      </div>
+                      <div className="bg-[#011B0D] rounded-[12px] py-2 px-4 w-full">
+                        <p className="text-xs font-outfit font-normal text-[#04DA6A] ">
+                          Capital:{" "}
+                          <span
+                            className="text-lg text-white font-extrabold font-verdana text-center"
+                            style={{
+                              WebkitTextStroke: "1px #04DA6A",
+                              textShadow: "1px 2px 3px rgba(4, 218, 106, 0.4)",
+                            }}
+                          >
+                          ₦{addCommasToNumber(Number(selectedQuestions[currentQuestionIndex]?.hustle_reveal?.hustle_amount.toFixed(0)?.toLocaleString()))}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedQuestions.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
+                        {(
+                          [
+                            "option_a",
+                            "option_b",
+                            "option_c",
+                            "option_d",
+                          ] as OptionKey[]
+                        ).map((option, index) => {
+                          const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
+                          const currentQuestions = selectedQuestions[currentQuestionIndex]?.questions || {};
+                          
+                          return (
+                            <button
+                              key={option}
+                              onClick={() => handleOptionSelect(option)}
+                              disabled={!timerActive || isSubmitted}
+                              className={cn(
+                                "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
+                                selectedOption === option &&
+                                  "bg-[#FCCE19] border-none text-[#745300]",
+                                (isSubmitted || !timerActive) && "opacity-70 cursor-not-allowed"
+                              )}
+                            >
+                              {optionLetter}:
+                              <span 
+                                className={`${selectedOption === option ? "text-white font-bold" : ""}`}
+                                style={{
+                                  marginLeft: "9px",
+                                  WebkitTextStroke:
+                                    selectedOption === option
+                                      ? "1px #C76000"
+                                      : "",
+                                }}
+                              >
+                                {" "}
+                                {currentQuestions[option]}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
 
-                      {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
-                      {!isSubmitted && timeLeft > 0 && (
-                        <Button
-                          className="p-0 bg-transparent"
-                          onClick={handleSubmitAnswer}
-                          disabled={!timerActive || !selectedOption || !rangeAdjusted}
-                        >
-                          <GradientButton
-                            text="Submit"
-                            className={`uppercase ${(!timerActive || !selectedOption || !rangeAdjusted) ? 'opacity-50' : ''}`}
-                            width={130}
+                      {/* Range slider, Submit and Next buttons */}
+                      <div className="flex items-center gap-3 justify-between mt-7">
+                        <div className="flex justify-between items-center max-w-[250px] bg-[#011B0D] px-2 py-1 rounded-[40px]">
+                          <input
+                            ref={rangeRef}
+                            type="range"
+                            min="10"
+                            max="100"
+                            step="10"
+                            value={selectedPercentage}
+                            onChange={handleRangeChange}
+                            className="custom-range w-full"
+                            disabled={!timerActive || isSubmitted || timeLeft <= 0}
                           />
-                        </Button>
-                      )}
+                          <div className="flex flex-col items-end ml-3">
+                            <p className=" text-xxs font-gilroyMedium text-[#04DA6A]" style={{ textShadow: "0px 1px 2px rgba(0, 0, 0, 0.8)" }}>
+                              ₦{selectedAmount.toLocaleString()}
+                            </p>
+                           
+                          </div>
+                        </div>
+                        <div className="">
+                        <p 
+                              className="text-white text-[1.75rem] font-gilroyBold font-bold" 
+                              style={{ 
+                                textShadow: "0px 0px 10px rgba(4, 218, 106, 0.5)",
+                                WebkitTextStroke: "1.4px #04DA6A"
+                              }}
+                            >
+                              {selectedPercentage}%
+                            </p>
+                        </div>
 
-                      {/* Next button - only show after time elapses */}
-                      {showNextButton && (
-                        <Button
-                          className="p-0 bg-transparent"
-                          onClick={handleNextQuestion}
-                          disabled={
-                            currentQuestionIndex ===
-                            selectedQuestions.length - 1
-                          }
-                        >
-                          <GradientButton
-                            text="Next"
-                            className="uppercase"
-                            width={130}
-                          />
-                        </Button>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-white mt-4">Loading questions...</p>
-                )}
-              </div>
-               }
-                <div className="">
-                  <FastestFingerResult 
-                    resultArray={answerData} 
-                    timeElapsed={timeLeft <= 0 || showNextButton}
-                    // Remove onStartTimer prop since we're handling it in the parent now
-                  />
+                        {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
+                        {!isSubmitted && timeLeft > 0 && (
+                          <Button
+                            className="p-0 bg-transparent"
+                            onClick={handleSubmitAnswer}
+                            disabled={!timerActive || !selectedOption || !rangeAdjusted}
+                          >
+                            <GradientButton
+                              text="Submit"
+                              className={`uppercase ${(!timerActive || !selectedOption || !rangeAdjusted) ? 'opacity-50' : ''}`}
+                              width={130}
+                            />
+                          </Button>
+                        )}
+
+                        {/* Next/Finish button - only show after time elapses */}
+                        {showNextButton && (
+                          <Button
+                            className="p-0 bg-transparent"
+                            onClick={handleNextQuestion}
+                          >
+                            <GradientButton
+                              text={
+                                currentQuestionIndex === selectedQuestions.length - 1
+                                  ? "Finish"
+                                  : "Next"
+                              }
+                              className="uppercase"
+                              width={currentQuestionIndex === selectedQuestions.length - 1 ? 150 : 130}
+                              startColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#FFC125" : "#8EFE9B"}
+                              endColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#FF8A00" : "#03984A"}
+                              baseColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#C76000" : "#035D2E"}
+                            />
+                          </Button>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-white mt-4">Loading questions...</p>
+                  )}
+                </div>
+                 }
+                  <div className="">
+                    <FastestFingerResult 
+                      resultArray={answerData} 
+                      timeElapsed={timeLeft <= 0 || showNextButton}
+                      // Remove onStartTimer prop since we're handling it in the parent now
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Right Sidebar */}
-      <div>
-        <HustleSideBar />
+        {/* Right Sidebar */}
+        <div>
+          <HustleSideBar showEmptyCard={false} showHustlerCard={true} />
+        </div>
       </div>
-    </div>
-
-    
-          <ErrorModal
-            isErrorModalOpen={isErrorModalOpen}
-            setErrorModalState={() => {
-              setErrorModalState(false);
-            }}
-            subheading={
-              errorModalMessage || "Please check your inputs and try again."
-            }
-          ></ErrorModal>
-    </>
+    )}
+    <ErrorModal
+      isErrorModalOpen={isErrorModalOpen}
+      setErrorModalState={() => {
+        setErrorModalState(false);
+      }}
+      subheading={
+        errorModalMessage || "Please check your inputs and try again."
+      }
+    ></ErrorModal>
+  </>
   );
 };
 

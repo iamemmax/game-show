@@ -4,40 +4,53 @@ import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { contestantImages } from '../../components/mocks/contestantImages'
 import { answerOptionProp, answerQuestionProp } from '../../api/stage1/question/getQuestionAnswer'
-import moment from 'moment';
-import { Button } from '@/components/core'
-import GradientButton from '@/app/shared/GradientButton'
+import UserBadge from '@/app/shared/UserBadge'
+// import moment from 'moment';
+// import { Button } from '@/components/core'
+// import GradientButton from '@/app/shared/GradientButton'
 
 interface FastestFingerResultProps {
   timeElapsed?: boolean;
   correctOption?: string;
   resultArray: answerQuestionProp | null | undefined;
-  onStartTimer?: () => void; // Add callback prop for starting timer
+  // Remove onStartTimer prop
 }
 
 const FastestFingerResult = ({ 
   timeElapsed = false, 
-  resultArray,
-  onStartTimer 
+  resultArray
 }: FastestFingerResultProps) => {
   const [visibleResults, setVisibleResults] = useState<number[]>([]);
-  const [timerStarted, setTimerStarted] = useState(false);
-
-  // Handle starting the timer
-  const handleStartTimer = () => {
-    if (onStartTimer) {
-      onStartTimer();
-      setTimerStarted(true);
-    }
-  };
+  // Remove timerStarted state
+  // Remove handleStartTimer function
 
   useEffect(() => {
-    if (timeElapsed) {
+    if (timeElapsed && resultArray?.data) {
       // Reset visible results when time elapses
       setVisibleResults([]);
       
+      // Create a copy of the data for sorting
+      const sortedResults = [...resultArray.data].sort((a, b) => {
+        // Calculate time differences
+        const timeA = new Date(a.timestamp).getTime() - new Date(a.question_start_time).getTime();
+        const timeB = new Date(b.timestamp).getTime() - new Date(b.question_start_time).getTime();
+        
+        // First prioritize correct answers
+        if (a.is_correct && !b.is_correct) return -1;
+        if (!a.is_correct && b.is_correct) return 1;
+        
+        // If both are correct or both are incorrect, sort by time
+        return timeA - timeB;
+      });
+      
+      // Replace the original data with sorted data for rendering
+      const sortedResultArray = {
+        ...resultArray,
+        data: sortedResults
+      };
+      
       // Show results one by one with a delay
-      resultArray?.data.forEach((_, index) => {
+      sortedResults.forEach((_, index) => {
         setTimeout(() => {
           setVisibleResults(prev => [...prev, index]);
         }, 500 * (index + 1)); // 500ms delay between each result
@@ -64,20 +77,23 @@ const FastestFingerResult = ({
     }
   };
 
-  // Function to calculate answer time for each contestant
-  function calculateAnswerTime(result: any) {
-    if (!result || !result.question_start_time || !result.timestamp) {
-      return "0.00";
-    }
-    
-    const start = moment(result.question_start_time);
-    const answer = moment(result.timestamp);
-    
-    // Calculate difference in seconds with 2 decimal precision
-    const timeTaken = moment.duration(answer.diff(start)).asSeconds();
-    return timeTaken.toFixed(2);
-  }
+//   function formatTime(time: number): string {
+//     const date = new Date(time);
+//     return date.toLocaleTimeString('en-US', {
+//         hour12: false,
+//         hour: '2-digit',
+//         minute: '2-digit',
+//         second: '2-digit',
+//         // fractionalSecondDigits: 0
+//     });
+// }
 
+function calculateTimeDifference(startTime: number, endTime: number): string {
+    const diff = endTime - startTime;
+    const seconds = Math.floor((diff % 60000) / 1000);
+
+    return `0.${seconds.toString().padStart(0)}`;
+}
   return (
     <div>
       {timeElapsed ? (
@@ -86,7 +102,16 @@ const FastestFingerResult = ({
           <AnimatePresence>
             {resultArray?.data?.map((result, index) => {
               const isCorrect = result?.is_correct;
-              const answerTime = calculateAnswerTime(result);
+              const answerTime = calculateTimeDifference(
+                new Date(result.question_start_time).getTime(), 
+                new Date(result.timestamp).getTime()
+              );
+              
+              // Find the index of the first correct answer in the sorted data
+              const firstCorrectIndex = resultArray.data.findIndex(item => item.is_correct);
+              
+              // Only the first correct answer should be active
+              const isFirstCorrect = isCorrect && index === firstCorrectIndex;
               
               // Only render if this result should be visible
               if (!visibleResults.includes(index)) {
@@ -102,13 +127,28 @@ const FastestFingerResult = ({
                   exit="exit"
                   className="w-full"
                 >
-                  <FastestFingerResultBoard 
+                  <UserBadge 
                     username={result.contestant?.contestant_name}
                     amount={answerTime}
-                    avatarUrl={contestantImages[index]}
+                    avatarUrl={contestantImages[index % contestantImages.length]} // Use modulo to avoid index errors
                     isOnline={true}
+                    isActive={isFirstCorrect} // Only active if it's the first correct answer
                     borderColor="#FFC125"
+                    backgroundGradient={{
+                      middleColor: "#997416",
+                      endColor: "#FEC124",
+                      startColor: "#FFC125",
+                      direction: "vertical"
+                    }}
+                    textGradient={{
+                      startColor: "#FFFFFF",
+                      endColor: "#FFC125",
+                      direction: "horizontal"
+                    }}
+                    color="#FFFFFF"
                     correctAnswerColor={isCorrect ? "#04DA6A" : "#EB001B"}
+                    usernameClassName=' mt-[6px] text-white text-xs'
+                    dotPosition={{y:36}}
                   />
                 </motion.div>
               );
@@ -116,9 +156,9 @@ const FastestFingerResult = ({
           </AnimatePresence>
         </div>
       ) : (
-        // Show placeholder cards and start timer button when time hasn't elapsed
+        // Show placeholder cards WITHOUT any start timer button
         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center">
-          {/* Add Start Timer button at the top */}
+          {/* REMOVE THIS ENTIRE BLOCK if it exists:
           {!timerStarted && (
             <Button 
               className="p-0 bg-transparent mb-4"
@@ -134,6 +174,7 @@ const FastestFingerResult = ({
               />
             </Button>
           )}
+          */}
           
           {Array.from({length:6}).map((_, index) => (
             <StagesCard 

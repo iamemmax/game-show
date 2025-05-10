@@ -1,11 +1,39 @@
 import * as React from 'react';
-
 import { cn } from '@/utils/classNames';
+import { removeAllSpaces } from '@/utils/strings';
 
-export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
+export type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+  removeSpaces?: boolean; // Add prop to control space removal
+};
 
 export const Input2 = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, removeSpaces = false, onChange, ...props }, ref) => {
+    // Custom onChange handler to remove spaces if needed
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (removeSpaces) {
+        // Remove all spaces from the input value
+        const noSpacesValue = removeAllSpaces(e.target.value);
+        
+        // Create a new synthetic event with the modified value
+        const newEvent = {
+          ...e,
+          target: {
+            ...e.target,
+            value: noSpacesValue
+          }
+        } as React.ChangeEvent<HTMLInputElement>;
+        
+        // Set the input's value directly to avoid cursor jumping
+        e.target.value = noSpacesValue;
+        
+        // Call the original onChange with our modified event
+        onChange?.(newEvent);
+      } else {
+        // Call the original onChange handler
+        onChange?.(e);
+      }
+    };
+
     return (
       <input
         className={cn(
@@ -14,6 +42,7 @@ export const Input2 = React.forwardRef<HTMLInputElement, InputProps>(
         )}
         ref={ref}
         type={type}
+        onChange={handleChange}
         {...props}
       />
     );

@@ -75,7 +75,7 @@ const HustleBottomCard = ({inline=false}:prop) => {
                   className={`${cn(`${inline?"text-xs mt-2":" text-sm"}`)}text-white font-normal font-gilroyHeavy )`}
                   style={{ WebkitTextStroke: "1px #CE64FF" }}
                 >
-                  {contestant?.contestant_details?.name}
+                  {inline? contestant?.contestant_details?.name?.split(' ')[0] :contestant?.contestant_details?.name}
                 </p>
               </div>
              {!inline&& <div className="w-[.9375rem] h-[.9375rem] bg-[#04DA6A] rounded-10"></div>}
