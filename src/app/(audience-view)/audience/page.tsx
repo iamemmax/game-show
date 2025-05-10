@@ -6,20 +6,13 @@ const page = () => {
     return (
         <div>
 
-            {/* <HustleCard
-                title='Hairdressing'
-                number={"25"}
-                amount={"$250"}
-                pattern="PATTERN_PURPLE_BLACK"
-
-            />
             <HustleCard
                 title='Hairdressing'
                 number={"25"}
                 amount={"$6000"}
                 pattern="PATTERN_PURPLE_WHITE"
 
-            /> */}
+            />
             
             <HustleCard
                 id="gaming-card"
