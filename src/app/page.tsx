@@ -4,6 +4,7 @@ import { useState } from "react";
 import {motion} from "framer-motion"
 import Stage1 from "./components/stages/Stage1";
 import Hustle from "./components/stages/components/hustle/Hustle";
+import QuestionScreen from "./components/stages/components/stage2/QuestionScreen";
 
 
 export interface resetprop {
@@ -67,7 +68,7 @@ const ForgetPasswordPage = () => {
         >
         
      
-     3
+        <QuestionScreen />
           
         </motion.div>
       )}
