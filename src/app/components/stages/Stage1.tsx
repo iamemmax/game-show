@@ -89,11 +89,12 @@ const Stage1 = ({ onNext }: Props) => {
         
         // Simplified payload structure as requested
         const payload = {
-          event: "select_number/pick",
+          event: "select_number",
           payload: {
             game_episode: user?.game_episode,
             contestant_id: user?.contestant_id,
-            picks: num,
+            pick: num,
+            action: action,
             timestamp: new Date().toISOString()
           }
         };
@@ -117,7 +118,7 @@ const Stage1 = ({ onNext }: Props) => {
       const handler = (receivedMessage: any) => {
         console.log("Received message:", receivedMessage);
         
-        // Handle batch data with response array
+        // Handle batch data with response array - matches the expected format
         if (receivedMessage?.response && Array.isArray(receivedMessage.response)) {
           console.log("Received batch data:", receivedMessage);
           
@@ -215,20 +216,20 @@ const Stage1 = ({ onNext }: Props) => {
         onMessage(null);
       };
     }
-  }, [isConnected, onMessage, user?.contestant_id]);
+  }, [isConnected, onMessage, user?.contestant_id, requestAllHustlePicks]);
 
   // Function to request all hustle picks
   const requestAllHustlePicks = useCallback(() => {
     if (isConnected && user?.game_episode) {
       const requestPayload = {
-        event: "all_hustle_picks",
+        event: "all_hustle_pick",
         payload: {
           game_episode: user.game_episode,
           timestamp: new Date().toISOString()
         }
       };
       
-      sendMessage(JSON.stringify(requestPayload), "all_hustle_picks")
+      sendMessage(JSON.stringify(requestPayload), "all_hustle_pick")
         .then(() => console.log("Requested all hustle picks"))
         .catch(error => console.error("Failed to request all hustle picks:", error));
     }
