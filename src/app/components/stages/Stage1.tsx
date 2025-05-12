@@ -6,18 +6,24 @@ import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import NumberCardContainer from "@/app/shared/NumberContainer";
 import { motion } from "framer-motion";
 import { tokenStorage } from "@/utils/auth";
-import { useStageOnePickNumber } from "./api/stage1/stageOnePickNumber";
-import { useDebounce, useErrorModalState } from "@/hooks";
+import { useErrorModalState } from "@/hooks";
 import { formatAxiosErrorMessage } from "@/utils";
 import { AxiosError } from "axios";
-import { useGetAllHustleNumbers } from "./api/stage1/getAllHustlePicks";
-// import HustleBottomCard from "./components/hustle/HustleBottomCard";
 import HustleSideBar from "./components/hustle/HustleSideBar";
 import Logo from "@/app/icons/Logo";
 import HustleStages from "./components/hustle/HustleStages";
 import { ContestantDetails } from "@/types/types";
 import { useMQTT } from "@/hooks/useMqttService";
-// import debounce from "lodash/debounce";
+
+interface RootObject {
+  event: string;
+  response: Response[];
+}
+
+interface Response {
+  contestant_id: number;
+  picks: number[];
+}
 
 interface Props {
   onNext: () => void;
@@ -46,12 +52,6 @@ const Stage1 = ({ onNext }: Props) => {
   const [timeLeft, setTimeLeft] = useState(60);
   const [autoPicked, setAutoPicked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { data, refetch } = useGetAllHustleNumbers(user?.game_episode as number);
-  const debouncedRefetchRef = useRef(
-    useDebounce(() => {
-      refetch();
-    }, 300) // 300ms debounce time
-  );
 
   // State to track current user's picks and other contestants' picks separately
   const [myPicks, setMyPicks] = useState<number[]>([]);
@@ -99,12 +99,12 @@ const Stage1 = ({ onNext }: Props) => {
         };
         
         // Send the message
-        await sendMessage(JSON.stringify(payload), "select_number/pick");
+        await sendMessage(JSON.stringify(payload), "select_number");
       }
     } catch (error) {
       console.error("Failed to publish message to MQTT:", error);
       // Revert optimistic update on error
-      refetch();
+      requestAllHustlePicks(); // Request fresh data on error
     } finally {
       setIsLoading(false);
     }
@@ -117,24 +117,93 @@ const Stage1 = ({ onNext }: Props) => {
       const handler = (receivedMessage: any) => {
         console.log("Received message:", receivedMessage);
         
-        // Check if message is related to our game picks
-        if (receivedMessage?.contestant_id && (receivedMessage?.picks || receivedMessage?.pick)) {
-          // If this is for our user ID, update the selected numbers
-          if (receivedMessage.contestant_id === user?.contestant_id) {
-            if (receivedMessage.picks) {
-              setSelectedNumbers(receivedMessage.picks);
-            } else if (receivedMessage.pick && receivedMessage.action) {
-              // Handle individual pick actions
-              if (receivedMessage.action === 'add') {
-                setSelectedNumbers(prev => [...prev, receivedMessage.pick]);
-              } else if (receivedMessage.action === 'remove') {
-                setSelectedNumbers(prev => prev.filter(n => n !== receivedMessage.pick));
+        // Handle batch data with response array
+        if (receivedMessage?.response && Array.isArray(receivedMessage.response)) {
+          console.log("Received batch data:", receivedMessage);
+          
+          // Extract all picks from other contestants
+          const allOtherPicks: number[] = [];
+          let myCurrentPicks: number[] = [];
+          
+          receivedMessage.response.forEach((contestant: Response) => {
+            if (contestant.contestant_id === user?.contestant_id) {
+              // These are my picks
+              myCurrentPicks = contestant.picks || [];
+            } else {
+              // These are other contestants' picks
+              if (Array.isArray(contestant.picks)) {
+                allOtherPicks.push(...contestant.picks);
+              }
+            }
+          });
+          
+          // Remove duplicates from other contestants' picks
+          const uniqueOtherPicks = [...new Set(allOtherPicks)];
+          
+          console.log("My picks from batch data:", myCurrentPicks);
+          console.log("Other contestants' picks from batch data:", uniqueOtherPicks);
+          
+          // Update state
+          setMyPicks(myCurrentPicks);
+          setSelectedNumbers(myCurrentPicks);
+          setOtherContestantsPicks(uniqueOtherPicks);
+          
+          return; // Skip the rest of the handler for this event
+        }
+        
+        // Handle individual pick events
+        if (receivedMessage?.contestant_id && receivedMessage?.picks !== undefined) {
+          const isMyMessage = receivedMessage.contestant_id === user?.contestant_id;
+          
+          // If it's a single number
+          if (typeof receivedMessage.picks === 'number') {
+            const pickedNumber = receivedMessage.picks;
+            const action = receivedMessage.action || 'add'; // Default to add if not specified
+            
+            if (isMyMessage) {
+              // Update my picks
+              if (action === 'add') {
+                console.log("Adding number to my picks from MQTT:", pickedNumber);
+                setMyPicks(prev => [...prev.filter(n => n !== pickedNumber), pickedNumber]);
+                setSelectedNumbers(prev => [...prev.filter(n => n !== pickedNumber), pickedNumber]);
+              } else if (action === 'remove') {
+                console.log("Removing number from my picks from MQTT:", pickedNumber);
+                setMyPicks(prev => prev.filter(n => n !== pickedNumber));
+                setSelectedNumbers(prev => prev.filter(n => n !== pickedNumber));
+              }
+            } else {
+              // Update other contestants' picks immediately
+              if (action === 'add') {
+                console.log("Other contestant picked number:", pickedNumber);
+                setOtherContestantsPicks(prev => [...prev.filter(n => n !== pickedNumber), pickedNumber]);
+                
+                // Add visual feedback for recently updated numbers
+                setRecentlyUpdated(prev => [...prev, pickedNumber]);
+                
+                // Remove from recently updated after animation
+                setTimeout(() => {
+                  setRecentlyUpdated(prev => prev.filter(n => n !== pickedNumber));
+                }, 1000);
+              } else if (action === 'remove') {
+                console.log("Other contestant unpicked number:", pickedNumber);
+                setOtherContestantsPicks(prev => prev.filter(n => n !== pickedNumber));
               }
             }
           }
           
-          // Always refetch to get updated data from all contestants
-          refetch();
+          // If it's an array of numbers
+          if (Array.isArray(receivedMessage.picks)) {
+            if (isMyMessage) {
+              console.log("Updating my picks from MQTT:", receivedMessage.picks);
+              setMyPicks(receivedMessage.picks);
+              setSelectedNumbers(receivedMessage.picks);
+            } else {
+              // For other contestants, we need to update the otherContestantsPicks
+              // This is more complex as we need to remove their old picks and add new ones
+              // For simplicity, we'll request a full refresh of all picks
+              requestAllHustlePicks();
+            }
+          }
         }
       };
       
@@ -143,72 +212,57 @@ const Stage1 = ({ onNext }: Props) => {
       
       return () => {
         // Clean up the message handler when the component unmounts
-        // Pass null directly without wrapping it in an object
         onMessage(null);
       };
     }
-  }, [isConnected, onMessage, user?.contestant_id, refetch]);
+  }, [isConnected, onMessage, user?.contestant_id]);
 
-  // Load user's previously picked numbers on mount
-  useEffect(() => {
-    if (user?.contestant_id && data?.data) {
-      const userPicks = data.data.find(
-        (contestant) => contestant.contestant_id === user.contestant_id
-      );
+  // Function to request all hustle picks
+  const requestAllHustlePicks = useCallback(() => {
+    if (isConnected && user?.game_episode) {
+      const requestPayload = {
+        event: "all_hustle_picks",
+        payload: {
+          game_episode: user.game_episode,
+          timestamp: new Date().toISOString()
+        }
+      };
       
-      if (userPicks && userPicks.picks && userPicks.picks.length > 0) {
-        console.log("Found user's previous picks:", userPicks.picks);
-        setSelectedNumbers(userPicks.picks);
-        setMyPicks(userPicks.picks);
-        setAutoPicked(true);
-      }
+      sendMessage(JSON.stringify(requestPayload), "all_hustle_picks")
+        .then(() => console.log("Requested all hustle picks"))
+        .catch(error => console.error("Failed to request all hustle picks:", error));
     }
-  }, [user?.contestant_id, data?.data]);
+  }, [isConnected, user?.game_episode, sendMessage]);
 
-  // Process data to separate my picks from others' picks
+  // Request all hustle picks on component mount and when connection status changes
   useEffect(() => {
-    if (data?.data && Array.isArray(data.data) && user?.contestant_id) {
-      console.log("Processing contestant data:", data.data);
-      
-      // Find my picks in the data
-      const myPicksFromData = data.data.find(
-        contestant => contestant.contestant_id === user.contestant_id
-      )?.picks || [];
-      
-      // Find all other contestants' picks
-      const otherPicks = data.data
-        .filter(contestant => contestant.contestant_id !== user.contestant_id)
-        .flatMap(contestant => contestant.picks || [])
-        .filter((value, index, self) => self.indexOf(value) === index); // Get unique values
-      
-      console.log("My picks from data:", myPicksFromData);
-      console.log("Other contestants' picks:", otherPicks);
-      
-      // Update state
-      setMyPicks(myPicksFromData);
-      setOtherContestantsPicks(otherPicks);
-      
-      // Also update selectedNumbers to match myPicks for UI consistency
-      if (JSON.stringify(myPicksFromData) !== JSON.stringify(selectedNumbers)) {
-        setSelectedNumbers(myPicksFromData);
-      }
+    if (isConnected) {
+      requestAllHustlePicks();
     }
-  }, [data?.data, user?.contestant_id]);
+  }, [isConnected, requestAllHustlePicks]);
+
+  // Add a periodic refresh of all hustle picks
+  useEffect(() => {
+    if (isConnected) {
+      const refreshInterval = setInterval(() => {
+        requestAllHustlePicks();
+      }, 10000); // Refresh every 10 seconds
+      
+      return () => clearInterval(refreshInterval);
+    }
+  }, [isConnected, requestAllHustlePicks]);
 
   // Check if a number is disabled (picked by others)
   const isNumberDisabled = (num: number): boolean => {
-    // If time has elapsed, all numbers are disabled except already selected ones
-    if (timeLeft <= 0) {
-      return !myPicks.includes(num);
-    }
-    
-    // If already selected 5 numbers, disable all except the selected ones
-    if (myPicks.length >= 5 && !myPicks.includes(num)) {
-      return true;
-    }
-    
-    // Check if number is picked by other contestants
-    return otherContestantsPicks.includes(num);
+    // Number is disabled if:
+    // 1. It's picked by another contestant
+    // 2. User already has 5 picks and this isn't one of them
+    // 3. Time has elapsed and this isn't one of user's picks
+    return (
+      (otherContestantsPicks.includes(num)) || 
+      (myPicks.length >= 5 && !myPicks.includes(num)) ||
+      (timeLeft <= 0 && !myPicks.includes(num))
+    );
   };
 
   // Countdown Timer
@@ -261,11 +315,19 @@ const Stage1 = ({ onNext }: Props) => {
     return myPicks.includes(num);
   };
 
-  // Improved handleNumberClick with stricter validation
+  // Function to handle number click
   const handleNumberClick = async (num: number): Promise<void> => {
-      // CRITICAL: Check if number is picked by other contestants - STRICT CHECK
-    if (otherContestantsPicks.includes(num) && !myPicks.includes(num)) {
-  
+    console.log(`Handling click for number ${num}`);
+    
+    // Don't allow clicking if loading
+    if (isLoading) {
+      console.log("Click ignored: Loading in progress");
+      return;
+    }
+    
+    // Check if number is picked by other contestants
+    if (otherContestantsPicks.includes(num)) {
+      console.log("Click ignored: Number is picked by another contestant");
       openErrorModalWithMessage("This number has already been selected by another contestant");
       return;
     }
@@ -278,7 +340,7 @@ const Stage1 = ({ onNext }: Props) => {
     
     // Don't allow selecting more than 5 numbers
     if (!myPicks.includes(num) && myPicks.length >= 5) {
-      openErrorModalWithMessage("You can only select 5 numbers");
+      console.log("Click ignored: Already selected 5 numbers");
       return;
     }
 
@@ -287,22 +349,6 @@ const Stage1 = ({ onNext }: Props) => {
     try {
       // Send to backend immediately
       await sendPickedNumbers(num);
-      
-      // If this selection completes the 5 picks, send completion event
-      if (!myPicks.includes(num) && myPicks.length === 4 && isConnected && user?.contestant_id) {
-        // Wait a bit for the pick to be processed
-        setTimeout(() => {
-          const completionPayload = {
-            contestant_id: user.contestant_id,
-            picks: [...myPicks, num],
-            timestamp: new Date().toISOString()
-          };
-          
-          sendMessage(JSON.stringify(completionPayload), "picks_completed").catch((error) => {
-            console.error("Failed to publish completion event to MQTT:", error);
-          });
-        }, 500);
-      }
     } catch (error) {
       console.error("Error updating picks:", error);
       const errorMessage = formatAxiosErrorMessage(error as AxiosError);
@@ -310,198 +356,72 @@ const Stage1 = ({ onNext }: Props) => {
     }
   };
 
-  // Enhanced MQTT message handling with immediate UI updates
-  useEffect(() => {
-    if (isConnected) {
-      // Set up message handler for real-time updates
-      const handleMessage = (receivedMessage:any) => {
-        console.log("Received MQTT message:", receivedMessage);
-        
-        // Check if message is related to game picks
-        if (receivedMessage?.contestant_id && (receivedMessage?.pick !== undefined || receivedMessage?.picks)) {
-          const isMyMessage = receivedMessage.contestant_id === user?.contestant_id;
-          
-          // Handle pick actions immediately
-          if (receivedMessage.pick !== undefined && receivedMessage.action) {
-            const pickedNumber = receivedMessage.pick;
-            
-            if (isMyMessage) {
-              // Update my picks
-              if (receivedMessage.action === 'add') {
-                console.log("Adding number to my picks from MQTT:", pickedNumber);
-                setMyPicks(prev => [...prev.filter(n => n !== pickedNumber), pickedNumber]);
-                setSelectedNumbers(prev => [...prev.filter(n => n !== pickedNumber), pickedNumber]);
-              } else if (receivedMessage.action === 'remove') {
-                console.log("Removing number from my picks from MQTT:", pickedNumber);
-                setMyPicks(prev => prev.filter(n => n !== pickedNumber));
-                setSelectedNumbers(prev => prev.filter(n => n !== pickedNumber));
-              }
-            } else {
-              // Update other contestants' picks immediately
-              if (receivedMessage.action === 'add') {
-                console.log("Other contestant picked number:", pickedNumber);
-                setOtherContestantsPicks(prev => [...prev.filter(n => n !== pickedNumber), pickedNumber]);
-                
-                // Add visual feedback for recently updated numbers
-                setRecentlyUpdated(prev => [...prev, pickedNumber]);
-                
-                // Remove from recently updated after animation
-                setTimeout(() => {
-                  setRecentlyUpdated(prev => prev.filter(n => n !== pickedNumber));
-                }, 1000);
-              } else if (receivedMessage.action === 'remove') {
-                console.log("Other contestant unpicked number:", pickedNumber);
-                setOtherContestantsPicks(prev => prev.filter(n => n !== pickedNumber));
-              }
-            }
-          }
-          
-          // Handle full picks array updates
-          if (receivedMessage.picks && Array.isArray(receivedMessage.picks)) {
-            if (isMyMessage) {
-              console.log("Updating my picks from MQTT:", receivedMessage.picks);
-              setMyPicks(receivedMessage.picks);
-              setSelectedNumbers(receivedMessage.picks);
-            }
-          }
-          
-          // Always refetch to ensure data consistency
-          debouncedRefetchRef.current();
-        }
-      };
-      
-      onMessage(handleMessage);
-      
-      return () => {
-        onMessage(null);
-      };
-    }
-  }, [isConnected, onMessage, user?.contestant_id]);
-
   // Automatically select remaining numbers
-  const autoSelectRemainingNumbers = async (): Promise<void> => {
+  const autoSelectRemainingNumbers = async () => {
+    if (isLoading || autoPicked) return;
+    
     setIsLoading(true);
+    setAutoPicked(true);
     
     try {
-      // Get all available numbers (not picked by others and not already picked by me)
-      const availableNumbers: Array<number> = Array.from(
-        { length: 49 },
-        (_, i) => i + 1
-      ).filter(
-        (num: number) =>
-          !myPicks.includes(num) && !otherContestantsPicks.includes(num)
-      );
-
-      const shuffled: Array<number> = availableNumbers.sort(
-        () => 0.5 - Math.random()
-      );
-      const numbersToAdd: Array<number> = shuffled.slice(
-        0,
-        5 - myPicks.length
-      );
-      const newSelectedNumbers: Array<number> = [
-        ...myPicks,
-        ...numbersToAdd,
-      ];
-
-      // Optimistic update
-      setMyPicks(newSelectedNumbers);
-      setSelectedNumbers(newSelectedNumbers);
-      setAutoPicked(true);
+      // Calculate how many more numbers we need
+      const numbersNeeded = 5 - myPicks.length;
       
-      // Send each auto-selected number to the backend and publish to MQTT
-      for (const num of numbersToAdd) {
-        await sendPickedNumbers(num);
-        // Small delay to avoid overwhelming the system
-        await new Promise(r => setTimeout(r, 100));
+      if (numbersNeeded <= 0) {
+        console.log("No additional numbers needed");
+        return;
       }
       
-      // Trigger a single refetch after all operations
-      refetch();
+      console.log(`Auto-selecting ${numbersNeeded} more numbers`);
       
-      // Publish auto-pick completion event
-      if (user?.contestant_id && isConnected) {
+      // Get all available numbers (not picked by others)
+      const availableNumbers = Array.from({ length: 49 }, (_, i) => i + 1)
+        .filter(num => !otherContestantsPicks.includes(num) && !myPicks.includes(num));
+      
+      if (availableNumbers.length < numbersNeeded) {
+        console.error("Not enough available numbers to auto-select");
+        openErrorModalWithMessage("Not enough available numbers to complete your selection");
+        return;
+      }
+      
+      // Shuffle available numbers and take what we need
+      const shuffled = [...availableNumbers].sort(() => 0.5 - Math.random());
+      const numbersToAdd = shuffled.slice(0, numbersNeeded);
+      
+      console.log("Auto-selecting numbers:", numbersToAdd);
+      
+      // Create a new array with all selected numbers
+      const newSelectedNumbers = [...myPicks, ...numbersToAdd];
+      
+      // Update state optimistically
+      setMyPicks(newSelectedNumbers);
+      setSelectedNumbers(newSelectedNumbers);
+      
+      // Send to server
+      if (isConnected && user?.contestant_id) {
         const autoPickPayload = {
-          contestant_id: user.contestant_id,
-          auto_picked: true,
-          picks: newSelectedNumbers,
-          timestamp: new Date().toISOString()
+          event: "auto_pick",
+          payload: {
+            game_episode: user.game_episode,
+            contestant_id: user.contestant_id,
+            picks: newSelectedNumbers,
+            timestamp: new Date().toISOString()
+          }
         };
         
-        sendMessage(JSON.stringify(autoPickPayload), "picks_completed").catch((error) => {
-          console.error("Failed to publish auto-pick message to MQTT:", error);
-        });
+        await sendMessage(JSON.stringify(autoPickPayload), "auto_pick");
+        console.log("Auto-pick sent to server");
       }
     } catch (error) {
       console.error("Error auto-selecting numbers:", error);
+      openErrorModalWithMessage("Failed to auto-select numbers");
+      
+      // Request fresh data on error
+      requestAllHustlePicks();
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Add a synchronization function to ensure data consistency
-  const synchronizeData = useCallback(async () => {
-    if (!user?.game_episode || !isConnected) return;
-    
-    try {
-      console.log("Synchronizing data...");
-      
-      // Request a full data refresh
-      const result = await refetch();
-      
-      if (result.data?.data) {
-        console.log("Sync successful, processing data:", result.data.data);
-        
-        // Process the data to update local state
-        const myPicksFromData = result.data.data.find(
-          contestant => contestant.contestant_id === user.contestant_id
-        )?.picks || [];
-        
-        const otherPicks = result.data.data
-          .filter(contestant => contestant.contestant_id !== user.contestant_id)
-          .flatMap(contestant => contestant.picks || [])
-          .filter((value, index, self) => self.indexOf(value) === index);
-        
-        // Update state with the latest data
-        setMyPicks(myPicksFromData);
-        setSelectedNumbers(myPicksFromData);
-        setOtherContestantsPicks(otherPicks);
-        
-        console.log("Sync complete. My picks:", myPicksFromData);
-        console.log("Other contestants' picks:", otherPicks);
-        
-        // Publish current state to MQTT to ensure all clients are in sync
-        if (user?.contestant_id) {
-          const syncPayload = {
-            contestant_id: user.contestant_id,
-            picks: myPicksFromData,
-            timestamp: new Date().toISOString(),
-            sync: true
-          };
-          
-          sendMessage(JSON.stringify(syncPayload), "sync_state").catch((error) => {
-            console.error("Failed to publish sync state to MQTT:", error);
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error synchronizing data:", error);
-    }
-  }, [user?.game_episode, user?.contestant_id, isConnected, refetch, sendMessage]);
-
-  // Trigger synchronization on component mount and when connection status changes
-  useEffect(() => {
-    if (isConnected) {
-      synchronizeData();
-      
-      // Set up periodic synchronization
-      const syncInterval = setInterval(() => {
-        synchronizeData();
-      }, 5000); // Sync every 5 seconds
-      
-      return () => clearInterval(syncInterval);
-    }
-  }, [isConnected, synchronizeData]);
 
   // Add a connection status indicator
   const ConnectionStatus = () => (
@@ -603,6 +523,7 @@ const Stage1 = ({ onNext }: Props) => {
                     const isMyPick = myPicks.includes(num);
                     const isOthersPick = otherContestantsPicks.includes(num);
                     const isDisabled = isNumberDisabled(num);
+                    const isRecentlyUpdated = recentlyUpdated.includes(num);
                     
                     return (
                       <div
@@ -610,11 +531,8 @@ const Stage1 = ({ onNext }: Props) => {
                         onClick={() => {
                           if (!isDisabled || isMyPick) {
                             handleNumberClick(num);
-                          } else {
-                            console.log(`Click blocked on number ${num}: ${isOthersPick ? "Picked by another contestant" : "Other restriction"}`);
-                            if (isOthersPick) {
-                              openErrorModalWithMessage("This number has already been selected by another contestant");
-                            }
+                          } else if (isOthersPick) {
+                            openErrorModalWithMessage("This number has already been selected by another contestant");
                           }
                         }}
                         className={`relative cursor-pointer transition-transform ${
@@ -625,15 +543,12 @@ const Stage1 = ({ onNext }: Props) => {
                               : isDisabled
                                 ? "opacity-50 cursor-not-allowed" // Disabled numbers
                                 : "hover:scale-105" // Available numbers
-                        } ${recentlyUpdated.includes(num) ? "animate-pulse" : ""}`}
+                        } ${isRecentlyUpdated ? "animate-pulse" : ""}`}
                       >
-                        {isOthersPick && (
-                          <div className="absolute inset-0 z-10 bg-red-500 opacity-20 rounded-full pointer-events-none"></div>
-                        )}
                         <NumberCardContainer
                           text={String(num)}
                           textColor={isMyPick ? "#fff" : "#F2C94C"}
-                          className={`max-xl:w-[54px] max-xl:h-[54px] ${recentlyUpdated.includes(num) ? "ring-2 ring-red-500" : ""}`}
+                          className={`max-xl:w-[54px] max-xl:h-[54px] ${isRecentlyUpdated ? "ring-2 ring-red-500" : ""}`}
                           primaryGradientEndColor={
                             isMyPick ? "#FF00FF" : "#3C1272"
                           }
