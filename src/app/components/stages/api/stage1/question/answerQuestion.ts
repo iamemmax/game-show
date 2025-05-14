@@ -6,7 +6,7 @@ interface PickNumberProp {
   question_id: any;
   answer: string;
   amount_staked: number;
-  percentage_staked: number;
+  // percentage_staked?: number;
   timestamp: string;
   question_start_time: string;
 }
@@ -17,7 +17,7 @@ export const answerStageOneQuestion = async ({
   timestamp,
   contestant_id,
   question_id,
-  percentage_staked,
+  // percentage_staked,
   question_start_time
 }: PickNumberProp) => {
   const response = await salaryAxios.post(`api/game/answer_hustle_reveal_question/${question_id}`, {
@@ -26,7 +26,7 @@ export const answerStageOneQuestion = async ({
     timestamp,
     contestant_id,
     question_id,
-    percentage_staked,
+    // percentage_staked,
     question_start_time
   });
   return response?.data;

@@ -14,6 +14,7 @@ import Logo from "@/app/icons/Logo";
 import HustleStages from "./components/hustle/HustleStages";
 import { ContestantDetails } from "@/types/types";
 import { useMQTT } from "@/hooks/useMqttService";
+import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 
 interface RootObject {
   event: string;
@@ -45,7 +46,7 @@ const Stage1 = ({ onNext }: Props) => {
   } = useErrorModalState();
 
   // Use the MQTT context
-  const { isConnected, sendMessage, onMessage, userId } = useMQTT();
+  const { isConnected, sendMessage, onMessage } = useMQTT();
   
   // Explicitly type the state with number[]
   const [selectedNumbers, setSelectedNumbers] = useState<Array<number>>([]);
@@ -59,6 +60,70 @@ const Stage1 = ({ onNext }: Props) => {
 
   // Add state to track recently updated numbers for visual feedback
   const [recentlyUpdated, setRecentlyUpdated] = useState<number[]>([]);
+
+  // Add state to track if timer has started
+  const [timerStarted, setTimerStarted] = useState(false);
+
+  // Function to start the timer
+  const handleStartTimer = () => {
+    setTimerStarted(true);
+    setTimeLeft(60); // Reset to 60 seconds when starting
+    
+    // Notify backend that timer has started
+    if (isConnected && user?.contestant_id) {
+      const timerStartPayload = {
+        event: "timer_start",
+        payload: {
+          game_episode: user?.game_episode,
+          contestant_id: user?.contestant_id,
+        }
+      };
+      
+      sendMessage(timerStartPayload, "timer_start")
+        .catch(error => console.error("Failed to send timer start event:", error));
+    }
+  };
+
+  // Function to handle all hustle picks received from socket
+  const handleAllHustlePicks = useCallback((receivedMessage: any) => {
+    if (receivedMessage?.event === "all_hustle_pick" && 
+        receivedMessage?.response && 
+        Array.isArray(receivedMessage.response)) {
+      
+      console.log("Received all_hustle_pick data:", receivedMessage);
+      
+      // Extract all picks from other contestants
+      const allOtherPicks: number[] = [];
+      let myCurrentPicks: number[] = [];
+      
+      receivedMessage.response.forEach((contestant: Response) => {
+        if (contestant.contestant_id === user?.contestant_id) {
+          // These are my picks
+          myCurrentPicks = contestant.picks || [];
+        } else {
+          // These are other contestants' picks
+          if (Array.isArray(contestant.picks)) {
+            allOtherPicks.push(...contestant.picks);
+          }
+        }
+      });
+      
+      // Remove duplicates from other contestants' picks
+      const uniqueOtherPicks = [...new Set(allOtherPicks)];
+      
+      console.log("My picks from all_hustle_pick:", myCurrentPicks);
+      console.log("Other contestants' picks from all_hustle_pick:", uniqueOtherPicks);
+      
+      // Update state
+      setMyPicks(myCurrentPicks);
+      setSelectedNumbers(myCurrentPicks);
+      setOtherContestantsPicks(uniqueOtherPicks);
+      
+      return true; // Indicate that we handled this event
+    }
+    
+    return false; // Indicate that we did not handle this event
+  }, [user?.contestant_id]);
 
   // Function to send picked numbers to backend
   const sendPickedNumbers = async (num: number) => {
@@ -89,23 +154,22 @@ const Stage1 = ({ onNext }: Props) => {
         
         // Simplified payload structure as requested
         const payload = {
-          event: "select_number",
+          event: "pick_hustle_number",
           payload: {
             game_episode: user?.game_episode,
             contestant_id: user?.contestant_id,
             pick: num,
             action: action,
-            timestamp: new Date().toISOString()
           }
         };
         
         // Send the message
-        await sendMessage(JSON.stringify(payload), "select_number");
+        await sendMessage(payload, "pick_hustle_number");
       }
     } catch (error) {
       console.error("Failed to publish message to MQTT:", error);
       // Revert optimistic update on error
-      requestAllHustlePicks(); // Request fresh data on error
+      // requestAllHustlePicks(); // Request fresh data on error
     } finally {
       setIsLoading(false);
     }
@@ -118,38 +182,9 @@ const Stage1 = ({ onNext }: Props) => {
       const handler = (receivedMessage: any) => {
         console.log("Received message:", receivedMessage);
         
-        // Handle batch data with response array - matches the expected format
-        if (receivedMessage?.response && Array.isArray(receivedMessage.response)) {
-          console.log("Received batch data:", receivedMessage);
-          
-          // Extract all picks from other contestants
-          const allOtherPicks: number[] = [];
-          let myCurrentPicks: number[] = [];
-          
-          receivedMessage.response.forEach((contestant: Response) => {
-            if (contestant.contestant_id === user?.contestant_id) {
-              // These are my picks
-              myCurrentPicks = contestant.picks || [];
-            } else {
-              // These are other contestants' picks
-              if (Array.isArray(contestant.picks)) {
-                allOtherPicks.push(...contestant.picks);
-              }
-            }
-          });
-          
-          // Remove duplicates from other contestants' picks
-          const uniqueOtherPicks = [...new Set(allOtherPicks)];
-          
-          console.log("My picks from batch data:", myCurrentPicks);
-          console.log("Other contestants' picks from batch data:", uniqueOtherPicks);
-          
-          // Update state
-          setMyPicks(myCurrentPicks);
-          setSelectedNumbers(myCurrentPicks);
-          setOtherContestantsPicks(uniqueOtherPicks);
-          
-          return; // Skip the rest of the handler for this event
+        // Try to handle as all_hustle_pick event first
+        if (handleAllHustlePicks(receivedMessage)) {
+          return; // Event was handled, skip the rest
         }
         
         // Handle individual pick events
@@ -164,7 +199,6 @@ const Stage1 = ({ onNext }: Props) => {
             if (isMyMessage) {
               // Update my picks
               if (action === 'add') {
-                console.log("Adding number to my picks from MQTT:", pickedNumber);
                 setMyPicks(prev => [...prev.filter(n => n !== pickedNumber), pickedNumber]);
                 setSelectedNumbers(prev => [...prev.filter(n => n !== pickedNumber), pickedNumber]);
               } else if (action === 'remove') {
@@ -202,7 +236,8 @@ const Stage1 = ({ onNext }: Props) => {
               // For other contestants, we need to update the otherContestantsPicks
               // This is more complex as we need to remove their old picks and add new ones
               // For simplicity, we'll request a full refresh of all picks
-              requestAllHustlePicks();
+              // Note: We don't have a requestAllHustlePicks function anymore
+              // The backend should send us updates automatically
             }
           }
         }
@@ -216,50 +251,36 @@ const Stage1 = ({ onNext }: Props) => {
         onMessage(null);
       };
     }
-  }, [isConnected, onMessage, user?.contestant_id, requestAllHustlePicks]);
+  }, [isConnected, onMessage, user?.contestant_id, handleAllHustlePicks]);
 
-  // Function to request all hustle picks
-  const requestAllHustlePicks = useCallback(() => {
-    if (isConnected && user?.game_episode) {
-      const requestPayload = {
-        event: "all_hustle_pick",
-        payload: {
-          game_episode: user.game_episode,
-          timestamp: new Date().toISOString()
-        }
-      };
-      
-      sendMessage(JSON.stringify(requestPayload), "all_hustle_pick")
-        .then(() => console.log("Requested all hustle picks"))
-        .catch(error => console.error("Failed to request all hustle picks:", error));
-    }
-  }, [isConnected, user?.game_episode, sendMessage]);
 
   // Request all hustle picks on component mount and when connection status changes
-  useEffect(() => {
-    if (isConnected) {
-      requestAllHustlePicks();
-    }
-  }, [isConnected, requestAllHustlePicks]);
+  // useEffect(() => {
+  //   if (isConnected) {
+  //     requestAllHustlePicks();
+  //   }
+  // }, [isConnected, requestAllHustlePicks]);
 
-  // Add a periodic refresh of all hustle picks
-  useEffect(() => {
-    if (isConnected) {
-      const refreshInterval = setInterval(() => {
-        requestAllHustlePicks();
-      }, 10000); // Refresh every 10 seconds
+  // // Add a periodic refresh of all hustle picks
+  // useEffect(() => {
+  //   if (isConnected) {
+  //     const refreshInterval = setInterval(() => {
+  //       requestAllHustlePicks();
+  //     }, 10000); // Refresh every 10 seconds
       
-      return () => clearInterval(refreshInterval);
-    }
-  }, [isConnected, requestAllHustlePicks]);
+  //     return () => clearInterval(refreshInterval);
+  //   }
+  // }, [isConnected, requestAllHustlePicks]);
 
   // Check if a number is disabled (picked by others)
   const isNumberDisabled = (num: number): boolean => {
     // Number is disabled if:
-    // 1. It's picked by another contestant
-    // 2. User already has 5 picks and this isn't one of them
-    // 3. Time has elapsed and this isn't one of user's picks
+    // 1. Timer hasn't started yet
+    // 2. It's picked by another contestant
+    // 3. User already has 5 picks and this isn't one of them
+    // 4. Time has elapsed and this isn't one of user's picks
     return (
+      !timerStarted ||
       (otherContestantsPicks.includes(num)) || 
       (myPicks.length >= 5 && !myPicks.includes(num)) ||
       (timeLeft <= 0 && !myPicks.includes(num))
@@ -268,21 +289,26 @@ const Stage1 = ({ onNext }: Props) => {
 
   // Countdown Timer
   useEffect(() => {
+    // Only run the timer if it has been started
+    if (!timerStarted) return;
+    
     if (timeLeft <= 0) {
       setTimeLeft(0); // Ensure timer stops at 0
       
-      // Send time elapsed event via MQTT
-      if (isConnected && user?.contestant_id) {
-        const timeElapsedPayload = {
-          contestant_id: user.contestant_id,
-          picks: selectedNumbers,
-          timestamp: new Date().toISOString()
-        };
+      // // Send time elapsed event via MQTT
+      // if (isConnected && user?.contestant_id) {
+      //   const timeElapsedPayload = {
+      //     event: "time_elapsed",
+      //     payload: {
+      //       game_episode: user?.game_episode,
+          
+      //     }
+      //   };
         
-        sendMessage(JSON.stringify(timeElapsedPayload), "time_elapsed").catch((error) => {
-          console.error("Failed to publish time elapsed event to MQTT:", error);
-        });
-      }
+      //   sendMessage(timeElapsedPayload, "time_elapsed").catch((error) => {
+      //     console.error("Failed to publish time elapsed event to MQTT:", error);
+      //   });
+      // }
       
       // Auto-select remaining numbers if needed
       if (!autoPicked && selectedNumbers.length < 5) {
@@ -291,12 +317,14 @@ const Stage1 = ({ onNext }: Props) => {
         // If all 5 numbers are already selected, send completion event
         if (isConnected && user?.contestant_id) {
           const completionPayload = {
-            contestant_id: user.contestant_id,
-            picks: selectedNumbers,
-            timestamp: new Date().toISOString()
+            event: "time_elapsed",
+            payload: {
+              game_episode: user?.game_episode,
+            
+            }
           };
           
-          sendMessage(JSON.stringify(completionPayload), "picks_completed").catch((error) => {
+          sendMessage(completionPayload, "time_elapsed").catch((error) => {
             console.error("Failed to publish completion event to MQTT:", error);
           });
         }
@@ -309,7 +337,7 @@ const Stage1 = ({ onNext }: Props) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timeLeft, autoPicked, selectedNumbers.length, isConnected, user?.contestant_id, sendMessage]);
+  }, [timeLeft, autoPicked, selectedNumbers.length, isConnected, user?.contestant_id, sendMessage, timerStarted]);
 
   // Check if a number is selected by the current user
   const isSelected = (num: number): boolean => {
@@ -320,15 +348,14 @@ const Stage1 = ({ onNext }: Props) => {
   const handleNumberClick = async (num: number): Promise<void> => {
     console.log(`Handling click for number ${num}`);
     
-    // Don't allow clicking if loading
-    if (isLoading) {
-      console.log("Click ignored: Loading in progress");
+    // Don't allow clicks if timer hasn't started yet
+    if (!timerStarted) {
+      console.log("Click ignored: Timer not started yet");
       return;
     }
     
     // Check if number is picked by other contestants
     if (otherContestantsPicks.includes(num)) {
-      console.log("Click ignored: Number is picked by another contestant");
       openErrorModalWithMessage("This number has already been selected by another contestant");
       return;
     }
@@ -410,7 +437,7 @@ const Stage1 = ({ onNext }: Props) => {
           }
         };
         
-        await sendMessage(JSON.stringify(autoPickPayload), "auto_pick");
+        await sendMessage(autoPickPayload, "auto_pick");
         console.log("Auto-pick sent to server");
       }
     } catch (error) {
@@ -418,7 +445,7 @@ const Stage1 = ({ onNext }: Props) => {
       openErrorModalWithMessage("Failed to auto-select numbers");
       
       // Request fresh data on error
-      requestAllHustlePicks();
+      // requestAllHustlePicks();
     } finally {
       setIsLoading(false);
     }
@@ -428,7 +455,6 @@ const Stage1 = ({ onNext }: Props) => {
   const ConnectionStatus = () => (
     <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
       <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-      <span className="text-xs text-white">{isConnected ? 'Connected' : 'Disconnecting...'}</span>
     </div>
   );
 
@@ -443,7 +469,9 @@ const Stage1 = ({ onNext }: Props) => {
           <div>
             <HustleStages />
           </div>
-          <div className=""></div>
+          <div className="pb-4 ">
+            <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>
+          </div>
         </div>
     
         <div className="overflow-y-auto">
@@ -465,7 +493,7 @@ const Stage1 = ({ onNext }: Props) => {
 
           <div className="flex justify-center flex-col items-center max-lg:px-3">
             {/* Selection Grid */}
-            <div className="w-full py-[1rem] max-xl:max-w-[65rem] 2xl:py-[3rem] max-w-[56.25rem] rounded-[.875rem] px-[2rem] 2xl:px-[3rem] bg-[#13051E] -mt-3 relative overflow-hidden">
+            <div className="w-full py-[1.5rem] max-xl:max-w-[65rem] 2xl:py-[3rem] max-w-[56.25rem] rounded-[.875rem] px-[2rem] 2xl:px-[3rem] bg-[#13051E] -mt-3 relative overflow-hidden">
               {/* Connection Status Indicator */}
               <ConnectionStatus />
               
@@ -501,21 +529,40 @@ const Stage1 = ({ onNext }: Props) => {
                 <div className="flex justify-between items-center">
                   <div>
                     <h2 className="text-[2.125rem] font-extrabold outline-text text-black">
-                      Stage 1: Hustle Kick-off {user?.contestant_id && `(${user.contestant_id})`}
+                      Stage 1: Hustle Kick-off 
                     </h2>
                   </div>
                   <div>
-                    <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
-                      <span 
-                        className="text-[20px] font-extrabold font-verdana text-white"
-                        style={{ 
-                          WebkitTextStroke: "1.5px #C76000",
-                          textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)"
-                        }}
+                    {timerStarted ? (
+                      <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+                        <span 
+                          className="text-[20px] font-extrabold font-verdana text-white"
+                          style={{ 
+                            WebkitTextStroke: "1.5px #C76000",
+                            textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)"
+                          }}
+                        >
+                          {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
+                        </span>
+                      </div>
+                    ) : (
+                      <Button
+                        className="p-0 bg-transparent"
+                        onClick={handleStartTimer}
                       >
-                        {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
-                      </span>
-                    </div>
+                        <div className="flex items-center justify-center  bg-gradient-to-r from-green-500 to-green-600 border-[2px] border-[#035D2E] rounded-xl px-3 py-2 shadow-md">
+                          <span 
+                            className="text-[16px] font-extrabold font-verdana text-white"
+                            style={{ 
+                              WebkitTextStroke: "1px #035D2E",
+                              textShadow: "0px 1px 2px rgba(3, 93, 46, 0.5)"
+                            }}
+                          >
+                            Start Timer
+                          </span>
+                        </div>
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -549,7 +596,7 @@ const Stage1 = ({ onNext }: Props) => {
                         <NumberCardContainer
                           text={String(num)}
                           textColor={isMyPick ? "#fff" : "#F2C94C"}
-                          className={`max-xl:w-[54px] max-xl:h-[54px] ${isRecentlyUpdated ? "ring-2 ring-red-500" : ""}`}
+                          className={`max-xl:w-[58px] max-xl:h-[58px] ${isRecentlyUpdated ? "ring-2 ring-red-500" : ""}`}
                           primaryGradientEndColor={
                             isMyPick ? "#FF00FF" : "#3C1272"
                           }

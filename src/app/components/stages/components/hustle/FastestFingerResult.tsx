@@ -1,19 +1,14 @@
 import StagesCard from '@/app/shared/StagesCard'
-import FastestFingerResultBoard from '@/app/shared/UserBadge'
+import UserBadge from '@/app/shared/UserBadge'
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { contestantImages } from '../../components/mocks/contestantImages'
-import { answerOptionProp, answerQuestionProp } from '../../api/stage1/question/getQuestionAnswer'
-import UserBadge from '@/app/shared/UserBadge'
-// import moment from 'moment';
-// import { Button } from '@/components/core'
-// import GradientButton from '@/app/shared/GradientButton'
+import { answerQuestionProp } from '../../api/stage1/question/getQuestionAnswer'
 
 interface FastestFingerResultProps {
   timeElapsed?: boolean;
   correctOption?: string;
   resultArray: answerQuestionProp | null | undefined;
-  // Remove onStartTimer prop
 }
 
 const FastestFingerResult = ({ 
@@ -21,8 +16,6 @@ const FastestFingerResult = ({
   resultArray
 }: FastestFingerResultProps) => {
   const [visibleResults, setVisibleResults] = useState<number[]>([]);
-  // Remove timerStarted state
-  // Remove handleStartTimer function
 
   useEffect(() => {
     if (timeElapsed && resultArray?.data) {
@@ -42,12 +35,6 @@ const FastestFingerResult = ({
         // If both are correct or both are incorrect, sort by time
         return timeA - timeB;
       });
-      
-      // Replace the original data with sorted data for rendering
-      const sortedResultArray = {
-        ...resultArray,
-        data: sortedResults
-      };
       
       // Show results one by one with a delay
       sortedResults.forEach((_, index) => {
@@ -77,28 +64,17 @@ const FastestFingerResult = ({
     }
   };
 
-//   function formatTime(time: number): string {
-//     const date = new Date(time);
-//     return date.toLocaleTimeString('en-US', {
-//         hour12: false,
-//         hour: '2-digit',
-//         minute: '2-digit',
-//         second: '2-digit',
-//         // fractionalSecondDigits: 0
-//     });
-// }
-
-function calculateTimeDifference(startTime: number, endTime: number): string {
+  function calculateTimeDifference(startTime: number, endTime: number): string {
     const diff = endTime - startTime;
     const seconds = Math.floor((diff % 60000) / 1000);
-
     return `0.${seconds.toString().padStart(0)}`;
-}
+  }
+
   return (
-    <div>
+    <div className="h-full flex flex-col">
       {timeElapsed ? (
         // Show results when time has elapsed
-        <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center">
+        <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center overflow-y-auto max-h-[300px]">
           <AnimatePresence>
             {resultArray?.data?.map((result, index) => {
               const isCorrect = result?.is_correct;
@@ -147,8 +123,9 @@ function calculateTimeDifference(startTime: number, endTime: number): string {
                     }}
                     color="#FFFFFF"
                     correctAnswerColor={isCorrect ? "#04DA6A" : "#EB001B"}
-                    usernameClassName=' mt-[6px] text-white text-xs'
+                    usernameClassName='mt-[6px] text-white text-xs'
                     dotPosition={{y:36}}
+                    width={130}
                   />
                 </motion.div>
               );
@@ -156,26 +133,8 @@ function calculateTimeDifference(startTime: number, endTime: number): string {
           </AnimatePresence>
         </div>
       ) : (
-        // Show placeholder cards WITHOUT any start timer button
+        // Show placeholder cards
         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center">
-          {/* REMOVE THIS ENTIRE BLOCK if it exists:
-          {!timerStarted && (
-            <Button 
-              className="p-0 bg-transparent mb-4"
-              onClick={handleStartTimer}
-            >
-              <GradientButton
-                text="Start Timer"
-                className="uppercase"
-                width={150}
-                startColor="#8EFE9B"
-                endColor="#03984A"
-                baseColor="#035D2E"
-              />
-            </Button>
-          )}
-          */}
-          
           {Array.from({length:6}).map((_, index) => (
             <StagesCard 
               key={index}

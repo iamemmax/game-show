@@ -98,7 +98,7 @@ const ProveHustle = () => {
             <div className="relative">
               <div className="flex justify-center flex-col items-center">
                 <h2 className="text-[2.125rem] text-center font-gilroyHeavy font-extrabold outline-text text-black">
-                  Stage 2: Prove your hustle
+                  Stage 1: Prove your hustle
                 </h2>
                 <p className="text-sm font-normal text-[#D5B9FF]">
                   Select minimum of 2 number to determine the trivia questions

@@ -23,6 +23,7 @@ import { useErrorModalState } from "@/hooks";
 import { AxiosError } from "axios";
 import { useGetQuestionAnswer } from "../../api/stage1/question/getQuestionAnswer";
 import StageOneTally from "../hustle/StageOneTally";
+import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -99,17 +100,16 @@ const QuestionScreen = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
   const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>([]);
-  const [selectedPercentage, setSelectedPercentage] = useState(10); // Start at 10%
-  const [selectedAmount, setSelectedAmount] = useState(10000); // 10% of max
+  const [selectedAmount, setSelectedAmount] = useState(10000); // Default selected amount
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showNextButton, setShowNextButton] = useState(false);
-  const maxAmount = 100000; // Maximum amount for the range
-  const rangeRef = useRef<HTMLInputElement>(null);
-  const [rangeAdjusted, setRangeAdjusted] = useState(false); // Track if range has been adjusted
   const [shouldFetchAnswer, setShouldFetchAnswer] = useState(false);
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
+  
+  // Array of available amounts to stake
+  const amountOptions = [ 10000, 20000, 30000, 50000];
 
   // Initialize with the question array data
   const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
@@ -151,39 +151,21 @@ const QuestionScreen = () => {
     }
   }, []);
 
-// Function to handle range change
-const handleRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  // Only allow range changes if timer is active
-  if (timerActive && !isSubmitted && timeLeft > 0) {
-    const newPercentage = parseInt(e.target.value);
-    setSelectedPercentage(newPercentage);
-    
-    // Calculate the amount based on percentage
-    const newAmount = (maxAmount * newPercentage) / 100;
-    setSelectedAmount(newAmount);
-    
-    // Mark that the range has been adjusted
-    setRangeAdjusted(true);
-  }
-};
+  // Function to handle amount selection
+  const handleAmountSelect = (amount: number) => {
+    // Only allow selection if timer is active and not submitted yet
+    if (timerActive && !isSubmitted && timeLeft > 0) {
+      setSelectedAmount(amount);
+    }
+  };
 
-// Effect to update the range progress
-useEffect(() => {
-  if (rangeRef.current) {
-    const min = parseInt(rangeRef.current.min);
-    const max = parseInt(rangeRef.current.max);
-    const progress = ((selectedPercentage - min) / (max - min)) * 100;
-    rangeRef.current.style.setProperty('--range-progress', `${progress}%`);
-  }
-}, [selectedPercentage]);
-  
   // Timer effect
   useEffect(() => {
     // This is the critical guard - timer should not run if not active
     if (!timerActive) return;
     
     if (timeLeft <= 0) {
-      setShowNextButton(true);
+      setShowNextButton(true); // Enable the Next button
       setShouldFetchAnswer(true);
       
       if (!selectedOption && !isSubmitted) {
@@ -223,18 +205,17 @@ useEffect(() => {
     const formattedTimestamp = formatTimestamp(new Date());
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
+    setShowNextButton(true); // Enable the Next button after submission
 
     handleAnswerStageOneQuestion({
       contestant_id: user?.contestant_id,
       question_id: currentQuestion?.questions?.question_id,
       answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
       amount_staked: selectedAmount,
-      percentage_staked: selectedPercentage,
       timestamp: formattedTimestamp,
       question_start_time: formattedGameStartTime, // Add game start time
     },{
       onSuccess: () => {
-        // Mark as submitted
         // Add to attempted options
         setAttemptedOptions([
           ...attemptedOptions,
@@ -256,6 +237,7 @@ useEffect(() => {
     setTimeLeft(10);
     setShowNextButton(false);
     setShouldFetchAnswer(false);
+    setSelectedAmount(10000); // Reset to default amount
   };
 
   // Handle next question
@@ -282,21 +264,19 @@ useEffect(() => {
     const currentQuestion = selectedQuestions[currentQuestionIndex];
     const formattedTimestamp = formatTimestamp(new Date());
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
+    setIsSubmitted(true);
+    setShowNextButton(true); // Enable the Next button after auto-submission
 
     // Create submission data with "N" as the answer
     handleAnswerStageOneQuestion({
-      contestant_id: user?.contestant_id,
+      contestant_id: Number(user?.contestant_id),
       question_id: currentQuestion?.questions?.question_id,
       answer: "N", // "N" for No Answer
       amount_staked: selectedAmount,
-      percentage_staked: selectedPercentage,
       timestamp: formattedTimestamp,
       question_start_time: formattedGameStartTime, // Add game start time
     },{
       onSuccess: () => {
-        // Mark as submitted
-        setIsSubmitted(true);
-        
         // Add to attempted options with "N" option
         setAttemptedOptions([
           ...attemptedOptions,
@@ -334,16 +314,8 @@ useEffect(() => {
           <div>
             <HustleStages />
           </div>
-          <div className="w-full p-[1.4375rem] flex-col rounded-t-[1.75rem] flex justify-center items-center bg-[linear-gradient(to_right,_#2D0304,_#EE24B8,_#1E0227)] text-white">
-            <Trophy height={50} width={50} />
-            <div className="flex flex-col justify-center pt-1 items-center">
-              <p className="uppercase font-bold text-xs font-verdana text-white">
-                Stage 2 of 6
-              </p>
-              <p className="max-w-[100px] text-center mt-1 font-display font-bold text-xs text-white">
-                Hustle: Fashion Designer
-              </p>
-            </div>
+          <div className="pb-4 ">
+            <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>
           </div>
         </div>
 
@@ -400,7 +372,7 @@ useEffect(() => {
                 <div className="flex justify-between items-center">
                   <div>
                     <h2 className="text-[2.75rem] font-extrabold outline-text text-black">
-                      Stage 2: Prove your hustle
+                      Stage 1: Prove your hustle
                     </h2>
                     <p className="text-sm font-normal text-[#D5B9FF]">
                       Select minimum of 2 number to determine the trivia questions
@@ -438,7 +410,7 @@ useEffect(() => {
                 </div>
 
                 <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">
-                  <div className="flex  flex-col">
+                  <div className="flex flex-col">
                     {selectedQuestions?.map((contestant, idx: number) => (
                       <div className="flex gap-2 items-center" key={idx}>
                         <div className="">
@@ -466,7 +438,6 @@ useEffect(() => {
                             }
                             iconPosition={{y:33}}
                             iconSize={30}
-                            
                           />
                         </div>
                         <div className="flex items-center gap-2">
@@ -487,192 +458,192 @@ useEffect(() => {
                       </div>
                     ))}
                   </div>
-                 {isLoading ? <div className="flex justify-center items-center h-full w-full">
-  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-</div>:
-                  <div className="relative">
-                  <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4  px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
-                    <div className="">
-                      <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
-                        Question{" "}
-                        {
-                          selectedQuestions[currentQuestionIndex]
-                            ?.question_number || (currentQuestionIndex + 1)
-                        }
-                      </p>
+                  {isLoading ? (
+                    <div className="flex justify-center items-center h-full ">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                     </div>
-                    <div className="">
-                      <h2 className="text-white text-2xl text-center font-gilroyMedium font-extrabold">
-                        {
-                          selectedQuestions[currentQuestionIndex]?.questions?.question 
-                        }
-                      </h2>
-                    </div>
-                    <div className="flex justify-center items-center w-full gap-4">
-                      <div className="bg-[#011B0D] rounded-[12px] py-1 px-4 max-xl:max-w-[130px] w-full">
-                        <p
-                          className="text-[25px] text-white font-extrabold font- text-center"
-                          style={{
-                            WebkitTextStroke: "2px #04DA6A",
-                            textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
-                          }}
-                        >
-                          {
-                            selectedQuestions[currentQuestionIndex]?.questions?.question_booster 
-                          }{" "}
-                          <span
-                            className="text-base font-outfit font-normal text-[#04DA6A]"
-                            style={{
-                              WebkitTextStroke: "0px",
-                              textShadow: "none",
-                            }}
-                          >
-                            Booster
-                          </span>
-                        </p>
-                      </div>
-                      <div className="bg-[#011B0D] rounded-[12px] py-2 px-4 w-full">
-                        <p className="text-xs font-outfit font-normal text-[#04DA6A] ">
-                          Capital:{" "}
-                          <span
-                            className="text-lg text-white font-extrabold font-verdana text-center"
-                            style={{
-                              WebkitTextStroke: "1px #04DA6A",
-                              textShadow: "1px 2px 3px rgba(4, 218, 106, 0.4)",
-                            }}
-                          >
-                          ₦{addCommasToNumber(Number(selectedQuestions[currentQuestionIndex]?.hustle_reveal?.hustle_amount.toFixed(0)?.toLocaleString()))}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {selectedQuestions.length > 0 ? (
-                    <>
-                      <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
-                        {(
-                          [
-                            "option_a",
-                            "option_b",
-                            "option_c",
-                            "option_d",
-                          ] as OptionKey[]
-                        ).map((option, index) => {
-                          const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-                          const currentQuestions = selectedQuestions[currentQuestionIndex]?.questions || {};
-                          
-                          return (
-                            <button
-                              key={option}
-                              onClick={() => handleOptionSelect(option)}
-                              disabled={!timerActive || isSubmitted}
-                              className={cn(
-                                "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
-                                selectedOption === option &&
-                                  "bg-[#FCCE19] border-none text-[#745300]",
-                                (isSubmitted || !timerActive) && "opacity-70 cursor-not-allowed"
-                              )}
-                            >
-                              {optionLetter}:
-                              <span 
-                                className={`${selectedOption === option ? "text-white font-bold" : ""}`}
-                                style={{
-                                  marginLeft: "9px",
-                                  WebkitTextStroke:
-                                    selectedOption === option
-                                      ? "1px #C76000"
-                                      : "",
-                                }}
-                              >
-                                {" "}
-                                {currentQuestions[option]}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Range slider, Submit and Next buttons */}
-                      <div className="flex items-center gap-3 justify-between mt-7">
-                        <div className="flex justify-between items-center max-w-[250px] bg-[#011B0D] px-2 py-1 rounded-[40px]">
-                          <input
-                            ref={rangeRef}
-                            type="range"
-                            min="10"
-                            max="100"
-                            step="10"
-                            value={selectedPercentage}
-                            onChange={handleRangeChange}
-                            className="custom-range w-full"
-                            disabled={!timerActive || isSubmitted || timeLeft <= 0}
-                          />
-                          <div className="flex flex-col items-end ml-3">
-                            <p className=" text-xxs font-gilroyMedium text-[#04DA6A]" style={{ textShadow: "0px 1px 2px rgba(0, 0, 0, 0.8)" }}>
-                              ₦{selectedAmount.toLocaleString()}
-                            </p>
-                           
-                          </div>
+                  ) : (
+                    <div className="relative">
+                      <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
+                        <div className="">
+                          <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
+                            Question{" "}
+                            {
+                              selectedQuestions[currentQuestionIndex]
+                                ?.question_number || (currentQuestionIndex + 1)
+                            }
+                          </p>
                         </div>
                         <div className="">
-                        <p 
-                              className="text-white text-[1.75rem] font-gilroyBold font-bold" 
-                              style={{ 
-                                textShadow: "0px 0px 10px rgba(4, 218, 106, 0.5)",
-                                WebkitTextStroke: "1.4px #04DA6A"
+                          <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
+                            {
+                              selectedQuestions[currentQuestionIndex]?.questions?.question 
+                            }
+                          </h2>
+                        </div>
+                        <div className="flex justify-center items-center w-full gap-4">
+                          <div className="bg-[#011B0D] rounded-[12px] py-1 px-4 max-xl:max-w-[130px] w-full">
+                            <p
+                              className="text-[25px] text-white font-extrabold font- text-center"
+                              style={{
+                                WebkitTextStroke: "2px #04DA6A",
+                                textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
                               }}
                             >
-                              {selectedPercentage}%
+                              {
+                                selectedQuestions[currentQuestionIndex]?.questions?.question_booster 
+                              }{" "}
+                              <span
+                                className="text-base font-outfit font-normal text-[#04DA6A]"
+                                style={{
+                                  WebkitTextStroke: "0px",
+                                  textShadow: "none",
+                                }}
+                              >
+                                Booster
+                              </span>
                             </p>
+                          </div>
+                          <div className="bg-[#011B0D] rounded-[12px] py-2 px-4 w-full">
+                            <p className="text-xs font-outfit font-normal text-[#04DA6A] ">
+                              Capital:{" "}
+                              <span
+                                className="text-lg text-white font-extrabold font-verdana text-center"
+                                style={{
+                                  WebkitTextStroke: "1px #04DA6A",
+                                  textShadow: "1px 2px 3px rgba(4, 218, 106, 0.4)",
+                                }}
+                              >
+                              ₦{addCommasToNumber(Number(selectedQuestions[currentQuestionIndex]?.hustle_reveal?.hustle_amount.toFixed(0)?.toLocaleString()))}
+                              </span>
+                            </p>
+                          </div>
                         </div>
-
-                        {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
-                        {!isSubmitted && timeLeft > 0 && (
-                          <Button
-                            className="p-0 bg-transparent"
-                            onClick={handleSubmitAnswer}
-                            disabled={!timerActive || !selectedOption || !rangeAdjusted}
-                          >
-                            <GradientButton
-                              text="Submit"
-                              className={`uppercase ${(!timerActive || !selectedOption || !rangeAdjusted) ? 'opacity-50' : ''}`}
-                              width={130}
-                            />
-                          </Button>
-                        )}
-
-                        {/* Next/Finish button - only show after time elapses */}
-                        {showNextButton && (
-                          <Button
-                            className="p-0 bg-transparent"
-                            onClick={handleNextQuestion}
-                          >
-                            <GradientButton
-                              text={
-                                currentQuestionIndex === selectedQuestions.length - 1
-                                  ? "Finish"
-                                  : "Next"
-                              }
-                              className="uppercase"
-                              width={currentQuestionIndex === selectedQuestions.length - 1 ? 150 : 130}
-                              startColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#FFC125" : "#8EFE9B"}
-                              endColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#FF8A00" : "#03984A"}
-                              baseColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#C76000" : "#035D2E"}
-                            />
-                          </Button>
-                        )}
                       </div>
-                    </>
-                  ) : (
-                    <p className="text-white mt-4">Loading questions...</p>
+
+                      {selectedQuestions.length > 0 ? (
+                        <>
+                          <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
+                            {(
+                              [
+                                "option_a",
+                                "option_b",
+                                "option_c",
+                                "option_d",
+                              ] as OptionKey[]
+                            ).map((option, index) => {
+                              const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
+                              const currentQuestions = selectedQuestions[currentQuestionIndex]?.questions || {};
+                              
+                              return (
+                                <button
+                                  key={option}
+                                  onClick={() => handleOptionSelect(option)}
+                                  disabled={!timerActive || isSubmitted}
+                                  className={cn(
+                                    "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
+                                    selectedOption === option &&
+                                      "bg-[#FCCE19] border-none text-[#745300]",
+                                    (isSubmitted || !timerActive) && "opacity-70 cursor-not-allowed"
+                                  )}
+                                >
+                                  {optionLetter}:
+                                  <span 
+                                    className={`${selectedOption === option ? "text-white font-bold" : ""}`}
+                                    style={{
+                                      marginLeft: "9px",
+                                      WebkitTextStroke:
+                                        selectedOption === option
+                                          ? "1px #C76000"
+                                          : "",
+                                    }}
+                                  >
+                                    {" "}
+                                    {currentQuestions[option]}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Amount buttons, Submit and Next buttons */}
+                          <div className="flex items-center gap-1  mt-7">
+                            <div className="flex flex-1 items-center">
+                              <div className="flex gap-2">
+                                {amountOptions?.map((amount) => (
+                                  <Button
+                                    key={amount}
+                                    onClick={() => handleAmountSelect(amount)}
+                                    disabled={!timerActive || isSubmitted || timeLeft <= 0}
+                                    className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                      selectedAmount === amount
+                                        ? "bg-[#04DA6A] text-black"
+                                        : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
+                                    }
+                                     ${
+                                      !timerActive || isSubmitted || timeLeft <= 0
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : "hover:bg-[#035D2E] hover:text-white"
+                                    }
+                                    
+                                    `}
+                                  >
+                                    ₦{amount.toLocaleString()}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                            
+                           
+                            <div className="items-end justify-end">
+                            
+                             {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
+                             {!isSubmitted  && (
+                                <Button
+                                  className="p-0 bg-transparent"
+                                  onClick={handleSubmitAnswer}
+                                  disabled={!timerActive || !selectedOption || isSubmitted}
+                                >
+                                  <GradientButton
+                                    text="Submit"
+                                    className={`uppercase ${(!timerActive || !selectedOption) ? 'opacity-50' : ''}`}
+                                    width={130}
+                                  />
+                                </Button>
+                              )}
+
+                              {/* Next/Finish button - only show after time elapses */}
+                              {(showNextButton && !timeLeft) && (
+                                <Button
+                                  className="p-0 bg-transparent"
+                                  onClick={handleNextQuestion}
+                                >
+                                  <GradientButton
+                                    text={
+                                      currentQuestionIndex === selectedQuestions.length - 1
+                                        ? "Finish"
+                                        : "Next"
+                                    }
+                                    className="uppercase"
+                                    width={currentQuestionIndex === selectedQuestions.length - 1 ? 150 : 130}
+                                    startColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#FFC125" : "#8EFE9B"}
+                                    endColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#FF8A00" : "#03984A"}
+                                    baseColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#C76000" : "#035D2E"}
+                                  />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-white mt-4">Loading questions...</p>
+                      )}
+                    </div>
                   )}
-                </div>
-                 }
-                  <div className="">
+                  <div className="h-full w-full">
                     <FastestFingerResult 
                       resultArray={answerData} 
                       timeElapsed={timeLeft <= 0 || showNextButton}
-                      // Remove onStartTimer prop since we're handling it in the parent now
                     />
                   </div>
                 </div>

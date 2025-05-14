@@ -5,7 +5,6 @@ import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import Image from "next/image";
 import React, { useState } from "react";
-import KeepCapitalTab from "./InvestCapital";
 import HustleStages from "./HustleStages";
 import HustleSideBar from "./HustleSideBar";
 import HustleBottomCard from "./HustleBottomCard";
@@ -15,6 +14,8 @@ import QuestionScreen from "../stage2/QuestionScreen";
 import { tokenStorage } from "@/utils/auth";
 import { useGetHustleReveal } from "../../api/stage1/getHustleReveal";
 import { addCommasToNumber } from "@/utils";
+import GetReadyScreen from "../GetReadyScreen";
+import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 
 const Hustle = () => {
   const [ShowQuestionScreen, setShowQuestionScreen] = useState(false)
@@ -23,7 +24,7 @@ const Hustle = () => {
 
   const  contestant = data?.data?.find((contestant) => contestant.contestant_id === user?.contestant_id);
   if (ShowQuestionScreen) {
-    return <QuestionScreen />;
+    return <GetReadyScreen />;
   }
   return (
     <div className="grid grid-cols-[1fr_5fr_1fr] h-full w-full overflow-x-hidden ">
@@ -35,17 +36,9 @@ const Hustle = () => {
         <div>
           <HustleStages />
         </div>
-        <div className="w-full p-[1.4375rem] flex-col rounded-t-[1.75rem] flex justify-center items-center bg-[linear-gradient(to_right,_#2D0304,_#EE24B8,_#1E0227)] text-white">
-          <Trophy height={50} width={50} />
-          <div className="flex flex-col justify-center pt-1 items-center">
-            <p className="uppercase font-bold text-xs font-verdana text-white">
-              Stage 1 of 6
-            </p>
-            <p className="max-w-[100px] text-center mt-1 font-display font-bold text-xs text-white">
-              Hustle: Fashion Designer
-            </p>
+        <div className="pb-4 ">
+            <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>
           </div>
-        </div>
       </div>
 
       {/* Center Content */}

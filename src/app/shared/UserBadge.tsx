@@ -185,7 +185,7 @@ const UserBadge = ({
       <foreignObject x={35} y={height * 0.8 - 15} width={width - avatarSize - 60} height={30}>
         <div 
           className={cn(
-            "text-lg font-bold overflow-hidden text-ellipsis whitespace-nowrap",
+            "text-base font-bold overflow-hidden text-ellipsis whitespace-nowrap",
             isActive ? "text-white" : "text-[#AAAAAA]",
             amountClassName
           )}
