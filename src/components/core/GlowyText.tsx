@@ -9,7 +9,8 @@ interface GlowyStrokeTextProps {
   strokeWidth?: number
   textclassName?: string
   className?: string
-  glowIntensity?: "low" | "medium" | "high"
+  glowIntensity?: "none" | "low" | "medium" | "high"
+  truncate?: boolean
 }
 
 export function GlowyStrokeText({
@@ -20,7 +21,8 @@ export function GlowyStrokeText({
   strokeWidth = 1,
   glowIntensity = "medium",
   className,
-  textclassName
+  textclassName,
+  truncate
 }: GlowyStrokeTextProps) {
 
 
@@ -36,6 +38,7 @@ export function GlowyStrokeText({
 
     // Create multiple text-shadow layers with decreasing opacity
     const intensityMap = {
+      none: [0, 0, 0],
       low: [0.8, 0.4, 0.1],
       medium: [0.9, 0.7, 0.5, 0.3],
       high: [1, 0.9, 0.8, 0.6, 0.4, 0.2],
@@ -88,7 +91,7 @@ export function GlowyStrokeText({
 
       {/* Main text with stroke */}
       <div
-        className={cn("relative font-black tracking-wider", textclassName )}
+        className={cn("relative font-black tracking-wider", textclassName, truncate && "!truncate" )}
         style={{
           color: fillColor,
           textShadow: `${getTextStroke()}, ${getGlowShadows()}`,
