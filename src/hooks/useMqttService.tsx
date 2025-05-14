@@ -20,13 +20,6 @@ interface MQTTContextProps {
 
 const MQTTContext = createContext<MQTTContextProps | null>(null);
 
-const generateUUID = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
 
 interface MQTTProviderProps {
   children: ReactNode;
@@ -56,31 +49,12 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
     const connect = () => {
       console.log('MQTT connect URL:', connectUrl);
 
-      const storedUserId =
-        typeof window !== 'undefined'
-          ? sessionStorage.getItem('SALARY_4_LIFE_CHAT_UUID')
-          : null;
-      const storedComputerId =
-        typeof window !== 'undefined'
-          ? localStorage.getItem('SALARY_4_LIFE_COMPUTER_UUID')
-          : null;
-
-      const newUserId = storedUserId || generateUUID();
-      const newComputerId = storedComputerId || generateUUID();
+   
 
       topicsRef.current = {
         publisher: `test/topic`,
         subscriber: `test/topic`,
-      };
-
-      userIdRef.current = newUserId;
-
-      if (typeof window !== 'undefined' && !storedUserId) {
-        sessionStorage.setItem('SALARY_4_LIFE_CHAT_UUID', newUserId);
-      }
-      if (typeof window !== 'undefined' && !storedComputerId) {
-        localStorage.setItem('SALARY_4_LIFE_COMPUTER_UUID', newComputerId);
-      }
+      }; 
 
       mqttClient = mqtt.connect(connectUrl, {
         clientId: `mqtt_${Math.random().toString(16).slice(3)}`,
