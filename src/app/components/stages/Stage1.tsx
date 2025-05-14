@@ -86,17 +86,17 @@ const Stage1 = ({ onNext }: Props) => {
 
   // Function to handle all hustle picks received from socket
   const handleAllHustlePicks = useCallback((receivedMessage: any) => {
-    if (receivedMessage?.event === "all_hustle_pick" && 
-        receivedMessage?.response && 
-        Array.isArray(receivedMessage.response)) {
+    if (receivedMessage?.event === "receive_hustle_picks" && 
+        receivedMessage?.payload && 
+        Array.isArray(receivedMessage.payload)) {
       
-      console.log("Received all_hustle_pick data:", receivedMessage);
+      console.log("Received receive_hustle_picks data:", receivedMessage);
       
       // Extract all picks from other contestants
       const allOtherPicks: number[] = [];
       let myCurrentPicks: number[] = [];
       
-      receivedMessage.response.forEach((contestant: Response) => {
+      receivedMessage.payload.forEach((contestant: Response) => {
         if (contestant.contestant_id === user?.contestant_id) {
           // These are my picks
           myCurrentPicks = contestant.picks || [];
@@ -111,8 +111,8 @@ const Stage1 = ({ onNext }: Props) => {
       // Remove duplicates from other contestants' picks
       const uniqueOtherPicks = [...new Set(allOtherPicks)];
       
-      console.log("My picks from all_hustle_pick:", myCurrentPicks);
-      console.log("Other contestants' picks from all_hustle_pick:", uniqueOtherPicks);
+      console.log("My picks from receive_hustle_picks:", myCurrentPicks);
+      console.log("Other contestants' picks from receive_hustle_picks:", uniqueOtherPicks);
       
       // Update state
       setMyPicks(myCurrentPicks);
@@ -131,8 +131,6 @@ const Stage1 = ({ onNext }: Props) => {
     
     // CRITICAL: Validate that number is not already picked by others
     if (otherContestantsPicks.includes(num) && !myPicks.includes(num)) {
-      console.error("Cannot pick number that is already picked by another contestant:", num);
-      openErrorModalWithMessage("This number has already been selected by another contestant");
       return;
     }
     
@@ -339,38 +337,13 @@ const Stage1 = ({ onNext }: Props) => {
     return () => clearInterval(interval);
   }, [timeLeft, autoPicked, selectedNumbers.length, isConnected, user?.contestant_id, sendMessage, timerStarted]);
 
-  // Check if a number is selected by the current user
-  const isSelected = (num: number): boolean => {
-    return myPicks.includes(num);
-  };
-
+ 
   // Function to handle number click
   const handleNumberClick = async (num: number): Promise<void> => {
     console.log(`Handling click for number ${num}`);
     
     // Don't allow clicks if timer hasn't started yet
-    if (!timerStarted) {
-      console.log("Click ignored: Timer not started yet");
-      return;
-    }
     
-    // Check if number is picked by other contestants
-    if (otherContestantsPicks.includes(num)) {
-      openErrorModalWithMessage("This number has already been selected by another contestant");
-      return;
-    }
-    
-    // Allow clicking own selections even if time elapsed
-    if (timeLeft <= 0 && !myPicks.includes(num)) {
-      console.log("Click ignored: Time elapsed and number not selected");
-      return;
-    }
-    
-    // Don't allow selecting more than 5 numbers
-    if (!myPicks.includes(num) && myPicks.length >= 5) {
-      console.log("Click ignored: Already selected 5 numbers");
-      return;
-    }
 
     console.log("Click allowed, proceeding with selection");
     
@@ -378,7 +351,6 @@ const Stage1 = ({ onNext }: Props) => {
       // Send to backend immediately
       await sendPickedNumbers(num);
     } catch (error) {
-      console.error("Error updating picks:", error);
       const errorMessage = formatAxiosErrorMessage(error as AxiosError);
       openErrorModalWithMessage(String(errorMessage));
     }
@@ -442,7 +414,7 @@ const Stage1 = ({ onNext }: Props) => {
       }
     } catch (error) {
       console.error("Error auto-selecting numbers:", error);
-      openErrorModalWithMessage("Failed to auto-select numbers");
+      // openErrorModalWithMessage("Failed to auto-select numbers");
       
       // Request fresh data on error
       // requestAllHustlePicks();
@@ -579,9 +551,7 @@ const Stage1 = ({ onNext }: Props) => {
                         onClick={() => {
                           if (!isDisabled || isMyPick) {
                             handleNumberClick(num);
-                          } else if (isOthersPick) {
-                            openErrorModalWithMessage("This number has already been selected by another contestant");
-                          }
+                          } 
                         }}
                         className={`relative cursor-pointer transition-transform ${
                           isLoading

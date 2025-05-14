@@ -3,37 +3,26 @@ import type React from "react"
 
 interface GlowyStrokeTextProps {
   children: React.ReactNode
-  size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl"
   glowColor?: string
   fillColor?: string
   strokeColor?: string
   strokeWidth?: number
+  textclassName?: string
   className?: string
   glowIntensity?: "low" | "medium" | "high"
 }
 
 export function GlowyStrokeText({
-  children,
-  size = "xl",
+  children, 
   glowColor = "#D91FFF",
   fillColor = "#FFFFFFB0",
   strokeColor = "#D91FFF",
   strokeWidth = 1,
   glowIntensity = "medium",
   className,
+  textclassName
 }: GlowyStrokeTextProps) {
-  // Map size to font size classes
-  const sizeClasses = {
-    xs: "text-xs",
-    sm: "text-sm",
-    md: "text-md",
-    lg: "text-lg",
-    xl: "text-xl",
-    "2xl": "text-2xl",
-    "3xl": "text-3xl",
-    "4xl": "text-4xl",
-    "5xl": "text-5xl",
-  }
+
 
   // Calculate glow shadow values based on intensity
   const getGlowShadows = () => {
@@ -87,7 +76,7 @@ export function GlowyStrokeText({
     <div className={cn("relative inline-block", className)}>
       {/* Background glow effect */}
       <div
-        className={cn("absolute inset-0 blur-sm opacity-70", sizeClasses[size])}
+        className={cn("absolute inset-0 blur-sm opacity-70", textclassName)}
         style={{
           color: glowColor,
           textShadow: getGlowShadows(),
@@ -99,7 +88,7 @@ export function GlowyStrokeText({
 
       {/* Main text with stroke */}
       <div
-        className={cn("relative font-black tracking-wider", sizeClasses[size])}
+        className={cn("relative font-black tracking-wider", textclassName )}
         style={{
           color: fillColor,
           textShadow: `${getTextStroke()}, ${getGlowShadows()}`,
