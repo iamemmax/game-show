@@ -130,8 +130,8 @@ export default function GameDetails() {
                     <div className="flex items-center gap-3">
                         <Trophy className="h-8 w-8 text-primary" />
                         <GlowyStrokeText
-                            size="4xl"
-                            strokeWidth={0.1}
+                            textclassName="text-4xl"
+                            strokeWidth={2}
                         >
                             Game Episode {gameId}
                         </GlowyStrokeText>
