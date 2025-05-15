@@ -11,10 +11,34 @@ import HustleStages from "./hustle/HustleStages";
 import HustleSideBar from "./hustle/HustleSideBar";
 import QuestionScreen from "./stage2/QuestionScreen";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
+import { useMQTT } from "@/hooks/useMqttService";
 
 const GetReadyScreen = () => {
+  const { isConnected, onMessage } = useMQTT();
+  const [showQuestionScreen, setshowQuestionScreen] = useState(false)
+  useEffect(() => {
+    if (isConnected) {
+      const handler = (receivedMessage: any) => {
+        console.log("Main page received message:", receivedMessage);
+        
+        // Handle stage transition events
+        if (receivedMessage?.event === "game_s1_question_reveal_1") {
+          // Proceed to the next stage
+          setshowQuestionScreen(true);
+        }
+      };
+      
+      // Register the message handler
+      onMessage(handler);
+      
+      // Clean up function to remove the handler when component unmounts
+      return () => {
+        onMessage(null);
+      };
+    }
+  }, [isConnected, onMessage]);
 
-const [showQuestionScreen, setshowQuestionScreen] = useState(false)
+
  
 
 if(showQuestionScreen){
@@ -114,7 +138,7 @@ if(showQuestionScreen){
     <li><span className="text-[#d91fff] font-semibold ">Bottom 2 contestants </span> will be eliminated after this round.</li>
   </ul>
 
-  <div className="mt-4">
+  {/* <div className="mt-4">
     <Button
       className="text-white font-bold py-3 px-10 rounded-lg transition duration-200"
       style={{
@@ -125,7 +149,7 @@ if(showQuestionScreen){
     >
       Proceed
     </Button>
-  </div>
+  </div> */}
 </div>
 
 

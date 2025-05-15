@@ -24,6 +24,7 @@ import { AxiosError } from "axios";
 import { useGetQuestionAnswer } from "../../api/stage1/question/getQuestionAnswer";
 import StageOneTally from "../hustle/StageOneTally";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
+import { useMQTT } from "@/hooks/useMqttService";
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -90,6 +91,7 @@ const QuestionScreen = () => {
       openErrorModalWithMessage,
       errorModalMessage,
     } = useErrorModalState();
+  const { isConnected, onMessage } = useMQTT();
   // Get user from storage
   const user = tokenStorage.getUser();
 
@@ -298,7 +300,41 @@ const QuestionScreen = () => {
     setTimeLeft(10); // Reset timer to 10 seconds
   };
 
-
+  // Add useEffect for MQTT message handling
+  useEffect(() => {
+    if (isConnected) {
+      const handler = (receivedMessage: any) => {
+        console.log("Question screen received message:", receivedMessage);
+        
+        // Handle question reveal events (game_s1_question_reveal_1 to game_s1_question_reveal_12)
+        if (receivedMessage?.event && receivedMessage.event.startsWith("game_s1_question_reveal_")) {
+          const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
+          if (!isNaN(questionNumber) && questionNumber >= 0 && questionNumber < selectedQuestions.length) {
+            setCurrentQuestionIndex(questionNumber);
+            setSelectedOption(null);
+            setIsSubmitted(false);
+            resetTimerState();
+          }
+        }
+        
+        // Handle timer start events (game_s1_timer_start_1 to game_s1_timer_start_12)
+        if (receivedMessage?.event && receivedMessage.event.startsWith("game_s1_timer_start_")) {
+          const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
+          if (!isNaN(questionNumber) && currentQuestionIndex === questionNumber) {
+            handleStartTimer();
+          }
+        }
+      };
+      
+      // Register the message handler
+      onMessage(handler);
+      
+      // Clean up function to remove the handler when component unmounts
+      return () => {
+        onMessage(null);
+      };
+    }
+  }, [isConnected, onMessage, currentQuestionIndex, selectedQuestions.length]);
   
   return (
     <>
@@ -380,7 +416,7 @@ const QuestionScreen = () => {
                     </p>
                   </div>
 
-                 {timerActive ? (
+                 {timerActive && (
                    <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
                      <span
                        className="text-[20px] font-extrabold font-verdana text-white"
@@ -392,21 +428,10 @@ const QuestionScreen = () => {
                        {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
                      </span>
                    </div>
-                 ) : (
-                   <Button
-                     className="p-0 bg-transparent"
-                     onClick={handleStartTimer}
-                   >
-                     <GradientButton
-                       text="Start Timer"
-                       className="uppercase"
-                       width={150}
-                       startColor="#8EFE9B"
-                       endColor="#03984A"
-                       baseColor="#035D2E"
-                     />
-                   </Button>
-                 )}
+                 ) 
+                
+                 
+                 }
                 </div>
 
                 <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">

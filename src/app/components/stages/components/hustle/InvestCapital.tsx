@@ -72,9 +72,9 @@ const InvestCapital = ({setShowQuestionScreen,hustleReveal}:Prop) => {
     </div>
 
     <div className="mt-2 flex w-full justify-center py-2 items-center">
-      <Button className="p-0 bg-transparent" onClick={()=>setShowQuestionScreen(true)}>
+      {/* <Button className="p-0 bg-transparent" onClick={()=>setShowQuestionScreen(true)}>
         <GradientButton text="invest" className="uppercase" height={35}/>
-      </Button>
+      </Button> */}
     </div>
     </div>
   );
