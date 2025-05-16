@@ -8,6 +8,7 @@ import QuestionScreen from "./components/stages/components/hustle/QuestionScreen
 import { useMQTT } from "@/hooks/useMqttService";
 import { tokenStorage } from "@/utils/auth";
 import StageOneTally from "./components/stages/components/hustle/StageOneTally";
+import QuestionTwoScreen from "./components/stages/components/stage2/QuestionTwoScreen";
 
 export interface resetprop {
   email: string;
@@ -39,8 +40,10 @@ const HomePage = () => {
           transition={{ duration: 0.4 }}
           variants={pageVariants}
         >
-          <Stage1
+          {/* <Stage1
             onNext={() => setStep(2)}
+          /> */}
+          <QuestionTwoScreen
           />
         </motion.div>
       )}

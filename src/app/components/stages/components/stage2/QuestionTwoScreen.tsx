@@ -27,6 +27,9 @@ import HustleStages from "../hustle/HustleStages";
 import StageOneTally from "../hustle/StageOneTally";
 import { processEliminatedContestants } from "@/utils/contestants";
 import { useGetWalletBalance } from "../../api/stage1/getbalance";
+import { useGetAllState2Questions } from "../../api/stage2/getQuestion2";
+import { useAnswerStageTwoQuestion } from "../../api/stage2/answerStage2Question";
+import { useGetQuestionTwoAnswer } from "../../api/stage2/getQuestion2Answer";
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -36,19 +39,6 @@ interface AttemptedOption {
 // Add type for option keys
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
 
-// Add helper function to convert option_x to letter A-D
-const getOptionLetter = (option: OptionKey | null): string => {
-  if (!option) return "";
-
-  // If the option is already in the format "option_x"
-  if (option.startsWith("option_")) {
-    // Extract the last character and convert to uppercase
-    return option.charAt(option.length - 1).toUpperCase();
-  }
-
-  // If the option is already a letter, return it as is
-  return option.toUpperCase();
-};
 
 /**
  * Converts option format (e.g., "option_a") to letter format (e.g., "A")
@@ -101,8 +91,9 @@ const QuestionTwoScreen = () => {
   const { data: balanceData } = useGetWalletBalance(
     user?.game_episode as number
   );
-
-  const { data: questionData, isLoading } = useGetAllHustleQuestions(
+  
+  // Get stage 2 questions
+  const { data: questionData, isLoading } = useGetAllState2Questions(
     user?.game_episode as number
   );
 
@@ -118,68 +109,39 @@ const QuestionTwoScreen = () => {
   const [timerActive, setTimerActive] = useState(false);
   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
 
-  // Array of available amounts to stake
-
   // Initialize with the question array data
   const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
 
-  // Process questions to remove those from eliminated contestants
+  // Load questions when data is available
   useEffect(() => {
-    if (
-      Array.isArray(questionData?.data?.hustle_questions) && 
-      balanceData?.data?.balances
-    ) {
-      // First, get the IDs of non-eliminated contestants (top performers)
-      const topContestants = processEliminatedContestants(
-        balanceData.data.balances,
-        2, // Eliminate 2 contestants
-        true // Remove them from the array
-      ).map(contestant => contestant.contestant_id);
+    if (questionData?.questions && questionData.questions.length > 0) {
+      console.log("Stage 2 questions loaded:", questionData.questions);
       
+      // Map the questions to the format expected by the component
+      const mappedQuestions = questionData.questions.map((question, index) => ({
+        questions: {
+          ...question,
+          question_id: question.question_id,
+          question: question.question,
+          option_a: question.option_a,
+          option_b: question.option_b,
+          option_c: question.option_c,
+          option_d: question.option_d,
+          correct_option: question.correct_option
+        },
+        question_number: question.question_id, // Use question_id instead of index
+        hustle_reveal: {
+          hustle_amount: 10000, // Default amount for stage 2
+        },
+        contestant: {
+          contestant_id: user?.contestant_id,
+          contestant_name: user?.name || "Contestant",
+        }
+      }));
       
-      // Filter questions to only include those from non-eliminated contestants
-      const filteredQuestions = questionData.data.hustle_questions.filter(
-        question => topContestants.includes(question.contestant?.contestant_id)
-      );
-      
-      
-      // Sort the filtered questions by hustle number
-      const sortedData = [...filteredQuestions].sort((a, b) => {
-        // Get hustle numbers with fallback to Infinity for missing values
-        const hustleNumA = a.hustle_reveal?.hustle_number;
-        const hustleNumB = b.hustle_reveal?.hustle_number;
-
-        // Convert both values to numbers to ensure type-safe comparison
-        const numA =
-          typeof hustleNumA === "number"
-            ? hustleNumA
-            : typeof hustleNumA === "string"
-              ? parseInt(hustleNumA, 10)
-              : Infinity;
-
-        const numB =
-          typeof hustleNumB === "number"
-            ? hustleNumB
-            : typeof hustleNumB === "string"
-              ? parseInt(hustleNumB, 10)
-              : Infinity;
-
-        // Now we can safely perform numeric subtraction
-        return numA - numB;
-      });
-
-      // Debug logs
-      console.log(
-        "Sorted data by hustle_number:",
-        sortedData.map(
-          (q) =>
-            `${q.hustle_reveal?.hustle_name}: ${q.hustle_reveal?.hustle_number}`
-        )
-      );
-
-      setSelectedQuestions(sortedData);
-    } 
-  }, [questionData, balanceData]);
+      setSelectedQuestions(mappedQuestions);
+    }
+  }, [questionData, user]);
 
   useEffect(() => {
     // Only initialize game start time, but don't start the timer
@@ -222,9 +184,9 @@ const QuestionTwoScreen = () => {
     }
   };
 
-  const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
+  const { mutate: handleAnswerStageTwoQuestion } = useAnswerStageTwoQuestion();
   // Handle submit answer
-  const { data: answerData } = useGetQuestionAnswer(
+  const { data: answerData } = useGetQuestionTwoAnswer(
     shouldFetchAnswer
       ? (selectedQuestions[currentQuestionIndex]?.questions
           ?.question_id as number)
@@ -240,12 +202,11 @@ const QuestionTwoScreen = () => {
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after submission
 
-    handleAnswerStageOneQuestion(
+    handleAnswerStageTwoQuestion(
       {
         contestant_id: user?.contestant_id,
         question_id: currentQuestion?.questions?.question_id,
         answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
-        amount_staked: selectedAmount,
         timestamp: formattedTimestamp,
         question_start_time: formattedGameStartTime, // Add game start time
       },
@@ -290,12 +251,11 @@ const QuestionTwoScreen = () => {
     setShowNextButton(true); // Enable the Next button after auto-submission
 
     // Create submission data with "N" as the answer
-    handleAnswerStageOneQuestion(
+    handleAnswerStageTwoQuestion(
       {
         contestant_id: Number(user?.contestant_id),
         question_id: currentQuestion?.questions?.question_id,
         answer: "N", // "N" for No Answer
-        amount_staked: selectedAmount,
         timestamp: formattedTimestamp,
         question_start_time: formattedGameStartTime, // Add game start time
       },
@@ -334,14 +294,26 @@ const QuestionTwoScreen = () => {
           receivedMessage?.event &&
           receivedMessage.event.startsWith("game_s2_question_reveal_")
         ) {
-          const questionNumber =
-            parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
+          const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
           if (
             !isNaN(questionNumber) &&
             questionNumber >= 0 &&
             questionNumber < selectedQuestions.length
           ) {
-            setCurrentQuestionIndex(questionNumber);
+          
+            
+            // Find the question with the matching question_id
+            const questionIndex = selectedQuestions.findIndex(
+              (q) => q.question_number === questionNumber + 1
+            );
+            
+            if (questionIndex !== -1) {
+              setCurrentQuestionIndex(questionIndex);
+            } else {
+              // If not found, use the index directly
+              setCurrentQuestionIndex(questionNumber);
+            }
+            
             setSelectedOption(null);
             setIsSubmitted(false);
             resetTimerState();
@@ -353,20 +325,26 @@ const QuestionTwoScreen = () => {
           receivedMessage?.event &&
           receivedMessage.event.startsWith("game_s2_timer_start_")
         ) {
-          const questionNumber =
-            parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
+          const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
+          
+          // Find the question with the matching question_id
+          const questionIndex = selectedQuestions.findIndex(
+            (q) => q.question_number === questionNumber + 1
+          );
+          
           if (
             !isNaN(questionNumber) &&
-            currentQuestionIndex === questionNumber
+            ((questionIndex !== -1 && currentQuestionIndex === questionIndex) ||
+             (questionIndex === -1 && currentQuestionIndex === questionNumber))
           ) {
+            console.log(`Starting timer for question ${questionNumber + 1}`);
             handleStartTimer();
           }
         }
 
         if (receivedMessage?.event === "game_s2_results_reveal") {
           // Proceed to the next stage
-          console.log(receivedMessage?.event);
-
+          console.log("Showing stage 2 results");
           setAllQuestionsCompleted(true);
         }
       };
@@ -379,7 +357,7 @@ const QuestionTwoScreen = () => {
         onMessage(null);
       };
     }
-  }, [isConnected, onMessage, currentQuestionIndex, selectedQuestions.length]);
+  }, [isConnected, onMessage, currentQuestionIndex, selectedQuestions]);
 
   return (
     <>
@@ -484,7 +462,7 @@ const QuestionTwoScreen = () => {
                   </div>
 
                   <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">
-                    <div className="flex flex-col">
+                    <div className="flex gap-2 flex-col">
                       {selectedQuestions?.map((contestant, idx: number) => (
                         <div className="flex gap-2 items-center" key={idx}>
                           <div className="">
@@ -493,7 +471,7 @@ const QuestionTwoScreen = () => {
                                 isQuestionAttempted(idx) ? (
                                   <CheckIcon size={160} />
                                 ) : (
-                                  contestant?.hustle_reveal?.hustle_number
+                                  contestant?.question_number
                                 )
                               }
                               textColor={
@@ -510,7 +488,7 @@ const QuestionTwoScreen = () => {
                                     ? "#04DA6A"
                                     : "black"
                               }
-                              width={40}
+                              width={45}
                               height={45}
                               active={
                                 currentQuestionIndex === idx ||
@@ -520,38 +498,7 @@ const QuestionTwoScreen = () => {
                               iconSize={30}
                             />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2">
-                              <div className="h-[1.3rem] w-[1.3rem]  relative">
-                                <Image
-                                  alt="User avatar"
-                                  src={
-                                    contestantImages[idx] ||
-                                    "/images/userImage.png"
-                                  }
-                                  fill
-                                  className="object-cover rounded-full"
-                                />
-                              </div>
-                             
-
-
-<GlowyStrokeText
-                                strokeWidth={3}
-                                strokeColor="#7E3CE0"
-                                glowColor="#04DA6A"
-                                textclassName="text-xs  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
-                                fillColor="#fff"
-                                glowIntensity={"none"}
-                              >
-                               {
-                                  contestant?.contestant?.contestant_name?.split(
-                                    " "
-                                  )[0]
-                                }
-                              </GlowyStrokeText>
-                            </div>
-                          </div>
+                         
                         </div>
                       ))}
                     </div>
@@ -564,21 +511,16 @@ const QuestionTwoScreen = () => {
                         <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
                           <div className="">
                             <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
-                              Question{" "}
-                              {selectedQuestions[currentQuestionIndex]
-                                ?.question_number || currentQuestionIndex + 1}
+                              Question {currentQuestionIndex + 1}
                             </p>
                           </div>
                           <div className="">
                             <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                              {
-                                selectedQuestions[currentQuestionIndex]
-                                  ?.questions?.question
-                              }
+                              {selectedQuestions[currentQuestionIndex]?.questions?.question || "Loading question..."}
                             </h2>
                           </div>
                           <div className="flex justify-center items-center w-full gap-4">
-                            <div className="bg-[#011B0D] flex justify-center items-center flex-col  rounded-[12px] py-2 px-4 w-full">
+                            <div className="bg-[#011B0D] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
                               <p className="text-sm font-outfit font-normal text-[#04DA6A] ">
                                 Win amount
                               </p>
@@ -586,18 +528,16 @@ const QuestionTwoScreen = () => {
                                 strokeWidth={1}
                                 strokeColor="#04DA6A"
                                 glowColor="#04DA6A"
-                                textclassName="text-[20px]  text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
+                                textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
                                 fillColor="#fff"
                                 glowIntensity={"none"}
                               >
                                 ₦
                                 {addCommasToNumber(
                                   Number(
-                                    selectedQuestions[
-                                      currentQuestionIndex
-                                    ]?.hustle_reveal?.hustle_amount
-                                      .toFixed(0)
-                                      ?.toLocaleString()
+                                    balanceData?.data?.balances?.find(
+                                      (balance) => balance.contestant_id === user?.contestant_id
+                                    )?.balance || 0
                                   )
                                 )}
                               </GlowyStrokeText>
@@ -612,17 +552,13 @@ const QuestionTwoScreen = () => {
                                 strokeColor="#04DA6A"
                                 glowColor="#04DA6A"
                                 glowIntensity="none"
-                                textclassName="text-[20px]  text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
+                                textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
                                 fillColor="#fff"
                               >
                                 ₦
                                 {addCommasToNumber(
                                   Number(
-                                    selectedQuestions[
-                                      currentQuestionIndex
-                                    ]?.hustle_reveal?.hustle_amount
-                                      .toFixed(0)
-                                      ?.toLocaleString()
+                                    selectedQuestions[currentQuestionIndex]?.hustle_reveal?.hustle_amount || 10000
                                   )
                                 )}
                               </GlowyStrokeText>
