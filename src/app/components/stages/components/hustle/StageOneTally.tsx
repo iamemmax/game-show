@@ -12,43 +12,115 @@ import Image from "next/image";
 import StageTallyCard from "@/app/shared/StageTallyCard";
 import { addCommasToNumber } from "@/utils";
 import { cn } from "@/utils/classNames";
-import { Button } from "@/components/core";
-import ProveHustle from "../stage2/ProveHustle";
+import { Button, GlowyStrokeText } from "@/components/core";
+import ProveHustle from "./ProveHustle";
 import { tokenStorage } from "@/utils/auth";
 import { useGetWalletBalance } from "../../api/stage1/getbalance";
 import { contestantImages } from "../mocks/contestantImages";
+import Stage2GetReadyPage from "../stage2/Stage2GetReadyPage";
+import { useMQTT } from "@/hooks/useMqttService";
+import { processEliminatedContestants } from "@/utils/contestants";
 
-const StageOneTally = () => {
+interface StageOneTallyProps {
+  eliminationCount?: number;
+  removeCount?: number;
+}
+
+const StageOneTally = ({ 
+  eliminationCount = 2,
+  removeCount = 0 
+}: StageOneTallyProps) => {
+  const borderArray = [
+    "#7E3CE0",
+    "#04DA6A",
+    "#FF7D01",
+    "#AE0F69",
+    "#E5AA18",
+    "##9E5CFF",
+  ];
+  const { isConnected, onMessage } = useMQTT();
   const [goToStage2, setGoToStage2] = useState(false);
+  const [goToStage3, setGoToStage3] = useState(false);
   const user = tokenStorage.getUser();
   const { data: dataBalance, isLoading } = useGetWalletBalance(user?.game_episode as number);
   const [processedBalances, setProcessedBalances] = useState<any[]>([]);
   
-  // Process balances to mark last two as eliminated
+  // Process balances to remove lowest contestants
   useEffect(() => {
     if (dataBalance?.data?.balances) {
-      // Sort balances by amount (descending)
+      // First, sort balances by amount (descending)
       const sortedBalances = [...dataBalance.data.balances].sort(
         (a, b) => parseFloat(String(b.balance)) - parseFloat(String(a.balance))
       );
       
-      // Mark the last two contestants as eliminated
-      const markedBalances = sortedBalances.map((balance, index) => ({
-        ...balance,
-        isEliminated: index >= sortedBalances.length - 2 // Last two are eliminated
-      }));
+      // If removeCount is specified, remove the lowest contestants
+      let filteredBalances = sortedBalances;
+      if (removeCount > 0) {
+        filteredBalances = sortedBalances.slice(
+          0, 
+          Math.max(0, sortedBalances.length - removeCount)
+        );
+      }
       
-      setProcessedBalances(markedBalances);
-      console.log("Processed balances:", markedBalances); // Debug log
+      // If eliminated is specified, mark those contestants as eliminated
+      if (eliminationCount > 0) {
+        filteredBalances = filteredBalances.map((balance, index) => ({
+          ...balance,
+          isEliminated: index >= filteredBalances.length - eliminationCount
+        }));
+      }
+      
+      setProcessedBalances(filteredBalances);
+      
+      console.log(`Processed balances (removed ${removeCount}, marked ${eliminationCount} as eliminated):`, 
+        filteredBalances.length);
     }
-  }, [dataBalance]);
+  }, [dataBalance, eliminationCount, removeCount]);
 
+  // Dynamic tally array based on elimination count
   const tallyArray = [
-    "PRO HUSTLER", "SUPER HUSTLER", "MINI HUSTLER", "MICRO HUSTLER", "ELIMINATED", "ELIMINATED", ""
+    "PRO HUSTLER", "SUPER HUSTLER", "MINI HUSTLER", "MICRO HUSTLER"
   ];
+  
+  // Add "ELIMINATED" labels based on elimination count
+  for (let i = 0; i < eliminationCount; i++) {
+    tallyArray.push("ELIMINATED");
+  }
+  
+  // Add empty string for any remaining positions
+  while (tallyArray.length < 7) {
+    tallyArray.push("");
+  }
+
+
+  useEffect(() => {
+    if (isConnected) {
+      const handler = (receivedMessage: any) => {
+        console.log("Main page received message:", receivedMessage);
+        
+        // Handle stage transition events
+        if (receivedMessage?.event === "game_s2_prep") {
+          // Proceed to the next stage
+          setGoToStage2(true);
+        }
+        if (receivedMessage?.event === "game_s3_prep") {
+          // Proceed to the next stage
+          setGoToStage3(true);
+        }
+      };
+      
+      // Register the message handler
+      onMessage(handler);
+      
+      // Clean up function to remove the handler when component unmounts
+      return () => {
+        onMessage(null);
+      };
+    }
+  }, [isConnected, onMessage]);
 
   if (goToStage2) {
-    return <ProveHustle />;
+    return <Stage2GetReadyPage />;
   }
   
   return (
@@ -96,7 +168,7 @@ const StageOneTally = () => {
           </div>
 
           <div
-            className="relative w-full py-[1rem] 2xl:py-[2.5rem] max-xl:max-w-[40.5rem] 2xl:max-w-[60rem] px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
+            className={`relative w-full ${processedBalances?.length <=4 ? "py-[3rem]":"py-[1rem]"}   2xl:py-[2.5rem] max-xl:max-w-[40.5rem] 2xl:max-w-[60rem] px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden`}
             style={{
               backdropFilter: "blur(74px)",
               WebkitBackdropFilter: "blur(74px)", // For Safari support
@@ -131,17 +203,29 @@ const StageOneTally = () => {
             </div>
 
             {/* Content container - increased border width from 5px to 8px for bolder appearance */}
-            <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
+            <div className="absolute inset-[8px] bg-[#13051E]  rounded-[.675rem]" />
             <div className="relative">
               <div className="flex justify-center flex-col items-center">
                 <div>
-                  <h2 className="text-[2.5rem] text-center font-extrabold outline-text text-black">
+                  {/* <h2 className="text-[2.5rem] text-center font-extrabold outline-text text-black">
                     Stage tally
-                  </h2>
+                  </h2> */}
+
+
+                  <GlowyStrokeText
+                                        strokeWidth={2}
+                                        strokeColor="#D91FFF"
+                                        // glowColor="transparent"
+                                        glowIntensity="low"
+                                        textclassName="text-[2.5rem] font-extrabold font-display"
+                                        fillColor="#000"
+                                      >
+                                         Stage tally
+                                      </GlowyStrokeText>
                 </div>
 
                 <motion.div
-                  className="flex items-center gap-1 2xl:gap-2 flex-col"
+                  className={`flex items-center gap-1 ${processedBalances?.length <=4 ? "gap-3":"gap-1"} 2xl:gap-2 flex-col`}
                   initial="hidden"
                   animate="visible"
                   variants={{
@@ -168,7 +252,7 @@ const StageOneTally = () => {
                       }}
                       className={`flex justify-center gap-[.6875rem] 2xl:gap-1 items-center ${tally.isEliminated ? "opacity-50" : ""}`}
                     >
-                      <div className="h-[3.125rem] grid grid-cols-[1fr_3fr] 2xl:grid-cols-[1fr_2fr] w-[7.8125rem] bg-[#1C0240] 2xl:h-[3.8rem] p-2 border border-[#7E3CE0] rounded-[.4594rem]">
+                      <div className={`${cn(`h-[3.125rem] grid grid-cols-[1fr_3fr] 2xl:grid-cols-[1fr_2fr] w-[7.8125rem] bg-[#1C0240] 2xl:h-[3.8rem] p-2 border-[.0531rem] border-opacity-55 border-[${borderArray[idx]}] rounded-[.4594rem]`)} `}>
                         <div className="shrink-0">
                           <Image
                             alt=""
@@ -216,7 +300,6 @@ const StageOneTally = () => {
             </div>
           </div>
         </div>
-        <Button className="bg-red-700 text-white" onClick={() => setGoToStage2(true)}>Proceed</Button>
 
         {/* Bottom Card (sticks to bottom) */}
         <div className="w-full max-w-[35rem] lg:max-w-[46.5rem] 2xl:max-w-[80rem] mt-2">
@@ -226,7 +309,11 @@ const StageOneTally = () => {
 
       {/* Right Sidebar */}
       <div>
-        <HustleSideBar showHustlerCard={true} />
+        <HustleSideBar 
+          showHustlerCard={true} 
+          eliminated={eliminationCount}
+         
+        />
       </div>
     </div>
   );

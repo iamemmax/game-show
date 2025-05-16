@@ -1,19 +1,20 @@
 "use client"
 import Logo from "@/app/icons/Logo";
-import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import React, { useEffect, useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
-import HustleStages from "./hustle/HustleStages";
-import HustleSideBar from "./hustle/HustleSideBar";
-import QuestionScreen from "./hustle/QuestionScreen";
+
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
+import HustleStages from "../hustle/HustleStages";
+import HustleSideBar from "../hustle/HustleSideBar";
+import QuestionTwoScreen from "../stage2/QuestionTwoScreen";
 
-const GetReadyScreen = () => {
+const Stage3GetReadyPage = () => {
   const { isConnected, onMessage } = useMQTT();
-  const [showQuestionScreen, setshowQuestionScreen] = useState(false);
+  const [showQuestionScreen, setshowQuestionScreen] = useState(false)
+
   
   // Animation variants
   const containerVariants = {
@@ -56,7 +57,7 @@ const GetReadyScreen = () => {
         console.log("Main page received message:", receivedMessage);
         
         // Handle stage transition events
-        if (receivedMessage?.event === "game_s1_question_reveal_1") {
+        if (receivedMessage?.event === "game_s2_question_reveal_1") {
           // Proceed to the next stage
           setshowQuestionScreen(true);
         }
@@ -72,12 +73,16 @@ const GetReadyScreen = () => {
     }
   }, [isConnected, onMessage]);
 
-  if(showQuestionScreen){
-    return <QuestionScreen/>
-  }
+
+ 
+
+if(showQuestionScreen){
+    return <QuestionTwoScreen/>
+
+}
   
   return (
-    <AnimatePresence mode="wait">
+     <AnimatePresence mode="wait">
       <motion.div
         key="getReadyScreen"
         initial="hidden"
@@ -175,8 +180,10 @@ const GetReadyScreen = () => {
                       repeatType: "reverse"
                     }}
                   >
-                    Get Ready
+                    Get Ready for stage 2
                   </motion.h2>
+
+                  
 
                   <motion.p 
                     className="text-sm font-outfit text-white max-w-2xl"
@@ -222,12 +229,12 @@ const GetReadyScreen = () => {
 
         {/* Right Sidebar */}
         <motion.div variants={itemVariants}>
-          <HustleSideBar showEmptyCard={false} showHustlerCard={true} />
+          <HustleSideBar showEmptyCard={false} showHustlerCard={true} removeCount={2} eliminated={2} />
         </motion.div>
       </motion.div>
     </AnimatePresence>
   );
 };
 
-export default GetReadyScreen;
+export default Stage3GetReadyPage;
 

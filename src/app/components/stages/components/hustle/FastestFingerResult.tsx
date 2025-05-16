@@ -9,11 +9,13 @@ interface FastestFingerResultProps {
   timeElapsed?: boolean;
   correctOption?: string;
   resultArray: answerQuestionProp | null | undefined;
+  length?: number;
 }
 
 const FastestFingerResult = ({ 
   timeElapsed = false, 
-  resultArray
+  resultArray,
+  length=6
 }: FastestFingerResultProps) => {
   const [visibleResults, setVisibleResults] = useState<number[]>([]);
 
@@ -135,7 +137,7 @@ const FastestFingerResult = ({
       ) : (
         // Show placeholder cards
         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center">
-          {Array.from({length:6}).map((_, index) => (
+          {Array.from({length}).map((_, index) => (
             <StagesCard 
               key={index}
               title=""

@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion"
 import Stage1 from "./components/stages/Stage1";
 import Hustle from "./components/stages/components/hustle/Hustle";
-import QuestionScreen from "./components/stages/components/stage2/QuestionScreen";
+import QuestionScreen from "./components/stages/components/hustle/QuestionScreen";
 import { useMQTT } from "@/hooks/useMqttService";
 import { tokenStorage } from "@/utils/auth";
+import StageOneTally from "./components/stages/components/hustle/StageOneTally";
 
 export interface resetprop {
   email: string;
@@ -68,6 +69,19 @@ const HomePage = () => {
           variants={pageVariants}
         >
           <QuestionScreen />
+        </motion.div>
+      )}
+      {step === 4 && (
+        <motion.div
+          animate="animate"
+          className="h-full"
+          exit="exit"
+          initial="initial"
+          key="step6"
+          transition={{ duration: 0.4 }}
+          variants={pageVariants}
+        >
+          <StageOneTally />
         </motion.div>
       )}
     </AnimatePresence>
