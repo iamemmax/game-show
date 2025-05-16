@@ -377,15 +377,13 @@ const QuestionScreen = () => {
           );
           
           if (userData) {
-            console.log("Found user bid data:", userData);
-            
             // Store the user's bid amounts
             setUserBidAmounts(userData.spend_breakdown);
             setUserMaxQuestionSpend(userData.max_question_spend);
             setUserBooster(userData.booster);
             
             // Set default selected amount to the first amount
-            const bidKeys = Object.keys(userData.spend_breakdown);
+            const bidKeys = Object?.keys(userData.spend_breakdown);
             if (bidKeys.length > 0) {
               const firstKey = bidKeys[0];
               setSelectedAmount(parseFloat(firstKey));
@@ -405,11 +403,6 @@ const QuestionScreen = () => {
     }
   }, [isConnected, onMessage, currentQuestionIndex, selectedQuestions.length, user?.contestant_id]);
 
-
-
-
-
- 
 
 
   
@@ -689,7 +682,7 @@ const QuestionScreen = () => {
                           <div className="flex items-center gap-1 mt-7">
                             <div className="flex flex-1 items-center">
                               <div className="flex gap-2">
-                                {Object?.keys(userBidAmounts).length > 0 ? (
+                                {Object?.keys(userBidAmounts).length > 0 && (
                                   // Use user-specific bid amounts if available
                                   Object?.keys(userBidAmounts).map((amountKey: string) => {
                                     const amount = parseFloat(amountKey);
@@ -723,40 +716,18 @@ const QuestionScreen = () => {
                                       </div>
                                     );
                                   })
-                                ) : (
-                                  // Fallback to default amounts if user-specific ones aren't available
-                                  amountOptions?.map((amount) => (
-                                    <Button
-                                      key={amount}
-                                      onClick={() => handleAmountSelect(amount)}
-                                      disabled={!timerActive || isSubmitted || timeLeft <= 0}
-                                      className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                        selectedAmount === amount
-                                          ? "bg-[#04DA6A] text-black"
-                                          : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
-                                      }
-                                       ${
-                                        !timerActive || isSubmitted || timeLeft <= 0
-                                          ? "opacity-50 cursor-not-allowed"
-                                          : "hover:bg-[#035D2E] hover:text-white"
-                                      }
-                                      `}
-                                    >
-                                      ₦{amount.toLocaleString()}
-                                    </Button>
-                                  ))
                                 )}
                               </div>
                             </div>
                             
-                            {/* Display booster if available
-                            {userBooster && (
-                              <div className="bg-[#011B0D] rounded-lg px-2 py-1 mr-2">
-                                <span className="text-xs text-[#04DA6A] font-bold">
-                                  Booster: {userBooster}
-                                </span>
-                              </div>
-                            )} */}
+                              {/* Display booster if available
+                              {userBooster && (
+                                <div className="bg-[#011B0D] rounded-lg px-2 py-1 mr-2">
+                                  <span className="text-xs text-[#04DA6A] font-bold">
+                                    Booster: {userBooster}
+                                  </span>
+                                </div>
+                              )} */}
                             
                             <div className="items-end justify-end">
                               {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
