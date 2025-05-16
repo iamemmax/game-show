@@ -18,7 +18,7 @@ export const answerStageTwoQuestion = async ({
   // percentage_staked,
   question_start_time
 }: PickNumberProp) => {
-  const response = await salaryAxios.post(`api/game/answer_hustle_reveal_question/${question_id}`, {
+  const response = await salaryAxios.post(`api/game/answer_proof_hustle_questions/${question_id}`, {
     answer,
     timestamp,
     contestant_id,

@@ -13,13 +13,11 @@ import StageTallyCard from "@/app/shared/StageTallyCard";
 import { addCommasToNumber } from "@/utils";
 import { cn } from "@/utils/classNames";
 import { Button, GlowyStrokeText } from "@/components/core";
-import ProveHustle from "./ProveHustle";
 import { tokenStorage } from "@/utils/auth";
 import { useGetWalletBalance } from "../../api/stage1/getbalance";
 import { contestantImages } from "../mocks/contestantImages";
 import Stage2GetReadyPage from "../stage2/Stage2GetReadyPage";
 import { useMQTT } from "@/hooks/useMqttService";
-import { processEliminatedContestants } from "@/utils/contestants";
 
 interface StageOneTallyProps {
   eliminationCount?: number;
