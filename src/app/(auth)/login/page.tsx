@@ -69,7 +69,7 @@ const LoginPage = () => {
               {...register("login_code")}
               type="text"
               placeholder="Enter Contestant ID"
-              className={`${errors.login_code ? "border-red-500 border-[2px]" : "border-none"} bg-white focus-visible:border-transparent h-[50px]  w-full placeholder:capitalize rounded-lg px-6  outline-none`}
+              className={`${errors.login_code ? "border-red-500 border-[2px]" : "border-none"} bg-white uppercase focus-visible:border-transparent h-[50px]  w-full placeholder:capitalize rounded-lg px-6  outline-none`}
               autoComplete="off"
               autoCapitalize="off"
             />
