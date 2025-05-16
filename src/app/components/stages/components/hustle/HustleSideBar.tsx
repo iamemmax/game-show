@@ -20,7 +20,7 @@ interface prop {
   eliminated?: number;
   removeCount?: number;
 }
-const HustleSideBar = ({
+const   HustleSideBar = ({
   showJackpot = true,
   showEmptyCard = false,
   showHustlerCard = false,
