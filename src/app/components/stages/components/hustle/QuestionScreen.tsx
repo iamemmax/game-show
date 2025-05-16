@@ -3,26 +3,26 @@ import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import React, { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import HustleStages from "../hustle/HustleStages";
-import HustleSideBar from "../hustle/HustleSideBar";
+import HustleStages from "./HustleStages";
+import HustleSideBar from "./HustleSideBar";
 import NumberCardContainer from "@/app/shared/NumberContainer";
 // import { questionArray } from "../mocks/sampleQuestion";
 import { cn } from "@/utils/classNames";
 import CheckIcon from "@/app/icons/CheckIcon";
 import ErrorIcon from "@/app/icons/ErrorIcon";
 import { tokenStorage } from "@/utils/auth";
-import { Button, ErrorModal } from "@/components/core";
+import { Button, ErrorModal, GlowyStrokeText } from "@/components/core";
 import GradientButton from "@/app/shared/GradientButton";
 import Image from "next/image";
 import { useGetAllHustleQuestions } from "../../api/stage1/question/getHustleQuestion";
 import { contestantImages, revealResults } from "../mocks/contestantImages";
 import { addCommasToNumber, formatAxiosErrorMessage } from "@/utils";
-import FastestFingerResult from "../hustle/FastestFingerResult";
+import FastestFingerResult from "./FastestFingerResult";
 import { useAnswerStageOneQuestion } from "../../api/stage1/question/answerQuestion";
 import { useErrorModalState } from "@/hooks";
 import { AxiosError } from "axios";
 import { useGetQuestionAnswer } from "../../api/stage1/question/getQuestionAnswer";
-import StageOneTally from "../hustle/StageOneTally";
+import StageOneTally from "./StageOneTally";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
 
@@ -242,19 +242,7 @@ const QuestionScreen = () => {
     setSelectedAmount(10000); // Reset to default amount
   };
 
-  // Handle next question
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < selectedQuestions?.length - 1) {
-      // Not the last question, move to next
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedOption(null);
-      setIsSubmitted(false);
-      resetTimerState(); // Reset timer state for next question
-    } else {
-      // This was the last question, mark all questions as completed
-      setAllQuestionsCompleted(true);
-    }
-  };
+
 
   // Function to check if a question has been attempted
   const isQuestionAttempted = (idx: number) => {
@@ -324,6 +312,13 @@ const QuestionScreen = () => {
             handleStartTimer();
           }
         }
+
+        if (receivedMessage?.event === "game_s1_results_reveal") {
+          // Proceed to the next stage
+          console.log(receivedMessage?.event);
+          
+          setAllQuestionsCompleted(true);
+        }
       };
       
       // Register the message handler
@@ -335,6 +330,14 @@ const QuestionScreen = () => {
       };
     }
   }, [isConnected, onMessage, currentQuestionIndex, selectedQuestions.length]);
+
+
+
+
+
+ 
+
+
   
   return (
     <>
@@ -465,21 +468,38 @@ const QuestionScreen = () => {
                             iconSize={30}
                           />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex gap-2">
-                            <div className="h-[1.2rem] w-[1.2rem] relative">
-                              <Image
-                                alt="User avatar"
-                                src={contestantImages[idx] || "/images/userImage.png"}
-                                fill
-                                className="object-cover rounded-full"
-                              />
-                            </div>
-                            <p className="text-white text-xs font-bold font-gilroyBold" style={{WebkitTextStroke:"1.3px #7E3CE0"}}>
-                              {contestant?.contestant?.contestant_name?.split(' ')[0]}
-                            </p>
-                          </div>
-                        </div>
+                         <div className="flex items-center gap-2">
+                                                   <div className="flex items-center gap-2">
+                                                     <div className="h-[1.2rem] w-[1.2rem]  relative">
+                                                       <Image
+                                                         alt="User avatar"
+                                                         src={
+                                                           contestantImages[idx] ||
+                                                           "/images/userImage.png"
+                                                         }
+                                                         fill
+                                                         className="object-cover rounded-full"
+                                                       />
+                                                     </div>
+                                                    
+                       
+                       
+                       <GlowyStrokeText
+                                                       strokeWidth={3}
+                                                       strokeColor="#7E3CE0"
+                                                       glowColor="#04DA6A"
+                                                       textclassName="text-xs  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
+                                                       fillColor="#fff"
+                                                       glowIntensity={"none"}
+                                                     >
+                                                      {
+                                                         contestant?.contestant?.contestant_name?.split(
+                                                           " "
+                                                         )[0]
+                                                       }
+                                                     </GlowyStrokeText>
+                                                   </div>
+                                                 </div>
                       </div>
                     ))}
                   </div>
@@ -637,26 +657,7 @@ const QuestionScreen = () => {
                                 </Button>
                               )}
 
-                              {/* Next/Finish button - only show after time elapses */}
-                              {(showNextButton && !timeLeft) && (
-                                <Button
-                                  className="p-0 bg-transparent"
-                                  onClick={handleNextQuestion}
-                                >
-                                  <GradientButton
-                                    text={
-                                      currentQuestionIndex === selectedQuestions.length - 1
-                                        ? "Finish"
-                                        : "Next"
-                                    }
-                                    className="uppercase"
-                                    width={currentQuestionIndex === selectedQuestions.length - 1 ? 150 : 130}
-                                    startColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#FFC125" : "#8EFE9B"}
-                                    endColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#FF8A00" : "#03984A"}
-                                    baseColor={currentQuestionIndex === selectedQuestions.length - 1 ? "#C76000" : "#035D2E"}
-                                  />
-                                </Button>
-                              )}
+                           
                             </div>
                           </div>
                         </>
