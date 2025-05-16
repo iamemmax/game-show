@@ -112,7 +112,7 @@ const HustleSideBar = ({
                           textclassName="text-[19.18px] font-extrabold font-gilroyHeavy text-white"
                           fillColor="#fff"
                         >
-                          {`₦${addCommasToNumber(Number(bal?.balance?.toFixed(0)))}`}
+                          {`₦${addCommasToNumber(Number(bal?.balance))}`}
                         </GlowyStrokeText>
                         <GlowyStrokeText
                           truncate

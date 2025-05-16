@@ -31,6 +31,25 @@ interface AttemptedOption {
   option: string;
 }
 
+
+type SpendBreakdown = {
+  [key: string]: number; // e.g. "3333.33": 9999.99
+};
+
+type ContestantSpend = {
+  contestant_id: number;
+  contestant_name: string | null;
+  wallet_balance: number;
+  max_question_spend: number;
+  booster: string;
+  spend_breakdown: SpendBreakdown;
+};
+
+type QuestionS1SpendEvent = {
+  event: "question_s1_spend";
+  payload: ContestantSpend[];
+};
+
 // Add type for option keys
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
 
@@ -109,6 +128,13 @@ const QuestionScreen = () => {
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
+  const [bidAmount, setBidAmount] = useState<QuestionS1SpendEvent>();
+  
+  // Add new state variables for user-specific bid amounts
+  const [userBidAmounts, setUserBidAmounts] = useState<{[key: string]: number}>({});
+  const [userMaxQuestionSpend, setUserMaxQuestionSpend] = useState<number>(0);
+  const [userBooster, setUserBooster] = useState<string>("");
+  const [selectedBidValue, setSelectedBidValue] = useState<number>(0);
   
   // Array of available amounts to stake
   const amountOptions = [ 10000, 20000, 30000, 50000];
@@ -158,6 +184,20 @@ const QuestionScreen = () => {
     // Only allow selection if timer is active and not submitted yet
     if (timerActive && !isSubmitted && timeLeft > 0) {
       setSelectedAmount(amount);
+      
+      // Set the corresponding bid value
+      if (userBidAmounts[amount.toFixed(2)]) {
+        setSelectedBidValue(userBidAmounts[amount.toFixed(2)]);
+      } else {
+        // Try with different decimal precision
+        const amountKey = Object.keys(userBidAmounts).find(
+          key => Math.abs(parseFloat(key) - amount) < 0.01
+        );
+        
+        if (amountKey) {
+          setSelectedBidValue(userBidAmounts[amountKey]);
+        }
+      }
     }
   };
 
@@ -209,11 +249,14 @@ const QuestionScreen = () => {
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after submission
 
+    // Use the actual bid value if available, otherwise use the selected amount
+    const amountToStake = selectedBidValue > 0 ? selectedBidValue : selectedAmount;
+
     handleAnswerStageOneQuestion({
       contestant_id: user?.contestant_id,
       question_id: currentQuestion?.questions?.question_id,
       answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
-      amount_staked: selectedAmount,
+      amount_staked: amountToStake,
       timestamp: formattedTimestamp,
       question_start_time: formattedGameStartTime, // Add game start time
     },{
@@ -257,12 +300,15 @@ const QuestionScreen = () => {
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after auto-submission
 
+    // Use the actual bid value if available, otherwise use the selected amount
+    const amountToStake = selectedBidValue > 0 ? selectedBidValue : selectedAmount;
+
     // Create submission data with "N" as the answer
     handleAnswerStageOneQuestion({
       contestant_id: Number(user?.contestant_id),
       question_id: currentQuestion?.questions?.question_id,
       answer: "N", // "N" for No Answer
-      amount_staked: selectedAmount,
+      amount_staked: amountToStake,
       timestamp: formattedTimestamp,
       question_start_time: formattedGameStartTime, // Add game start time
     },{
@@ -319,6 +365,34 @@ const QuestionScreen = () => {
           
           setAllQuestionsCompleted(true);
         }
+        
+        // Handle bid amount data
+        if (receivedMessage?.event === "question_s1_spend") {
+          setBidAmount(receivedMessage as QuestionS1SpendEvent);
+          
+          // Find the current user's bid data
+          const currentUserId = user?.contestant_id;
+          const userData = receivedMessage?.payload?.find(
+            (contestant: ContestantSpend) => contestant.contestant_id === currentUserId
+          );
+          
+          if (userData) {
+            console.log("Found user bid data:", userData);
+            
+            // Store the user's bid amounts
+            setUserBidAmounts(userData.spend_breakdown);
+            setUserMaxQuestionSpend(userData.max_question_spend);
+            setUserBooster(userData.booster);
+            
+            // Set default selected amount to the first amount
+            const bidKeys = Object.keys(userData.spend_breakdown);
+            if (bidKeys.length > 0) {
+              const firstKey = bidKeys[0];
+              setSelectedAmount(parseFloat(firstKey));
+              setSelectedBidValue(userData.spend_breakdown[firstKey]);
+            }
+          }
+        }
       };
       
       // Register the message handler
@@ -329,7 +403,7 @@ const QuestionScreen = () => {
         onMessage(null);
       };
     }
-  }, [isConnected, onMessage, currentQuestionIndex, selectedQuestions.length]);
+  }, [isConnected, onMessage, currentQuestionIndex, selectedQuestions.length, user?.contestant_id]);
 
 
 
@@ -612,38 +686,81 @@ const QuestionScreen = () => {
                           </div>
 
                           {/* Amount buttons, Submit and Next buttons */}
-                          <div className="flex items-center gap-1  mt-7">
+                          <div className="flex items-center gap-1 mt-7">
                             <div className="flex flex-1 items-center">
                               <div className="flex gap-2">
-                                {amountOptions?.map((amount) => (
-                                  <Button
-                                    key={amount}
-                                    onClick={() => handleAmountSelect(amount)}
-                                    disabled={!timerActive || isSubmitted || timeLeft <= 0}
-                                    className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                      selectedAmount === amount
-                                        ? "bg-[#04DA6A] text-black"
-                                        : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
-                                    }
-                                     ${
-                                      !timerActive || isSubmitted || timeLeft <= 0
-                                        ? "opacity-50 cursor-not-allowed"
-                                        : "hover:bg-[#035D2E] hover:text-white"
-                                    }
+                                {Object?.keys(userBidAmounts).length > 0 ? (
+                                  // Use user-specific bid amounts if available
+                                  Object?.keys(userBidAmounts).map((amountKey: string) => {
+                                    const amount = parseFloat(amountKey);
+                                    const bidValue = userBidAmounts[amountKey];
                                     
-                                    `}
-                                  >
-                                    ₦{amount.toLocaleString()}
-                                  </Button>
-                                ))}
+                                    return (
+                                      <div key={amountKey} className="flex flex-col items-center">
+                                        <Button
+                                          onClick={() => handleAmountSelect(amount)}
+                                          disabled={!timerActive || isSubmitted || timeLeft <= 0}
+                                          className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                            selectedAmount === amount
+                                              ? "bg-[#04DA6A] text-black"
+                                              : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
+                                          }
+                                           ${
+                                            !timerActive || isSubmitted || timeLeft <= 0
+                                              ? "opacity-50 cursor-not-allowed"
+                                              : "hover:bg-[#035D2E] hover:text-white"
+                                          }
+                                          `}
+                                        >
+                                          ₦{amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                        </Button>
+                                        
+                                        {selectedAmount === amount && (
+                                          <div className="text-xs text-[#04DA6A] mt-1 font-bold">
+                                            ₦{bidValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })
+                                ) : (
+                                  // Fallback to default amounts if user-specific ones aren't available
+                                  amountOptions?.map((amount) => (
+                                    <Button
+                                      key={amount}
+                                      onClick={() => handleAmountSelect(amount)}
+                                      disabled={!timerActive || isSubmitted || timeLeft <= 0}
+                                      className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                        selectedAmount === amount
+                                          ? "bg-[#04DA6A] text-black"
+                                          : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
+                                      }
+                                       ${
+                                        !timerActive || isSubmitted || timeLeft <= 0
+                                          ? "opacity-50 cursor-not-allowed"
+                                          : "hover:bg-[#035D2E] hover:text-white"
+                                      }
+                                      `}
+                                    >
+                                      ₦{amount.toLocaleString()}
+                                    </Button>
+                                  ))
+                                )}
                               </div>
                             </div>
                             
-                           
-                            <div className="items-end justify-end">
+                            {/* Display booster if available
+                            {userBooster && (
+                              <div className="bg-[#011B0D] rounded-lg px-2 py-1 mr-2">
+                                <span className="text-xs text-[#04DA6A] font-bold">
+                                  Booster: {userBooster}
+                                </span>
+                              </div>
+                            )} */}
                             
-                             {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
-                             {!isSubmitted  && (
+                            <div className="items-end justify-end">
+                              {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
+                              {!isSubmitted && (
                                 <Button
                                   className="p-0 bg-transparent"
                                   onClick={handleSubmitAnswer}
@@ -656,8 +773,6 @@ const QuestionScreen = () => {
                                   />
                                 </Button>
                               )}
-
-                           
                             </div>
                           </div>
                         </>
