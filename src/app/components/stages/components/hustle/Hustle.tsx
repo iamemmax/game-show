@@ -1,26 +1,49 @@
 "use client"
 import Logo from "@/app/icons/Logo";
 import StartUpIcon from "@/app/icons/StartupIcon";
-import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import HustleStages from "./HustleStages";
 import HustleSideBar from "./HustleSideBar";
 import HustleBottomCard from "./HustleBottomCard";
 import { motion } from "framer-motion";
 import InvestCapital from "./InvestCapital";
-import QuestionScreen from "../stage2/QuestionScreen";
 import { tokenStorage } from "@/utils/auth";
-import { useGetHustleReveal } from "../../api/stage1/getHustleReveal";
+import { hustleRevealProps, useGetHustleReveal } from "../../api/stage1/getHustleReveal";
 import { addCommasToNumber } from "@/utils";
 import GetReadyScreen from "../GetReadyScreen";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
+import { useMQTT } from "@/hooks/useMqttService";
 
 const Hustle = () => {
+  const { isConnected, onMessage } = useMQTT();
   const [ShowQuestionScreen, setShowQuestionScreen] = useState(false)
   const user = tokenStorage.getUser();
+  // const [data, setData] = useState<hustleRevealProps>()
+// const [isLoading, setIsLoading] = useState(false)
   const {data,isLoading} = useGetHustleReveal(user?.game_episode as number);
+
+  useEffect(() => {
+    if (isConnected) {
+     
+      const handler = (receivedMessage: any) => {
+        console.log("Main page received message:", receivedMessage);
+        
+        // Handle stage transition events
+      
+
+        if ( receivedMessage?.event === "game_s1_questions_prep") {
+          // Proceed to the next stage
+          setShowQuestionScreen(true)
+          
+                  }
+      };
+      
+      onMessage(handler);
+    }
+  }, [isConnected, onMessage]);
+
 
   const  contestant = data?.data?.find((contestant) => contestant.contestant_id === user?.contestant_id);
   if (ShowQuestionScreen) {

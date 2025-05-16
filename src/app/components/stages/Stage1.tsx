@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import Image from "next/image";
-import { Button, ErrorModal } from "@/components/core";
+import { Button, ErrorModal, GlowyStrokeText } from "@/components/core";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import NumberCardContainer from "@/app/shared/NumberContainer";
 import { motion } from "framer-motion";
@@ -47,16 +47,17 @@ const Stage1 = ({ onNext }: Props) => {
 
   // Use the MQTT context
   const { isConnected, sendMessage, onMessage } = useMQTT();
-  
+
   // Explicitly type the state with number[]
   const [selectedNumbers, setSelectedNumbers] = useState<Array<number>>([]);
   const [timeLeft, setTimeLeft] = useState(60);
-  const [autoPicked, setAutoPicked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // State to track current user's picks and other contestants' picks separately
   const [myPicks, setMyPicks] = useState<number[]>([]);
-  const [otherContestantsPicks, setOtherContestantsPicks] = useState<number[]>([]);
+  const [otherContestantsPicks, setOtherContestantsPicks] = useState<number[]>(
+    []
+  );
 
   // Add state to track recently updated numbers for visual feedback
   const [recentlyUpdated, setRecentlyUpdated] = useState<number[]>([]);
@@ -64,92 +65,79 @@ const Stage1 = ({ onNext }: Props) => {
   // Add state to track if timer has started
   const [timerStarted, setTimerStarted] = useState(false);
 
-  // Function to start the timer
-  const handleStartTimer = () => {
-    setTimerStarted(true);
-    setTimeLeft(60); // Reset to 60 seconds when starting
-    
-    // Notify backend that timer has started
-    if (isConnected && user?.contestant_id) {
-      const timerStartPayload = {
-        event: "timer_start",
-        payload: {
-          game_episode: user?.game_episode,
-          contestant_id: user?.contestant_id,
-        }
-      };
-      
-      sendMessage(timerStartPayload, "timer_start")
-        .catch(error => console.error("Failed to send timer start event:", error));
-    }
-  };
-
   // Function to handle all hustle picks received from socket
-  const handleAllHustlePicks = useCallback((receivedMessage: any) => {
-    if (receivedMessage?.event === "receive_hustle_picks" && 
-        receivedMessage?.payload && 
-        Array.isArray(receivedMessage.payload)) {
-      
-      console.log("Received receive_hustle_picks data:", receivedMessage);
-      
-      // Extract all picks from other contestants
-      const allOtherPicks: number[] = [];
-      let myCurrentPicks: number[] = [];
-      
-      receivedMessage.payload.forEach((contestant: Response) => {
-        if (contestant.contestant_id === user?.contestant_id) {
-          // These are my picks
-          myCurrentPicks = contestant.picks || [];
-        } else {
-          // These are other contestants' picks
-          if (Array.isArray(contestant.picks)) {
-            allOtherPicks.push(...contestant.picks);
+  const handleAllHustlePicks = useCallback(
+    (receivedMessage: any) => {
+      if (
+        receivedMessage?.event === "receive_hustle_picks" &&
+        receivedMessage?.payload &&
+        Array.isArray(receivedMessage.payload)
+      ) {
+        console.log("Received receive_hustle_picks data:", receivedMessage);
+
+        // Extract all picks from other contestants
+        const allOtherPicks: number[] = [];
+        let myCurrentPicks: number[] = [];
+
+        receivedMessage.payload.forEach((contestant: Response) => {
+          if (contestant.contestant_id === user?.contestant_id) {
+            // These are my picks
+            myCurrentPicks = contestant.picks || [];
+          } else {
+            // These are other contestants' picks
+            if (Array.isArray(contestant.picks)) {
+              allOtherPicks.push(...contestant.picks);
+            }
           }
-        }
-      });
-      
-      // Remove duplicates from other contestants' picks
-      const uniqueOtherPicks = [...new Set(allOtherPicks)];
-      
-      console.log("My picks from receive_hustle_picks:", myCurrentPicks);
-      console.log("Other contestants' picks from receive_hustle_picks:", uniqueOtherPicks);
-      
-      // Update state
-      setMyPicks(myCurrentPicks);
-      setSelectedNumbers(myCurrentPicks);
-      setOtherContestantsPicks(uniqueOtherPicks);
-      
-      return true; // Indicate that we handled this event
-    }
-    
-    return false; // Indicate that we did not handle this event
-  }, [user?.contestant_id]);
+        });
+
+        // Remove duplicates from other contestants' picks
+        const uniqueOtherPicks = [...new Set(allOtherPicks)];
+
+        console.log("My picks from receive_hustle_picks:", myCurrentPicks);
+        console.log(
+          "Other contestants' picks from receive_hustle_picks:",
+          uniqueOtherPicks
+        );
+
+        // Update state
+        setMyPicks(myCurrentPicks);
+        setSelectedNumbers(myCurrentPicks);
+        setOtherContestantsPicks(uniqueOtherPicks);
+
+        return true; // Indicate that we handled this event
+      }
+
+      return false; // Indicate that we did not handle this event
+    },
+    [user?.contestant_id]
+  );
 
   // Function to send picked numbers to backend
   const sendPickedNumbers = async (num: number) => {
     if (!user?.contestant_id) return;
-    
+
     // CRITICAL: Validate that number is not already picked by others
     if (otherContestantsPicks.includes(num) && !myPicks.includes(num)) {
       return;
     }
-    
+
     // Set loading state
     setIsLoading(true);
-    
+
     try {
       if (isConnected) {
-        const action = myPicks.includes(num) ? 'remove' : 'add';
-        
+        const action = myPicks.includes(num) ? "remove" : "add";
+
         // Apply optimistic update immediately
-        if (action === 'add') {
-          setMyPicks(prev => [...prev.filter(n => n !== num), num]);
-          setSelectedNumbers(prev => [...prev.filter(n => n !== num), num]);
+        if (action === "add") {
+          setMyPicks((prev) => [...prev.filter((n) => n !== num), num]);
+          setSelectedNumbers((prev) => [...prev.filter((n) => n !== num), num]);
         } else {
-          setMyPicks(prev => prev.filter(n => n !== num));
-          setSelectedNumbers(prev => prev.filter(n => n !== num));
+          setMyPicks((prev) => prev.filter((n) => n !== num));
+          setSelectedNumbers((prev) => prev.filter((n) => n !== num));
         }
-        
+
         // Simplified payload structure as requested
         const payload = {
           event: "pick_hustle_number",
@@ -158,9 +146,9 @@ const Stage1 = ({ onNext }: Props) => {
             contestant_id: user?.contestant_id,
             pick: num,
             action: action,
-          }
+          },
         };
-        
+
         // Send the message
         await sendMessage(payload, "pick_hustle_number");
       }
@@ -173,77 +161,152 @@ const Stage1 = ({ onNext }: Props) => {
     }
   };
 
-  // Setup MQTT message handling for initial load
+  // Consolidate all MQTT message handling into a single useEffect
   useEffect(() => {
     if (isConnected) {
       // Set up message handler
       const handler = (receivedMessage: any) => {
-        console.log("Received message:", receivedMessage);
-        
-        // Try to handle as all_hustle_pick event first
+        // Handle start timer event
+        if (receivedMessage?.event === "game_s1_init") {
+          setTimerStarted(true);
+          // Calculate elapsed time since start_time
+          const startTime = new Date(receivedMessage?.payload?.start_time);
+          const currentTime = new Date();
+          const elapsedSeconds = Math.floor(
+            (currentTime.getTime() - startTime.getTime()) / 1000
+          );
+
+          // Calculate remaining time (60 seconds total - elapsed time)
+          const remainingTime = Math.max(0, 60 - elapsedSeconds);
+          console.log(
+            "Elapsed seconds:",
+            elapsedSeconds,
+            "Remaining time:",
+            remainingTime
+          );
+
+          setTimeLeft(remainingTime);
+
+          // Start the countdown timer
+          const timerInterval = setInterval(() => {
+            setTimeLeft((prevTime) => {
+              const newTime = prevTime - 1;
+              if (newTime <= 0) {
+                clearInterval(timerInterval);
+                return 0;
+              }
+              return newTime;
+            });
+          }, 1000);
+
+          // Clean up interval on component unmount
+          return () => clearInterval(timerInterval);
+          // Start the timer if not already started
+        }
+
+        // Handle proceed to next stage event
+        if (
+          receivedMessage?.event === "proceed_to_next_stage" ||
+          receivedMessage?.event === "stage_complete"
+        ) {
+          console.log("Received proceed to next stage event:", receivedMessage);
+
+          // Set state to proceed to next stage
+          // setShouldProceedToNext(true);
+        }
+
+        // Try to handle as all_hustle_pick event
         if (handleAllHustlePicks(receivedMessage)) {
           return; // Event was handled, skip the rest
         }
-        
+
         // Handle individual pick events
-        if (receivedMessage?.contestant_id && receivedMessage?.picks !== undefined) {
-          const isMyMessage = receivedMessage.contestant_id === user?.contestant_id;
-          
+        if (
+          receivedMessage?.contestant_id &&
+          receivedMessage?.picks !== undefined
+        ) {
+          const isMyMessage =
+            receivedMessage.contestant_id === user?.contestant_id;
+
           // If it's a single number
-          if (typeof receivedMessage.picks === 'number') {
+          if (typeof receivedMessage.picks === "number") {
             const pickedNumber = receivedMessage.picks;
-            const action = receivedMessage.action || 'add'; // Default to add if not specified
-            
+            const action = receivedMessage.action || "add"; // Default to add if not specified
+
             if (isMyMessage) {
               // Update my picks
-              if (action === 'add') {
-                setMyPicks(prev => [...prev.filter(n => n !== pickedNumber), pickedNumber]);
-                setSelectedNumbers(prev => [...prev.filter(n => n !== pickedNumber), pickedNumber]);
-              } else if (action === 'remove') {
-                console.log("Removing number from my picks from MQTT:", pickedNumber);
-                setMyPicks(prev => prev.filter(n => n !== pickedNumber));
-                setSelectedNumbers(prev => prev.filter(n => n !== pickedNumber));
+              if (action === "add") {
+                setMyPicks((prev) => [
+                  ...prev.filter((n) => n !== pickedNumber),
+                  pickedNumber,
+                ]);
+                setSelectedNumbers((prev) => [
+                  ...prev.filter((n) => n !== pickedNumber),
+                  pickedNumber,
+                ]);
+              } else if (action === "remove") {
+                console.log(
+                  "Removing number from my picks from MQTT:",
+                  pickedNumber
+                );
+                setMyPicks((prev) => prev.filter((n) => n !== pickedNumber));
+                setSelectedNumbers((prev) =>
+                  prev.filter((n) => n !== pickedNumber)
+                );
               }
             } else {
               // Update other contestants' picks immediately
-              if (action === 'add') {
+              if (action === "add") {
                 console.log("Other contestant picked number:", pickedNumber);
-                setOtherContestantsPicks(prev => [...prev.filter(n => n !== pickedNumber), pickedNumber]);
-                
+                setOtherContestantsPicks((prev) => [
+                  ...prev.filter((n) => n !== pickedNumber),
+                  pickedNumber,
+                ]);
+
                 // Add visual feedback for recently updated numbers
-                setRecentlyUpdated(prev => [...prev, pickedNumber]);
-                
+                setRecentlyUpdated((prev) => [...prev, pickedNumber]);
+
                 // Remove from recently updated after animation
                 setTimeout(() => {
-                  setRecentlyUpdated(prev => prev.filter(n => n !== pickedNumber));
+                  setRecentlyUpdated((prev) =>
+                    prev.filter((n) => n !== pickedNumber)
+                  );
                 }, 1000);
-              } else if (action === 'remove') {
+              } else if (action === "remove") {
                 console.log("Other contestant unpicked number:", pickedNumber);
-                setOtherContestantsPicks(prev => prev.filter(n => n !== pickedNumber));
+                setOtherContestantsPicks((prev) =>
+                  prev.filter((n) => n !== pickedNumber)
+                );
               }
             }
           }
-          
+
           // If it's an array of numbers
           if (Array.isArray(receivedMessage.picks)) {
             if (isMyMessage) {
-              console.log("Updating my picks from MQTT:", receivedMessage.picks);
+              console.log(
+                "Updating my picks from MQTT:",
+                receivedMessage.picks
+              );
               setMyPicks(receivedMessage.picks);
               setSelectedNumbers(receivedMessage.picks);
             } else {
               // For other contestants, we need to update the otherContestantsPicks
               // This is more complex as we need to remove their old picks and add new ones
               // For simplicity, we'll request a full refresh of all picks
-              // Note: We don't have a requestAllHustlePicks function anymore
-              // The backend should send us updates automatically
             }
           }
         }
+
+        if (receivedMessage?.event === "game_s1_hustle_reveal") {
+          // Proceed to the next stage
+          onNext();
+        }
       };
-      
+
       // Pass the handler function to onMessage
       onMessage(handler);
-      
+
       return () => {
         // Clean up the message handler when the component unmounts
         onMessage(null);
@@ -251,184 +314,54 @@ const Stage1 = ({ onNext }: Props) => {
     }
   }, [isConnected, onMessage, user?.contestant_id, handleAllHustlePicks]);
 
-
-  // Request all hustle picks on component mount and when connection status changes
-  // useEffect(() => {
-  //   if (isConnected) {
-  //     requestAllHustlePicks();
-  //   }
-  // }, [isConnected, requestAllHustlePicks]);
-
-  // // Add a periodic refresh of all hustle picks
-  // useEffect(() => {
-  //   if (isConnected) {
-  //     const refreshInterval = setInterval(() => {
-  //       requestAllHustlePicks();
-  //     }, 10000); // Refresh every 10 seconds
-      
-  //     return () => clearInterval(refreshInterval);
-  //   }
-  // }, [isConnected, requestAllHustlePicks]);
-
-  // Check if a number is disabled (picked by others)
-  const isNumberDisabled = (num: number): boolean => {
-    // Number is disabled if:
-    // 1. Timer hasn't started yet
-    // 2. It's picked by another contestant
-    // 3. User already has 5 picks and this isn't one of them
-    // 4. Time has elapsed and this isn't one of user's picks
-    return (
-      !timerStarted ||
-      (otherContestantsPicks.includes(num)) || 
-      (myPicks.length >= 5 && !myPicks.includes(num)) ||
-      (timeLeft <= 0 && !myPicks.includes(num))
-    );
-  };
-
-  // Countdown Timer
-  useEffect(() => {
-    // Only run the timer if it has been started
-    if (!timerStarted) return;
-    
-    if (timeLeft <= 0) {
-      setTimeLeft(0); // Ensure timer stops at 0
-      
-      // // Send time elapsed event via MQTT
-      // if (isConnected && user?.contestant_id) {
-      //   const timeElapsedPayload = {
-      //     event: "time_elapsed",
-      //     payload: {
-      //       game_episode: user?.game_episode,
-          
-      //     }
-      //   };
-        
-      //   sendMessage(timeElapsedPayload, "time_elapsed").catch((error) => {
-      //     console.error("Failed to publish time elapsed event to MQTT:", error);
-      //   });
-      // }
-      
-      // Auto-select remaining numbers if needed
-      if (!autoPicked && selectedNumbers.length < 5) {
-        autoSelectRemainingNumbers();
-      } else if (selectedNumbers.length === 5) {
-        // If all 5 numbers are already selected, send completion event
-        if (isConnected && user?.contestant_id) {
-          const completionPayload = {
-            event: "time_elapsed",
-            payload: {
-              game_episode: user?.game_episode,
-            
-            }
-          };
-          
-          sendMessage(completionPayload, "time_elapsed").catch((error) => {
-            console.error("Failed to publish completion event to MQTT:", error);
-          });
-        }
-      }
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => Math.max(0, prev - 1)); // Prevent negative values
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timeLeft, autoPicked, selectedNumbers.length, isConnected, user?.contestant_id, sendMessage, timerStarted]);
-
- 
-  // Function to handle number click
-  const handleNumberClick = async (num: number): Promise<void> => {
-    console.log(`Handling click for number ${num}`);
-    
-    // Don't allow clicks if timer hasn't started yet
-    
-
-    console.log("Click allowed, proceeding with selection");
-    
-    try {
-      // Send to backend immediately
-      await sendPickedNumbers(num);
-    } catch (error) {
-      const errorMessage = formatAxiosErrorMessage(error as AxiosError);
-      openErrorModalWithMessage(String(errorMessage));
-    }
-  };
-
-  // Automatically select remaining numbers
-  const autoSelectRemainingNumbers = async () => {
-    if (isLoading || autoPicked) return;
-    
-    setIsLoading(true);
-    setAutoPicked(true);
-    
-    try {
-      // Calculate how many more numbers we need
-      const numbersNeeded = 5 - myPicks.length;
-      
-      if (numbersNeeded <= 0) {
-        console.log("No additional numbers needed");
-        return;
-      }
-      
-      console.log(`Auto-selecting ${numbersNeeded} more numbers`);
-      
-      // Get all available numbers (not picked by others)
-      const availableNumbers = Array.from({ length: 49 }, (_, i) => i + 1)
-        .filter(num => !otherContestantsPicks.includes(num) && !myPicks.includes(num));
-      
-      if (availableNumbers.length < numbersNeeded) {
-        console.error("Not enough available numbers to auto-select");
-        openErrorModalWithMessage("Not enough available numbers to complete your selection");
-        return;
-      }
-      
-      // Shuffle available numbers and take what we need
-      const shuffled = [...availableNumbers].sort(() => 0.5 - Math.random());
-      const numbersToAdd = shuffled.slice(0, numbersNeeded);
-      
-      console.log("Auto-selecting numbers:", numbersToAdd);
-      
-      // Create a new array with all selected numbers
-      const newSelectedNumbers = [...myPicks, ...numbersToAdd];
-      
-      // Update state optimistically
-      setMyPicks(newSelectedNumbers);
-      setSelectedNumbers(newSelectedNumbers);
-      
-      // Send to server
-      if (isConnected && user?.contestant_id) {
-        const autoPickPayload = {
-          event: "auto_pick",
-          payload: {
-            game_episode: user.game_episode,
-            contestant_id: user.contestant_id,
-            picks: newSelectedNumbers,
-            timestamp: new Date().toISOString()
-          }
-        };
-        
-        await sendMessage(autoPickPayload, "auto_pick");
-        console.log("Auto-pick sent to server");
-      }
-    } catch (error) {
-      console.error("Error auto-selecting numbers:", error);
-      // openErrorModalWithMessage("Failed to auto-select numbers");
-      
-      // Request fresh data on error
-      // requestAllHustlePicks();
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Add a connection status indicator
   const ConnectionStatus = () => (
     <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
-      <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+      <div
+        className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}
+      ></div>
     </div>
   );
+
+  // Add this function before the return statement in your Stage1 component
+  const isNumberDisabled = (num: number): boolean => {
+    // A number is disabled if:
+    // 1. Timer hasn't started - this should be the first check
+    // 2. It's picked by other contestants (and not by me)
+    // 3. I already have 5 picks and this isn't one of them
+    // 4. Timer has ended
+
+    // First check - if timer hasn't started, disable all numbers
+    if (!timerStarted) return true;
+
+    const isOthersPick =
+      otherContestantsPicks.includes(num) && !myPicks.includes(num);
+    const maxPicksReached = myPicks.length >= 5 && !myPicks.includes(num);
+    const timerEnded = timeLeft <= 0 && !myPicks.includes(num);
+
+    return isOthersPick || maxPicksReached || timerEnded;
+  };
+
+  // Function to handle number click
+  const handleNumberClick = (num: number) => {
+    // Don't allow clicks if loading
+    if (isLoading) return;
+
+    // Don't allow clicks if timer hasn't started
+    if (!timerStarted) return;
+
+    // Don't allow clicks if time has elapsed
+    if (timeLeft <= 0 && !myPicks.includes(num)) return;
+
+    // Don't allow clicks on numbers picked by others
+    if (otherContestantsPicks.includes(num) && !myPicks.includes(num)) return;
+
+    // Don't allow more than 5 picks
+    if (myPicks.length >= 5 && !myPicks.includes(num)) return;
+
+    // Send the pick to the backend
+    sendPickedNumbers(num);
+  };
 
   return (
     <>
@@ -442,10 +375,10 @@ const Stage1 = ({ onNext }: Props) => {
             <HustleStages />
           </div>
           <div className="pb-4 ">
-            <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>
+            <Salary4LifeTrophy className="max-xl:h-[13.25rem]" />
           </div>
         </div>
-    
+
         <div className="overflow-y-auto">
           <div className="w-full h-[100px] flex items-center justify-center">
             <HeaderTitleContainer
@@ -468,7 +401,7 @@ const Stage1 = ({ onNext }: Props) => {
             <div className="w-full py-[1.5rem] max-xl:max-w-[65rem] 2xl:py-[3rem] max-w-[56.25rem] rounded-[.875rem] px-[2rem] 2xl:px-[3rem] bg-[#13051E] -mt-3 relative overflow-hidden">
               {/* Connection Status Indicator */}
               <ConnectionStatus />
-              
+
               {/* Animated border */}
               <div className="absolute inset-0">
                 <motion.div
@@ -500,41 +433,55 @@ const Stage1 = ({ onNext }: Props) => {
               <div className="relative">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-[2.125rem] font-extrabold outline-text text-black">
+                    {/* <h2 className="text-[2.125rem] font-extrabold outline-text text-black">
                       Stage 1: Hustle Kick-off 
-                    </h2>
+                    </h2> */}
+
+                    <GlowyStrokeText
+                      strokeWidth={2}
+                      strokeColor="#D91FFF"
+                      // glowColor="transparent"
+                      glowIntensity="low"
+                      textclassName="text-[2.125rem] font-extrabold font-gilroyHeavy"
+                      fillColor="#000"
+                    >
+                      Stage 1 : Hustle Kick-off
+                    </GlowyStrokeText>
                   </div>
                   <div>
-                    {timerStarted ? (
-                      <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
-                        <span 
-                          className="text-[20px] font-extrabold font-verdana text-white"
-                          style={{ 
-                            WebkitTextStroke: "1.5px #C76000",
-                            textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)"
-                          }}
-                        >
-                          {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
-                        </span>
-                      </div>
-                    ) : (
-                      <Button
-                        className="p-0 bg-transparent"
-                        onClick={handleStartTimer}
-                      >
-                        <div className="flex items-center justify-center  bg-gradient-to-r from-green-500 to-green-600 border-[2px] border-[#035D2E] rounded-xl px-3 py-2 shadow-md">
-                          <span 
-                            className="text-[16px] font-extrabold font-verdana text-white"
-                            style={{ 
-                              WebkitTextStroke: "1px #035D2E",
-                              textShadow: "0px 1px 2px rgba(3, 93, 46, 0.5)"
+                    {
+                      timerStarted && (
+                        <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+                          <span
+                            className="text-[20px] font-extrabold font-verdana text-white"
+                            style={{
+                              WebkitTextStroke: "1.5px #C76000",
+                              textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
                             }}
                           >
-                            Start Timer
+                            {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
                           </span>
                         </div>
-                      </Button>
-                    )}
+                      )
+                      // : (
+                      //   <Button
+                      //     className="p-0 bg-transparent"
+                      //     onClick={handleStartTimer}
+                      //   >
+                      //     <div className="flex items-center justify-center bg-gradient-to-r from-green-500 to-green-600 border-[2px] border-[#035D2E] rounded-xl px-3 py-2 shadow-md">
+                      //       <span
+                      //         className="text-[16px] font-extrabold font-verdana text-white"
+                      //         style={{
+                      //           WebkitTextStroke: "1px #035D2E",
+                      //           textShadow: "0px 1px 2px rgba(3, 93, 46, 0.5)"
+                      //         }}
+                      //       >
+                      //         Start Timer
+                      //       </span>
+                      //     </div>
+                      //   </Button>
+                      // )
+                    }
                   </div>
                 </div>
 
@@ -544,14 +491,14 @@ const Stage1 = ({ onNext }: Props) => {
                     const isOthersPick = otherContestantsPicks.includes(num);
                     const isDisabled = isNumberDisabled(num);
                     const isRecentlyUpdated = recentlyUpdated.includes(num);
-                    
+
                     return (
                       <div
                         key={num}
                         onClick={() => {
                           if (!isDisabled || isMyPick) {
                             handleNumberClick(num);
-                          } 
+                          }
                         }}
                         className={`relative cursor-pointer transition-transform ${
                           isLoading
@@ -609,7 +556,9 @@ const Stage1 = ({ onNext }: Props) => {
                   {Array.from({ length: 5 }, (_, i) => (
                     <div key={i} className="px-2">
                       <NumberCardContainer
-                        text={selectedNumbers[i] ? String(selectedNumbers[i]) : ""}
+                        text={
+                          selectedNumbers[i] ? String(selectedNumbers[i]) : ""
+                        }
                         textColor="#F2C94C"
                         width={55}
                         height={45}
@@ -626,13 +575,13 @@ const Stage1 = ({ onNext }: Props) => {
                 </div>
               )}
 
-              <Button
+              {/* <Button
                 className="bg-pink-950"
                 onClick={onNext}
                 disabled={isLoading || selectedNumbers.length !== 5}
               >
                 Proceed
-              </Button>
+              </Button> */}
             </div>
           </div>
 
@@ -646,10 +595,14 @@ const Stage1 = ({ onNext }: Props) => {
             }
           />
         </div>
-           
+
         {/* Right Sidebar */}
         <div>
-          <HustleSideBar showJackpot={false} showHustlerCard={false} showEmptyCard={true}/>
+          <HustleSideBar
+            showJackpot={false}
+            showHustlerCard={false}
+            showEmptyCard={true}
+          />
         </div>
       </div>
     </>

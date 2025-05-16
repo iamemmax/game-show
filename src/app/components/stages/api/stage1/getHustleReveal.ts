@@ -1,7 +1,7 @@
 import { salaryAxios } from '@/lib/axios';
 import {  useQuery } from 'react-query';
 
-interface hustleRevealProps {
+export interface hustleRevealProps {
   status: string;
   message: string;
   data: Datum[];

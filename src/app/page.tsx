@@ -1,23 +1,22 @@
 "use client"
 import { AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import {motion} from "framer-motion"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion"
 import Stage1 from "./components/stages/Stage1";
 import Hustle from "./components/stages/components/hustle/Hustle";
 import QuestionScreen from "./components/stages/components/stage2/QuestionScreen";
-
+import { useMQTT } from "@/hooks/useMqttService";
+import { tokenStorage } from "@/utils/auth";
 
 export interface resetprop {
   email: string;
   otp: string;
-
 }
 
-
-const ForgetPasswordPage = () => {
+const HomePage = () => {
   const [step, setStep] = useState(1);
-  // const [email, setEmail] = useState("");
- 
+  const { isConnected, onMessage } = useMQTT();
+  const user = tokenStorage.getUser();
 
   const pageVariants = {
     initial: { opacity: 0, x: 50 },
@@ -25,55 +24,55 @@ const ForgetPasswordPage = () => {
     exit: { opacity: 0, x: -50 },
   };
 
+
+ 
   return (
     <AnimatePresence mode="wait">
       {step === 1 && (
         <motion.div
-        animate="animate"
-        className="h-full"
+          animate="animate"
+          className="h-full"
           exit="exit"
           initial="initial"
           key="step1"
           transition={{ duration: 0.4 }}
           variants={pageVariants}
         >
-       <Stage1
-       onNext={() => setStep(2)}
-       />
+          <Stage1
+            onNext={() => setStep(2)}
+          />
         </motion.div>
       )}
       {step === 2 && (
         <motion.div
           animate="animate"
-           className="h-full"
+          className="h-full"
           exit="exit"
           initial="initial"
           key="step2"
           transition={{ duration: 0.4 }}
           variants={pageVariants}
         >
-        <Hustle/>
+          <Hustle />
         </motion.div>
       )}
       
       {step === 3 && (
         <motion.div
-        animate="animate"
-        className="h-full"
-        exit="exit"
-        initial="initial"
-        key="step6"
-        transition={{ duration: 0.4 }}
-        variants={pageVariants}
+          animate="animate"
+          className="h-full"
+          exit="exit"
+          initial="initial"
+          key="step6"
+          transition={{ duration: 0.4 }}
+          variants={pageVariants}
         >
-        
-     
-        <QuestionScreen />
-          
+          <QuestionScreen />
         </motion.div>
       )}
     </AnimatePresence>
   );
 };
 
-export default ForgetPasswordPage;
+export default HomePage;
+
