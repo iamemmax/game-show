@@ -12,13 +12,10 @@ import { GAME_STATUSES_ENUMS } from "@/utils/enums"
 import toast from "react-hot-toast"
 import { useMQTT } from "@/hooks/useMqttService"
 import { useGetGameContestants } from "@/app/admin/misc/api"
-import { useGetAllHustleQuestions } from "@/app/components/stages/api/stage1/question/getHustleQuestion"
 
 export default function HostPage() {
     const params = useParams()
     const gameId = params.episode as string
-    const { data: allEpisodeQuestions, isLoading:isLoadingHustleQuestions } = useGetAllHustleQuestions(Number(gameId))
-
     const router = useRouter()
     const { isConnected, sendMessage, onMessage } = useMQTT()
     const [activeStage, setActiveStage] = useState<string>("stage1")
@@ -171,7 +168,7 @@ export default function HostPage() {
     const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
     const endTimerHustlePick = () => sendGameMessage("game_s1_hustle_pick_time_elapse")
     const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
-    const prepStage1Questions = () => sendGameMessage("game_s1_questions_prep", {question_id:allEpisodeQuestions?.data?.hustle_questions[0]?.questions.question_id })
+    const prepStage1Questions = () => sendGameMessage("game_s1_questions_prep")
     const revealStage1Question = (n: number) => sendGameMessage(`game_s1_question_reveal_${n}`)
     const startStage1Timer = (n: number) => sendGameMessage(`game_s1_timer_start_${n}`)
     const showStage1Results = () => sendGameMessage("game_s1_results_reveal")
