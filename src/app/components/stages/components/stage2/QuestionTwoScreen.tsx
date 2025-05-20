@@ -641,9 +641,9 @@ const QuestionTwoScreen = () => {
                             </div>
                           </>
                         ) : (
-                          <p className="text-white mt-4">
-                            Loading questions...
-                          </p>
+                          <div className="flex justify-center items-center h-full ">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+                          </div>
                         )}
                       </div>
                     )}

@@ -18,6 +18,8 @@ import { useGetWalletBalance } from "../../api/stage1/getbalance";
 import { contestantImages } from "../mocks/contestantImages";
 import Stage2GetReadyPage from "../stage2/Stage2GetReadyPage";
 import { useMQTT } from "@/hooks/useMqttService";
+import Stage3GetReadyPage from "../stage3/Stage3GetReadyPage";
+import Stage3CardSelection from "../stage3/Stage3CardSelection";
 
 interface StageOneTallyProps {
   eliminationCount?: number;
@@ -119,6 +121,10 @@ const StageOneTally = ({
 
   if (goToStage2) {
     return <Stage2GetReadyPage />;
+  }
+  if (goToStage3) {
+    return <Stage3CardSelection />;
+    // return <Stage3GetReadyPage />;
   }
   
   return (

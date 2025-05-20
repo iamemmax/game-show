@@ -10,10 +10,11 @@ import { useMQTT } from "@/hooks/useMqttService";
 import HustleStages from "../hustle/HustleStages";
 import HustleSideBar from "../hustle/HustleSideBar";
 import QuestionTwoScreen from "../stage2/QuestionTwoScreen";
+import Stage3CardSelection from "./Stage3CardSelection";
 
 const Stage3GetReadyPage = () => {
   const { isConnected, onMessage } = useMQTT();
-  const [showQuestionScreen, setshowQuestionScreen] = useState(false)
+  const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
 
   
   // Animation variants
@@ -59,7 +60,7 @@ const Stage3GetReadyPage = () => {
         // Handle stage transition events
         if (receivedMessage?.event === "game_s2_question_reveal_1") {
           // Proceed to the next stage
-          setshowQuestionScreen(true);
+          setShowCardRevealScreen(true);
         }
       };
       
@@ -76,8 +77,8 @@ const Stage3GetReadyPage = () => {
 
  
 
-if(showQuestionScreen){
-    return <QuestionTwoScreen/>
+if(showCardRevealScreen){
+    return <Stage3CardSelection/>
 
 }
   
@@ -180,7 +181,7 @@ if(showQuestionScreen){
                       repeatType: "reverse"
                     }}
                   >
-                    Get Ready for stage 2
+                    Get Ready for stage 3
                   </motion.h2>
 
                   
@@ -189,17 +190,14 @@ if(showQuestionScreen){
                     className="text-sm font-outfit text-white max-w-2xl"
                     variants={itemVariants}
                   >
-                    Welcome to the <span className="font-semibold text-[#d91fff] px-1">Fastest Finger Q&A</span> round! 
-                    In this stage, your speed and accuracy will be tested. Each contestant will face two questions — 
-                    but only the quickest correct response earns the point. Stay sharp, think fast, and respond faster!
-                    This round is not just about getting it right — it's about being the fastest to do so.
+                   Contestants will select Dud or Opportunity cards. The system will automatically handle the selections.
                   </motion.p>
 
                   <motion.p 
                     className="text-sm font-outfit text-white max-w-2xl"
                     variants={itemVariants}
                   >
-                    At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">two contestants with the lowest scores</span> 
+                    At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">1 contestants with the lowest scores</span> 
                     will be <strong>eliminated</strong> from the competition. So bring your A-game — every second and every point counts!
                   </motion.p>
 
@@ -207,19 +205,7 @@ if(showQuestionScreen){
                     className="list-disc pl-5 leading-7 text-sm text-white font-outfit"
                     variants={itemVariants}
                   >
-                    {[
-                      "Each contestant gets <strong>2 questions</strong>.",
-                      "<strong>Only the first correct answer</strong> wins the point.",
-                      "Speed matters — think fast, answer faster!",
-                      "If no one answers correctly, the question is skipped.",
-                      "<span className=\"text-[#d91fff] font-semibold \">Bottom 2 contestants </span> will be eliminated after this round."
-                    ].map((item, index) => (
-                      <motion.li 
-                        key={index}
-                        variants={listItemVariants}
-                        dangerouslySetInnerHTML={{ __html: item }}
-                      />
-                    ))}
+                    
                   </motion.ul>
                 </motion.div>
               </div>

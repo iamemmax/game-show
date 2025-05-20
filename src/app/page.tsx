@@ -5,9 +5,9 @@ import { motion } from "framer-motion"
 import Stage1 from "./components/stages/Stage1";
 import Hustle from "./components/stages/components/hustle/Hustle";
 import QuestionScreen from "./components/stages/components/hustle/QuestionScreen";
-import { useMQTT } from "@/hooks/useMqttService";
-import { tokenStorage } from "@/utils/auth";
+
 import StageOneTally from "./components/stages/components/hustle/StageOneTally";
+import Stage3CardSelection from "./components/stages/components/stage3/Stage3CardSelection";
 
 export interface resetprop {
   email: string;
@@ -16,8 +16,7 @@ export interface resetprop {
 
 const HomePage = () => {
   const [step, setStep] = useState(1);
-  const { isConnected, onMessage } = useMQTT();
-  const user = tokenStorage.getUser();
+  
 
   const pageVariants = {
     initial: { opacity: 0, x: 50 },
@@ -39,9 +38,10 @@ const HomePage = () => {
           transition={{ duration: 0.4 }}
           variants={pageVariants}
         >
-          <Stage1
+          {/* <Stage1
             onNext={() => setStep(2)}
-          />
+          /> */}
+          <Stage3CardSelection/>
         </motion.div>
       )}
       {step === 2 && (

@@ -869,7 +869,7 @@ const QuestionScreen = () => {
 
           {/* Right Sidebar */}
           <div>
-            <HustleSideBar showEmptyCard={false} showHustlerCard={true} />
+            <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={0} />
           </div>
         </div>
       )}

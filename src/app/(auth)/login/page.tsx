@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import { useLogin } from "../api/login";
 import { SmallSpinner } from "@/icons/core";
 import { useEffect } from "react";
-import PickCardContainer from "@/app/shared/PickCardContainer";
 
 const LoginPage = () => {
   const {
@@ -114,7 +113,6 @@ const LoginPage = () => {
           </form>
         </div>
       </div>
-      <PickCardContainer />
 
       <ErrorModal
         isErrorModalOpen={isErrorModalOpen}

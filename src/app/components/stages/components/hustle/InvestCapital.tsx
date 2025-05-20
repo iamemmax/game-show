@@ -8,7 +8,6 @@ import {
   PATTERN_GREEN_BLACK,
   PATTERN_PURPLE_BLACK,
 } from "@/app/shared/HustleCard.PatternTypes";
-import { Button } from "@/components/core";
 import { Reveal } from "../../api/stage1/getHustleReveal";
 import { convertKebabAndSnakeToTitleCase } from "@/utils/strings";
 // import { convertNumberToNaira } from "@/utils/currency";
