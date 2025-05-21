@@ -176,20 +176,15 @@ export default function HostPage() {
     const endTimerHustlePick = () => sendGameMessage("game_s1_hustle_pick_time_elapse")
     const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
     const prepStage1Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage1Questions?.data?.hustle_questions[num - 1]?.questions.question_id })
-    const prepStage2Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage2Questions?.questions[num - 1]?.question_id })
-    const revealStage1Question = (n: number) => {
-        sendGameMessage(`game_s1_question_reveal_${n}`);
-        if (n == 1) {
-            prepStage1Questions(1)
-        }
-    }
+    const revealStage1Question = (n: number) => sendGameMessage(`game_s1_question_reveal_${n}`)
     const startStage1Timer = (n: number) => sendGameMessage(`game_s1_timer_start_${n}`)
     const endStage1Timer = () => sendGameMessage(`question_s1_time_elapsed`)
     const showStage1Results = () => sendGameMessage("game_s1_results_reveal")
-
+    
     // Stage 2 functions
     const initStage2 = () => sendGameMessage("game_s2_init")
     const prepStage2 = () => sendGameMessage("game_s2_prep")
+    const prepStage2Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage2Questions?.questions[num - 1]?.question_id })
     const revealStage2Question = (n: number) => sendGameMessage(`game_s2_question_reveal_${n}`)
     const startStage2Timer = (n: number) => sendGameMessage(`game_s2_timer_start_${n}`)
     const showStage2Results = () => sendGameMessage("game_s2_results_reveal")

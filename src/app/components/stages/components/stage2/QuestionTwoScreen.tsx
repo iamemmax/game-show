@@ -27,7 +27,7 @@ import HustleStages from "../hustle/HustleStages";
 import StageOneTally from "../hustle/StageOneTally";
 import { processEliminatedContestants } from "@/utils/contestants";
 import { useGetWalletBalance } from "../../api/stage1/getbalance";
-import { useGetAllState2Questions } from "../../api/stage2/getQuestion2";
+import { useGetAllStage2Questions } from "../../api/stage2/getQuestion2";
 import { useAnswerStageTwoQuestion } from "../../api/stage2/answerStage2Question";
 import { useGetQuestionTwoAnswer } from "../../api/stage2/getQuestion2Answer";
 
@@ -93,7 +93,7 @@ const QuestionTwoScreen = () => {
   );
   
   // Get stage 2 questions
-  const { data: questionData, isLoading } = useGetAllState2Questions(
+  const { data: questionData, isLoading } = useGetAllStage2Questions(
     user?.game_episode as number
   );
 
