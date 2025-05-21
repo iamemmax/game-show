@@ -14,12 +14,14 @@ import { useMQTT } from "@/hooks/useMqttService"
 import { useGetGameContestants } from "@/app/admin/misc/api"
 import { useGetAllHustleQuestions } from "@/app/components/stages/api/stage1/question/getHustleQuestion"
 import { useGetAllStage2Questions } from "@/app/components/stages/api/stage2/getQuestion2"
+import { useNotifyBackendStartQuestionTimer } from "../misc/api"
 
 export default function HostPage() {
     const params = useParams()
     const gameId = params.episode as string
     const { data: allStage1Questions, isLoading: isLoadingHustleQuestions } = useGetAllHustleQuestions(Number(gameId))
     const { data: allStage2Questions, isLoading: isLoadingStage2Questions } = useGetAllStage2Questions(Number(gameId))
+    const { mutate: notifyBackendStartTimer } = useNotifyBackendStartQuestionTimer()
 
     const router = useRouter()
     const { isConnected, sendMessage, onMessage } = useMQTT()
@@ -178,12 +180,20 @@ export default function HostPage() {
     const prepStage1Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage1Questions?.data?.hustle_questions[num - 1]?.questions.question_id })
     const prepStage2Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage2Questions?.questions[num - 1]?.question_id })
     const revealStage1Question = (n: number) => {
-        sendGameMessage(`game_s1_question_reveal_${n}`);
+        sendGameMessage(`game_s1_question_reveal_${n}`, {question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",});
         if (n == 1) {
             prepStage1Questions(1)
         }
     }
-    const startStage1Timer = (n: number) => sendGameMessage(`game_s1_timer_start_${n}`)
+    const startStage1Timer = (n: number) => {
+        sendGameMessage(`game_s1_timer_start_${n}`);
+        notifyBackendStartTimer({
+            question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",
+            start_time: new Date().toISOString(),
+            question_type: "stage_1",
+        })
+    }
+
     const endStage1Timer = () => sendGameMessage(`question_s1_time_elapsed`)
     const showStage1Results = () => sendGameMessage("game_s1_results_reveal")
 
