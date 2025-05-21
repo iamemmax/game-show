@@ -247,16 +247,20 @@ const QuestionScreen = () => {
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after submission
 
-    // Use the actual bid value if available, otherwise use the selected amount
-    const amountToStake =
-      selectedBidValue > 0 ? selectedBidValue : selectedAmount;
+    // Find the exact string key from the backend that matches the selected amount
+    const selectedAmountKey = Object.keys(userBidAmounts).find(
+      key => Math.abs(parseFloat(key) - selectedAmount) < 0.01
+    );
+    
+    // Use the exact key string from the backend (e.g., "15000.00")
+    const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
 
     handleAnswerStageOneQuestion(
       {
         contestant_id: user?.contestant_id,
         question_id: currentQuestion?.questions?.question_id,
         answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
-        amount_staked: amountToStake,
+        amount_staked: amountToStake, // Send the exact key string from backend
         timestamp: formattedTimestamp,
         question_start_time: formattedGameStartTime, // Add game start time
       },
@@ -300,9 +304,13 @@ const QuestionScreen = () => {
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after auto-submission
 
-    // Use the actual bid value if available, otherwise use the selected amount
-    const amountToStake =
-      selectedBidValue > 0 ? selectedBidValue : selectedAmount;
+    // Find the exact string key from the backend that matches the selected amount
+    const selectedAmountKey = Object.keys(userBidAmounts).find(
+      key => Math.abs(parseFloat(key) - selectedAmount) < 0.01
+    );
+    
+    // Use the exact key string from the backend (e.g., "15000.00")
+    const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
 
     // Create submission data with "N" as the answer
     handleAnswerStageOneQuestion(
@@ -310,7 +318,7 @@ const QuestionScreen = () => {
         contestant_id: Number(user?.contestant_id),
         question_id: currentQuestion?.questions?.question_id,
         answer: "N", // "N" for No Answer
-        amount_staked: amountToStake,
+        amount_staked: amountToStake, // Send the exact key string from backend
         timestamp: formattedTimestamp,
         question_start_time: formattedGameStartTime, // Add game start time
       },
@@ -770,7 +778,7 @@ const QuestionScreen = () => {
                                               >
                                                 <Button
                                                   onClick={() =>
-                                                    handleAmountSelect(amount)
+                                                    handleAmountSelect(Number(amountKey))
                                                   }
                                                   disabled={
                                                     !timerActive ||

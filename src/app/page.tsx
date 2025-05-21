@@ -38,10 +38,10 @@ const HomePage = () => {
           transition={{ duration: 0.4 }}
           variants={pageVariants}
         >
-          {/* <Stage1
+          <Stage1
             onNext={() => setStep(2)}
-          /> */}
-          <Stage3CardSelection/>
+          />
+          {/* <Stage3CardSelection/> */}
         </motion.div>
       )}
       {step === 2 && (
