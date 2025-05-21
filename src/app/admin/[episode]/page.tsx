@@ -154,7 +154,7 @@ export default function GameDetails() {
           <div className="grid grid-cols-1 lg:grid-cols-[0.7fr,1fr,1fr] gap-4">
             {/* Left Column - Episode Information */}
             <section className="lg:col-span-1 space-y-6">
-              <header className="font-semibold text-sm">EPISODE INFORMATION</header>
+              <header className="font-bold text-sm">EPISODE INFORMATION</header>
               <section className="bg-[#341D44] p-5 rounded-xl">
                 <div>
                   <div className="rounded-lg space-y-3">
@@ -186,11 +186,11 @@ export default function GameDetails() {
                         name="constestants_attr"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm text-[#878787]">Contestant Position</FormLabel>
+                            <FormLabel className="text-[0.7rem] text-[#878787]">Contestant Position</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
-                                <SelectTrigger className=" border-[#ff00ff]/30 focus:border-[#ff00ff] focus:ring-[#ff00ff]/50 text-white h-9">
-                                  <SelectValue placeholder="Select" />
+                                <SelectTrigger className=" border-[#ff00ff]/30 focus:border-[#ff00ff] focus:ring-[#ff00ff]/50 text-white h-7">
+                                  <SelectValue placeholder="Select " />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent className=" border-[#ff00ff]/30 text-white">
@@ -201,7 +201,7 @@ export default function GameDetails() {
                                     disabled={getContestantStatus(contestant) === "assigned"}
                                     className={getContestantStatus(contestant) === "assigned" ? "opacity-50" : ""}
                                   >
-                                    {contestant.constestant_attr}{" "}
+                                    {convertKebabAndSnakeToTitleCase(contestant.constestant_attr)}{" "}
                                     {getContestantStatus(contestant) === "assigned" ? "(Assigned)" : ""}
                                   </SelectItem>
                                 ))}
@@ -221,8 +221,8 @@ export default function GameDetails() {
                             <FormControl>
                               <Input
                                 {...field}
-                                placeholder="Enter title..."
-                                className=" border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white h-9"
+                                placeholder="Enter contestant name"
+                                className=" border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white h-7"
                               />
                             </FormControl>
                             <FormMessage className="text-[#ff00ff]" />
@@ -239,8 +239,8 @@ export default function GameDetails() {
                             <FormControl>
                               <Input
                                 {...field}
-                                placeholder="Enter title..."
-                                className=" border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white h-9"
+                                placeholder="Enter contestant number"
+                                className=" border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white h-7"
                               />
                             </FormControl>
                             <FormMessage className="text-[#ff00ff]" />

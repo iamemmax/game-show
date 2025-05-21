@@ -36,7 +36,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <input
         className={cn(
-          'flex h-10 w-full rounded-lg bg-[#462B58] px-5 py-2 text-xs transition duration-300 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-input-placeholder focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-9 w-full rounded-lg bg-[#462B58] px-5 py-2 text-xs transition duration-300 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-input-placeholder focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
         ref={ref}
