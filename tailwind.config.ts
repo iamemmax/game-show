@@ -23,6 +23,7 @@ const config: Config = {
         heading: ['var(--font-heading)'],
         display: ['var(--font-display)'],
         outfit: ['var(--font-outfit)'],
+        montserrat: ['var(--font-montserrat)'],
       },
       fontSize: {
         xxs: '.625rem',

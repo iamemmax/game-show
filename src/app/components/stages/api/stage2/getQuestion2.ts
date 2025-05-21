@@ -31,7 +31,7 @@ export const getAllState2Questions = async (episode_id: number) => {
   return response?.data as hustleQuestionPicksProps;
 };
 
-export const useGetAllState2Questions = (episode_id: number) =>
+export const useGetAllStage2Questions = (episode_id: number) =>
   useQuery({
     queryKey: ["all-stage-2-questions", episode_id],
     queryFn: () => getAllState2Questions(episode_id),

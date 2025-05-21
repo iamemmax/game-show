@@ -227,7 +227,7 @@ export default function HostPage() {
                     <div className="flex items-center gap-3">
                         <Trophy className="h-8 w-8 text-primary" />
                         <GlowyStrokeText textclassName="text-[4xl]" strokeWidth={2} strokeColor="#ff00ff" glowColor="#ff00ff">
-                            Host Panel - Game {gameId}
+                            Host Paneline - Game {gameId}
                         </GlowyStrokeText>
                     </div>
                 </div>
