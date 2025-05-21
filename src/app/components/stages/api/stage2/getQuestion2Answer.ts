@@ -1,21 +1,40 @@
 import { salaryAxios } from '@/lib/axios';
 import { useQuery, useQueryClient } from 'react-query';
 
+// export interface answerQuestion2Prop {
+//   status: string;
+//   message: string;
+//   data: answerOptionProp[];
+// }
+
 export interface answerQuestion2Prop {
   status: string;
   message: string;
-  data: answerOptionProp[];
+  data: Data[];
 }
 
 export interface answerOptionProp {
-  contestant: Contestant;
+  status: string;
+  message: string;
+  data: Data;
+}
+
+interface Data {
+  contestant_answers: Contestantanswer[];
+  question: Question;
+}
+
+interface Question {
   question_id: string;
+  question_start_time: null;
+  question_winner: null;
+}
+
+interface Contestantanswer {
+  contestant: Contestant;
   answer_supplied: string;
   is_correct: boolean;
   timestamp: string;
-  percentage_staked: number;
-  amount_staked: number;
-  question_start_time: string;
 }
 
 interface Contestant {

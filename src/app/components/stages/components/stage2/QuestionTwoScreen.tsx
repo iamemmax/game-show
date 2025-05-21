@@ -11,14 +11,9 @@ import ErrorIcon from "@/app/icons/ErrorIcon";
 import { tokenStorage } from "@/utils/auth";
 import { Button, ErrorModal, GlowyStrokeText } from "@/components/core";
 import GradientButton from "@/app/shared/GradientButton";
-import Image from "next/image";
-import { useGetAllHustleQuestions } from "../../api/stage1/question/getHustleQuestion";
-import { contestantImages, revealResults } from "../mocks/contestantImages";
 import { addCommasToNumber, formatAxiosErrorMessage } from "@/utils";
-import { useAnswerStageOneQuestion } from "../../api/stage1/question/answerQuestion";
 import { useErrorModalState } from "@/hooks";
 import { AxiosError } from "axios";
-import { useGetQuestionAnswer } from "../../api/stage1/question/getQuestionAnswer";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
 import FastestFingerResult from "../hustle/FastestFingerResult";
@@ -114,24 +109,26 @@ const QuestionTwoScreen = () => {
 
   // Load questions when data is available
   useEffect(() => {
-    if (questionData?.questions && questionData.questions.length > 0) {
-      console.log("Stage 2 questions loaded:", questionData.questions);
+    console.log("Raw question data:", questionData);
+    
+    if (questionData?.data?.proof_questions && questionData.data.proof_questions.length > 0) {
+      console.log("Stage 2 questions loaded:", questionData.data.proof_questions);
       
       // Map the questions to the format expected by the component
-      const mappedQuestions = questionData.questions.map((question, index) => ({
+      const mappedQuestions = questionData.data.proof_questions.map((item, index) => ({
         questions: {
-          ...question,
-          question_id: question.question_id,
-          question: question.question,
-          option_a: question.option_a,
-          option_b: question.option_b,
-          option_c: question.option_c,
-          option_d: question.option_d,
-          correct_option: question.correct_option
+          ...item.questions,
+          question_id: item.questions.question_id,
+          question: item.questions.question,
+          option_a: item.questions.option_a,
+          option_b: item.questions.option_b,
+          option_c: item.questions.option_c,
+          option_d: item.questions.option_d,
+          correct_option: item.questions.correct_option
         },
-        question_number: question.question_id, // Use question_id instead of index
+        question_number: item.questions.question_id, // Use question_id instead of index
         hustle_reveal: {
-          hustle_amount: 10000, // Default amount for stage 2
+          hustle_amount: item.questions.allocated_winning_amount || 10000, // Use allocated amount or default
         },
         contestant: {
           contestant_id: user?.contestant_id,
@@ -139,6 +136,7 @@ const QuestionTwoScreen = () => {
         }
       }));
       
+      console.log("Mapped questions:", mappedQuestions);
       setSelectedQuestions(mappedQuestions);
     }
   }, [questionData, user]);
@@ -287,58 +285,96 @@ const QuestionTwoScreen = () => {
   useEffect(() => {
     if (isConnected) {
       const handler = (receivedMessage: any) => {
-        console.log("Question screen received message:", receivedMessage);
+        console.log("Question Two screen received message:", receivedMessage);
 
-        // Handle question reveal events (game_s2_question_reveal_1 to game_s2_question_reveal_12)
+        // Handle question reveal events (game_s2_question_reveal)
         if (
           receivedMessage?.event &&
-          receivedMessage.event.startsWith("game_s2_question_reveal_")
+          receivedMessage.event.startsWith("game_s2_question_reveal")
         ) {
-          const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
-          if (
-            !isNaN(questionNumber) &&
-            questionNumber >= 0 &&
-            questionNumber < selectedQuestions.length
-          ) {
+          console.log("Question reveal event received:", receivedMessage);
           
+          // Check if we have a question_id in the payload
+          if (receivedMessage?.payload?.question_id && selectedQuestions.length > 0) {
+            console.log("Looking for question with ID:", receivedMessage.payload.question_id);
+            console.log("Available questions:", selectedQuestions);
             
             // Find the question with the matching question_id
             const questionIndex = selectedQuestions.findIndex(
-              (q) => q.question_number === questionNumber + 1
+              (q) => q.questions.question_id.toString() === receivedMessage.payload.question_id.toString()
             );
             
-            if (questionIndex !== -1) {
-              setCurrentQuestionIndex(questionIndex);
-            } else {
-              // If not found, use the index directly
-              setCurrentQuestionIndex(questionNumber);
-            }
+            console.log("Found question at index:", questionIndex);
             
-            setSelectedOption(null);
-            setIsSubmitted(false);
-            resetTimerState();
+            if (questionIndex !== -1) {
+              console.log("Setting current question to index:", questionIndex);
+              setCurrentQuestionIndex(questionIndex);
+              setSelectedOption(null);
+              setIsSubmitted(false);
+              resetTimerState();
+            } else {
+              console.log("Question not found with ID:", receivedMessage.payload.question_id);
+              
+              // Fallback to using question number from event name if available
+              const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
+              if (!isNaN(questionNumber) && questionNumber >= 0 && questionNumber < selectedQuestions.length) {
+                console.log("Using fallback question number:", questionNumber);
+                setCurrentQuestionIndex(questionNumber);
+                setSelectedOption(null);
+                setIsSubmitted(false);
+                resetTimerState();
+              }
+            }
+          } else {
+            // Fallback to using question number from event name
+            const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
+            if (!isNaN(questionNumber) && questionNumber >= 0 && questionNumber < selectedQuestions.length) {
+              console.log("Using question number from event name:", questionNumber);
+              setCurrentQuestionIndex(questionNumber);
+              setSelectedOption(null);
+              setIsSubmitted(false);
+              resetTimerState();
+            }
           }
         }
 
-        // Handle timer start events (game_s2_timer_start_1 to game_s2_timer_start_12)
+        // Handle timer start events (game_s2_timer_start)
         if (
           receivedMessage?.event &&
-          receivedMessage.event.startsWith("game_s2_timer_start_")
+          receivedMessage.event.startsWith("game_s2_timer_start")
         ) {
-          const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
+          console.log("Timer start event received:", receivedMessage);
           
-          // Find the question with the matching question_id
-          const questionIndex = selectedQuestions.findIndex(
-            (q) => q.question_number === questionNumber + 1
-          );
-          
-          if (
-            !isNaN(questionNumber) &&
-            ((questionIndex !== -1 && currentQuestionIndex === questionIndex) ||
-             (questionIndex === -1 && currentQuestionIndex === questionNumber))
-          ) {
-            console.log(`Starting timer for question ${questionNumber + 1}`);
-            handleStartTimer();
+          // Check if we have a question_id in the payload
+          if (receivedMessage?.payload?.question_id) {
+            console.log("Looking for question with ID:", receivedMessage.payload.question_id);
+            
+            // Find the question with the matching question_id
+            const questionIndex = selectedQuestions.findIndex(
+              (q) => q.questions.question_id.toString() === receivedMessage.payload.question_id.toString()
+            );
+            
+            console.log("Found question at index:", questionIndex, "Current index:", currentQuestionIndex);
+            
+            if (questionIndex !== -1 && currentQuestionIndex === questionIndex) {
+              console.log("Starting timer for question:", questionIndex);
+              handleStartTimer();
+            } else {
+              console.log("Not starting timer - question index mismatch");
+            }
+          } else {
+            // Fallback to using question number from event name
+            const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
+            console.log("Using question number from event:", questionNumber, "Current index:", currentQuestionIndex);
+            
+            if (!isNaN(questionNumber) && currentQuestionIndex === questionNumber) {
+              console.log("Starting timer based on event number");
+              handleStartTimer();
+            } else {
+              // If all else fails, just start the timer for the current question
+              console.log("Starting timer for current question as fallback");
+              handleStartTimer();
+            }
           }
         }
 
@@ -358,6 +394,14 @@ const QuestionTwoScreen = () => {
       };
     }
   }, [isConnected, onMessage, currentQuestionIndex, selectedQuestions]);
+
+  // Debug current question
+  useEffect(() => {
+    if (selectedQuestions.length > 0) {
+      console.log("Current question index:", currentQuestionIndex);
+      console.log("Current question data:", selectedQuestions[currentQuestionIndex]);
+    }
+  }, [currentQuestionIndex, selectedQuestions]);
 
   return (
     <>

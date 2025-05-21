@@ -131,38 +131,11 @@ const QuestionScreen = () => {
   // Initialize with the question array data
   const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
 
-  // Type-safe sorting code that handles string or number hustle_number values
+  // Type-safe handling of question data without sorting
   useEffect(() => {
     if (Array.isArray(questionData?.data?.hustle_questions)) {
-      const sortedData = [...questionData.data.hustle_questions].sort(
-        (a, b) => {
-          // Get hustle numbers with fallback to Infinity for missing values
-          const hustleNumA = a.hustle_reveal?.hustle_number;
-          const hustleNumB = b.hustle_reveal?.hustle_number;
-
-          // Convert both values to numbers to ensure type-safe comparison
-          const numA =
-            typeof hustleNumA === "number"
-              ? hustleNumA
-              : typeof hustleNumA === "string"
-                ? parseInt(hustleNumA, 10)
-                : Infinity;
-
-          const numB =
-            typeof hustleNumB === "number"
-              ? hustleNumB
-              : typeof hustleNumB === "string"
-                ? parseInt(hustleNumB, 10)
-                : Infinity;
-
-          // Now we can safely perform numeric subtraction
-          return numA - numB;
-        }
-      );
-
-      console
-
-      setSelectedQuestions(sortedData);
+      // Use the original order from the API without sorting
+      setSelectedQuestions(questionData.data.hustle_questions);
     } else {
       console.warn("hustle_questions is not an array or is undefined");
     }
@@ -200,13 +173,20 @@ const QuestionScreen = () => {
   // Timer effect
   useEffect(() => {
     // This is the critical guard - timer should not run if not active
-    if (!timerActive) return;
+    if (!timerActive) {
+      console.log("Timer not active, not starting countdown");
+      return;
+    }
+
+    console.log("Timer active, timeLeft:", timeLeft);
 
     if (timeLeft <= 0) {
+      console.log("Time's up! Showing next button and fetching answer");
       setShowNextButton(true); // Enable the Next button
       setShouldFetchAnswer(true);
 
       if (!selectedOption && !isSubmitted) {
+        console.log("No option selected, auto-submitting with 'N'");
         setSelectedOption("N" as OptionKey);
         handleAutoSubmit();
       }
@@ -215,10 +195,14 @@ const QuestionScreen = () => {
     }
 
     const timer = setTimeout(() => {
+      console.log("Decreasing timer by 1 second");
       setTimeLeft(timeLeft - 1);
     }, 1000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      console.log("Clearing timer");
+      clearTimeout(timer);
+    };
   }, [timeLeft, selectedOption, isSubmitted, timerActive]);
 
   // Handle option selection - now just selects without checking correctness
@@ -341,6 +325,7 @@ const QuestionScreen = () => {
   };
 
   const handleStartTimer = () => {
+    console.log("handleStartTimer called - activating timer");
     setTimerActive(true);
     setGameStartTime(new Date()); // Reset game start time when timer starts
     setTimeLeft(10); // Reset timer to 10 seconds
@@ -355,33 +340,50 @@ const QuestionScreen = () => {
         // Handle question reveal events (game_s1_question_reveal_1 to game_s1_question_reveal_12)
         if (
           receivedMessage?.event &&
-          receivedMessage.event.startsWith("game_s1_question_reveal_")
+          receivedMessage.event.startsWith("game_s1_question_reveal")
         ) {
-          const questionNumber =
-            parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
-          if (
-            !isNaN(questionNumber) &&
-            questionNumber >= 0 &&
-            questionNumber < selectedQuestions.length
-          ) {
-            setCurrentQuestionIndex(questionNumber);
-            setSelectedOption(null);
-            setIsSubmitted(false);
-            resetTimerState();
+          // Check if we have a question_id in the payload
+          if (receivedMessage?.payload?.question_id && selectedQuestions.length > 0) {
+            // Find the question with the matching question_id
+            const questionIndex = selectedQuestions.findIndex(
+              (q) => q.questions.question_id.toString() === receivedMessage.payload.question_id.toString()
+            );
+            
+            if (questionIndex !== -1) {
+              // If found, set the current question to this index
+              setCurrentQuestionIndex(questionIndex);
+              
+              // Reset state for the new question
+              setSelectedOption(null);
+              setIsSubmitted(false);
+              resetTimerState();
+            }
           }
         }
 
         // Handle timer start events (game_s1_timer_start_1 to game_s1_timer_start_12)
         if (
           receivedMessage?.event &&
-          receivedMessage.event.startsWith("game_s1_timer_start_")
+          receivedMessage.event.startsWith("game_s1_timer_start")
         ) {
-          const questionNumber =
-            parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
-          if (
-            !isNaN(questionNumber) &&
-            currentQuestionIndex === questionNumber
-          ) {
+          
+          // Check if we have a question_id in the payload
+          if (receivedMessage?.payload?.question_id) {
+            console.log("Looking for question with ID:", receivedMessage.payload.question_id);
+            
+            // Find the question with the matching question_id
+            const questionIndex = selectedQuestions.findIndex(
+              (q) => q.questions.question_id.toString() === receivedMessage.payload.question_id.toString()
+            );
+            
+    
+            
+            // Start timer if we're on the correct question
+            if (questionIndex !== -1 && currentQuestionIndex === questionIndex) {
+              handleStartTimer();
+            } 
+          } else {
+            // If no question_id in payload, start timer for current question
             handleStartTimer();
           }
         }
@@ -389,19 +391,15 @@ const QuestionScreen = () => {
         if (receivedMessage?.event === "game_s1_results_reveal") {
           // Proceed to the next stage
           console.log(receivedMessage?.event);
-
           setAllQuestionsCompleted(true);
         }
 
         // Handle bid amount data
         if (receivedMessage?.event === "question_s1_spend") {
-          console.log("Received question_s1_spend event:", receivedMessage);
-          // setBidAmount(receivedMessage as QuestionS1SpendEvent);
-
+          // console.log("Received question_s1_spend event:", receivedMessage);
           // Find the current user's bid data
           const currentUserId = user?.contestant_id;
-          console.log("Current user ID:", currentUserId);
-          console.log("Payload:", receivedMessage?.payload);
+         
 
           const userData = receivedMessage?.payload?.find(
             (contestant: ContestantSpend) =>
@@ -415,8 +413,6 @@ const QuestionScreen = () => {
 
             // Store the user's bid amounts
             setUserBidAmounts(userData.spend_breakdown);
-            // setUserMaxQuestionSpend(userData.max_question_spend);
-            // setUserBooster(userData.booster);
 
             // Set default selected amount to the first amount
             const bidKeys = Object.keys(userData.spend_breakdown);
@@ -424,12 +420,7 @@ const QuestionScreen = () => {
 
             if (bidKeys.length > 0) {
               const firstKey = bidKeys[0];
-              console.log("Setting selected amount to:", parseFloat(firstKey));
-              console.log(
-                "Setting selected bid value to:",
-                userData.spend_breakdown[firstKey]
-              );
-
+          
               setSelectedAmount(parseFloat(firstKey));
               setSelectedBidValue(userData.spend_breakdown[firstKey]);
             }
@@ -449,7 +440,7 @@ const QuestionScreen = () => {
     isConnected,
     onMessage,
     currentQuestionIndex,
-    selectedQuestions.length,
+    selectedQuestions,
     user?.contestant_id,
   ]);
 
