@@ -23,7 +23,7 @@ export default function HostPage() {
     const { data: allStage2Questions, isLoading: isLoadingStage2Questions } = useGetAllStage2Questions(Number(gameId))
     const { mutate: notifyBackendStartTimer } = useNotifyBackendStartQuestionTimer()
 
-    const router = useRouter()
+
     const { isConnected, sendMessage, onMessage } = useMQTT()
     const [activeStage, setActiveStage] = useState<string>("stage1")
     const [gameState, setGameState] = useState<{
