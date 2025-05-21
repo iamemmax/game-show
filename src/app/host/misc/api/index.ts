@@ -2,7 +2,7 @@ import { salaryAxios } from "@/lib/axios";
 import { useMutation } from "react-query";
 
 interface RootObject {
-  question_id: number;
+  question_id: number | string;
   start_time: string;
   question_type: string;
 }
