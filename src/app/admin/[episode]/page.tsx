@@ -212,7 +212,7 @@ export default function GameDetails() {
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-[0.7fr,1fr,1fr] gap-4">
                         {/* Left Column - Episode Information */}
-                        <section className="lg:col-span-1 space-y-6">
+                        <section className="lg:col-span-1 space-y-4">
                             <header className="font-bold text-sm">EPISODE INFORMATION</header>
                             <section className="bg-[#341D44] p-5 rounded-xl">
                                 <div>
