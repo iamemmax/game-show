@@ -426,12 +426,33 @@ const QuestionTwoScreen = () => {
                        {Array.from({ length: 8 }, (_, index) => ( 
                           <div className="">
                           <NumberCardContainer
-                            text={index + 1}
-                            textColor="#F2C94C"
-                            backgroundColor="black"
+                            // text={index + 1}
+                            text={
+                              isQuestionAttempted(index) ? (
+                                <CheckIcon size={160} />
+                              ) : (
+                                index + 1
+                              )}
+                            textColor={
+                              mqttQuestionData?.question_index === index
+                                ? "#FFFFFF"
+                                : isQuestionAttempted(index)
+                                  ? "#fff"
+                                  : "#F2C94C"
+                            }
+                            backgroundColor={
+                              mqttQuestionData?.question_index === index
+                                ? "#FEC124"
+                                : isQuestionAttempted(index)
+                                  ? "#04DA6A"
+                                  : "black"
+                            }
                             width={45}
                             height={45}
-                            active={!!mqttQuestionData}
+                            active={
+                              mqttQuestionData?.question_index === index ||
+                              isQuestionAttempted(index)
+                            }
                             iconPosition={{ y: 33 }}
                             iconSize={30}
                           />
