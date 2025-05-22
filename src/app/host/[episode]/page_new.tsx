@@ -1,19 +1,22 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMQTT } from "@/hooks/useMqttService"
 import { useGetGameContestants } from "@/app/admin/misc/api"
+import { useGetAllHustleQuestions } from "@/app/components/stages/api/stage1/question/getHustleQuestion"
+import { useGetAllStage2Questions } from "@/app/components/stages/api/stage2/getQuestion2"
 import { useNotifyBackendStartQuestionTimer } from "../misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
-import Stage1Questions from "./Stage1"
 
 export default function HostPage() {
   const params = useParams()
   const gameId = params.episode as string
+  const { data: allStage1Questions, isLoading: isLoadingHustleQuestions } = useGetAllHustleQuestions(Number(gameId))
+  const { data: allStage2Questions, isLoading: isLoadingStage2Questions } = useGetAllStage2Questions(Number(gameId))
   const { mutate: notifyBackendStartTimer } = useNotifyBackendStartQuestionTimer()
 
   const { isConnected, sendMessage, onMessage } = useMQTT()
@@ -42,6 +45,9 @@ export default function HostPage() {
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [timerMinutes, setTimerMinutes] = useState(0)
   const [timerActive, setTimerActive] = useState(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const hustlePickTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const questionTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const {
     data: contestantsData,
@@ -110,6 +116,89 @@ export default function HostPage() {
       }
     }
   }, [contestantsData])
+
+  // Timer effect
+  useEffect(() => {
+    if (timerActive) {
+      timerRef.current = setInterval(() => {
+        setTimerSeconds((prev) => {
+          if (prev === 0) {
+            if (timerMinutes === 0) {
+              // Timer completed
+              setTimerActive(false)
+              clearInterval(timerRef.current as NodeJS.Timeout)
+              return 0
+            } else {
+              setTimerMinutes((prevMin) => prevMin - 1)
+              return 59
+            }
+          } else {
+            return prev - 1
+          }
+        })
+      }, 1000)
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
+    }
+  }, [timerActive, timerMinutes])
+
+  // Auto-end hustle pick timer after 60 seconds when stage 1 is initialized
+  useEffect(() => {
+    if (gameState.currentStage === "STAGE_1" && gameState.currentStageStep === "hustle_pick") {
+      // Clear any existing timer
+      if (hustlePickTimerRef.current) {
+        clearTimeout(hustlePickTimerRef.current)
+      }
+
+      // Start 60 second timer for hustle pick
+      setTimerMinutes(1)
+      setTimerSeconds(0)
+      setTimerActive(true)
+
+      hustlePickTimerRef.current = setTimeout(() => {
+        endTimerHustlePick()
+        setTimerActive(false)
+        // toast.info("Hustle pick time elapsed automatically")
+      }, 60000) // 60 seconds
+    }
+
+    return () => {
+      if (hustlePickTimerRef.current) {
+        clearTimeout(hustlePickTimerRef.current)
+      }
+    }
+  }, [gameState.currentStage, gameState.currentStageStep])
+
+  // Auto-end question timer after 15 seconds when a question timer starts
+  useEffect(() => {
+    if (gameState.currentStageStep === "timer_running") {
+      // Clear any existing timer
+      if (questionTimerRef.current) {
+        clearTimeout(questionTimerRef.current)
+      }
+
+      // Start 15 second timer for questions
+      setTimerMinutes(0)
+      setTimerSeconds(15)
+      setTimerActive(true)
+
+      questionTimerRef.current = setTimeout(() => {
+        endStage1Timer()
+        setTimerActive(false)
+        // toast.info("Question time elapsed automatically")
+      }, 15000) // 15 seconds
+    }
+
+    return () => {
+      if (questionTimerRef.current) {
+        clearTimeout(questionTimerRef.current)
+      }
+    }
+  }, [gameState.currentStageStep])
 
   // Send message helper function
   const sendGameMessage = useCallback(
@@ -208,9 +297,72 @@ export default function HostPage() {
             currentStageStep: "results",
             currentStage: "STAGE_1_COMPLETE",
           }))
-        }
-        // Add other stage handlers here...
-        else {
+        } else if (eventCode === "game_s2_init") {
+          setGameState((prev) => ({
+            ...prev,
+            currentStage: "STAGE_2",
+            lastAction: "game_s2_init",
+            currentStageStep: "init",
+          }))
+        } else if (eventCode === "game_s2_prep") {
+          setGameState((prev) => ({
+            ...prev,
+            lastAction: "game_s2_prep",
+            currentStageStep: "questions",
+            showQuestions: true,
+          }))
+        } else if (eventCode.includes("game_s2_question_reveal")) {
+          const questionNumber = Number.parseInt(eventCode.split("_").pop() || "0")
+          setGameState((prev) => ({
+            ...prev,
+            currentQuestion: questionNumber,
+            lastAction: eventCode,
+            currentStageStep: "question_reveal",
+          }))
+        } else if (eventCode === "game_s2_results_reveal") {
+          setGameState((prev) => ({
+            ...prev,
+            lastAction: "game_s2_results_reveal",
+            currentStageStep: "results",
+            currentStage: "STAGE_2_COMPLETE",
+          }))
+        } else if (eventCode === "game_s3_init") {
+          setGameState((prev) => ({
+            ...prev,
+            currentStage: "STAGE_3",
+            lastAction: "game_s3_init",
+            currentStageStep: "init",
+          }))
+        } else if (eventCode === "game_s3_results_reveal") {
+          setGameState((prev) => ({
+            ...prev,
+            lastAction: "game_s3_results_reveal",
+            currentStageStep: "results",
+            currentStage: "STAGE_3_COMPLETE",
+          }))
+        } else if (eventCode === "game_s4_prep") {
+          setGameState((prev) => ({
+            ...prev,
+            currentStage: "STAGE_4",
+            lastAction: "game_s4_prep",
+            currentStageStep: "init",
+          }))
+        } else if (eventCode.includes("game_s4_picks_reveal")) {
+          const pickNumber = Number.parseInt(eventCode.split("_").pop() || "0")
+          setGameState((prev) => ({
+            ...prev,
+            currentQuestion: pickNumber,
+            lastAction: eventCode,
+            currentStageStep: "pick_reveal",
+          }))
+        } else if (eventCode === "game_s4_results_reveal") {
+          setGameState((prev) => ({
+            ...prev,
+            lastAction: "game_s4_results_reveal",
+            currentStageStep: "results",
+            currentStage: "GAME_COMPLETE",
+          }))
+        } else {
           setGameState((prev) => ({ ...prev, lastAction: eventCode }))
         }
       } catch (error) {
@@ -231,29 +383,46 @@ export default function HostPage() {
   const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
   const endTimerHustlePick = () => sendGameMessage("game_s1_hustle_pick_time_elapse")
   const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
-  const prepStage1Questions = () => sendGameMessage("game_s1_questions_prep")
-  const showStage1Results = () => sendGameMessage("game_s1_results_reveal")
-
-  // Handle question completion
-  const handleQuestionComplete = (questionId: number) => {
-    // Logic to handle when a question is completed
-    console.log(`Question ${questionId} completed`)
-
-    // Update game state to show we're ready for the next question
-    setGameState((prev) => ({
-      ...prev,
-      currentStageStep: "questions",
-    }))
-  }
-
-  // Handle timer start
-  const handleTimerStart = (questionId: string, startTime: string, questionType: string) => {
-    notifyBackendStartTimer({
-      question_id: questionId,
-      start_time: startTime,
-      question_type: questionType,
+  const prepStage1Questions = (num: number) =>
+    sendGameMessage("game_s1_questions_prep", {
+      question_id: allStage1Questions?.data?.hustle_questions[num - 1]?.questions.question_id,
+    })
+  const revealStage1Question = (n: number) => {
+    sendGameMessage(`game_s1_question_reveal_${n}`, {
+      question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",
     })
   }
+  const startStage1Timer = (n: number) => {
+    sendGameMessage(`game_s1_timer_start_${n}`)
+    notifyBackendStartTimer({
+      question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",
+      start_time: new Date().toISOString(),
+      question_type: "stage_1",
+    })
+  }
+  const endStage1Timer = () => sendGameMessage(`question_s1_time_elapsed`)
+  const showStage1Results = () => sendGameMessage("game_s1_results_reveal")
+
+  // Stage 2 functions
+  const initStage2 = () => sendGameMessage("game_s2_init")
+  const prepStage2 = () => sendGameMessage("game_s2_prep")
+  const prepStage2Questions = (num: number) =>
+    sendGameMessage("game_s2_questions_prep", {
+      question_id: allStage2Questions?.questions[num - 1]?.question_id,
+    })
+  const revealStage2Question = (n: number) => sendGameMessage(`game_s2_question_reveal_${n}`)
+  const startStage2Timer = (n: number) => sendGameMessage(`game_s2_timer_start_${n}`)
+  const showStage2Results = () => sendGameMessage("game_s2_results_reveal")
+
+  // Stage 3 functions
+  const initStage3 = () => sendGameMessage("game_s3_init")
+  const prepStage3 = () => sendGameMessage("game_s3_prep")
+  const showStage3Results = () => sendGameMessage("game_s3_results_reveal")
+
+  // Stage 4 functions
+  const prepStage4 = () => sendGameMessage("game_s4_prep")
+  const revealStage4Picks = (n: number) => sendGameMessage(`game_s4_picks_reveal_${n}`)
+  const showStage4Results = () => sendGameMessage("game_s4_results_reveal")
 
   // Helper to get current stage title and subtitle
   const getStageInfo = () => {
@@ -306,8 +475,91 @@ export default function HostPage() {
                 <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
               </div>
               <p className="text-white mb-4">Prep Stage 1 Questions</p>
-              <TrapeziumButton onClick={prepStage1Questions} variant="orange">
+              <TrapeziumButton onClick={() => prepStage1Questions(1)} variant="orange">
                 PREP QUESTIONS
+              </TrapeziumButton>
+            </div>
+          </div>
+        )
+      } else if (currentStageStep === "questions" && gameState.showQuestions) {
+        return (
+          <div className="flex flex-col items-center">
+            <p className="text-white mb-4">Show Question</p>
+            <div className="grid grid-cols-5 gap-2 mb-4">
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                <QuestionButton
+                  key={`q_${num}`}
+                  number={num}
+                  onClick={() => revealStage1Question(num)}
+                  active={gameState.currentQuestion === num}
+                />
+              ))}
+            </div>
+            <div className="flex justify-center gap-4 mt-4">
+              <TrapeziumButton onClick={() => showStage1Results()} variant="purple">
+                REVEAL STAGE TALLY
+              </TrapeziumButton>
+            </div>
+          </div>
+        )
+      } else if (currentStageStep === "question_reveal") {
+        return (
+          <div className="flex justify-center gap-4">
+            <TrapeziumButton onClick={() => startStage1Timer(gameState.currentQuestion)} color="green">
+              START
+            </TrapeziumButton>
+          </div>
+        )
+      } else if (currentStageStep === "timer_running") {
+        return (
+          <div className="flex justify-center">
+            <TrapeziumButton onClick={endStage1Timer} variant="blue">
+              END TIMER
+            </TrapeziumButton>
+          </div>
+        )
+      } else if (currentStageStep === "results") {
+        return (
+          <div className="flex flex-col items-center mt-8">
+            <div className="flex justify-center mb-4">
+              <img src="/images/trophy.png" alt="Trophy" className="w-20 h-20" />
+            </div>
+            <p className="text-white mb-4">Proceed to stage 2</p>
+            <TrapeziumButton onClick={initStage2} color="orange">
+              START STAGE 2
+            </TrapeziumButton>
+          </div>
+        )
+      }
+    } else if (currentStage.includes("STAGE_2")) {
+      if (currentStageStep === "init") {
+        return (
+          <div className="flex justify-center gap-4">
+            <TrapeziumButton onClick={initStage2} color="green">
+              INITIALIZE STAGE 2
+            </TrapeziumButton>
+            <TrapeziumButton onClick={prepStage2} color="yellow">
+              PREP STAGE 2
+            </TrapeziumButton>
+          </div>
+        )
+      } else if (currentStageStep === "questions" && gameState.showQuestions) {
+        return (
+          <div className="flex flex-col items-center">
+            <p className="text-white mb-4">Show Question</p>
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              {Array.from({ length: 8 }, (_, i) => i + 1).map((num) => (
+                <QuestionButton
+                  key={`q_${num}`}
+                  number={num}
+                  onClick={() => revealStage2Question(num)}
+                  active={gameState.currentQuestion === num}
+                />
+              ))}
+            </div>
+            <div className="flex justify-center gap-4 mt-4">
+              <TrapeziumButton onClick={() => showStage2Results()} color="purple">
+                REVEAL STAGE TALLY
               </TrapeziumButton>
             </div>
           </div>
@@ -318,17 +570,53 @@ export default function HostPage() {
             <div className="flex justify-center mb-4">
               <img src="/images/trophy.png" alt="Trophy" className="w-20 h-20" />
             </div>
-            <p className="text-white mb-4">Proceed to stage 2</p>
-            <TrapeziumButton onClick={() => sendGameMessage("game_s2_init")} color="orange">
-              START STAGE 2
+            <p className="text-white mb-4">Proceed to stage 3</p>
+            <TrapeziumButton onClick={initStage3} color="orange">
+              START STAGE 3
             </TrapeziumButton>
           </div>
         )
       }
-
-      // For questions, question_reveal, and timer_running steps,
-      // we'll use the Stage1Questions component
-      return null
+    } else if (currentStage.includes("STAGE_3")) {
+      if (currentStageStep === "init") {
+        return (
+          <div className="flex justify-center">
+            <TrapeziumButton onClick={() => showStage3Results()} color="yellow">
+              SELECT OPPORTUNITY
+            </TrapeziumButton>
+          </div>
+        )
+      } else if (currentStageStep === "results") {
+        return (
+          <div className="flex flex-col items-center mt-8">
+            <div className="flex justify-center mb-4">
+              <img src="/images/trophy.png" alt="Trophy" className="w-20 h-20" />
+            </div>
+            <p className="text-white mb-4">Proceed to final stage</p>
+            <TrapeziumButton onClick={prepStage4} color="orange">
+              START STAGE 4
+            </TrapeziumButton>
+          </div>
+        )
+      }
+    } else if (currentStage.includes("STAGE_4")) {
+      if (currentStageStep === "init") {
+        return (
+          <div className="flex justify-center">
+            <TrapeziumButton onClick={() => showStage4Results()} color="yellow">
+              REVEAL FINAL STAGE VIEW
+            </TrapeziumButton>
+          </div>
+        )
+      } else if (currentStageStep === "results") {
+        return (
+          <div className="flex justify-center">
+            <TrapeziumButton onClick={endGame} color="red">
+              END GAME
+            </TrapeziumButton>
+          </div>
+        )
+      }
     }
 
     // Default - game not started
@@ -339,6 +627,11 @@ export default function HostPage() {
         </TrapeziumButton>
       </div>
     )
+  }
+
+  // Format timer display
+  const formatTime = (value: number) => {
+    return value < 10 ? `0${value}` : `${value}`
   }
 
   return (
@@ -361,6 +654,38 @@ export default function HostPage() {
             </nav>
           </div>
           <div className="flex items-center gap-4">
+            <button className="text-white/70 hover:text-white">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </button>
+            <button className="text-white/70 hover:text-white">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </button>
             <div className="bg-[#ff00ff]/20 rounded-full p-1">
               <img src="/placeholder.svg?height=32&width=32" alt="User" className="w-8 h-8 rounded-full" />
             </div>
@@ -438,32 +763,26 @@ export default function HostPage() {
               ))}
             </div>
 
+            {/* Timer */}
+            <div className="mb-8">
+              <div className="flex gap-4">
+                <div className="text-center">
+                  <div className="text-xs text-white/70 mb-1">MINUTES</div>
+                  <div className="bg-[#1a0b25] w-32 h-24 flex items-center justify-center text-6xl font-bold">
+                    {formatTime(timerMinutes)}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-white/70 mb-1">SECONDS</div>
+                  <div className="bg-[#1a0b25] w-32 h-24 flex items-center justify-center text-6xl font-bold">
+                    {formatTime(timerSeconds)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Stage-specific buttons */}
             {getStageButtons()}
-
-            {/* Stage 1 Questions Component */}
-            {gameState.currentStage.includes("STAGE_1") &&
-              (gameState.currentStageStep === "questions" ||
-                gameState.currentStageStep === "question_reveal" ||
-                gameState.currentStageStep === "timer_running") && (
-                <Stage1Questions
-                  gameId={gameId}
-                  onQuestionComplete={handleQuestionComplete}
-                  onTimerStart={handleTimerStart}
-                  sendGameMessage={sendGameMessage}
-                  currentQuestion={gameState.currentQuestion}
-                  currentStageStep={gameState.currentStageStep}
-                />
-              )}
-
-            {/* Show results button for Stage 1 */}
-            {gameState.currentStage.includes("STAGE_1") && gameState.currentStageStep === "questions" && (
-              <div className="mt-8">
-                <TrapeziumButton onClick={showStage1Results} variant="purple">
-                  REVEAL STAGE RESULTS
-                </TrapeziumButton>
-              </div>
-            )}
           </div>
         </main>
       )}
@@ -481,6 +800,25 @@ export default function HostPage() {
   )
 }
 
+type QuestionButtonProps = {
+  number: number
+  onClick: () => void
+  active?: boolean
+}
+
+const QuestionButton = ({ number, onClick, active = false }: QuestionButtonProps) => {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-12 h-10 rounded ${active ? "bg-[#ff6600]" : "bg-[#3a2a45]"} 
+                      border border-[#ff00ff]/30 text-white font-bold
+                      hover:bg-[#ff00ff]/50 transition-colors`}
+    >
+      {number}
+    </button>
+  )
+}
+
 type StageTabProps = {
   label: string
   active?: boolean
@@ -492,7 +830,7 @@ const StageTab = ({ label, active = false, onClick }: StageTabProps) => {
     <button
       onClick={onClick}
       className={`px-4 py-2 ${active ? "text-white" : "text-white/50"} 
-                font-medium hover:text-white transition-colors`}
+                      font-medium hover:text-white transition-colors`}
     >
       {label}
     </button>

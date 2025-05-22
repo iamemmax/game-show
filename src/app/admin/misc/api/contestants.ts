@@ -42,7 +42,7 @@ interface AssignContestantResponse {
 
 export const getGameContestants = async (gameId: number) => {
   if (!gameId) return null
-  const response = await tokenlessAxios.post(`api/accounts/game_contestants/${gameId}/`)
+  const response = await tokenlessAxios.post(`api/accounts/game_contestants/${gameId}`)
   return response?.data as ContestantsResponse
 }
 
