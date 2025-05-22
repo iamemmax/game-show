@@ -2,80 +2,85 @@
 import Logo from "@/app/icons/Logo";
 import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
-import React, { useEffect, useState, useRef } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import HustleStages from "./hustle/HustleStages";
 import HustleSideBar from "./hustle/HustleSideBar";
-import QuestionScreen from "./hustle/QuestionScreen";
+// Removed import of QuestionScreen to avoid circular dependency
+// import QuestionScreen from "./hustle/QuestionScreen";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
-import { useMQTT } from "@/hooks/useMqttService";
+// import { useMQTT } from "@/hooks/useMqttService"; // Commented out as it's not currently used
 
 const GetReadyScreen = () => {
-  const { isConnected, onMessage } = useMQTT();
-  const [showQuestionScreen, setshowQuestionScreen] = useState(false);
-  
+  // MQTT hooks are kept for future use but not currently used
+  // const { isConnected, onMessage } = useMQTT();
+  // const [showQuestionScreen, setshowQuestionScreen] = useState(false);
+
+  // Add debug log to track component rendering
+  console.log("GetReadyScreen component rendering");
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
+      transition: {
         duration: 0.5,
         when: "beforeChildren",
         staggerChildren: 0.2
       }
     },
-    exit: { 
+    exit: {
       opacity: 0,
       transition: { duration: 0.3 }
     }
   };
-  
+
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
+    visible: {
+      y: 0,
       opacity: 1,
       transition: { duration: 0.5, ease: "easeOut" }
     }
   };
-  
+
   const listItemVariants = {
     hidden: { x: -10, opacity: 0 },
-    visible: { 
-      x: 0, 
+    visible: {
+      x: 0,
       opacity: 1,
       transition: { duration: 0.3, ease: "easeOut" }
     }
   };
 
-  useEffect(() => {
-    if (isConnected) {
-      const handler = (receivedMessage: any) => {
-        console.log("Main page received message:", receivedMessage);
-        
-        // Handle stage transition events
-        if (receivedMessage?.event === "game_s1_question_reveal") {
-          // Proceed to the next stage
-          setshowQuestionScreen(true);
-        }
-      };
-      
-      // Register the message handler
-      onMessage(handler);
-      
-      // Clean up function to remove the handler when component unmounts
-      return () => {
-        onMessage(null);
-      };
-    }
-  }, [isConnected, onMessage]);
+  // useEffect(() => {
+  //   if (isConnected) {
+  //     const handler = (receivedMessage: any) => {
+  //       console.log("Main page received message:", receivedMessage);
 
-  if(showQuestionScreen){
-    return <QuestionScreen/>
-  }
-  
+  //       // Handle stage transition events
+  //       if (receivedMessage?.event === "game_s1_question_reveal") {
+  //         // Proceed to the next stage
+  //         setshowQuestionScreen(true);
+  //       }
+  //     };
+
+  //     // Register the message handler
+  //     onMessage(handler);
+
+  //     // Clean up function to remove the handler when component unmounts
+  //     return () => {
+  //       onMessage(null);
+  //     };
+  //   }
+  // }, [isConnected, onMessage]);
+
+  // if(showQuestionScreen){
+  //   return <QuestionScreen/>
+  // }
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -87,7 +92,7 @@ const GetReadyScreen = () => {
         className="grid grid-cols-[1.2fr_5fr_1fr] h-full"
       >
         {/* Left Sidebar */}
-        <motion.div 
+        <motion.div
           className="flex flex-col justify-between"
           variants={itemVariants}
         >
@@ -106,7 +111,7 @@ const GetReadyScreen = () => {
         <div className="flex flex-col justify-between items-center min-h-full">
           {/* Top section */}
           <div className="flex flex-col w-full items-center">
-            <motion.div 
+            <motion.div
               className="w-full h-[100px] flex items-center justify-center"
               variants={itemVariants}
             >
@@ -125,7 +130,7 @@ const GetReadyScreen = () => {
               />
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="relative w-full py-[2rem] 2xl:py-[6.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
               variants={itemVariants}
             >
@@ -158,18 +163,18 @@ const GetReadyScreen = () => {
               {/* Content container - increased border width from 5px to 8px for bolder appearance */}
               <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
               <div className="relative flex flex-col items-center w-full">
-                <motion.div 
+                <motion.div
                   className="flex flex-col justify-between items-start gap-4 p-6 rounded-lg shadow-md"
                   variants={itemVariants}
                 >
-                  <motion.h2 
+                  <motion.h2
                     className="text-[2.75rem] font-extrabold outline-text text-black"
                     variants={itemVariants}
-                    animate={{ 
+                    animate={{
                       scale: [1, 1.05, 1],
                       textShadow: ["0px 0px 0px rgba(217, 31, 255, 0)", "0px 0px 10px rgba(217, 31, 255, 0.7)", "0px 0px 0px rgba(217, 31, 255, 0)"]
                     }}
-                    transition={{ 
+                    transition={{
                       duration: 2,
                       repeat: Infinity,
                       repeatType: "reverse"
@@ -178,25 +183,25 @@ const GetReadyScreen = () => {
                     Get Ready
                   </motion.h2>
 
-                  <motion.p 
+                  <motion.p
                     className="text-sm font-outfit text-white max-w-2xl"
                     variants={itemVariants}
                   >
-                    Welcome to the <span className="font-semibold text-[#d91fff] px-1">Fastest Finger Q&A</span> round! 
-                    In this stage, your speed and accuracy will be tested. Each contestant will face two questions — 
+                    Welcome to the <span className="font-semibold text-[#d91fff] px-1">Fastest Finger Q&A</span> round!
+                    In this stage, your speed and accuracy will be tested. Each contestant will face two questions —
                     but only the quickest correct response earns the point. Stay sharp, think fast, and respond faster!
                     This round is not just about getting it right — it's about being the fastest to do so.
                   </motion.p>
 
-                  <motion.p 
+                  <motion.p
                     className="text-sm font-outfit text-white max-w-2xl"
                     variants={itemVariants}
                   >
-                    At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">two contestants with the lowest scores</span> 
+                    At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">two contestants with the lowest scores</span>
                     will be <strong>eliminated</strong> from the competition. So bring your A-game — every second and every point counts!
                   </motion.p>
 
-                  <motion.ul 
+                  <motion.ul
                     className="list-disc pl-5 leading-7 text-sm text-white font-outfit"
                     variants={itemVariants}
                   >
@@ -207,7 +212,7 @@ const GetReadyScreen = () => {
                       "If no one answers correctly, the question is skipped.",
                       "<span className=\"text-[#d91fff] font-semibold \">Bottom 2 contestants </span> will be eliminated after this round."
                     ].map((item, index) => (
-                      <motion.li 
+                      <motion.li
                         key={index}
                         variants={listItemVariants}
                         dangerouslySetInnerHTML={{ __html: item }}
