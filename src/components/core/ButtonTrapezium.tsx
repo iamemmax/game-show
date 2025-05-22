@@ -16,6 +16,7 @@ const trapeziumVariants = cva(
         yellow: "text-white",
         blue: "text-white",
         purple: "text-white",
+        orange: "text-white",
         custom: "",
       },
       size: {
@@ -98,6 +99,12 @@ export const TrapeziumButton = React.forwardRef<HTMLButtonElement, TrapeziumButt
           border: "#59339d",
           text: "#ffffff",
           glow: "#b388ff",
+        },
+        orange: {
+          bg: "#fd7e14",
+          border: "#e06a00",
+          text: "#ffffff",
+          glow: "#ff9f43",
         },
         custom: {
           bg: backgroundColor || "#3a3a3a",

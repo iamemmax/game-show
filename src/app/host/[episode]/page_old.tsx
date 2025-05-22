@@ -13,13 +13,17 @@ import toast from "react-hot-toast"
 import { useMQTT } from "@/hooks/useMqttService"
 import { useGetGameContestants } from "@/app/admin/misc/api"
 import { useGetAllHustleQuestions } from "@/app/components/stages/api/stage1/question/getHustleQuestion"
+import { useGetAllStage2Questions } from "@/app/components/stages/api/stage2/getQuestion2"
+import { useNotifyBackendStartQuestionTimer } from "../misc/api"
 
 export default function HostPage() {
     const params = useParams()
     const gameId = params.episode as string
-    const { data: allEpisodeQuestions, isLoading:isLoadingHustleQuestions } = useGetAllHustleQuestions(Number(gameId))
+    const { data: allStage1Questions, isLoading: isLoadingHustleQuestions } = useGetAllHustleQuestions(Number(gameId))
+    const { data: allStage2Questions, isLoading: isLoadingStage2Questions } = useGetAllStage2Questions(Number(gameId))
+    const { mutate: notifyBackendStartTimer } = useNotifyBackendStartQuestionTimer()
 
-    const router = useRouter()
+
     const { isConnected, sendMessage, onMessage } = useMQTT()
     const [activeStage, setActiveStage] = useState<string>("stage1")
     const [gameState, setGameState] = useState<{
@@ -166,14 +170,31 @@ export default function HostPage() {
     // Game control functions
     const startGame = () => sendGameMessage("game_start")
     const endGame = () => sendGameMessage("game_end")
+    console.log(allStage1Questions?.data?.hustle_questions)
+    console.log(allStage2Questions?.questions)
 
     // Stage 1 functions
     const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
     const endTimerHustlePick = () => sendGameMessage("game_s1_hustle_pick_time_elapse")
     const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
-    const prepStage1Questions = () => sendGameMessage("game_s1_questions_prep", {question_id:allEpisodeQuestions?.data?.hustle_questions[0]?.questions.question_id })
-    const revealStage1Question = (n: number) => sendGameMessage(`game_s1_question_reveal_${n}`)
-    const startStage1Timer = (n: number) => sendGameMessage(`game_s1_timer_start_${n}`)
+    const prepStage1Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage1Questions?.data?.hustle_questions[num - 1]?.questions.question_id })
+    const prepStage2Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage2Questions?.questions[num - 1]?.question_id })
+    const revealStage1Question = (n: number) => {
+        sendGameMessage(`game_s1_question_reveal_${n}`, {question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",});
+        if (n == 1) {
+            prepStage1Questions(1)
+        }
+    }
+    const startStage1Timer = (n: number) => {
+        sendGameMessage(`game_s1_timer_start_${n}`);
+        notifyBackendStartTimer({
+            question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",
+            start_time: new Date().toISOString(),
+            question_type: "stage_1",
+        })
+    }
+
+    const endStage1Timer = () => sendGameMessage(`question_s1_time_elapsed`)
     const showStage1Results = () => sendGameMessage("game_s1_results_reveal")
 
     // Stage 2 functions
@@ -213,10 +234,35 @@ export default function HostPage() {
                         className="border-[#ff00ff]/30 text-white hover:bg-[#3a2a45] hover:text-white"
                     >
                         <Clock className="h-3 w-3 mr-1" />
-                        Timer
+                        Start Timer
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={() => {
+                            if (stage == "S1") {
+
+                                endStage1Timer()
+                                setTimeout(() => {
+                                    prepStage1Questions(num)
+                                }, 500);
+                            }
+                            else {
+
+                                endStage1Timer()
+                                setTimeout(() => {
+                                    prepStage1Questions(num)
+                                }, 500);
+                                prepStage2Questions(num)
+                            }
+
+                        }}
+                        className="border-[#ff00ff]/30 text-white hover:bg-[#3a2a45] hover:text-white"
+                    >
+                        <Clock className="h-3 w-3 mr-1" />
+                        End Timer
                     </Button>
                 </div>
-            </div>
+            </div >
         ))
     }
 
@@ -404,7 +450,7 @@ export default function HostPage() {
                                                     Reveal Hustles
                                                 </Button>
                                                 <Button
-                                                    onClick={prepStage1Questions}
+                                                    onClick={() => prepStage1Questions(1)}
                                                     disabled={isSending}
                                                     className="bg-[#3a2a45] hover:bg-[#4a3a55] border border-[#ff00ff]/20"
                                                 >
@@ -415,7 +461,7 @@ export default function HostPage() {
 
                                             <div className="p-4 rounded-lg bg-[#3a2a45] border border-[#ff00ff]/20">
                                                 <h3 className="text-sm font-medium mb-3">Stage 1 Questions</h3>
-                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid- gap-3">
                                                     {renderQuestionButtons("S1", 12)}
                                                 </div>
                                             </div>
@@ -526,7 +572,7 @@ export default function HostPage() {
 
                                             <div className="p-4 rounded-lg bg-[#3a2a45] border border-[#ff00ff]/20">
                                                 <h3 className="text-sm font-medium mb-3">Number Match Picks</h3>
-                                                <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                                                <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
                                                     {Array.from({ length: 6 }, (_, i) => i + 1).map((num) => (
                                                         <Button
                                                             key={`pick_${num}`}

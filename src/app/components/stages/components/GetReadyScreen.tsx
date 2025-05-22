@@ -56,7 +56,7 @@ const GetReadyScreen = () => {
         console.log("Main page received message:", receivedMessage);
         
         // Handle stage transition events
-        if (receivedMessage?.event === "game_s1_question_reveal_1") {
+        if (receivedMessage?.event === "game_s1_question_reveal") {
           // Proceed to the next stage
           setshowQuestionScreen(true);
         }
