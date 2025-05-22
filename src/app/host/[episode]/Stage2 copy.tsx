@@ -4,11 +4,11 @@ import React, { useState, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import { toast } from "react-hot-toast"
-import { type IGetHustleQuestionAPIResponse, useEndStageOne, useGetHustleQuestion, useNotifyBackendEndQuestionTimer } from "../misc/api"
+import { type IGetHustleQuestionAPIResponse, useEndStageTwo, useGetAllStage2Questions, useGetHustleQuestion, useNotifyBackendEndQuestionTimer } from "../misc/api"
 import { GlowyStrokeText } from "@/components/core/GlowyText"
 import { FlipCountdown } from "@/components/core"
 
-interface Stage1QuestionsProps {
+interface Stage2QuestionsProps {
     gameId: string | number
     onQuestionComplete: (questionId: number) => void
     onTimerStart: (questionId: string, startTime: string, questionType: string) => void
@@ -16,13 +16,14 @@ interface Stage1QuestionsProps {
     currentStageStep: string
 }
 
-export default function Stage1Questions({
+export default function Stage2Questions({
     gameId,
     onQuestionComplete,
     onTimerStart,
     sendGameMessage,
     currentStageStep,
-}: Stage1QuestionsProps) {
+}: Stage2QuestionsProps) {
+    const { data, refetch } = useGetAllStage2Questions(gameId as number)
     const [loading, setLoading] = useState(false)
     const [currentQuestionData, setCurrentQuestionData] = useState<IGetHustleQuestionAPIResponse | null>(null)
     const [timerActive, setTimerActive] = useState(false)
@@ -30,7 +31,7 @@ export default function Stage1Questions({
     const [questionExhausted, setQuestionExhausted] = useState(false)
 
     const { mutate: fetchNextQuestion, data: hustleQuestionsData, isLoading } = useGetHustleQuestion()
-    const { mutate: endStageOne } = useEndStageOne();
+    const { mutate: endStageTwo } = useEndStageTwo();
 
     React.useEffect(() => {
         if (hustleQuestionsData) {
@@ -48,7 +49,7 @@ export default function Stage1Questions({
                     setCurrentQuestionData(data)
                     const questionId = data.data.question.questions.question_id.toString()
 
-                    sendGameMessage(`game_s1_question_reveal`, {
+                    sendGameMessage(`game_s2_question_reveal`, {
                         question_id: questionId,
                         data: data.data,
                     })
@@ -69,14 +70,14 @@ export default function Stage1Questions({
         )
     }
 
-    const handleRevealStage1Result = () => {
-        endStageOne(
+    const handleRevealStage2Result = () => {
+        endStageTwo(
             { episode: gameId },
             {
                 onSuccess: (data) => {
                     toast.success("Stage 1 results revealed successfully")
                     setQuestionExhausted(false)
-                    sendGameMessage("game_s1_results_reveal", {
+                    sendGameMessage("game_s2_results_reveal", {
                         game_id: gameId,
                     })
                 },
@@ -95,9 +96,9 @@ export default function Stage1Questions({
 
         const questionId = currentQuestionData.data.question.questions.question_id.toString()
         const startTime = new Date().toISOString()
-        onTimerStart(questionId, startTime, "stage_1")
+        onTimerStart(questionId, startTime, "stage_2")
 
-        sendGameMessage(`game_s1_timer_start_${currentQuestionData.data.question_index}`)
+        sendGameMessage(`game_s2_timer_start_${currentQuestionData.data.question_index}`)
 
         // Start local timer
         setTimerActive(true)
@@ -106,6 +107,7 @@ export default function Stage1Questions({
 
     const { mutate: endTimer } = useNotifyBackendEndQuestionTimer()
 
+    // End the timer for the current question
     const endQuestionTimer = () => {
         if (!currentQuestionData) return
 
@@ -113,7 +115,7 @@ export default function Stage1Questions({
         endTimer({ question_id: questionId },
             {
                 onSuccess: () => {
-                    sendGameMessage(`game_s1_timer_end_${currentQuestionData.data.question_index}`, {
+                    sendGameMessage(`game_s2_timer_end_${currentQuestionData.data.question_index}`, {
                         question_id: questionId,
                     })
 
@@ -149,7 +151,7 @@ export default function Stage1Questions({
 
                     questionExhausted ?
                         <div className="flex flex-col items-center justify-center mt-8">
-                            <TrapeziumButton onClick={handleRevealStage1Result} variant="purple">
+                            <TrapeziumButton onClick={handleRevealStage2Result} variant="purple">
                                 REVEAL STAGE RESULTS
                             </TrapeziumButton>
                         </div>
