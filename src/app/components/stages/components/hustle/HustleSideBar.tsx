@@ -38,7 +38,7 @@ const   HustleSideBar = ({
     if (dataBalance?.data?.balances) {
       // First, sort balances by amount (descending)
       const sortedBalances = [...dataBalance.data.balances].sort(
-        (a, b) => parseFloat(String(b.balance)) - parseFloat(String(a.balance))
+        (a, b) => parseFloat(String(b.book_balance)) - parseFloat(String(a.book_balance))
       );
       
       // If removeCount is specified, remove the lowest contestants
@@ -112,7 +112,7 @@ const   HustleSideBar = ({
                           textclassName="text-[19.18px] font-extrabold font-gilroyHeavy text-white"
                           fillColor="#fff"
                         >
-                          {`₦${addCommasToNumber(Number(bal?.balance))}`}
+                          {`₦${addCommasToNumber(Number(bal?.book_balance))}`}
                         </GlowyStrokeText>
                         <GlowyStrokeText
                           truncate
