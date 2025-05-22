@@ -100,19 +100,20 @@ const QuestionScreen = () => {
   const { data: questionData, isLoading } = useGetAllHustleQuestions(
     user?.game_episode as number
   );
-  
+
   // Add wallet balance query
   const { data: dataBalance } = useGetWalletBalance(
     user?.game_episode as number
   );
-  // const questionArray = questionData?.data?.hustle_questions || [];
 
+  // Initialize with the question array data
+  const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
+
+  // State declarations
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
-  const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>(
-    []
-  );
+  const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>([]);
   const [selectedAmount, setSelectedAmount] = useState(10000); // Default selected amount
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showNextButton, setShowNextButton] = useState(false);
@@ -127,15 +128,50 @@ const QuestionScreen = () => {
   }>({});
   const [selectedBidValue, setSelectedBidValue] = useState<number>(0);
 
+  // Add state to track the current question ID from MQTT events
+  const [currentQuestionId, setCurrentQuestionId] = useState<number | null>(null);
 
-  // Initialize with the question array data
-  const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
+  // Add a derived state for the question ID to submit
+  const [questionIdToSubmit, setQuestionIdToSubmit] = useState<number | null>(null);
+
+  // Add a new state to store the question data from MQTT events
+  const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
+
+  // Update questionIdToSubmit whenever currentQuestionIndex changes
+  useEffect(() => {
+    if (selectedQuestions.length > 0 && currentQuestionIndex >= 0 && currentQuestionIndex < selectedQuestions.length) {
+      const currentQuestion = selectedQuestions[currentQuestionIndex];
+      if (currentQuestion?.questions?.question_id) {
+        const newQuestionId = currentQuestion.questions.question_id;
+        console.log("Updating questionIdToSubmit from current question:", newQuestionId);
+        setQuestionIdToSubmit(newQuestionId);
+      }
+    }
+  }, [currentQuestionIndex, selectedQuestions]);
+
+  // Also update questionIdToSubmit when we receive MQTT question data
+  useEffect(() => {
+    if (mqttQuestionData?.question?.questions?.question_id) {
+      const newQuestionId = mqttQuestionData.question.questions.question_id;
+      console.log("Updating questionIdToSubmit from MQTT data:", newQuestionId);
+      setQuestionIdToSubmit(newQuestionId);
+    }
+  }, [mqttQuestionData]);
 
   // Type-safe handling of question data without sorting
   useEffect(() => {
     if (Array.isArray(questionData?.data?.hustle_questions)) {
       // Use the original order from the API without sorting
       setSelectedQuestions(questionData.data.hustle_questions);
+      
+      // Initialize questionIdToSubmit with the first question's ID if available
+      if (questionData.data.hustle_questions.length > 0) {
+        const firstQuestionId = questionData.data.hustle_questions[0]?.questions?.question_id;
+        if (firstQuestionId && !questionIdToSubmit) {
+          console.log("Initializing questionIdToSubmit with first question ID:", firstQuestionId);
+          setQuestionIdToSubmit(Number(firstQuestionId));
+        }
+      }
     } else {
       console.warn("hustle_questions is not an array or is undefined");
     }
@@ -224,7 +260,6 @@ const QuestionScreen = () => {
   const handleSubmitAnswer = () => {
     if (!selectedOption) return;
 
-    const currentQuestion = selectedQuestions[currentQuestionIndex];
     const answerLetter = convertOptionToLetter(selectedOption);
     const formattedTimestamp = formatTimestamp(new Date());
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
@@ -239,10 +274,17 @@ const QuestionScreen = () => {
     // Use the exact key string from the backend (e.g., "15000.00")
     const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
 
+    // Get the question ID to submit - prioritize MQTT data, then fall back to selected questions
+    const questionId = mqttQuestionData?.question?.questions?.question_id || 
+                      selectedQuestions[currentQuestionIndex]?.questions?.question_id || 
+                      questionIdToSubmit;
+    
+    console.log("Submitting answer for question ID:", questionId);
+
     handleAnswerStageOneQuestion(
       {
         contestant_id: user?.contestant_id,
-        question_id: currentQuestion?.questions?.question_id,
+        question_id: questionId,
         answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
         amount_staked: amountToStake, // Send the exact key string from backend
         timestamp: formattedTimestamp,
@@ -250,6 +292,7 @@ const QuestionScreen = () => {
       },
       {
         onSuccess: () => {
+          console.log("Successfully submitted answer for question ID:", questionId);
           // Add to attempted options
           setAttemptedOptions([
             ...attemptedOptions,
@@ -259,6 +302,7 @@ const QuestionScreen = () => {
           ]);
         },
         onError: (error) => {
+          console.error("Error submitting answer:", error);
           const errorMessage = formatAxiosErrorMessage(error as AxiosError);
           openErrorModalWithMessage(String(errorMessage));
         },
@@ -282,7 +326,6 @@ const QuestionScreen = () => {
 
   // Handle auto-submission when time elapses
   const handleAutoSubmit = () => {
-    const currentQuestion = selectedQuestions[currentQuestionIndex];
     const formattedTimestamp = formatTimestamp(new Date());
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
@@ -296,17 +339,24 @@ const QuestionScreen = () => {
     // Use the exact key string from the backend (e.g., "15000.00")
     const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
 
+    // Get the question ID to submit - prioritize MQTT data, then fall back to selected questions
+    const questionId = mqttQuestionData?.question?.questions?.question_id || 
+                      selectedQuestions[currentQuestionIndex]?.questions?.question_id || 
+                      questionIdToSubmit;
+    
+    console.log("Auto-submitting answer for question ID:", questionId);
+
     // Create submission data with "N" as the answer
     handleAnswerStageOneQuestion(
       {
         contestant_id: Number(user?.contestant_id),
-        question_id: currentQuestion?.questions?.question_id,
+        question_id: questionId,
         answer: "N", // "N" for No Answer
         amount_staked: amountToStake, // Send the exact key string from backend
         timestamp: formattedTimestamp,
         question_start_time: formattedGameStartTime, // Add game start time
       },
-      {
+      {     
         onSuccess: () => {
           // Add to attempted options with "N" option
           setAttemptedOptions([
@@ -337,21 +387,43 @@ const QuestionScreen = () => {
       const handler = (receivedMessage: any) => {
         console.log("Question screen received message:", receivedMessage);
 
+        // Handle new question format from MQTT events
+        if (receivedMessage?.event === "game_s1_question_reveal") {
+          console.log("Received new question format:", receivedMessage.data);
+          
+          // Store the question data
+          setMqttQuestionData(receivedMessage.data);
+          
+          // Reset state for the new question
+          setSelectedOption(null);
+          setIsSubmitted(false);
+          resetTimerState();
+          
+          // Set the current question index if available
+          if (receivedMessage.data?.question_index !== undefined) {
+            setCurrentQuestionIndex(receivedMessage.data.question_index - 1);
+          }
+        }
+
         // Handle question reveal events (game_s1_question_reveal_1 to game_s1_question_reveal_12)
         if (
           receivedMessage?.event &&
-          receivedMessage.event.startsWith("game_s1_question_reveal")
+          receivedMessage.event.startsWith("game_s1_question_reveal_")
         ) {
-          // Check if we have a question_id in the payload
-          if (receivedMessage?.payload?.question_id && selectedQuestions.length > 0) {
-            // Find the question with the matching question_id
-            const questionIndex = selectedQuestions.findIndex(
-              (q) => q.questions.question_id.toString() === receivedMessage.payload.question_id.toString()
-            );
+          // Extract question number from event name (e.g., "game_s1_question_reveal_3" -> 3)
+          const questionNumberMatch = receivedMessage.event.match(/_(\d+)$/);
+          const questionNumber = questionNumberMatch ? parseInt(questionNumberMatch[1], 10) : null;
+          
+          console.log("Extracted question number from event:", questionNumber);
+          
+          if (questionNumber !== null && selectedQuestions.length > 0) {
+            // Adjust to zero-based index
+            const newIndex = questionNumber - 1;
             
-            if (questionIndex !== -1) {
-              // If found, set the current question to this index
-              setCurrentQuestionIndex(questionIndex);
+            // Ensure index is valid
+            if (newIndex >= 0 && newIndex < selectedQuestions.length) {
+              console.log("Setting currentQuestionIndex to:", newIndex);
+              setCurrentQuestionIndex(newIndex);
               
               // Reset state for the new question
               setSelectedOption(null);
@@ -361,31 +433,13 @@ const QuestionScreen = () => {
           }
         }
 
-        // Handle timer start events (game_s1_timer_start_1 to game_s1_timer_start_12)
+        // Handle timer start events
         if (
           receivedMessage?.event &&
           receivedMessage.event.startsWith("game_s1_timer_start")
         ) {
-          
-          // Check if we have a question_id in the payload
-          if (receivedMessage?.payload?.question_id) {
-            console.log("Looking for question with ID:", receivedMessage.payload.question_id);
-            
-            // Find the question with the matching question_id
-            const questionIndex = selectedQuestions.findIndex(
-              (q) => q.questions.question_id.toString() === receivedMessage.payload.question_id.toString()
-            );
-            
-    
-            
-            // Start timer if we're on the correct question
-            if (questionIndex !== -1 && currentQuestionIndex === questionIndex) {
-              handleStartTimer();
-            } 
-          } else {
-            // If no question_id in payload, start timer for current question
-            handleStartTimer();
-          }
+          // Start timer for current question
+          handleStartTimer();
         }
 
         if (receivedMessage?.event === "game_s1_results_reveal") {
@@ -396,33 +450,57 @@ const QuestionScreen = () => {
 
         // Handle bid amount data
         if (receivedMessage?.event === "question_s1_spend") {
-          // console.log("Received question_s1_spend event:", receivedMessage);
           // Find the current user's bid data
           const currentUserId = user?.contestant_id;
-         
-
-          const userData = receivedMessage?.payload?.find(
-            (contestant: ContestantSpend) =>
-              contestant.contestant_id === currentUserId
-          );
-
-          console.log("Found user data:", userData);
-
-          if (userData) {
-            console.log("User bid amounts:", userData.spend_breakdown);
-
-            // Store the user's bid amounts
-            setUserBidAmounts(userData.spend_breakdown);
-
-            // Set default selected amount to the first amount
-            const bidKeys = Object.keys(userData.spend_breakdown);
-            console.log("Bid keys:", bidKeys);
-
-            if (bidKeys.length > 0) {
-              const firstKey = bidKeys[0];
           
-              setSelectedAmount(parseFloat(firstKey));
-              setSelectedBidValue(userData.spend_breakdown[firstKey]);
+          // Check if the data is in the new format (with spend_breakdown array)
+          if (Array.isArray(receivedMessage?.data?.spend_breakdown)) {
+            const userData = receivedMessage.data.spend_breakdown.find(
+              (contestant: any) => contestant.contestant_id === currentUserId
+            );
+            
+            console.log("Found user data (new format):", userData);
+            
+            if (userData && userData.spend_breakdown) {
+              console.log("User bid amounts:", userData.spend_breakdown);
+              
+              // Store the user's bid amounts
+              setUserBidAmounts(userData.spend_breakdown);
+              
+              // Set default selected amount to the first amount
+              const bidKeys = Object.keys(userData.spend_breakdown);
+              
+              if (bidKeys.length > 0) {
+                const firstKey = bidKeys[0];
+                
+                setSelectedAmount(parseFloat(firstKey));
+                setSelectedBidValue(userData.spend_breakdown[firstKey]);
+              }
+            }
+          } 
+          // Handle the old format
+          else if (receivedMessage?.payload) {
+            const userData = receivedMessage.payload.find(
+              (contestant: ContestantSpend) => contestant.contestant_id === currentUserId
+            );
+            
+            console.log("Found user data (old format):", userData);
+            
+            if (userData) {
+              console.log("User bid amounts:", userData.spend_breakdown);
+              
+              // Store the user's bid amounts
+              setUserBidAmounts(userData.spend_breakdown);
+              
+              // Set default selected amount to the first amount
+              const bidKeys = Object.keys(userData.spend_breakdown);
+              
+              if (bidKeys.length > 0) {
+                const firstKey = bidKeys[0];
+                
+                setSelectedAmount(parseFloat(firstKey));
+                setSelectedBidValue(userData.spend_breakdown[firstKey]);
+              }
             }
           }
         }
@@ -439,10 +517,14 @@ const QuestionScreen = () => {
   }, [
     isConnected,
     onMessage,
-    currentQuestionIndex,
     selectedQuestions,
     user?.contestant_id,
   ]);
+
+  // Debug logging for questionIdToSubmit changes
+  useEffect(() => {
+    console.log("questionIdToSubmit changed to:", questionIdToSubmit);
+  }, [questionIdToSubmit]);
 
   return (
     <>
@@ -618,17 +700,13 @@ const QuestionScreen = () => {
                         <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
                           <div className="">
                             <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
-                              Question{" "}
-                              {selectedQuestions[currentQuestionIndex]
-                                ?.question_number || currentQuestionIndex + 1}
+                              Question {mqttQuestionData?.question_index || currentQuestionIndex + 1}
                             </p>
                           </div>
                           <div className="">
                             <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                              {
-                                selectedQuestions[currentQuestionIndex]
-                                  ?.questions?.question
-                              }
+                              {mqttQuestionData?.question?.questions?.question || 
+                               selectedQuestions[currentQuestionIndex]?.questions?.question}
                             </h2>
                           </div>
                           <div className="flex justify-center items-center w-full gap-4">
@@ -637,14 +715,11 @@ const QuestionScreen = () => {
                                 className="text-[25px] text-white font-extrabold font- text-center"
                                 style={{
                                   WebkitTextStroke: "2px #04DA6A",
-                                  textShadow:
-                                    "0px 2px 4px rgba(4, 218, 106, 0.5)",
+                                  textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
                                 }}
                               >
-                                {
-                                  selectedQuestions[currentQuestionIndex]
-                                    ?.questions?.question_booster
-                                }{" "}
+                                {mqttQuestionData?.question?.questions?.question_booster || 
+                                 selectedQuestions[currentQuestionIndex]?.questions?.question_booster}{" "}
                                 <span
                                   className="text-base font-outfit font-normal text-[#04DA6A]"
                                   style={{
@@ -671,7 +746,12 @@ const QuestionScreen = () => {
                                     Number(
                                       dataBalance?.data?.balances?.find(
                                         (balance) => balance.contestant_id === user?.contestant_id
-                                      )?.balance || 0
+                                      )?.balance || 
+                                      // Use wallet balance from MQTT data if available
+                                      mqttQuestionData?.spend_breakdown?.find(
+                                        (contestant: any) => contestant.contestant_id === user?.contestant_id
+                                      )?.wallet_balance ||
+                                      0
                                     )
                                   )}
                                 </span>
@@ -680,178 +760,144 @@ const QuestionScreen = () => {
                           </div>
                         </div>
 
-                        {selectedQuestions.length > 0 ? (
-                          <>
-                            <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
-                              {(
-                                [
-                                  "option_a",
-                                  "option_b",
-                                  "option_c",
-                                  "option_d",
-                                ] as OptionKey[]
-                              ).map((option, index) => {
-                                const optionLetter = String.fromCharCode(
-                                  65 + index
-                                ); // A, B, C, D
-                                const currentQuestions =
-                                  selectedQuestions[currentQuestionIndex]
-                                    ?.questions || {};
+                        {/* Options display */}
+                        <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
+                          {(
+                            [
+                              "option_a",
+                              "option_b",
+                              "option_c",
+                              "option_d",
+                            ] as OptionKey[]
+                          ).map((option, index) => {
+                            const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
+                            const currentQuestions = mqttQuestionData?.question?.questions || 
+                                                    selectedQuestions[currentQuestionIndex]?.questions || {};
 
-                                return (
-                                  <button
-                                    key={option}
-                                    onClick={() => handleOptionSelect(option)}
-                                    disabled={!timerActive || isSubmitted}
-                                    className={cn(
-                                      "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
-                                      selectedOption === option &&
-                                        "bg-[#FCCE19] border-none text-[#745300]",
-                                      (isSubmitted || !timerActive) &&
-                                        "opacity-70 cursor-not-allowed"
-                                    )}
-                                  >
-                                    {optionLetter}:
-                                    <span
-                                      className={`${selectedOption === option ? "text-white font-bold" : ""}`}
-                                      style={{
-                                        marginLeft: "9px",
-                                        WebkitTextStroke:
-                                          selectedOption === option
-                                            ? "1px #C76000"
-                                            : "",
-                                      }}
-                                    >
-                                      {" "}
-                                      {currentQuestions[option]}
-                                    </span>
-                                  </button>
-                                );
-                              })}
-                            </div>
+                            return (
+                              <button
+                                key={option}
+                                onClick={() => handleOptionSelect(option)}
+                                disabled={!timerActive || isSubmitted}
+                                className={cn(
+                                  "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
+                                  selectedOption === option &&
+                                    "bg-[#FCCE19] border-none text-[#745300]",
+                                  (isSubmitted || !timerActive) &&
+                                    "opacity-70 cursor-not-allowed"
+                                )}
+                              >
+                                {optionLetter}:
+                                <span
+                                  className={`${selectedOption === option ? "text-white font-bold" : ""}`}
+                                  style={{
+                                    marginLeft: "9px",
+                                    WebkitTextStroke:
+                                      selectedOption === option
+                                        ? "1px #C76000"
+                                        : "",
+                                  }}
+                                >
+                                  {" "}
+                                  {currentQuestions[option]}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
 
-                            {/* Amount buttons, Submit and Next buttons */}
-                            <div className="flex flex-col items-start gap-1 mt-7">
-                              {/* Debug info - remove in production */}
-                              {/* <div className="text-xs text-white mb-2">
-                                <div>
-                                  Has bid amounts:{" "}
-                                  {Object.keys(userBidAmounts).length > 0
-                                    ? "Yes"
-                                    : "No"}
-                                </div>
-                                <div>Selected amount: {selectedAmount}</div>
-                                <div>
-                                  Selected bid value: {selectedBidValue}
-                                </div>
-                                <div>
-                                  Bid keys:{" "}
-                                  {Object.keys(userBidAmounts).join(", ")}
-                                </div>
-                              </div> */}
+                        {/* Amount buttons section */}
+                        <div className="flex flex-col items-start gap-1 mt-7">
+                          <div className="flex items-center w-full">
+                            <div className="flex flex-1 items-center">
+                              <div className="flex gap-2">
+                                {Object.keys(userBidAmounts).length > 0
+                                  && // Use user-specific bid amounts if available
+                                    Object.keys(userBidAmounts).map(
+                                      (amountKey: string) => {
+                                        const amount = parseFloat(amountKey);
+                                        const bidValue = userBidAmounts[amountKey];
 
-                              <div className="flex items-center w-full">
-                                <div className="flex flex-1 items-center">
-                                  <div className="flex gap-2">
-                                    {Object.keys(userBidAmounts).length > 0
-                                      && // Use user-specific bid amounts if available
-                                        Object.keys(userBidAmounts).map(
-                                          (amountKey: string) => {
-                                            const amount =
-                                              parseFloat(amountKey);
-                                            const bidValue =
-                                              userBidAmounts[amountKey];
-
-                                            return (
-                                              <div
-                                                key={amountKey}
-                                                className="flex flex-col items-center"
+                                        return (
+                                          <div
+                                            key={amountKey}
+                                            className="flex flex-col items-center"
+                                          >
+                                            <Button
+                                              onClick={() =>
+                                                handleAmountSelect(Number(amountKey))
+                                              }
+                                              disabled={
+                                                !timerActive ||
+                                                isSubmitted ||
+                                                timeLeft <= 0
+                                              }
+                                              className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                selectedAmount === amount
+                                                  ? "bg-[#04DA6A] text-black"
+                                                  : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
+                                              }
+                                         ${
+                                           !timerActive ||
+                                           isSubmitted ||
+                                           timeLeft <= 0
+                                             ? "opacity-50 cursor-not-allowed"
+                                             : "hover:bg-[#035D2E] hover:text-white"
+                                         }
+                                        `}
                                               >
-                                                <Button
-                                                  onClick={() =>
-                                                    handleAmountSelect(Number(amountKey))
+                                                ₦
+                                                {amount?.toLocaleString(
+                                                  undefined,
+                                                  {
+                                                    minimumFractionDigits:0,
+                                                    maximumFractionDigits:0,
                                                   }
-                                                  disabled={
-                                                    !timerActive ||
-                                                    isSubmitted ||
-                                                    timeLeft <= 0
-                                                  }
-                                                  className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                                    selectedAmount === amount
-                                                      ? "bg-[#04DA6A] text-black"
-                                                      : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
-                                                  }
-                                             ${
-                                               !timerActive ||
-                                               isSubmitted ||
-                                               timeLeft <= 0
-                                                 ? "opacity-50 cursor-not-allowed"
-                                                 : "hover:bg-[#035D2E] hover:text-white"
-                                             }
-                                            `}
-                                                >
+                                                )}
+                                              </Button>
+
+                                              {selectedAmount === amount && (
+                                                <div className="text-xs text-[#04DA6A] mt-1 font-bold">
                                                   ₦
-                                                  {amount?.toLocaleString(
+                                                  {bidValue.toLocaleString(
                                                     undefined,
                                                     {
                                                       minimumFractionDigits:0,
                                                       maximumFractionDigits:0,
                                                     }
                                                   )}
-                                                </Button>
-
-                                                {selectedAmount === amount && (
-                                                  <div className="text-xs text-[#04DA6A] mt-1 font-bold">
-                                                    ₦
-                                                    {bidValue.toLocaleString(
-                                                      undefined,
-                                                      {
-                                                        minimumFractionDigits:0,
-                                                        maximumFractionDigits:0,
-                                                      }
-                                                    )}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            );
-                                          }
-                                        )
-                                      
-                                        
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
                                         }
-                                  </div>
-                                </div>
-
-                                
-
-                                <div className="items-end justify-end">
-                                  {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
-                                  {!isSubmitted && (
-                                    <Button
-                                      className="p-0 bg-transparent"
-                                      onClick={handleSubmitAnswer}
-                                      disabled={
-                                        !timerActive ||
-                                        !selectedOption ||
-                                        isSubmitted
-                                      }
-                                    >
-                                      <GradientButton
-                                        text="Submit"
-                                        className={`uppercase ${!timerActive || !selectedOption ? "opacity-50" : ""}`}
-                                        width={130}
-                                      />
-                                    </Button>
-                                  )}
-                                </div>
+                                    )
+                                }
                               </div>
                             </div>
-                          </>
-                        ) : (
-                          <p className="text-white mt-4">
-                            Loading questions...
-                          </p>
-                        )}
+
+                            <div className="items-end justify-end">
+                              {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
+                              {!isSubmitted && (
+                                <Button
+                                  className="p-0 bg-transparent"
+                                  onClick={handleSubmitAnswer}
+                                  disabled={
+                                    !timerActive ||
+                                    !selectedOption ||
+                                    isSubmitted
+                                  }
+                                >
+                                  <GradientButton
+                                    text="Submit"
+                                    className={`uppercase ${!timerActive || !selectedOption ? "opacity-50" : ""}`}
+                                    width={130}
+                                  />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                     <div className="h-full w-full">

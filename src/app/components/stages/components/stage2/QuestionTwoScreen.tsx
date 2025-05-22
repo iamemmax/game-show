@@ -505,7 +505,7 @@ const QuestionTwoScreen = () => {
                     )}
                   </div>
 
-                  <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">
+                  <div className="grid mt-5 gap-2 grid-cols-[1_3fr_1fr]">
                     <div className="flex gap-2 flex-col">
                       {selectedQuestions?.map((contestant, idx: number) => (
                         <div className="flex gap-2 items-center" key={idx}>

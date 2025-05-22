@@ -28,6 +28,7 @@ interface Question {
   question_id: string;
   question_start_time: null;
   question_winner: null;
+  correct_option?: string; // Add the correct_option property
 }
 
 interface Contestantanswer {

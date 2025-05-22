@@ -227,6 +227,10 @@ export default function HostPage() {
                     >
                         <Radio className="h-3 w-3 mr-1" />
                         Reveal
+
+                        {
+                            allStage1Questions?.data?.hustle_questions[num - 1]?.questions.question_id
+                        }
                     </Button>
                     <Button
                         variant="outlined"
