@@ -48,7 +48,6 @@ export function GameHeader({
 
             <div className={cn("absolute z-10 inset-0 flex items-center justify-center", padding)}>
                 <GlowyStrokeText
-                    size="4xl"
                     // glowColor="#f542f5"
                     // strokeColor="#f542f5"
                     className="text-center"
