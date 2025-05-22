@@ -21,7 +21,7 @@ const trapeziumVariants = cva(
       },
       size: {
         default: "h-14 px-0 py-5 px-2 text-base",
-        sm: "h-8 px-0 py-4 text-sm min-h-[38px]",
+        sm: "h-10 px-0 py-4 text-sm min-h-[38px]",
         lg: "h-16 px-4 py-4 text-lg",
         xl: "h-14 px-12 py-5 text-xl",
       },
