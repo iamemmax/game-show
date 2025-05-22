@@ -20,7 +20,7 @@ const trapeziumVariants = cva(
         custom: "",
       },
       size: {
-        default: "h-14 px-0 py-5 px-2 text-base",
+        default: "h-12 px-0 py-5 px-2 text-base",
         sm: "h-10 px-0 py-4 text-sm min-h-[38px]",
         lg: "h-16 px-4 py-4 text-lg",
         xl: "h-14 px-12 py-5 text-xl",
@@ -159,7 +159,7 @@ export const TrapeziumButton = React.forwardRef<HTMLButtonElement, TrapeziumButt
             maskUnits="userSpaceOnUse"
             x={1}
             y={0}
-            width={100}
+            width={500}
             height={38}
           >
             <path
@@ -240,7 +240,8 @@ export const TrapeziumButton = React.forwardRef<HTMLButtonElement, TrapeziumButt
             strokeColor={darkenColor(colors.bg, 30)}
             fillColor={colors.text}
             glowIntensity={glowIntensity || "none"}
-            strokeWidth={3}
+            strokeWidth={2}
+            className="text-center font-outfit tracking-wider"
           >
             {children}
           </GlowyStrokeText>

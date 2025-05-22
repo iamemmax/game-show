@@ -1,6 +1,6 @@
 "use client";
 
-import { DM_Sans, Wix_Madefor_Display, Outfit, Montserrat } from "next/font/google";
+import { DM_Sans, Wix_Madefor_Display, Outfit, Montserrat, Platypi } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/utils/classNames";
 import FullscreenWrapper from "./components/AutoFullScreenMode";
@@ -31,6 +31,11 @@ const montserrat = Montserrat({
   variable: "--font-montserrat",
   display: "swap",
 });
+const platypi = Platypi({
+  subsets: ["latin"],
+  variable: "--font-platypi",
+  display: "swap",
+});
 
 export default function RootLayout({
   children,
@@ -39,7 +44,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={cn(sans.variable, display.variable, outfit.variable, montserrat.variable)}
+      className={cn(sans.variable, display.variable, outfit.variable, montserrat.variable, platypi.variable)}
       lang="en"
     >
       <body>

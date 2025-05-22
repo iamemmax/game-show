@@ -72,15 +72,37 @@ export const useNotifyBackendStartQuestionTimer = () => {
         },
     });
 }
+const postNotifyBackendEndTimer = async ({question_id}:{question_id:number | string}) => {
+    const res = await salaryAxios.post(`/api/game/s1_question_time_elapsed/${question_id}`);
+    return res.data;
+}
+
+export const useNotifyBackendEndQuestionTimer = () => {
+    return useMutation({
+        mutationFn: postNotifyBackendEndTimer,
+        mutationKey: ["end-hustle-questiontimer"],
+    });
+}
 
 const postGetHustleQuestion = async ({ episode }: { episode: string | number }) => {
     const res = await salaryAxios.post<IGetHustleQuestionAPIResponse>(`/api/game/request_next_question/${episode}`);
     return res.data;
 }
 
-export const useGetHustleQuestion = (episode: string | number) => {
+export const useGetHustleQuestion = () => {
     return useMutation({
         mutationFn: postGetHustleQuestion,
         mutationKey: ["get-hustle-question"],
+    });
+}
+const postEndStageOne = async ({ episode }: { episode: string | number }) => {
+    const res = await salaryAxios.post<IGetHustleQuestionAPIResponse>(`/api/game/end_stage_one/${episode}`);
+    return res.data;
+}
+
+export const useEndStageOne = () => {
+    return useMutation({
+        mutationFn: postEndStageOne,
+        mutationKey: ["end-stage-1"],
     });
 }
