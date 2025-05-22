@@ -127,7 +127,7 @@ const FastestFingerResult = ({
   const questionData = getQuestionData();
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex items-end flex-col">
       {timeElapsed && contestantAnswers.length > 0 ? (
         // Show results when time has elapsed
         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center overflow-y-auto max-h-[600px]">

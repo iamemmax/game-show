@@ -51,27 +51,27 @@ const Stage2GetReadyPage = () => {
     }
   };
 
-  useEffect(() => {
-    if (isConnected) {
-      const handler = (receivedMessage: any) => {
-        console.log("Main page received message:", receivedMessage);
+  // useEffect(() => {
+  //   if (isConnected) {
+  //     const handler = (receivedMessage: any) => {
+  //       console.log("Main page received message:", receivedMessage);
         
-        // Handle stage transition events
-        if (receivedMessage?.event === "game_s2_question_reveal_1") {
-          // Proceed to the next stage
-          setshowQuestionScreen(true);
-        }
-      };
+  //       // Handle stage transition events
+  //       if (receivedMessage?.event === "game_s2_question_reveal_1") {
+  //         // Proceed to the next stage
+  //         setshowQuestionScreen(true);
+  //       }
+  //     };
       
-      // Register the message handler
-      onMessage(handler);
+  //     // Register the message handler
+  //     onMessage(handler);
       
-      // Clean up function to remove the handler when component unmounts
-      return () => {
-        onMessage(null);
-      };
-    }
-  }, [isConnected, onMessage]);
+  //     // Clean up function to remove the handler when component unmounts
+  //     return () => {
+  //       onMessage(null);
+  //     };
+  //   }
+  // }, [isConnected, onMessage]);
 
 
  

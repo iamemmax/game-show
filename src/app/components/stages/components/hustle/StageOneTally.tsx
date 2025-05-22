@@ -16,10 +16,10 @@ import { Button, GlowyStrokeText } from "@/components/core";
 import { tokenStorage } from "@/utils/auth";
 import { useGetWalletBalance } from "../../api/stage1/getbalance";
 import { contestantImages } from "../mocks/contestantImages";
-import Stage2GetReadyPage from "../stage2/Stage2GetReadyPage";
 import { useMQTT } from "@/hooks/useMqttService";
-import Stage3GetReadyPage from "../stage3/Stage3GetReadyPage";
 import Stage3CardSelection from "../stage3/Stage3CardSelection";
+import QuestionTwoScreen from "../stage2/QuestionTwoScreen";
+import { useGetGameContestants } from "@/app/admin/misc/api";
 
 interface StageOneTallyProps {
   eliminationCount?: number;
@@ -44,55 +44,36 @@ const StageOneTally = ({
   const user = tokenStorage.getUser();
   const { data: dataBalance, isLoading } = useGetWalletBalance(user?.game_episode as number);
   const [processedBalances, setProcessedBalances] = useState<any[]>([]);
+  const {data:allContestsant} =useGetGameContestants(user?.game_episode as number);
   
-  // Process balances to remove lowest contestants
-  useEffect(() => {
-    if (dataBalance?.data?.balances) {
-      // First, sort balances by amount (descending)
-      const sortedBalances = [...dataBalance.data.balances].sort(
-        (a, b) => parseFloat(String(b.balance)) - parseFloat(String(a.balance))
-      );
-      
-      // If removeCount is specified, remove the lowest contestants
-      let filteredBalances = sortedBalances;
-      if (removeCount > 0) {
-        filteredBalances = sortedBalances.slice(
-          0, 
-          Math.max(0, sortedBalances.length - removeCount)
-        );
-      }
-      
-      // If eliminated is specified, mark those contestants as eliminated
-      if (eliminationCount > 0) {
-        filteredBalances = filteredBalances.map((balance, index) => ({
-          ...balance,
-          isEliminated: index >= filteredBalances.length - eliminationCount
-        }));
-      }
-      
-      setProcessedBalances(filteredBalances);
-      
-      console.log(`Processed balances (removed ${removeCount}, marked ${eliminationCount} as eliminated):`, 
-        filteredBalances.length);
-    }
-  }, [dataBalance, eliminationCount, removeCount]);
 
   // Dynamic tally array based on elimination count
   const tallyArray = [
     "PRO HUSTLER", "SUPER HUSTLER", "MINI HUSTLER", "MICRO HUSTLER"
   ];
   
-  // Add "ELIMINATED" labels based on elimination count
-  for (let i = 0; i < eliminationCount; i++) {
-    tallyArray.push("ELIMINATED");
-  }
+  // Sort contestants - non-eliminated first, then eliminated
+  const sortedContestants = React.useMemo(() => {
+    if (!allContestsant?.data) return [];
+    
+    return [...allContestsant.data].sort((a, b) => {
+      // Sort by elimination status first
+      if (a.is_eliminated && !b.is_eliminated) return 1;
+      if (!a.is_eliminated && b.is_eliminated) return -1;
+      
+      // If both have same elimination status, sort by balance (if available)
+      if (a.actual_balance && b.actual_balance) {
+        return Number(b.actual_balance) - Number(a.actual_balance);
+      }
+      
+      // Default to original order
+      return 0;
+    });
+  }, [allContestsant?.data]);
   
-  // Add empty string for any remaining positions
-  while (tallyArray.length < 7) {
-    tallyArray.push("");
-  }
-
-
+ 
+  
+ 
   useEffect(() => {
     if (isConnected) {
       const handler = (receivedMessage: any) => {
@@ -120,7 +101,7 @@ const StageOneTally = ({
   }, [isConnected, onMessage]);
 
   if (goToStage2) {
-    return <Stage2GetReadyPage />;
+    return <QuestionTwoScreen />;
   }
   if (goToStage3) {
     return <Stage3CardSelection />;
@@ -240,7 +221,7 @@ const StageOneTally = ({
                     },
                   }}
                 >
-                  {processedBalances?.map((tally, idx: number) => (
+                  {sortedContestants.map((tally, idx: number) => (
                     <motion.div
                       key={idx}
                       variants={{
@@ -254,7 +235,7 @@ const StageOneTally = ({
                           },
                         },
                       }}
-                      className={`flex justify-center gap-[.6875rem] 2xl:gap-1 items-center ${tally.isEliminated ? "opacity-50" : ""}`}
+                      className={`flex justify-center gap-[.6875rem] 2xl:gap-1 items-center ${tally.is_eliminated ? "opacity-50" : ""}`}
                     >
                       <div className={`${cn(`h-[3.125rem] grid grid-cols-[1fr_3fr] 2xl:grid-cols-[1fr_2fr] w-[7.8125rem] bg-[#1C0240] 2xl:h-[3.8rem] p-2 border-[.0531rem] border-opacity-55 border-[${borderArray[idx]}] rounded-[.4594rem]`)} `}>
                         <div className="shrink-0">
@@ -268,33 +249,33 @@ const StageOneTally = ({
                         </div>
                         <div className={`${cn(` flex flex-col`)}`}>
                           <p className="text-xs 2xl:text-sm font-gilroyMedium font-normal text-white">
-                            {tally.contestant_name?.split(' ')[0]}
+                            {tally.name?.split(' ')[0]}
                           </p>
                           <p className="text-xs 2xl:text-sm font-gilroyMedium font-normal text-white">
-                           {`₦${addCommasToNumber(Number(tally?.balance?.toFixed(0)) ?? 0)}`}
+                           {`₦${addCommasToNumber(Number(tally?.actual_balance || 0))}`}
                           </p>
                         </div>
                       </div>
                       <div className="">
                         <StageTallyCard
-                          text={tally.isEliminated ? "ELIMINATED" : tallyArray[idx]}
+                          text={tally.is_eliminated ? "ELIMINATED" : tallyArray[idx]}
                           fontSize={30}
                           className="2xl:w-[700px] 2xl:h-[90px]"
                           color="#fff"
-                          amount={`₦${addCommasToNumber(Number(tally?.balance?.toFixed(0)) ?? 0)}`}
+                          amount={`₦${addCommasToNumber(Number(tally?.actual_balance) ?? 0)}`}
                           badgeColor={
-                            tally.isEliminated ? "#760F1B" : "#035D2E"
+                            tally.is_eliminated ? "#760F1B" : "#035D2E"
                           }
                           backgroundGradient={{
-                            endColor: tally.isEliminated
+                            endColor: tally.is_eliminated
                               ? "#980306"
                               : "#03984A",
-                            startColor: tally.isEliminated
+                            startColor: tally.is_eliminated
                               ? "#FE8E8E"
                               : "#8EFE9B",
                           }}
-                          // innerBackgroundColor={tally.isEliminated ? "#2D0304" : "#13051E"}
-                          gradientId={`gradient-${idx}-${tally.contestant_id}`}
+                          // innerBackgroundColor={tally.is_eliminated ? "#2D0304" : "#13051E"}
+                          gradientId={`gradient-${idx}-${tally.id}`}
                         />
                       </div>
                     </motion.div>

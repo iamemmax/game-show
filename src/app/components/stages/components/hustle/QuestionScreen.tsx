@@ -120,27 +120,11 @@ const QuestionScreen = () => {
   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
 const [showPrepPage, setShowPrepPage] = useState(true);
 
-  // Add effect to log state changes for debugging
-  useEffect(() => {
-    console.log("showPrepPage state changed:", showPrepPage);
-  }, [showPrepPage]);
+ 
   // Add new state variables for user-specific bid amounts
   const [userBidAmounts, setUserBidAmounts] = useState<{
     [key: string]: number;
   }>({});
-
-  // Add a direct console log when the component mounts to check initial state
-  
-
-  // const [selectedBidValue, setSelectedBidValue] = useState<number>(0);
-
-  // Add state to track the current question ID from MQTT events
-  // const [currentQuestionId, setCurrentQuestionId] = useState<number | null>(null);
-
-  // Add a derived state for the question ID to submit
-  // const [questionIdToSubmit, setQuestionIdToSubmit] = useState<number | null>(null);
-
-  // Add a new state to store the question data from MQTT events
   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
 
 
@@ -195,14 +179,11 @@ const [showPrepPage, setShowPrepPage] = useState(true);
   useEffect(() => {
     // This is the critical guard - timer should not run if not active
     if (!timerActive) {
-      console.log("Timer not active, not starting countdown");
       return;
     }
 
-    console.log("Timer active, timeLeft:", timeLeft);
 
     if (timeLeft <= 0) {
-      console.log("Time's up! Showing next button and fetching answer");
       setShowNextButton(true); // Enable the Next button
       setShouldFetchAnswer(true);
 
@@ -216,12 +197,10 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     }
 
     const timer = setTimeout(() => {
-      console.log("Decreasing timer by 1 second");
       setTimeLeft(timeLeft - 1);
     }, 1000);
 
     return () => {
-      console.log("Clearing timer");
       clearTimeout(timer);
     };
   }, [timeLeft, selectedOption, isSubmitted, timerActive]);
@@ -234,10 +213,8 @@ const [showPrepPage, setShowPrepPage] = useState(true);
   useEffect(() => {
     if (!isConnected) return;
 
-    console.log("Setting up MQTT message handler");
 
     const handler = (receivedMessage: any) => {
-      console.log("MQTT message received:", receivedMessage);
 
       try {
         // Handle prep page event
@@ -245,7 +222,6 @@ const [showPrepPage, setShowPrepPage] = useState(true);
 
         // Handle question reveal event
         if (receivedMessage?.event === "game_s1_question_reveal") {
-          console.log("Question reveal event received");
           setShowPrepPage(false);
 
           const payload = receivedMessage.payload || {};
@@ -280,7 +256,6 @@ const [showPrepPage, setShowPrepPage] = useState(true);
                 )
               : spendBreakdown;
 
-            console.log("🧾 User bid breakdown:", userData);
 
             if (userData?.spend_breakdown) {
               setUserBidAmounts(userData.spend_breakdown);
@@ -699,11 +674,7 @@ const [showPrepPage, setShowPrepPage] = useState(true);
                                         // Use wallet balance from MQTT data if available
                                         mqttQuestionData?.spend_breakdown?.find(
                                           (contestant: any) => String(contestant.contestant_id) === String(user?.contestant_id)
-                                        )?.wallet_balance ||
-                                        // Fall back to API data
-                                        dataBalance?.data?.balances?.find(
-                                          (balance) => balance.contestant_id === user?.contestant_id
-                                        )?.actual_balance ||
+                                        )?.wallet_balance  ||
                                         0
                                       )
                                     )}

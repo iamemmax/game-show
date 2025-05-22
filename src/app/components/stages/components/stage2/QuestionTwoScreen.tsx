@@ -20,11 +20,11 @@ import FastestFingerResult from "../hustle/FastestFingerResult";
 import HustleSideBar from "../hustle/HustleSideBar";
 import HustleStages from "../hustle/HustleStages";
 import StageOneTally from "../hustle/StageOneTally";
-import { processEliminatedContestants } from "@/utils/contestants";
 import { useGetWalletBalance } from "../../api/stage1/getbalance";
-import { useGetAllStage2Questions } from "../../api/stage2/getQuestion2";
+// import { useGetAllStage2Questions } from "../../api/stage2/getQuestion2";
 import { useAnswerStageTwoQuestion } from "../../api/stage2/answerStage2Question";
 import { useGetQuestionTwoAnswer } from "../../api/stage2/getQuestion2Answer";
+import Stage2GetReadyPage from "./Stage2GetReadyPage";
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -88,9 +88,9 @@ const QuestionTwoScreen = () => {
   );
   
   // Get stage 2 questions
-  const { data: questionData, isLoading } = useGetAllStage2Questions(
-    user?.game_episode as number
-  );
+  // const { data: questionData, isLoading } = useGetAllStage2Questions(
+  //   user?.game_episode as number
+  // );
 
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -103,43 +103,12 @@ const QuestionTwoScreen = () => {
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
+  const [showStage2Prep, setShowStage2Prep] = useState(true);
+  // Add state for MQTT question data
+  const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize with the question array data
-  const [selectedQuestions, setSelectedQuestions] = useState<any[]>([]);
-
-  // Load questions when data is available
-  useEffect(() => {
-    console.log("Raw question data:", questionData);
-    
-    if (questionData?.data?.proof_questions && questionData.data.proof_questions.length > 0) {
-      console.log("Stage 2 questions loaded:", questionData.data.proof_questions);
-      
-      // Map the questions to the format expected by the component
-      const mappedQuestions = questionData.data.proof_questions.map((item, index) => ({
-        questions: {
-          ...item.questions,
-          question_id: item.questions.question_id,
-          question: item.questions.question,
-          option_a: item.questions.option_a,
-          option_b: item.questions.option_b,
-          option_c: item.questions.option_c,
-          option_d: item.questions.option_d,
-          correct_option: item.questions.correct_option
-        },
-        question_number: item.questions.question_id, // Use question_id instead of index
-        hustle_reveal: {
-          hustle_amount: item.questions.allocated_winning_amount || 10000, // Use allocated amount or default
-        },
-        contestant: {
-          contestant_id: user?.contestant_id,
-          contestant_name: user?.name || "Contestant",
-        }
-      }));
-      
-      console.log("Mapped questions:", mappedQuestions);
-      setSelectedQuestions(mappedQuestions);
-    }
-  }, [questionData, user]);
+ 
 
   useEffect(() => {
     // Only initialize game start time, but don't start the timer
@@ -186,14 +155,12 @@ const QuestionTwoScreen = () => {
   // Handle submit answer
   const { data: answerData } = useGetQuestionTwoAnswer(
     shouldFetchAnswer
-      ? (selectedQuestions[currentQuestionIndex]?.questions
-          ?.question_id as number)
+      ? (mqttQuestionData?.question_id as number)
       : 0
   );
   const handleSubmitAnswer = () => {
-    if (!selectedOption) return;
+    if (!selectedOption || !mqttQuestionData) return;
 
-    const currentQuestion = selectedQuestions[currentQuestionIndex];
     const answerLetter = convertOptionToLetter(selectedOption);
     const formattedTimestamp = formatTimestamp(new Date());
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
@@ -203,10 +170,10 @@ const QuestionTwoScreen = () => {
     handleAnswerStageTwoQuestion(
       {
         contestant_id: user?.contestant_id,
-        question_id: currentQuestion?.questions?.question_id,
+        question_id: mqttQuestionData?.question_id,
         answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
         timestamp: formattedTimestamp,
-        question_start_time: formattedGameStartTime, // Add game start time
+        // question_start_time: formattedGameStartTime, // Add game start time
       },
       {
         onSuccess: () => {
@@ -242,9 +209,10 @@ const QuestionTwoScreen = () => {
 
   // Handle auto-submission when time elapses
   const handleAutoSubmit = () => {
-    const currentQuestion = selectedQuestions[currentQuestionIndex];
+    if (!mqttQuestionData) return;
+    
     const formattedTimestamp = formatTimestamp(new Date());
-    const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
+    // const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after auto-submission
 
@@ -252,10 +220,10 @@ const QuestionTwoScreen = () => {
     handleAnswerStageTwoQuestion(
       {
         contestant_id: Number(user?.contestant_id),
-        question_id: currentQuestion?.questions?.question_id,
+        question_id: mqttQuestionData?.question_id,
         answer: "N", // "N" for No Answer
         timestamp: formattedTimestamp,
-        question_start_time: formattedGameStartTime, // Add game start time
+        // question_start_time: formattedGameStartTime, // Add game start time
       },
       {
         onSuccess: () => {
@@ -288,53 +256,26 @@ const QuestionTwoScreen = () => {
         console.log("Question Two screen received message:", receivedMessage);
 
         // Handle question reveal events (game_s2_question_reveal)
-        if (
-          receivedMessage?.event &&
-          receivedMessage.event.startsWith("game_s2_question_reveal")
-        ) {
-          console.log("Question reveal event received:", receivedMessage);
+        if (receivedMessage?.event === "game_s2_question_reveal") {
+          setShowStage2Prep(false);
           
-          // Check if we have a question_id in the payload
-          if (receivedMessage?.payload?.question_id && selectedQuestions.length > 0) {
-            console.log("Looking for question with ID:", receivedMessage.payload.question_id);
-            console.log("Available questions:", selectedQuestions);
+          // Store the question data from MQTT - handle both payload formats
+          const questionData = receivedMessage?.payload?.questions || 
+                              receivedMessage?.payload?.question_data;
+                              
+          if (questionData) {
+            console.log("Received question data from MQTT:", questionData);
+            setMqttQuestionData(questionData);
             
-            // Find the question with the matching question_id
-            const questionIndex = selectedQuestions.findIndex(
-              (q) => q.questions.question_id.toString() === receivedMessage.payload.question_id.toString()
-            );
-            
-            console.log("Found question at index:", questionIndex);
-            
-            if (questionIndex !== -1) {
-              console.log("Setting current question to index:", questionIndex);
-              setCurrentQuestionIndex(questionIndex);
-              setSelectedOption(null);
-              setIsSubmitted(false);
-              resetTimerState();
-            } else {
-              console.log("Question not found with ID:", receivedMessage.payload.question_id);
-              
-              // Fallback to using question number from event name if available
-              const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
-              if (!isNaN(questionNumber) && questionNumber >= 0 && questionNumber < selectedQuestions.length) {
-                console.log("Using fallback question number:", questionNumber);
-                setCurrentQuestionIndex(questionNumber);
-                setSelectedOption(null);
-                setIsSubmitted(false);
-                resetTimerState();
-              }
+            // Update current question index if available
+            if (receivedMessage?.payload?.question_index) {
+              setCurrentQuestionIndex(receivedMessage.payload.question_index - 1);
             }
-          } else {
-            // Fallback to using question number from event name
-            const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
-            if (!isNaN(questionNumber) && questionNumber >= 0 && questionNumber < selectedQuestions.length) {
-              console.log("Using question number from event name:", questionNumber);
-              setCurrentQuestionIndex(questionNumber);
-              setSelectedOption(null);
-              setIsSubmitted(false);
-              resetTimerState();
-            }
+            
+            // Reset states for new question
+            setSelectedOption(null);
+            setIsSubmitted(false);
+            resetTimerState();
           }
         }
 
@@ -344,38 +285,7 @@ const QuestionTwoScreen = () => {
           receivedMessage.event.startsWith("game_s2_timer_start")
         ) {
           console.log("Timer start event received:", receivedMessage);
-          
-          // Check if we have a question_id in the payload
-          if (receivedMessage?.payload?.question_id) {
-            console.log("Looking for question with ID:", receivedMessage.payload.question_id);
-            
-            // Find the question with the matching question_id
-            const questionIndex = selectedQuestions.findIndex(
-              (q) => q.questions.question_id.toString() === receivedMessage.payload.question_id.toString()
-            );
-            
-            console.log("Found question at index:", questionIndex, "Current index:", currentQuestionIndex);
-            
-            if (questionIndex !== -1 && currentQuestionIndex === questionIndex) {
-              console.log("Starting timer for question:", questionIndex);
-              handleStartTimer();
-            } else {
-              console.log("Not starting timer - question index mismatch");
-            }
-          } else {
-            // Fallback to using question number from event name
-            const questionNumber = parseInt(receivedMessage.event.split("_").pop(), 10) - 1;
-            console.log("Using question number from event:", questionNumber, "Current index:", currentQuestionIndex);
-            
-            if (!isNaN(questionNumber) && currentQuestionIndex === questionNumber) {
-              console.log("Starting timer based on event number");
-              handleStartTimer();
-            } else {
-              // If all else fails, just start the timer for the current question
-              console.log("Starting timer for current question as fallback");
-              handleStartTimer();
-            }
-          }
+          handleStartTimer();
         }
 
         if (receivedMessage?.event === "game_s2_results_reveal") {
@@ -393,21 +303,26 @@ const QuestionTwoScreen = () => {
         onMessage(null);
       };
     }
-  }, [isConnected, onMessage, currentQuestionIndex, selectedQuestions]);
+  }, [isConnected, onMessage]);
 
-  // Debug current question
+  // Debug current question - remove reference to questionData
   useEffect(() => {
-    if (selectedQuestions.length > 0) {
-      console.log("Current question index:", currentQuestionIndex);
-      console.log("Current question data:", selectedQuestions[currentQuestionIndex]);
+    if (mqttQuestionData) {
+      console.log("Current question data from MQTT:", mqttQuestionData);
     }
-  }, [currentQuestionIndex, selectedQuestions]);
+  }, [mqttQuestionData]);
+
+
+  if(showStage2Prep){
+    return <Stage2GetReadyPage />
+  }
+  if(allQuestionsCompleted){
+    return <StageOneTally eliminationCount={2} removeCount={2}/>
+  }
 
   return (
     <>
-      {allQuestionsCompleted ? (
-        <StageOneTally eliminationCount={2} removeCount={2}/> 
-      ) : (
+    
         <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full ">
           {/* Left Sidebar */}
           <div className="flex flex-col justify-between">
@@ -505,46 +420,23 @@ const QuestionTwoScreen = () => {
                     )}
                   </div>
 
-                  <div className="grid mt-5 gap-2 grid-cols-[1_3fr_1fr]">
+                  <div className="grid mt-5 gap-3 grid-cols-[1fr_3fr_1fr] items-start">
                     <div className="flex gap-2 flex-col">
-                      {selectedQuestions?.map((contestant, idx: number) => (
-                        <div className="flex gap-2 items-center" key={idx}>
+                      {/* Remove the mapping over selectedQuestions since we're not using it anymore */}
+                       {Array.from({ length: 8 }, (_, index) => ( 
                           <div className="">
-                            <NumberCardContainer
-                              text={
-                                isQuestionAttempted(idx) ? (
-                                  <CheckIcon size={160} />
-                                ) : (
-                                  contestant?.question_number
-                                )
-                              }
-                              textColor={
-                                currentQuestionIndex === idx
-                                  ? "#FFFFFF"
-                                  : isQuestionAttempted(idx)
-                                    ? "#fff"
-                                    : "#F2C94C"
-                              }
-                              backgroundColor={
-                                currentQuestionIndex === idx
-                                  ? "#FEC124"
-                                  : isQuestionAttempted(idx)
-                                    ? "#04DA6A"
-                                    : "black"
-                              }
-                              width={45}
-                              height={45}
-                              active={
-                                currentQuestionIndex === idx ||
-                                isQuestionAttempted(idx)
-                              }
-                              iconPosition={{ y: 33 }}
-                              iconSize={30}
-                            />
-                          </div>
-                         
+                          <NumberCardContainer
+                            text={index + 1}
+                            textColor="#F2C94C"
+                            backgroundColor="black"
+                            width={45}
+                            height={45}
+                            active={!!mqttQuestionData}
+                            iconPosition={{ y: 33 }}
+                            iconSize={30}
+                          />
                         </div>
-                      ))}
+                        ))}
                     </div>
                     {isLoading ? (
                       <div className="flex justify-center items-center h-full ">
@@ -552,6 +444,7 @@ const QuestionTwoScreen = () => {
                       </div>
                     ) : (
                       <div className="relative">
+                        {/* Question display section */}
                         <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
                           <div className="">
                             <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
@@ -560,7 +453,7 @@ const QuestionTwoScreen = () => {
                           </div>
                           <div className="">
                             <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                              {selectedQuestions[currentQuestionIndex]?.questions?.question || "Loading question..."}
+                              {mqttQuestionData?.question || "Waiting for question..."}
                             </h2>
                           </div>
                           <div className="flex justify-center items-center w-full gap-4">
@@ -581,7 +474,7 @@ const QuestionTwoScreen = () => {
                                   Number(
                                     balanceData?.data?.balances?.find(
                                       (balance) => balance.contestant_id === user?.contestant_id
-                                    )?.balance || 0
+                                    )?.actual_balance || 0
                                   )
                                 )}
                               </GlowyStrokeText>
@@ -602,7 +495,7 @@ const QuestionTwoScreen = () => {
                                 ₦
                                 {addCommasToNumber(
                                   Number(
-                                    selectedQuestions[currentQuestionIndex]?.hustle_reveal?.hustle_amount || 10000
+                                    mqttQuestionData?.allocated_winning_amount || 10000
                                   )
                                 )}
                               </GlowyStrokeText>
@@ -610,7 +503,7 @@ const QuestionTwoScreen = () => {
                           </div>
                         </div>
 
-                        {selectedQuestions.length > 0 ? (
+                        {mqttQuestionData ? (
                           <>
                             <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
                               {(
@@ -624,20 +517,17 @@ const QuestionTwoScreen = () => {
                                 const optionLetter = String.fromCharCode(
                                   65 + index
                                 ); // A, B, C, D
-                                const currentQuestions =
-                                  selectedQuestions[currentQuestionIndex]
-                                    ?.questions || {};
 
                                 return (
                                   <button
                                     key={option}
                                     onClick={() => handleOptionSelect(option)}
-                                    disabled={!timerActive || isSubmitted}
+                                    disabled={!timerActive || isSubmitted || !mqttQuestionData}
                                     className={cn(
                                       "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
                                       selectedOption === option &&
                                         "bg-[#FCCE19] border-none text-[#745300]",
-                                      (isSubmitted || !timerActive) &&
+                                      (isSubmitted || !timerActive || !mqttQuestionData) &&
                                         "opacity-70 cursor-not-allowed"
                                     )}
                                   >
@@ -653,7 +543,7 @@ const QuestionTwoScreen = () => {
                                       }}
                                     >
                                       {" "}
-                                      {currentQuestions[option]}
+                                      {mqttQuestionData?.[option] || "..."}
                                     </span>
                                   </button>
                                 );
@@ -685,13 +575,13 @@ const QuestionTwoScreen = () => {
                             </div>
                           </>
                         ) : (
-                          <div className="flex justify-center items-center h-full ">
+                          <div className="flex justify-center items-center h-full mt-4">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                           </div>
                         )}
                       </div>
                     )}
-                    <div className="h-full flex w-full">
+                    <div className="">
                       <FastestFingerResult
                         resultArray={answerData}
                         timeElapsed={timeLeft <= 0 || showNextButton}
@@ -713,7 +603,7 @@ const QuestionTwoScreen = () => {
             />
           </div>
         </div>
-      )}
+     
       <ErrorModal
         isErrorModalOpen={isErrorModalOpen}
         setErrorModalState={() => {

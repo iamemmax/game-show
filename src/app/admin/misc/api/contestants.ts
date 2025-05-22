@@ -11,6 +11,9 @@ interface Contestant {
   login_code: string | null
   created_at: string
   updated_at: string
+  is_eliminated: boolean
+  actual_balance: string;
+  book_balance: string;
 }
 
 interface GameInfo {
@@ -38,6 +41,8 @@ interface AssignContestantResponse {
   status: string
   message: string
 }
+
+
 
 
 export const getGameContestants = async (gameId: number) => {

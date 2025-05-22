@@ -32,40 +32,43 @@ const   HustleSideBar = ({
     user?.game_episode as number
   );
   const [processedBalances, setProcessedBalances] = useState<any[]>([]);
+  const myBalance = dataBalance?.data?.balances?.find(
+    (contestant) => contestant.contestant_id === user?.contestant_id
+  );
 
   // Process balances to mark or remove lowest contestants
-  useEffect(() => {
-    if (dataBalance?.data?.balances) {
-      // First, sort balances by amount (descending)
-      const sortedBalances = [...dataBalance.data.balances].sort(
-        (a, b) => parseFloat(String(b.book_balance)) - parseFloat(String(a.book_balance))
-      );
+  // useEffect(() => {
+  //   if (dataBalance?.data?.balances) {
+  //     // First, sort balances by amount (descending)
+  //     const sortedBalances = [...dataBalance.data.balances].sort(
+  //       (a, b) => parseFloat(String(b.book_balance)) - parseFloat(String(a.book_balance))
+  //     );
       
-      // If removeCount is specified, remove the lowest contestants
-      let filteredBalances = sortedBalances;
-      if (removeCount > 0) {
-        filteredBalances = sortedBalances.slice(
-          0, 
-          Math.max(0, sortedBalances.length - removeCount)
-        );
-      }
+  //     // If removeCount is specified, remove the lowest contestants
+  //     let filteredBalances = sortedBalances;
+  //     if (removeCount > 0) {
+  //       filteredBalances = sortedBalances.slice(
+  //         0, 
+  //         Math.max(0, sortedBalances.length - removeCount)
+  //       );
+  //     }
       
-      // If eliminated is specified, remove those contestants too
-      if (eliminated > 0) {
-        filteredBalances = filteredBalances.slice(
-          0,
-          Math.max(0, filteredBalances.length - eliminated)
-        );
-      }
+  //     // If eliminated is specified, remove those contestants too
+  //     if (eliminated > 0) {
+  //       filteredBalances = filteredBalances.slice(
+  //         0,
+  //         Math.max(0, filteredBalances.length - eliminated)
+  //       );
+  //     }
       
-      setProcessedBalances(filteredBalances);
+  //     setProcessedBalances(filteredBalances);
       
-      console.log(`Processed balances (removed ${removeCount + eliminated}):`, 
-        filteredBalances.length);
-    } else {
-      setProcessedBalances([]);
-    }
-  }, [dataBalance, eliminated, removeCount]);
+  //     console.log(`Processed balances (removed ${removeCount + eliminated}):`, 
+  //       filteredBalances.length);
+  //   } else {
+  //     setProcessedBalances([]);
+  //   }
+  // }, [dataBalance, eliminated, removeCount]);
 
   return (
     <div className="flex justify-between h-full items-center flex-col">
@@ -83,7 +86,7 @@ const   HustleSideBar = ({
             </div>
           ) : (
             <div className="flex-1 flex px-3 gap-5 h-full flex-col justify-center items-center">
-              {processedBalances.map((bal, idx: number) => (
+              {dataBalance?.data?.balances?.map((bal, idx: number) => (
                 <div
                   className="w-[136.73px] bg-[#ae77ff] p-[5px] h-[70.66px] rounded-[12.79px] relative"
                   key={idx}
@@ -112,7 +115,11 @@ const   HustleSideBar = ({
                           textclassName="text-[19.18px] font-extrabold font-gilroyHeavy text-white"
                           fillColor="#fff"
                         >
-                          {`₦${addCommasToNumber(Number(bal?.book_balance))}`}
+                  {`₦${addCommasToNumber(bal?.book_balance)}`
+}
+
+
+                          
                         </GlowyStrokeText>
                         <GlowyStrokeText
                           truncate
