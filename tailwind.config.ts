@@ -24,6 +24,7 @@ const config: Config = {
         display: ['var(--font-display)'],
         outfit: ['var(--font-outfit)'],
         montserrat: ['var(--font-montserrat)'],
+        platypi: ['var(--font-platypi)'],
       },
       fontSize: {
         xxs: '.625rem',

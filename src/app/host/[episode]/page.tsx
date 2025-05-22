@@ -7,7 +7,7 @@ import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMQTT } from "@/hooks/useMqttService"
 import { useGetGameContestants } from "@/app/admin/misc/api"
-import { useNotifyBackendStartQuestionTimer } from "../misc/api"
+import { useNotifyBackendEndQuestionTimer, useNotifyBackendStartQuestionTimer } from "../misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import Stage1Questions from "./Stage1"
 
@@ -342,7 +342,8 @@ export default function HostPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#1a0b25] text-white">
+        <div className="min-h-screen bg-[#1a0b25] text-white bg-[url('/images/host-bg.png')] bg-no-repeat bg-contain bg-bottom">
+
 
 
             {isLoadingContestants ? (
@@ -359,17 +360,17 @@ export default function HostPage() {
                 </div>
             ) : (
                 <main className="container mx-auto py-8 px-4 h-dvh">
-                    <div className="flex flex-col items-center h-full">
+                    <div className="flex flex-col items-center h-full justify-center">
                         {/* Stage Title */}
-                        <div className="relative w-80 h-32 flex items-center justify-center mb-8">
+                        <div className="relative w-80 h-28 flex items-center justify-center mb-8">
                             <img
                                 src="/images/stage-scroll.png"
                                 alt="Stage"
                                 className="absolute inset-0 w-full h-full object-contain"
                             />
-                            <div className="relative text-center">
-                                <h2 className="text-3xl font-serif text-[#5c2800]">{getStageInfo().title}</h2>
-                                <p className="text-sm font-bold text-[#5c2800]">{getStageInfo().subtitle}</p>
+                            <div className="relative text-center z-[5]">
+                                <h2 className="text-2xl font-platypi font-semibold text-[#5D1F26]">{getStageInfo().title}</h2>
+                                <p className="text-xs font-montserrat font-bold text-black uppercase">{getStageInfo().subtitle}</p>
                             </div>
                         </div>
 
@@ -384,13 +385,13 @@ export default function HostPage() {
                                 <div className="flex justify-center gap-4 mb-8">
                                     {gameState.contestants.map((contestant, index) => (
                                         <div key={contestant.id} className="relative">
-                                            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#ff00ff] mb-2">
+                                            {/* <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#ff00ff] mb-2">
                                                 <img
                                                     src={`/placeholder.svg?height=64&width=64&text=${index + 1}`}
                                                     alt={contestant.name || "Contestant"}
                                                     className="w-full h-full object-cover"
                                                 />
-                                            </div>
+                                            </div> */}
                                             <div className="w-24 h-32 bg-gradient-to-b from-[#9c4dcc] to-[#6a2a8c] clip-path-contestant">
                                                 {/* Contestant bar */}
                                             </div>
@@ -403,7 +404,8 @@ export default function HostPage() {
                         {getStageButtons()}
 
                         {/* Stage 1 Questions Component */}
-                        {gameState.currentStage.includes("STAGE_1") &&
+                        {
+                            gameState.currentStage.includes("STAGE_1") &&
                             (gameState.currentStageStep === "questions" ||
                                 gameState.currentStageStep === "question_reveal" ||
                                 gameState.currentStageStep === "timer_running") && (
@@ -412,19 +414,12 @@ export default function HostPage() {
                                     onQuestionComplete={handleQuestionComplete}
                                     onTimerStart={handleTimerStart}
                                     sendGameMessage={sendGameMessage}
-                                    currentQuestion={gameState.currentQuestion}
                                     currentStageStep={gameState.currentStageStep}
                                 />
-                            )}
+                            )
+                        }
 
-                        {/* Show results button for Stage 1 */}
-                        {gameState.currentStage.includes("STAGE_1") && gameState.currentStageStep === "questions" && (
-                            <div className="mt-8">
-                                <TrapeziumButton onClick={showStage1Results} variant="purple">
-                                    REVEAL STAGE RESULTS
-                                </TrapeziumButton>
-                            </div>
-                        )}
+
                     </div>
                 </main>
             )}
