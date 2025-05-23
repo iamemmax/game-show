@@ -16,7 +16,7 @@ interface Datum {
   reveals: Reveal[];
 }
 
-interface Reveal {
+export interface Reveal {
   id: number;
   hustle_name: string;
   hustle_number: number;
