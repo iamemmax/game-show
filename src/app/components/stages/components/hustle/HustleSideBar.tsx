@@ -13,6 +13,7 @@ import { tokenStorage } from "@/utils/auth";
 import { addCommasToNumber } from "@/utils";
 import { processEliminatedContestants } from "@/utils/contestants";
 import Image from "next/image";
+import { useGetGameContestants } from "@/app/admin/misc/api";
 interface prop {
   showJackpot?: boolean;
   showEmptyCard?: boolean;
@@ -35,6 +36,8 @@ const   HustleSideBar = ({
   const myBalance = dataBalance?.data?.balances?.find(
     (contestant) => contestant.contestant_id === user?.contestant_id
   );
+    const {data:allContestsant} =useGetGameContestants(user?.game_episode as number);
+    
 
   // Process balances to mark or remove lowest contestants
   // useEffect(() => {
@@ -86,9 +89,9 @@ const   HustleSideBar = ({
             </div>
           ) : (
             <div className="flex-1 flex px-3 gap-5 h-full flex-col justify-center items-center">
-              {dataBalance?.data?.balances?.map((bal, idx: number) => (
+              {allContestsant?.data?.map((bal, idx: number) => (
                 <div
-                  className="w-[136.73px] bg-[#ae77ff] p-[5px] h-[70.66px] rounded-[12.79px] relative"
+                  className={`w-[136.73px] bg-[#ae77ff] p-[5px] h-[70.66px] rounded-[12.79px] relative ${bal?.is_eliminated ?"hidden":""}`}
                   key={idx}
                 >
                   <div className="w-full h-full flex justify-center items-center rounded-[12.79px] 
@@ -115,7 +118,7 @@ const   HustleSideBar = ({
                           textclassName="text-[19.18px] font-extrabold font-gilroyHeavy text-white"
                           fillColor="#fff"
                         >
-                  {`₦${addCommasToNumber(bal?.book_balance)}`
+                  {`₦${addCommasToNumber(Number(bal?.book_balance))}`
 }
 
 
@@ -130,7 +133,7 @@ const   HustleSideBar = ({
                           textclassName="text-[19.18px] font-extrabold font-gilroyHeavy text-white -mt-2 max-w-[110px] truncate"
                           fillColor="#fff"
                         >
-                          {bal?.contestant_name?.split(" ")[0]}
+                          {bal?.name?.split(" ")[0]}
                         </GlowyStrokeText>
                       </div>
                     </div>

@@ -100,7 +100,7 @@ if(showQuestionScreen){
             <Logo />
           </div>
           <div>
-            <HustleStages />
+            <HustleStages activeStage={2} />
           </div>
           <div className="pb-4">
             <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>

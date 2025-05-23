@@ -242,7 +242,6 @@ const Stage3CardSelection = () => {
           [otherContestant.id]: otherContestant.name || "Opponent"
         }));
         
-        console.log("Set opponent name:", otherContestant.name, "ID:", otherContestant.id);
       }
     }
   }, [contestantsData?.data, user?.contestant_id]);
@@ -975,11 +974,11 @@ const Stage3CardSelection = () => {
                         onClick={() => handleCardClick(index)}
                         className={cn(
                           "relative transition-transform perspective-[1000px]",
-                          card.revealed || passFound ? "cursor-default pointer-events-none" : 
+                          card.revealed ? "cursor-default pointer-events-none opacity-70" : 
                             isMyTurn ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-80",
                           (isSending || flippingCards.length > 0) ? "cursor-wait pointer-events-none" : "",
                           isRecentlyUpdated ? "animate-pulse" : "",
-                          isRevealedPass ? "z-10" : ""
+                          isRevealedPass ? "z-10 opacity-100" : "" // Keep PASS card fully visible
                         )}
                         style={{ perspective: "1000px" }}
                       >

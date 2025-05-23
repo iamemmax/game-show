@@ -78,7 +78,9 @@ const QuestionTwoScreen = () => {
     openErrorModalWithMessage,
     errorModalMessage,
   } = useErrorModalState();
-  const { isConnected, onMessage } = useMQTT();
+  const { isConnected, onMessage,sendMessage } = useMQTT();
+  // Add hook to publish MQTT messages
+  // const { publishMessage } = usePublishMQTT();
   // Get user from storage
   const user = tokenStorage.getUser();
 
@@ -107,8 +109,8 @@ const QuestionTwoScreen = () => {
   // Add state for MQTT question data
   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-
- 
+  // Add state to track if we've sent the result message
+  const [resultMessageSent, setResultMessageSent] = useState(false);
 
   useEffect(() => {
     // Only initialize game start time, but don't start the timer
@@ -116,8 +118,6 @@ const QuestionTwoScreen = () => {
       setGameStartTime(new Date());
     }
   }, []);
-
-  
 
   // Timer effect
   useEffect(() => {
@@ -162,8 +162,8 @@ const QuestionTwoScreen = () => {
     if (!selectedOption || !mqttQuestionData) return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
-    const formattedTimestamp = formatTimestamp(new Date());
-    const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
+    const formattedTimestamp =Date.now().toString();
+    // const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after submission
 
@@ -200,6 +200,7 @@ const QuestionTwoScreen = () => {
     setShowNextButton(false);
     setShouldFetchAnswer(false);
     setSelectedAmount(10000); // Reset to default amount
+    setResultMessageSent(false); // Reset the flag
   };
 
   // Function to check if a question has been attempted
@@ -234,6 +235,9 @@ const QuestionTwoScreen = () => {
               option: "N" as OptionKey,
             },
           ]);
+          
+          // Set shouldFetchAnswer to true to fetch and display the answer
+          setShouldFetchAnswer(true);
         },
         onError: (error) => {
           const errorMessage = formatAxiosErrorMessage(error as AxiosError);
@@ -264,18 +268,18 @@ const QuestionTwoScreen = () => {
                               receivedMessage?.payload?.question_data;
                               
           if (questionData) {
-            console.log("Received question data from MQTT:", questionData);
             setMqttQuestionData(questionData);
             
             // Update current question index if available
             if (receivedMessage?.payload?.question_index) {
-              setCurrentQuestionIndex(receivedMessage.payload.question_index - 1);
+              setCurrentQuestionIndex(receivedMessage.payload.question_index);
             }
             
             // Reset states for new question
             setSelectedOption(null);
             setIsSubmitted(false);
             resetTimerState();
+            setResultMessageSent(false); // Reset the flag
           }
         }
 
@@ -284,13 +288,11 @@ const QuestionTwoScreen = () => {
           receivedMessage?.event &&
           receivedMessage.event.startsWith("game_s2_timer_start")
         ) {
-          console.log("Timer start event received:", receivedMessage);
           handleStartTimer();
         }
 
         if (receivedMessage?.event === "game_s2_results_reveal") {
           // Proceed to the next stage
-          console.log("Showing stage 2 results");
           setAllQuestionsCompleted(true);
         }
       };
@@ -312,6 +314,21 @@ const QuestionTwoScreen = () => {
     }
   }, [mqttQuestionData]);
 
+  // Watch for answer data and publish event when available
+  useEffect(() => {
+    if (answerData && shouldFetchAnswer && mqttQuestionData && !resultMessageSent) {
+      console.log("Answer data received, publishing result event:", answerData);
+      
+      // Publish event with the result
+      sendMessage({
+        event: "contestant_s2_answer_submitted",
+        payload: answerData
+      });
+      
+      // Set flag to prevent sending the message again
+      setResultMessageSent(true);
+    }
+  }, [answerData, shouldFetchAnswer, mqttQuestionData, resultMessageSent, sendMessage]);
 
   if(showStage2Prep){
     return <Stage2GetReadyPage />
@@ -493,9 +510,7 @@ const QuestionTwoScreen = () => {
                                 ₦
                                 {addCommasToNumber(
                                   Number(
-                                    balanceData?.data?.balances?.find(
-                                      (balance) => balance.contestant_id === user?.contestant_id
-                                    )?.actual_balance || 0
+                                    mqttQuestionData?.allocated_winning_amount
                                   )
                                 )}
                               </GlowyStrokeText>
@@ -515,9 +530,12 @@ const QuestionTwoScreen = () => {
                               >
                                 ₦
                                 {addCommasToNumber(
-                                  Number(
-                                    mqttQuestionData?.allocated_winning_amount || 10000
+                                   Number(
+                                    balanceData?.data?.balances?.find(
+                                      (balance) => balance.contestant_id === user?.contestant_id
+                                    )?.actual_balance || 0
                                   )
+                                 
                                 )}
                               </GlowyStrokeText>
                             </div>
@@ -621,6 +639,7 @@ const QuestionTwoScreen = () => {
               showEmptyCard={false}
               showHustlerCard={true}
               eliminated={2}
+
             />
           </div>
         </div>

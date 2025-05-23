@@ -22,6 +22,7 @@ export interface answerOptionProp {
 interface Data {
   contestant_answers: Contestantanswer[];
   question: Question;
+  winner_details?: Contestant;
 }
 
 interface Question {
@@ -43,6 +44,21 @@ interface Contestant {
   contestant_name: string;
   contestant_id: number;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export const getQuestionTwoAnswer = async (gameId: number) => {
   if (!gameId) return null;
   const response = await salaryAxios.post(`api/game/get_proof_hustle_answers?question_id=${gameId}`);
