@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Loader2 } from "lucide-react"
+import { CircleCheck, Loader2 } from "lucide-react"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import { toast } from "react-hot-toast"
 import { type IGetHustleQuestionAPIResponse, useEndStageOne, useGetHustleQuestion, useNotifyBackendEndQuestionTimer } from "../misc/api"
@@ -184,18 +184,46 @@ export default function Stage1Questions({
                                             <div className="bg-[#462B58] px-4 py-2.5 rounded-xl text-sm">
                                                 <span className="text-white/70 mr-2 font-medium">A:</span>
                                                 <span className="text-white">{currentQuestionData.data.question.questions.option_a}</span>
+                                                <span>
+                                                    {currentQuestionData.data.question.questions.correct_option === "A" && (
+                                                        <span className="text-green-500 ml-2 font-bold">
+                                                            <CircleCheck className="size-6 inline" />
+                                                        </span>
+                                                    )}
+                                                </span>
                                             </div>
                                             <div className="bg-[#462B58] px-4 py-2.5 rounded-xl text-sm">
                                                 <span className="text-white/70 mr-2 font-medium">B:</span>
                                                 <span className="text-white">{currentQuestionData.data.question.questions.option_b}</span>
+                                                 <span>
+                                                    {currentQuestionData.data.question.questions.correct_option === "B" && (
+                                                        <span className="text-green-500 ml-2 font-bold">
+                                                            <CircleCheck className="size-6 inline" />
+                                                        </span>
+                                                    )}
+                                                </span>
                                             </div>
                                             <div className="bg-[#462B58] px-4 py-2.5 rounded-xl text-sm">
                                                 <span className="text-white/70 mr-2 font-medium">C:</span>
                                                 <span className="text-white">{currentQuestionData.data.question.questions.option_c}</span>
+                                                 <span>
+                                                    {currentQuestionData.data.question.questions.correct_option === "C" && (
+                                                        <span className="text-green-500 ml-2 font-bold">
+                                                            <CircleCheck className="size-6 inline" />
+                                                        </span>
+                                                    )}
+                                                </span>
                                             </div>
                                             <div className="bg-[#462B58] px-4 py-2.5 rounded-xl text-sm">
                                                 <span className="text-white/70 mr-2 font-medium">D:</span>
                                                 <span className="text-white">{currentQuestionData.data.question.questions.option_d}</span>
+                                                 <span>
+                                                    {currentQuestionData.data.question.questions.correct_option === "D" && (
+                                                        <span className="text-green-500 ml-2 font-bold">
+                                                            <CircleCheck className="size-6 inline" />
+                                                        </span>
+                                                    )}
+                                                </span>
                                             </div>
                                         </div>
 

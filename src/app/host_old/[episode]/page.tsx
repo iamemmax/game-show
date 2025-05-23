@@ -200,7 +200,7 @@ export default function HostPage() {
     // Stage 2 functions
     const initStage2 = () => sendGameMessage("game_s2_init")
     const prepStage2 = () => sendGameMessage("game_s2_prep")
-    const revealStage2Question = (n: number) => sendGameMessage(`game_s2_question_reveal_${n}`)
+    const revealStage2Question = (n: number) => sendGameMessage(`game_s2_question_reveal`)
     const startStage2Timer = (n: number) => sendGameMessage(`game_s2_timer_start_${n}`)
     const showStage2Results = () => sendGameMessage("game_s2_results_reveal")
 

@@ -60,7 +60,7 @@ export default function GameDetails() {
 
 
     const [debitWalletData, setDebitWalletData] = useState<Question2AnswerData | null>(null)
-    const [debitWalletPayload, setDebitWalletPayload] = useState<CreditDebitContestantRequest | null>(null)
+    const [debitWalletPayload, setDebitWalletPayload] = useState<CreditDebitContestantRequest | null>()
 
     const sendGameMessage = React.useCallback(
         async (eventCode: string, data: any = {}) => {
@@ -95,8 +95,6 @@ export default function GameDetails() {
     React.useEffect(() => {
         const handleMessage = (message: any) => {
             console.log("Received message:", message)
-
-            // Update game state based on message
             if (message.event === "contestant_s2_answer_submitted") {
                 setDebitWalletData(message.payload.data)
             }
@@ -204,25 +202,11 @@ export default function GameDetails() {
 
     const { mutate: creditDebit, isLoading: isCreditDebitLoading } = useCreditDebitContestant()
 
-    // const handleDebitWallet = () => {
-    //     if (!debitWalletPayload) return
-    //     creditDebit(debitWalletPayload, {
-    //         onSuccess: (data) => {
-    //             toast.success("Wallet debited successfully")
-    //             setDebitWalletData(null)
-    //             setDebitWalletPayload(null)
-    //         },
-    //         onError: (error) => {
-    //             console.error("Failed to debit wallet:", error)
-    //             toast.error("Failed to debit wallet")
-    //         },
-    //     })
-    //     closeCreditDebitModal()
-    //     refetchContestants()
-    // }
-
     const handleDebitWallet = () => {
-        if (!debitWalletPayload) return;
+        if (!debitWalletPayload) {
+            alert("Please select a credit source");
+            return
+        };
 
         const payload: CreditDebitContestantRequest = {
             question_id: Number(debitWalletData?.question.question_id),
@@ -613,7 +597,7 @@ export default function GameDetails() {
                                 <label className="text-sm text-gray-300 mb-2 block">Credit Source</label>
 
                                 <RadioGroup
-                                    defaultValue="gameshow_float"
+                                    // defaultValue="gameshow_float"
                                     onValueChange={(value) => {
                                         if (value === "gameshow_float") {
                                             setDebitWalletPayload((prev) => ({
@@ -647,22 +631,23 @@ export default function GameDetails() {
 
                                     {/* Contestant options */}
                                     <div className="text-sm text-white mb-1">Contestant Wallets:</div>
-                                    {contestantsData?.data?.map((contestant: any) => (
-                                        <div key={contestant.id} className="flex items-center space-x-2 ml-2">
-                                            <RadioGroupItem
-                                                value={contestant.id.toString()}
-                                                id={`contestant-${contestant.id}`}
-                                            />
-                                            <Label
-                                                htmlFor={`contestant-${contestant.id}`}
-                                                className="text-white"
-                                            >
-                                                {convertKebabAndSnakeToTitleCase(contestant.name || contestant.constestant_attr)}
-                                                <span>
-                                                </span>
-                                            </Label>
-                                        </div>
-                                    ))}
+                                    {
+                                        contestantsData?.data?.filter(contestant => contestant.id !== debitWalletData?.winner_details?.contestant_id).map((contestant: any) => (
+                                            <div key={contestant.id} className="flex items-center space-x-2 ml-2">
+                                                <RadioGroupItem
+                                                    value={contestant.id.toString()}
+                                                    id={`contestant-${contestant.id}`}
+                                                />
+                                                <Label
+                                                    htmlFor={`contestant-${contestant.id}`}
+                                                    className="text-white"
+                                                >
+                                                    {convertKebabAndSnakeToTitleCase(contestant.name || contestant.constestant_attr)}
+                                                    <span>
+                                                    </span>
+                                                </Label>
+                                            </div>
+                                        ))}
                                 </RadioGroup>
                             </div>
                         </div>
