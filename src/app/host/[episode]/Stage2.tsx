@@ -40,7 +40,7 @@ export default function Stage2Questions({
     const [currentQuestionData, setCurrentQuestionData] = useState<Stage2Question | null>(null)
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
     const [timerActive, setTimerActive] = useState(false)
-    const [timerSeconds, setTimerSeconds] = useState(15)
+    const [timerSeconds, setTimerSeconds] = useState(10)
     const [questionsExhausted, setQuestionsExhausted] = useState(false)
 
     // Debug logging
@@ -54,7 +54,7 @@ export default function Stage2Questions({
         })
     }, [allQuestions, currentQuestionIndex, isLoadingQuestions, questionsError])
 
-    // Check if all questions are exhausted - Fixed logic
+    // Check if all questions are exhausted
     useEffect(() => {
         if (!isLoadingQuestions && allQuestions?.data.proof_questions) {
             // Only set exhausted if we have questions and current index exceeds the length
@@ -68,6 +68,16 @@ export default function Stage2Questions({
             }
         }
     }, [allQuestions, currentQuestionIndex, isLoadingQuestions])
+
+
+    useEffect(() => {
+        if (!isLoadingQuestions && questionsError) {
+            if (questionsError && (questionsError as any).response.data.message === "No question found or all questions already asked") {
+                setQuestionsExhausted(true)
+            }
+        }
+    }, [questionsError])
+
 
     const handleRevealNextQuestion = () => {
         console.log("Revealing next question:", {
@@ -83,7 +93,6 @@ export default function Stage2Questions({
         }
 
         if (currentQuestionIndex >= allQuestions?.data.proof_questions.length) {
-            //   toast.info("All questions have been revealed")
             setQuestionsExhausted(true)
             return
         }
@@ -135,7 +144,7 @@ export default function Stage2Questions({
         sendGameMessage(`game_s2_timer_start_${currentQuestionIndex + 1}`)
 
         setTimerActive(true)
-        setTimerSeconds(15)
+        setTimerSeconds(10)
     }
 
     // End the timer for the current question
@@ -192,14 +201,30 @@ export default function Stage2Questions({
     }
 
     if (questionsError) {
+        console.log("Error loading questions:", (questionsError as any).response.data.message)
         return (
-            <div className="flex flex-col items-center justify-center h-40">
-                <p className="text-red-400 mb-4">Error loading questions</p>
-                <p className="text-white/70 text-sm mb-4">{(questionsError as any).message}</p>
-                <TrapeziumButton onClick={() => refetchQuestions()} variant="orange">
-                    RETRY
-                </TrapeziumButton>
-            </div>
+            <>
+                {
+                    (questionsError as any).response.data.message === "No question found or all questions already asked" ?
+                        <div className="flex flex-col items-center justify-center mt-8">
+                            <div className="text-center mb-4">
+                                <p className="text-white mb-2">All Stage 2 questions completed!</p>
+                                <p className="text-white/70 text-sm">Ready to reveal results</p>
+                            </div>
+                            <TrapeziumButton onClick={handleRevealStage2Results} variant="purple">
+                                REVEAL STAGE RESULTS
+                            </TrapeziumButton>
+                        </div>
+                        :
+                        <div className="flex flex-col items-center justify-center h-40">
+                            <p className="text-red-400 mb-4">Error loading questions</p>
+                            <p className="text-white/70 text-sm mb-4">{(questionsError as any).message}</p>
+                            <TrapeziumButton onClick={() => refetchQuestions()} variant="orange">
+                                RETRY
+                            </TrapeziumButton>
+                        </div>
+                }
+            </>
         )
     }
 

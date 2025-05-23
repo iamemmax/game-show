@@ -209,7 +209,14 @@ export default function HostPage() {
                     setGameState((prev) => ({
                         ...prev,
                         lastAction: "game_s2_init",
+                        currentStageStep: "prep_questions",
+                    }))
+                } else if (eventCode === "game_s2_questions_prep") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: "game_s2_questions_prep",
                         currentStageStep: "questions",
+                        showQuestions: true,
                     }))
                 } else if (eventCode == "game_s2_question_reveal") {
                     const questionNumber = Number.parseInt(eventCode.split("_").pop() || "0")
@@ -285,8 +292,7 @@ export default function HostPage() {
     //////////////////////////////
     //////////////////////////////
     const initStage2 = () => sendGameMessage("game_s2_init", { start_time: new Date().toISOString() })
-
-
+    const prepStage2Questions = () => sendGameMessage("game_s2_questions_prep")
 
     // Handle timer start
     const handleTimerStart = (questionId: string, startTime: string, questionType: string) => {
@@ -310,10 +316,15 @@ export default function HostPage() {
         return { title: "Game Setup", subtitle: "PREPARE TO START" }
     }
 
-    // Get stage-specific buttons based on current stage and step
+
     const getStageButtons = () => {
         const { currentStage, currentStageStep } = gameState
 
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////                      STAGE ONE                     /////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
         if (currentStage.includes("STAGE_ONE")) {
             if (currentStageStep === "init") {
                 return (
@@ -367,16 +378,36 @@ export default function HostPage() {
                 )
             }
 
-            // For questions, question_reveal, and timer_running steps,
-            // we'll use the Stage1Questions component
+
             return null
         }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////                      STAGE TWO                     /////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
         else if (currentStage.includes("STAGE_TWO")) {
             if (currentStageStep === "init") {
                 return (
+                    <div className="flex justify-center mt-8">
+                        <div className="text-center">
+                            <div className="flex justify-center items-center">
+                                <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
+                            </div>
+                            <p className="text-white mb-4">Prep Stage 2 Questions</p>
+                            <TrapeziumButton onClick={initStage2} variant="orange">
+                                INITIALIZE STAGE 2
+                            </TrapeziumButton>
+                        </div>
+                    </div>
+                )
+            }
+            else if (currentStageStep === "prep_questions") {
+                return (
                     <div className="flex justify-center">
-                        <TrapeziumButton onClick={initStage2} variant="green">
-                            INITIALIZE STAGE 2
+                        <TrapeziumButton onClick={prepStage2Questions} variant="green">
+                            PREP STAGE 2
                         </TrapeziumButton>
                     </div>
                 )
