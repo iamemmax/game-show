@@ -49,16 +49,6 @@ interface Contestant {
 
 
 
-
-
-
-
-
-
-
-
-
-
 export const getQuestionTwoAnswer = async (gameId: number) => {
   if (!gameId) return null;
   const response = await salaryAxios.post(`api/game/get_proof_hustle_answers?question_id=${gameId}`);
