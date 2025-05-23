@@ -13,8 +13,9 @@ import toast from "react-hot-toast"
 import { useMQTT } from "@/hooks/useMqttService"
 import { useGetGameContestants } from "@/app/admin/misc/api"
 import { useGetAllHustleQuestions } from "@/app/components/stages/api/stage1/question/getHustleQuestion"
-import { useGetAllStage2Questions } from "@/app/components/stages/api/stage2/getQuestion2"
+// import { useGetAllStage2Questions } from "@/app/components/stages/api/stage2/getQuestion2"
 import { useNotifyBackendStartQuestionTimer } from "../misc/api"
+import { useGetAllStage2Questions } from "@/app/host/misc/api"
 
 export default function HostPage() {
     const params = useParams()

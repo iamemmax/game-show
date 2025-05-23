@@ -175,7 +175,7 @@ export const launchNotification = (type: ToastNotification, text: string) => {
 };
 export const addCommasToNumber = (number?: number | null): string =>
   typeof number === "number"
-    ? number.toLocaleString("en-US", { maximumFractionDigits: 2 })
+    ? number.toLocaleString("en-US", { maximumFractionDigits: 0 })
     : "0";
 
 export const withoutFirstAndLast = (str: string) => str.slice(1, -1);

@@ -8,11 +8,11 @@ import {
   PATTERN_GREEN_BLACK,
   PATTERN_PURPLE_BLACK,
 } from "@/app/shared/HustleCard.PatternTypes";
-import { Reveal } from "../../api/stage1/getHustleReveal";
 import { convertKebabAndSnakeToTitleCase } from "@/utils/strings";
 // import { convertNumberToNaira } from "@/utils/currency";
 import { addCommasToNumber } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { Reveal } from "../../api/stage1/getHustleReveal";
 
 interface Prop{
   setShowQuestionScreen: React.Dispatch<React.SetStateAction<boolean>>
