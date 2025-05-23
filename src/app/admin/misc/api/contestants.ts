@@ -72,71 +72,19 @@ export const useAssignContestant = () =>
   })
 
 
-  // Mock data for getGameContestants response
-export const mockGameContestantsResponse = {
-  status: "success",
-  message: "Contestants retrieved successfully",
-  data: [
-    {
-      id: 1,
-      constestant_attr: "player_1",
-      name: "John Smith",
-      phone_number: "+1234567890",
-      final_pot: "5000",
-      eliminated_stage: null,
-      login_code: "ABC123",
-      created_at: "2023-05-15T10:30:00Z",
-      updated_at: "2023-05-15T10:30:00Z"
-    },
-    {
-      id: 2,
-      constestant_attr: "player_2",
-      name: "Sarah Johnson",
-      phone_number: "+1987654321",
-      final_pot: "7500",
-      eliminated_stage: "round_2",
-      login_code: "DEF456",
-      created_at: "2023-05-15T10:35:00Z",
-      updated_at: "2023-05-15T11:45:00Z"
-    },
-    {
-      id: 3,
-      constestant_attr: "player_3",
-      name: "Michael Brown",
-      phone_number: "+1122334455",
-      final_pot: "10000",
-      eliminated_stage: null,
-      login_code: "GHI789",
-      created_at: "2023-05-15T10:40:00Z",
-      updated_at: "2023-05-15T10:40:00Z"
-    },
-    {
-      id: 4,
-      constestant_attr: "player_4",
-      name: "Emily Davis",
-      phone_number: "+1555666777",
-      final_pot: "2500",
-      eliminated_stage: "round_1",
-      login_code: "JKL012",
-      created_at: "2023-05-15T10:45:00Z",
-      updated_at: "2023-05-15T11:20:00Z"
-    },
-    {
-      id: 5,
-      constestant_attr: "player_5",
-      name: null,
-      phone_number: null,
-      final_pot: "0",
-      eliminated_stage: null,
-      login_code: null,
-      created_at: "2023-05-15T10:50:00Z",
-      updated_at: "2023-05-15T10:50:00Z"
-    }
-  ],
-  game: {
-    game_episode: 3,
-    game_nick: "Summer Showdown",
-    status: "active",
-    stage: "round_3"
-  }
-};
+  export interface CreditDebitContestantRequest {
+  question_id: number;
+  giver_contestant_id: number;
+  credit_source: "gameshow_float" | number;
+}
+export const creditDebitContestant = async (data: CreditDebitContestantRequest) => {
+  const response = await tokenlessAxios.post("api/game/handle_wallet_funding_and_debits/", data)
+  return response?.data 
+}
+
+export const useCreditDebitContestant = () =>
+  useMutation({
+    mutationFn: creditDebitContestant,
+  })
+
+

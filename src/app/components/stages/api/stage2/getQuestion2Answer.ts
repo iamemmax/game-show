@@ -10,16 +10,16 @@ import { useQuery, useQueryClient } from 'react-query';
 export interface answerQuestion2Prop {
   status: string;
   message: string;
-  data: Data[];
+  data: Question2AnswerData[];
 }
 
 export interface answerOptionProp {
   status: string;
   message: string;
-  data: Data;
+  data: Question2AnswerData;
 }
 
-interface Data {
+export interface Question2AnswerData {
   contestant_answers: Contestantanswer[];
   question: Question;
   winner_details?: Contestant;

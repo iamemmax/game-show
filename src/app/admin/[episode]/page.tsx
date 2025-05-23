@@ -23,13 +23,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/core/Form"
 import React, { useState } from "react"
-import { useGetGameContestants, useAssignContestant } from "../misc/api"
+import { useGetGameContestants, useAssignContestant, useCreditDebitContestant, CreditDebitContestantRequest } from "../misc/api"
 import { convertKebabAndSnakeToTitleCase } from "@/utils/strings"
 import toast from "react-hot-toast"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import { useMQTT } from "@/hooks/useMqttService"
+import { Question2AnswerData } from "@/app/components/stages/api/stage2/getQuestion2Answer"
+import { useBooleanStateControl } from "@/hooks"
 
-// Define the form schema with Zod
 const assignContestantSchema = z.object({
     constestants_attr: z.string().min(1, "Please select a contestant position"),
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -38,34 +39,32 @@ const assignContestantSchema = z.object({
 
 type AssignContestantFormValues = z.infer<typeof assignContestantSchema>
 
+
 export default function GameDetails() {
     const params = useParams()
     const gameId = params.episode as string
     const router = useRouter()
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const {
+        state: isCreditDebitModalOpen,
+        setTrue: openCreditDebitModal,
+        setFalse: closeCreditDebitModal,
+        setState: setCreditDebitModalState,
+    } = useBooleanStateControl()
     const [selectedContestant, setSelectedContestant] = useState("")
     const { isConnected, sendMessage, onMessage } = useMQTT()
     const [isSending, setIsSending] = useState(false)
-    const [gameState, setGameState] = useState<{
-        currentStage: string;
-        status: string;
-        lastAction: string;
-        currentQuestion: number;
-        contestants: any[];
-    }>({
-        currentStage: "",
-        status: "",
-        lastAction: "",
-        currentQuestion: 0,
-        contestants: [],
-    })
+
+
+    const [debitWalletData, setDebitWalletData] = useState<Question2AnswerData | null>(null)
+    const [debitWalletPayload, setDebitWalletPayload] = useState<CreditDebitContestantRequest | null>(null)
+
     const sendGameMessage = React.useCallback(
         async (eventCode: string, data: any = {}) => {
             if (!isConnected) {
                 toast.error("Not connected to server")
                 return
             }
-
             setIsSending(true)
 
             try {
@@ -76,19 +75,9 @@ export default function GameDetails() {
                         ...data,
                     },
                 }
-
-
                 await sendMessage(message)
                 refetchContestants();
                 toast.success(`Sent: ${eventCode}`)
-
-                if (eventCode === "game_start") {
-                    setGameState((prev) => ({ ...prev, status: "IN_PROGRESS", lastAction: "game_start" }))
-                } else if (eventCode === "game_end") {
-                    setGameState((prev) => ({ ...prev, status: "IS_COMPLETED", lastAction: "game_end" }))
-                } else {
-                    setGameState((prev) => ({ ...prev, lastAction: eventCode }))
-                }
 
             } catch (error) {
                 console.error("Failed to send message:", error)
@@ -100,6 +89,28 @@ export default function GameDetails() {
         [isConnected, sendMessage, gameId],
     )
 
+    React.useEffect(() => {
+        const handleMessage = (message: any) => {
+            console.log("Received message:", message)
+
+            // Update game state based on message
+            if (message.event === "contestant_s2_answer_submitted") {
+                setDebitWalletData(message.payload.data)
+            }
+        }
+
+        if (isConnected) {
+            onMessage(handleMessage)
+            refetchContestants()
+        }
+
+        return () => {
+            if (isConnected) {
+                onMessage(null)
+            }
+        }
+    }, [isConnected, onMessage])
+
     const startGameEpisode = () => sendGameMessage("game_start")
 
 
@@ -109,10 +120,8 @@ export default function GameDetails() {
         refetch: refetchContestants,
     } = useGetGameContestants(Number.parseInt(gameId))
 
-    // const mm = data || mockGameContestantsResponse
-    const assignContestantMutation = useAssignContestant()
 
-    // Initialize React Hook Form
+    const assignContestantMutation = useAssignContestant()
     const form = useForm<AssignContestantFormValues>({
         resolver: zodResolver(assignContestantSchema),
         defaultValues: {
@@ -130,6 +139,8 @@ export default function GameDetails() {
             phone_number: "",
         },
     })
+
+
 
     const onSubmit = async (values: AssignContestantFormValues) => {
         try {
@@ -187,6 +198,27 @@ export default function GameDetails() {
                 console.error("Failed to copy login code:", error)
             })
     }
+
+    const { mutate: creditDebit, isLoading: isCreditDebitLoading } = useCreditDebitContestant()
+
+    const handleDebitWallet = () => {
+        if (!debitWalletPayload) return
+        creditDebit(debitWalletPayload, {
+            onSuccess: (data) => {
+                toast.success("Wallet debited successfully")
+                setDebitWalletData(null)
+                setDebitWalletPayload(null)
+            },
+            onError: (error) => {
+                console.error("Failed to debit wallet:", error)
+                toast.error("Failed to debit wallet")
+            },
+        })
+        closeCreditDebitModal()
+        refetchContestants()
+    }
+
+
 
     return (
         <div className="min-h-screen bg-[#1a0b25] text-white !font-montserrat">
@@ -422,9 +454,12 @@ export default function GameDetails() {
                                     <TrapeziumButton variant="red" size="sm" backgroundColor="#ff00ff" onClick={startGameEpisode}>
                                         START EPISODE
                                     </TrapeziumButton>
-                                    <TrapeziumButton variant="yellow" size="sm" backgroundColor="#ff00ff">
-                                        RESUME EPISODE
-                                    </TrapeziumButton>
+                                    {
+                                        !!debitWalletData &&
+                                        <TrapeziumButton variant="yellow" size="sm" backgroundColor="#ff00ff">
+                                            DEBIT WALLET FOR QUESTION {debitWalletData.question.question_id}
+                                        </TrapeziumButton>
+                                    }
                                     <TrapeziumButton variant="green" size="sm" backgroundColor="#ff00ff">
                                         END EPISODE
                                     </TrapeziumButton>
@@ -517,6 +552,84 @@ export default function GameDetails() {
                     </DialogBody>
                 </DialogContent>
             </Dialog>
+
+            {/* Debit/Credit Modal */}
+            {
+                debitWalletData &&
+                <Dialog open={isCreditDebitModalOpen} onOpenChange={setCreditDebitModalState}>
+                    <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white">
+                        <DialogHeader>
+                            <DialogTitle className="text-xl text-primary">
+                                Winning Contestant: {convertKebabAndSnakeToTitleCase(debitWalletData.winner_details?.contestant_name)}
+                            </DialogTitle>
+                        </DialogHeader>
+
+                        <DialogBody>
+                            <div className="grid gap-2 mt-2">
+                                <div className="text-sm text-gray-300">Contestant ID: {debitWalletData.winner_details?.contestant_id}</div>
+                                <div className="text-sm text-gray-300">Contestant Phone Number: {debitWalletData.winner_details?.contestant_attr}</div>
+                                {/* <div className="text-sm text-gray-300">Winning Amount: ₦{debitWalletData.contestant_answers}</div> */}
+                            </div>
+
+
+                            <div className="mt-4">
+
+                                <label className="text-sm text-gray-300">Credit Source</label>
+                                <Select
+                                    onValueChange={(value) => {
+                                        setDebitWalletPayload((prev) =>
+                                            prev
+                                                ? {
+                                                    ...prev,
+                                                    credit_source: value === "gameshow_float" ? "gameshow_float" : Number(value),
+                                                }
+                                                : prev
+                                        )
+                                    }}
+                                    defaultValue={
+                                        debitWalletPayload?.credit_source === "gameshow_float"
+                                            ? "gameshow_float"
+                                            : debitWalletPayload?.credit_source?.toString() || ""
+                                    }
+                                >
+                                    <SelectTrigger className="border-[#ff00ff]/30 focus:border-[#ff00ff] focus:ring-[#ff00ff]/50 text-white h-8">
+                                        <SelectValue placeholder="Select credit source" />
+                                    </SelectTrigger>
+                                    <SelectContent className="border-[#ff00ff]/30 text-white">
+                                        <SelectItem value="gameshow_float">Gameshow Float</SelectItem>
+                                        {
+                                            contestantsData?.data?.map((contestant: any) => (
+                                                <SelectItem key={contestant.id} value={contestant.id.toString()}>
+                                                    {convertKebabAndSnakeToTitleCase(contestant.name || contestant.constestant_attr)}
+                                                </SelectItem>
+                                            ))
+                                        }
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="flex justify-end gap-2 mt-4">
+                                <Button
+                                    type="button"
+                                    variant="outlined"
+                                    onClick={closeCreditDebitModal}
+                                    className="border-[#ff00ff]/30 text-white hover: hover:text-white"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="button"
+                                    disabled={isCreditDebitLoading || !debitWalletPayload}
+                                    onClick={handleDebitWallet}
+                                    className="bg-gradient-to-r from-primary to-[#ff00ff] hover:opacity-90 transition-opacity"
+                                >
+                                    Debit Wallet
+                                </Button>
+                            </div>
+
+                        </DialogBody>
+                    </DialogContent>
+                </Dialog>
+            }
         </div>
     )
 }
