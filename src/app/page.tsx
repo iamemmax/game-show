@@ -7,7 +7,7 @@ import Hustle from "./components/stages/components/hustle/Hustle";
 import QuestionScreen from "./components/stages/components/hustle/QuestionScreen";
 
 import StageOneTally from "./components/stages/components/hustle/StageOneTally";
-// import Stage3CardSelection from "./components/stages/components/stage3/Stage3CardSelection";
+// import Stage3CardSelection from "./components/stages/components/stage3/Stage3CardSelection"
 
 export interface resetprop {
   email: string;
@@ -16,7 +16,7 @@ export interface resetprop {
 
 const HomePage = () => {
   const [step, setStep] = useState(1);
-  
+
 
   const pageVariants = {
     initial: { opacity: 0, x: 50 },
@@ -25,7 +25,7 @@ const HomePage = () => {
   };
 
 
- 
+
   return (
     <AnimatePresence mode="wait">
       {step === 1 && (
@@ -57,7 +57,7 @@ const HomePage = () => {
           <Hustle />
         </motion.div>
       )}
-      
+
       {step === 3 && (
         <motion.div
           animate="animate"
