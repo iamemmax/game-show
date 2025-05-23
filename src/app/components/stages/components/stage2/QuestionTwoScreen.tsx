@@ -162,7 +162,7 @@ const QuestionTwoScreen = () => {
     if (!selectedOption || !mqttQuestionData) return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
-    const formattedTimestamp =Date.now().toString();
+    const formattedTimestamp =new Date().toISOString()
     // const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after submission
@@ -495,14 +495,14 @@ const QuestionTwoScreen = () => {
                             </h2>
                           </div>
                           <div className="flex justify-center items-center w-full gap-4">
-                            <div className="bg-[#011B0D] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
-                              <p className="text-sm font-outfit font-normal text-[#04DA6A] ">
+                            <div   className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
+                              <p className="text-sm font-outfit font-normal text-[#FFC125] ">
                                 Win amount
                               </p>
                               <GlowyStrokeText
                                 strokeWidth={1}
-                                strokeColor="#04DA6A"
-                                glowColor="#04DA6A"
+                                strokeColor="#FFC125"
+                                glowColor="#FFC125"
                                 textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
                                 fillColor="#fff"
                                 glowIntensity={"none"}

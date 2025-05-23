@@ -317,7 +317,7 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     if (!selectedOption) return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
-    const formattedTimestamp = Date.now().toString();
+    const formattedTimestamp = new Date().toISOString()
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after submission
