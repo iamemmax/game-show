@@ -29,6 +29,7 @@ import { ContestantSpend, QuestionS1SpendEvent } from "./types";
 import { useGetWalletBalance } from "../../api/stage1/getbalance";
 import { set } from "date-fns";
 import GetReadyScreen from "../GetReadyScreen";
+import { useGetGameContestants } from "@/app/admin/misc/api";
 // Add debug log to track component imports
 console.log("GetReadyScreen imported in QuestionScreen");
 
@@ -101,11 +102,11 @@ const QuestionScreen = () => {
   );
 
   // Add wallet balance query
-  const { data: dataBalance } = useGetWalletBalance(
-    user?.game_episode as number
-  );
+  // const { data: dataBalance } = useGetWalletBalance(
+  //   user?.game_episode as number
+  // );
 
-
+  const {refetch, data:contestantData} =useGetGameContestants(user?.game_episode as number);
   // State declarations
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -186,6 +187,7 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     if (timeLeft <= 0) {
       setShowNextButton(true); // Enable the Next button
       setShouldFetchAnswer(true);
+      refetch()
 
       if (!selectedOption && !isSubmitted) {
         console.log("No option selected, auto-submitting with 'N'");
@@ -308,7 +310,11 @@ const [showPrepPage, setShowPrepPage] = useState(true);
 
   const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
   // Handle submit answer
-  const { data: answerData } = useGetQuestionAnswer(
+  const { 
+    data: answerData, 
+    refetch: refetchAnswer,
+    revalidate: revalidateAnswer 
+  } = useGetQuestionAnswer(
     shouldFetchAnswer
       ? (mqttQuestionData?.question?.questions?.question_id as number)
       : 0
@@ -321,6 +327,7 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after submission
+    setShouldFetchAnswer(true); // Set this to true to fetch the answer
 
     // Find the exact string key from the backend that matches the selected amount
     const selectedAmountKey = Object.keys(userBidAmounts).find(
@@ -331,7 +338,7 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
 
     // Get the question ID to submit - prioritize MQTT data, then fall back to selected questions
-    const questionId = mqttQuestionData?.question?.questions?.question_id ;
+    const questionId = mqttQuestionData?.question?.questions?.question_id;
 
     handleAnswerStageOneQuestion(
       {
@@ -352,6 +359,10 @@ const [showPrepPage, setShowPrepPage] = useState(true);
               option: selectedOption,
             },
           ]);
+          
+          // Revalidate and refetch the answer data
+          revalidateAnswer();
+          refetchAnswer();
         },
         onError: (error) => {
           console.error("Error submitting answer:", error);
@@ -382,6 +393,7 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after auto-submission
+    setShouldFetchAnswer(true); // Set this to true to fetch the answer
 
     // Find the exact string key from the backend that matches the selected amount
     const selectedAmountKey = Object.keys(userBidAmounts).find(
@@ -414,6 +426,10 @@ const [showPrepPage, setShowPrepPage] = useState(true);
               option: "N" as OptionKey,
             },
           ]);
+          
+          // Revalidate and refetch the answer data
+          revalidateAnswer();
+          refetchAnswer();
         },
         onError: (error) => {
           const errorMessage = formatAxiosErrorMessage(error as AxiosError);
@@ -448,7 +464,7 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     return <StageOneTally eliminationCount={0} removeCount={0} />;
   }
 
-  console.log("Rendering main question screen");
+  console.log(contestantData?.data?.find((contestant:any) => contestant.contestant_id === user?.contestant_id));
 
     return (
       <>
@@ -672,10 +688,9 @@ const [showPrepPage, setShowPrepPage] = useState(true);
                                     {addCommasToNumber(
                                       Number(
                                         // Use wallet balance from MQTT data if available
-                                        mqttQuestionData?.spend_breakdown?.find(
-                                          (contestant: any) => String(contestant.contestant_id) === String(user?.contestant_id)
-                                        )?.wallet_balance  ||
-                                        0
+                                        contestantData?.data?.find(
+                                          (contestant: any) => String(contestant.id) === String(user?.contestant_id)
+                                        )?.actual_balance  
                                       )
                                     )}
                                   </span>

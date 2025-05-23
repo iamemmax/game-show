@@ -246,7 +246,7 @@ const Stage3CardSelection = () => {
     }
   }, [contestantsData?.data, user?.contestant_id]);
 
-  // Custom celebration animation component with ribbons
+  // Custom celebration animation component with ribbons and celebrating person
   const CelebrationAnimation = ({ isVisible, finderName }: { isVisible: boolean, finderName?: string }) => {
     if (!isVisible) return null;
 
@@ -369,22 +369,24 @@ const Stage3CardSelection = () => {
           })}
         </div>
         
-        {/* Celebration text in the center */}
+        {/* Celebration content in the center */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-          {/* Trophy with ribbons */}
+          {/* Celebrating person instead of trophy */}
           <div className="relative">
             <motion.div
-              className="w-40 h-40 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 flex items-center justify-center"
+              className="w-48 h-48 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 flex items-center justify-center"
               animate={{
                 scale: [1, 1.1, 1]
               }}
               transition={{
                 duration: 2,
                 repeat: Infinity,
-                ease: "easeInOut" // Use easeInOut instead of spring
+                ease: "easeInOut"
               }}
             >
-              <span className="text-6xl">🏆</span>
+              {/* Celebrating person emoji */}
+              <span className="text-7xl">🎉</span>
+              <span className="text-7xl absolute">🙌</span>
             </motion.div>
             
             {/* Add a separate glow animation */}
@@ -404,7 +406,7 @@ const Stage3CardSelection = () => {
               }}
             />
             
-            {/* Decorative ribbons around trophy */}
+            {/* Decorative ribbons around the celebrating person */}
             {Array.from({ length: 8 }).map((_, i) => {
               const angle = (i / 8) * 360;
               const color = [
@@ -438,7 +440,7 @@ const Stage3CardSelection = () => {
                       repeat: Infinity,
                       repeatType: "reverse",
                       delay: i * 0.2,
-                      ease: "easeInOut", // Use easeInOut instead of spring
+                      ease: "easeInOut",
                     },
                     rotate: {
                       duration: 20,
@@ -528,15 +530,59 @@ const Stage3CardSelection = () => {
                 transform: `rotate(${angle}deg)`,
               }}
               animate={{
-                height: ["0px", "100px", "0px"],
+                height: ["0px", "150px", "0px"],
                 opacity: [0, 1, 0],
               }}
               transition={{
-                duration: 1.5,
+                duration: 2,
                 repeat: Infinity,
                 repeatType: "loop",
                 delay: i * 0.1,
-                ease: "easeInOut", // Use easeInOut instead of spring
+                ease: "easeInOut",
+              }}
+            />
+          );
+        })}
+        
+        {/* Add ribbons that flow from top to bottom over the card */}
+        {Array.from({ length: 8 }).map((_, i) => {
+          const color = [
+            "#FFD700", // Gold
+            "#FFA500", // Orange
+            "#FFFF00", // Yellow
+          ][i % 3];
+          
+          // Calculate position based on the card's position in the grid
+          const row = Math.floor(cardIndex / 6);
+          const col = cardIndex % 6;
+          
+          // Approximate position calculation
+          const left = col * 120 + 60 + (Math.random() * 40 - 20); // Add some randomness
+          const startTop = row * 120 - 50; // Start above the card
+          
+          return (
+            <motion.div
+              key={`flow-ribbon-${i}`}
+              className="absolute"
+              style={{
+                width: "6px",
+                height: "30px",
+                backgroundColor: color,
+                left: `${left}px`,
+                top: `${startTop}px`,
+                borderRadius: "3px",
+              }}
+              animate={{
+                top: [`${startTop}px`, `${startTop + 200}px`],
+                opacity: [0, 1, 0],
+                rotate: [0, Math.random() * 180 - 90],
+              }}
+              transition={{
+                duration: 2 + Math.random(),
+                repeat: Infinity,
+                repeatType: "loop",
+                delay: i * 0.3,
+                ease: "easeInOut",
               }}
             />
           );

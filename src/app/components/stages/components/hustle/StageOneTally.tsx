@@ -56,6 +56,7 @@ const StageOneTally = ({
   const sortedContestants = React.useMemo(() => {
     if (!allContestsant?.data) return [];
     
+    // Create a copy of the data to avoid mutating the original
     return [...allContestsant.data].sort((a, b) => {
       // Sort by elimination status first
       if (a.is_eliminated && !b.is_eliminated) return 1;
@@ -210,7 +211,7 @@ const StageOneTally = ({
                 </div>
 
                 <motion.div
-                  className={`flex items-center gap-1 ${processedBalances?.length <=4 ? "gap-3":"gap-1"} 2xl:gap-2 flex-col`}
+                  className={`flex items-center gap-1 ${allContestsant&&allContestsant?.data?.length <=4 ? "gap-3":"gap-1"} 2xl:gap-2 flex-col`}
                   initial="hidden"
                   animate="visible"
                   variants={{
@@ -274,7 +275,6 @@ const StageOneTally = ({
                               ? "#FE8E8E"
                               : "#8EFE9B",
                           }}
-                          // innerBackgroundColor={tally.is_eliminated ? "#2D0304" : "#13051E"}
                           gradientId={`gradient-${idx}-${tally.id}`}
                         />
                       </div>
@@ -297,7 +297,6 @@ const StageOneTally = ({
         <HustleSideBar 
           showHustlerCard={true} 
           eliminated={eliminationCount}
-         
         />
       </div>
     </div>
