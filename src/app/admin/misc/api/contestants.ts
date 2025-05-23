@@ -58,6 +58,7 @@ export const useGetGameContestants = (gameId: number) =>
     enabled: !!gameId,
     staleTime: 0, // Consider data stale immediately
     cacheTime: 0, // Don't cache the data
+   
   })
 
 // Assign a contestant

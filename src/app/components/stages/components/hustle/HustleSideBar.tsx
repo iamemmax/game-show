@@ -91,7 +91,8 @@ const   HustleSideBar = ({
             <div className="flex-1 flex px-3 gap-5 h-full flex-col justify-center items-center">
               {allContestsant?.data?.map((bal, idx: number) => (
                 <div
-                  className={`w-[136.73px] bg-[#ae77ff] p-[5px] h-[70.66px] rounded-[12.79px] relative ${bal?.is_eliminated ?"hidden":""}`}
+                  className={`w-[136.73px] bg-[#ae77ff] p-[5px] h-[70.66px] rounded-[12.79px] relative ${bal?.is_eliminated 
+                    ? "opacity-50"  : ""  }`}
                   key={idx}
                 >
                   <div className="w-full h-full flex justify-center items-center rounded-[12.79px] 

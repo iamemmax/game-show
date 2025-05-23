@@ -79,7 +79,7 @@ export const useGetQuestionTwoAnswer = (gameId: number) => {
 
   // Add a revalidate function to manually trigger refetch
   const revalidate = () => {
-    queryClient.invalidateQueries(["get-question-2-answer", gameId]);
+    queryClient.invalidateQueries(["game-contestants", gameId]);
   };
 
   // Return both the query result and the revalidate function

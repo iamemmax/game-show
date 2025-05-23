@@ -29,6 +29,7 @@ import { ContestantSpend, QuestionS1SpendEvent } from "./types";
 import { useGetWalletBalance } from "../../api/stage1/getbalance";
 import { set } from "date-fns";
 import GetReadyScreen from "../GetReadyScreen";
+import { useGetGameContestants } from "@/app/admin/misc/api";
 // Add debug log to track component imports
 console.log("GetReadyScreen imported in QuestionScreen");
 
@@ -105,7 +106,7 @@ const QuestionScreen = () => {
     user?.game_episode as number
   );
 
-
+  const {refetch} =useGetGameContestants(user?.game_episode as number);
   // State declarations
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
