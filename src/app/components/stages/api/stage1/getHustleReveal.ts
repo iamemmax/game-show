@@ -1,6 +1,9 @@
 import { salaryAxios } from '@/lib/axios';
 import {  useQuery } from 'react-query';
 
+
+
+
 export interface hustleRevealProps {
   status: string;
   message: string;
@@ -13,20 +16,20 @@ interface Datum {
   reveals: Reveal[];
 }
 
-export interface Reveal {
+interface Reveal {
   id: number;
   hustle_name: string;
   hustle_number: number;
   hustle_state: string;
-  hustle_booster: string;
   hustle_amount: number;
 }
+
 interface Contestantdetails {
-  name: null | string;
+  name: string;
   constestant_attr: string;
-  phone_number: null | string;
+  phone_number: string;
   final_pot: number;
-  eliminated_stage: null;
+  eliminated_stage: null | string;
 }
 
 export const getHustleReveal = async (episode_id: number) => {

@@ -5,29 +5,33 @@ import { useQuery } from 'react-query';
 
 
 
-interface hustleQuestionPicksProps {
+export interface hustleQuestionPicksProps {
   status: string;
   message: string;
-  questions: Question2[];
+  data: Data;
 }
 
-export interface Question2 {
-  question_id: number;
-  game_id: number;
+interface Data {
+  proof_questions: Proofquestion[];
+}
+
+interface Proofquestion {
+  questions: Questions;
+}
+
+export interface Questions {
   question: string;
   option_a: string;
   option_b: string;
   option_c: string;
   option_d: string;
   correct_option: string;
-  winning_amount: null;
-  asked: string;
-  won: string;
+  question_id: number;
+  allocated_winning_amount: number;
 }
-
 export const getAllState2Questions = async (episode_id: number) => {
   if (!episode_id) return null;
-  const response = await salaryAxios.get(`api/game/get_all_proof_questions?game_episode=${episode_id}&asked=false&won=false`);
+  const response = await salaryAxios.post(`api/game/get_all_proof_questions/${episode_id}`);
   return response?.data as hustleQuestionPicksProps;
 };
 

@@ -3,12 +3,25 @@ import UserBadge from '@/app/shared/UserBadge'
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { contestantImages } from '../../components/mocks/contestantImages'
-import { answerQuestionProp } from '../../api/stage1/question/getQuestionAnswer'
+import { answerOptionProp } from '../../api/stage1/question/getQuestionAnswer'
+import { answerQuestion2Prop } from '../../api/stage2/getQuestion2Answer'
+
+// Create a unified type for contestant answers
+interface ContestantAnswer {
+  contestant: {
+    contestant_attr: string;
+    contestant_name: string;
+    contestant_id: number;
+  };
+  answer_supplied: string;
+  is_correct: boolean;
+  timestamp: string;
+}
 
 interface FastestFingerResultProps {
   timeElapsed?: boolean;
   correctOption?: string;
-  resultArray: answerQuestionProp | null | undefined;
+  resultArray?: answerOptionProp | answerQuestion2Prop | null | undefined;
   length?: number;
 }
 
@@ -19,16 +32,52 @@ const FastestFingerResult = ({
 }: FastestFingerResultProps) => {
   const [visibleResults, setVisibleResults] = useState<number[]>([]);
 
+  // Helper function to extract contestant answers from either data format
+  const getContestantAnswers = (): ContestantAnswer[] => {
+    if (!resultArray || !resultArray.data) return [];
+    
+    // Handle Stage 1 format (data is an object with contestant_answers array)
+    if (!Array.isArray(resultArray.data) && resultArray.data.contestant_answers) {
+      return resultArray.data.contestant_answers;
+    }
+    
+    // Handle Stage 2 format (data is an array of objects with contestant_answers array)
+    if (Array.isArray(resultArray.data) && resultArray.data.length > 0 && resultArray.data[0].contestant_answers) {
+      return resultArray.data[0].contestant_answers;
+    }
+    
+    return [];
+  };
+
+  // Helper function to get question data
+  const getQuestionData = () => {
+    if (!resultArray || !resultArray.data) return null;
+    
+    // Handle Stage 1 format
+    if (!Array.isArray(resultArray.data) && resultArray.data.question) {
+      return resultArray.data.question;
+    }
+    
+    // Handle Stage 2 format
+    if (Array.isArray(resultArray.data) && resultArray.data.length > 0 && resultArray.data[0].question) {
+      return resultArray.data[0].question;
+    }
+    
+    return null;
+  };
+
   useEffect(() => {
-    if (timeElapsed && resultArray?.data) {
+    const contestantAnswers = getContestantAnswers();
+    
+    if (timeElapsed && contestantAnswers.length > 0) {
       // Reset visible results when time elapses
       setVisibleResults([]);
       
       // Create a copy of the data for sorting
-      const sortedResults = [...resultArray.data].sort((a, b) => {
-        // Calculate time differences
-        const timeA = new Date(a.timestamp).getTime() - new Date(a.question_start_time).getTime();
-        const timeB = new Date(b.timestamp).getTime() - new Date(b.question_start_time).getTime();
+      const sortedResults = [...contestantAnswers].sort((a, b) => {
+        // Calculate time differences - assuming timestamp is available
+        const timeA = new Date(a.timestamp).getTime();
+        const timeB = new Date(b.timestamp).getTime();
         
         // First prioritize correct answers
         if (a.is_correct && !b.is_correct) return -1;
@@ -66,27 +115,34 @@ const FastestFingerResult = ({
     }
   };
 
-  function calculateTimeDifference(startTime: number, endTime: number): string {
-    const diff = endTime - startTime;
+  function calculateTimeDifference(startTime: string, endTime: string): string {
+    const start = new Date(startTime).getTime();
+    const end = new Date(endTime).getTime();
+    const diff = end - start;
     const seconds = Math.floor((diff % 60000) / 1000);
-    return `0.${seconds.toString().padStart(0)}`;
+    return `0.${seconds.toString().padStart(2, '0')}`;
   }
 
+  const contestantAnswers = getContestantAnswers();
+  const questionData = getQuestionData();
+
   return (
-    <div className="h-full flex flex-col">
-      {timeElapsed ? (
+    <div className="h-full flex items-center flex-col">
+      {timeElapsed && contestantAnswers.length > 0 ? (
         // Show results when time has elapsed
-        <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center overflow-y-auto max-h-[300px]">
+        <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center overflow-y-auto max-h-[600px]">
           <AnimatePresence>
-            {resultArray?.data?.map((result, index) => {
+            {contestantAnswers.map((result, index) => {
               const isCorrect = result?.is_correct;
+              
+              // Calculate answer time - assuming question has start_time
               const answerTime = calculateTimeDifference(
-                new Date(result.question_start_time).getTime(), 
-                new Date(result.timestamp).getTime()
+                questionData?.question_start_time || result.timestamp, 
+                result.timestamp
               );
               
               // Find the index of the first correct answer in the sorted data
-              const firstCorrectIndex = resultArray.data.findIndex(item => item.is_correct);
+              const firstCorrectIndex = contestantAnswers.findIndex(item => item.is_correct);
               
               // Only the first correct answer should be active
               const isFirstCorrect = isCorrect && index === firstCorrectIndex;

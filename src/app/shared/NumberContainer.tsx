@@ -86,6 +86,7 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
           stroke={textStrokeColor}
           strokeWidth="3"
           paintOrder="stroke"
+          style={{ userSelect: "none" }}
         >
           {text}
         </text>

@@ -94,11 +94,7 @@ const Stage1 = ({ onNext }: Props) => {
         // Remove duplicates from other contestants' picks
         const uniqueOtherPicks = [...new Set(allOtherPicks)];
 
-        console.log("My picks from receive_hustle_picks:", myCurrentPicks);
-        console.log(
-          "Other contestants' picks from receive_hustle_picks:",
-          uniqueOtherPicks
-        );
+      
 
         // Update state
         setMyPicks(myCurrentPicks);
@@ -202,6 +198,13 @@ const Stage1 = ({ onNext }: Props) => {
           // Clean up interval on component unmount
           return () => clearInterval(timerInterval);
           // Start the timer if not already started
+        }
+
+        // Handle timer end event
+        if (receivedMessage?.event === "game_s1_hustle_pick_time_elapse") {
+          console.log("Received timer end event:", receivedMessage);
+          // Force timer to end
+          setTimeLeft(0);
         }
 
         // Handle proceed to next stage event
@@ -513,7 +516,7 @@ const Stage1 = ({ onNext }: Props) => {
                         <NumberCardContainer
                           text={String(num)}
                           textColor={isMyPick ? "#fff" : "#F2C94C"}
-                          className={`max-xl:w-[58px] max-xl:h-[58px] ${isRecentlyUpdated ? "ring-2 ring-red-500" : ""}`}
+                          className={`max-xl:w-[58px]  max-xl:h-[58px] ${isRecentlyUpdated ? "ring-2 ring-red-500" : ""}`}
                           primaryGradientEndColor={
                             isMyPick ? "#FF00FF" : "#3C1272"
                           }

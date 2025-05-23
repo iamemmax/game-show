@@ -5,7 +5,7 @@ interface PickNumberProp {
   contestant_id: number | undefined;
   question_id: any;
   answer: string;
-  amount_staked: number;
+  amount_staked: string;
   // percentage_staked?: number;
   timestamp: string;
   question_start_time: string;

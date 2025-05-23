@@ -15,6 +15,7 @@ import { addCommasToNumber } from "@/utils";
 import GetReadyScreen from "../GetReadyScreen";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
+import QuestionScreen from "./QuestionScreen";
 
 const Hustle = () => {
   const { isConnected, onMessage } = useMQTT();
@@ -47,7 +48,7 @@ const Hustle = () => {
 
   const  contestant = data?.data?.find((contestant) => contestant.contestant_id === user?.contestant_id);
   if (ShowQuestionScreen) {
-    return <GetReadyScreen />;
+    return <QuestionScreen />;
   }
   return (
     <div className="grid grid-cols-[1fr_5fr_1fr] h-full w-full overflow-x-hidden ">

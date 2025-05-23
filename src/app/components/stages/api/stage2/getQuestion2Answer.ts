@@ -1,21 +1,42 @@
 import { salaryAxios } from '@/lib/axios';
 import { useQuery, useQueryClient } from 'react-query';
 
+// export interface answerQuestion2Prop {
+//   status: string;
+//   message: string;
+//   data: answerOptionProp[];
+// }
+
 export interface answerQuestion2Prop {
   status: string;
   message: string;
-  data: answerOptionProp[];
+  data: Data[];
 }
 
 export interface answerOptionProp {
-  contestant: Contestant;
+  status: string;
+  message: string;
+  data: Data;
+}
+
+interface Data {
+  contestant_answers: Contestantanswer[];
+  question: Question;
+  winner_details?: Contestant;
+}
+
+interface Question {
   question_id: string;
+  question_start_time: null;
+  question_winner: null;
+  correct_option?: string; // Add the correct_option property
+}
+
+interface Contestantanswer {
+  contestant: Contestant;
   answer_supplied: string;
   is_correct: boolean;
   timestamp: string;
-  percentage_staked: number;
-  amount_staked: number;
-  question_start_time: string;
 }
 
 interface Contestant {
@@ -23,6 +44,21 @@ interface Contestant {
   contestant_name: string;
   contestant_id: number;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export const getQuestionTwoAnswer = async (gameId: number) => {
   if (!gameId) return null;
   const response = await salaryAxios.post(`api/game/get_proof_hustle_answers?question_id=${gameId}`);

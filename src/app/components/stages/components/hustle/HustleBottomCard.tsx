@@ -57,9 +57,9 @@ const HustleBottomCard = ({inline=false}:prop) => {
         whileHover={{ animationPlayState: "paused" }}
       >
         {data?.data?.map((contestant, index) => (
-          <div
+         <div
             key={index}
-            className={`${cn(`${inline?"flex items-center justify-center gap-[1.125rem] px-[1.6875rem]":"px-[1.125rem] "} bg-gradient-to-r from-[#13051E] via-[#000] max-w-[350px] to-[#3C1272] border-[5px] border-[#CE64FF] rounded-[1.5rem] py-2 flex-shrink-0`)}`}
+            className={`${cn(`${inline?"flex items-center justify-center gap-[1.125rem] px-[1.6875rem]":"px-[1.125rem] "} ${contestant?.contestant_details?.eliminated_stage !== null ?"hidden":""} bg-gradient-to-r from-[#13051E] via-[#000] max-w-[350px] to-[#3C1272] border-[5px] border-[#CE64FF] rounded-[1.5rem] py-2 flex-shrink-0`)}`}
           >
             <div className={`flex justify-between items-center`}>
               <div className={`${cn(`flex ${inline?"gap-x-2":"gap-4 "} items-center`)}`}>

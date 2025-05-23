@@ -15,7 +15,8 @@ interface Balance {
   contestant_id: number;
   contestant_attr: string;
   contestant_name: string;
-  balance: number;
+  actual_balance: number;
+  book_balance: number;
 }
 export const getWalletBalance = async (episode_id: number) => {
   if (!episode_id) return null;
