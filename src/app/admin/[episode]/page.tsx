@@ -13,6 +13,8 @@ import {
     SelectItem,
     SelectValue,
     GlowyStrokeText,
+    RadioGroup,
+    RadioGroupItem,
 } from "@/components/core"
 import { Input } from "@/components/core/Input"
 import { useParams, useRouter } from "next/navigation"
@@ -30,6 +32,7 @@ import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import { useMQTT } from "@/hooks/useMqttService"
 import { Question2AnswerData } from "@/app/components/stages/api/stage2/getQuestion2Answer"
 import { useBooleanStateControl } from "@/hooks"
+import { Label } from "@/components/core/Label"
 
 const assignContestantSchema = z.object({
     constestants_attr: z.string().min(1, "Please select a contestant position"),
@@ -201,23 +204,53 @@ export default function GameDetails() {
 
     const { mutate: creditDebit, isLoading: isCreditDebitLoading } = useCreditDebitContestant()
 
+    // const handleDebitWallet = () => {
+    //     if (!debitWalletPayload) return
+    //     creditDebit(debitWalletPayload, {
+    //         onSuccess: (data) => {
+    //             toast.success("Wallet debited successfully")
+    //             setDebitWalletData(null)
+    //             setDebitWalletPayload(null)
+    //         },
+    //         onError: (error) => {
+    //             console.error("Failed to debit wallet:", error)
+    //             toast.error("Failed to debit wallet")
+    //         },
+    //     })
+    //     closeCreditDebitModal()
+    //     refetchContestants()
+    // }
+
     const handleDebitWallet = () => {
-        if (!debitWalletPayload) return
-        creditDebit(debitWalletPayload, {
+        if (!debitWalletPayload) return;
+
+        const payload: CreditDebitContestantRequest = {
+            question_id: Number(debitWalletData?.question.question_id),
+            giver_contestant_id: debitWalletPayload.credit_source === "gameshow_float"
+                ? ""
+                : debitWalletPayload.giver_contestant_id,
+            credit_source: debitWalletPayload.credit_source === "gameshow_float"
+                ? "gameshow_float"
+                : "",
+        };
+
+        creditDebit(payload, {
             onSuccess: (data) => {
-                toast.success("Wallet debited successfully")
-                setDebitWalletData(null)
-                setDebitWalletPayload(null)
+                toast.success("Wallet debited successfully");
+                setDebitWalletData(null);
+                setDebitWalletPayload(null);
+                closeCreditDebitModal();
+                refetchContestants();
             },
             onError: (error) => {
-                console.error("Failed to debit wallet:", error)
-                toast.error("Failed to debit wallet")
+                console.error("Failed to debit wallet:", error);
+                toast.error("Failed to debit wallet");
+                refetchContestants();
             },
-        })
-        closeCreditDebitModal()
-        refetchContestants()
-    }
+        });
 
+
+    };
 
 
     return (
@@ -456,7 +489,9 @@ export default function GameDetails() {
                                     </TrapeziumButton>
                                     {
                                         !!debitWalletData &&
-                                        <TrapeziumButton variant="yellow" size="sm" backgroundColor="#ff00ff">
+                                        <TrapeziumButton variant="yellow" size="sm" backgroundColor="#ff00ff"
+
+                                            onClick={openCreditDebitModal}>
                                             DEBIT WALLET FOR QUESTION {debitWalletData.question.question_id}
                                         </TrapeziumButton>
                                     }
@@ -554,82 +589,108 @@ export default function GameDetails() {
             </Dialog>
 
             {/* Debit/Credit Modal */}
-            {
-                debitWalletData &&
-                <Dialog open={isCreditDebitModalOpen} onOpenChange={setCreditDebitModalState}>
-                    <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white">
-                        <DialogHeader>
-                            <DialogTitle className="text-xl text-primary">
-                                Winning Contestant: {convertKebabAndSnakeToTitleCase(debitWalletData.winner_details?.contestant_name)}
-                            </DialogTitle>
-                        </DialogHeader>
 
-                        <DialogBody>
-                            <div className="grid gap-2 mt-2">
-                                <div className="text-sm text-gray-300">Contestant ID: {debitWalletData.winner_details?.contestant_id}</div>
-                                <div className="text-sm text-gray-300">Contestant Phone Number: {debitWalletData.winner_details?.contestant_attr}</div>
-                                {/* <div className="text-sm text-gray-300">Winning Amount: ₦{debitWalletData.contestant_answers}</div> */}
-                            </div>
+            <Dialog open={isCreditDebitModalOpen} onOpenChange={setCreditDebitModalState}>
+                <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl text-primary">
+                            Winning Contestant: {convertKebabAndSnakeToTitleCase(debitWalletData?.winner_details?.contestant_name)}
+                        </DialogTitle>
+                    </DialogHeader>
 
+                    <DialogBody>
+                        <div className="grid gap-2 mt-2">
+                            <div className="text-sm text-gray-300">Contestant ID: {debitWalletData?.winner_details?.contestant_id}</div>
+                            <div className="text-sm text-gray-300">Contestant Phone Number: {debitWalletData?.winner_details?.contestant_attr}</div>
+                            {/* <div className="text-sm text-gray-300">Winning Amount: ₦{debitWalletData.contestant_answers}</div> */}
+                        </div>
+
+
+                        <div className="mt-4">
+                            <label className="text-sm text-gray-300 mb-2 block">Credit Source</label>
 
                             <div className="mt-4">
+                                <label className="text-sm text-gray-300 mb-2 block">Credit Source</label>
 
-                                <label className="text-sm text-gray-300">Credit Source</label>
-                                <Select
+                                <RadioGroup
+                                    defaultValue="gameshow_float"
                                     onValueChange={(value) => {
-                                        setDebitWalletPayload((prev) =>
-                                            prev
-                                                ? {
-                                                    ...prev,
-                                                    credit_source: value === "gameshow_float" ? "gameshow_float" : Number(value),
-                                                }
-                                                : prev
-                                        )
-                                    }}
-                                    defaultValue={
-                                        debitWalletPayload?.credit_source === "gameshow_float"
-                                            ? "gameshow_float"
-                                            : debitWalletPayload?.credit_source?.toString() || ""
-                                    }
-                                >
-                                    <SelectTrigger className="border-[#ff00ff]/30 focus:border-[#ff00ff] focus:ring-[#ff00ff]/50 text-white h-8">
-                                        <SelectValue placeholder="Select credit source" />
-                                    </SelectTrigger>
-                                    <SelectContent className="border-[#ff00ff]/30 text-white">
-                                        <SelectItem value="gameshow_float">Gameshow Float</SelectItem>
-                                        {
-                                            contestantsData?.data?.map((contestant: any) => (
-                                                <SelectItem key={contestant.id} value={contestant.id.toString()}>
-                                                    {convertKebabAndSnakeToTitleCase(contestant.name || contestant.constestant_attr)}
-                                                </SelectItem>
-                                            ))
+                                        if (value === "gameshow_float") {
+                                            setDebitWalletPayload((prev) => ({
+                                                ...prev,
+                                                credit_source: "gameshow_float",
+                                                giver_contestant_id: "",
+                                                question_id: prev?.question_id ?? (debitWalletData?.question.question_id ?? 0),
+                                            }));
+                                        } else {
+                                            // For contestant options, value will be the contestant ID
+                                            setDebitWalletPayload((prev) => ({
+                                                ...prev,
+                                                credit_source: "",
+                                                giver_contestant_id: Number(value),
+                                                question_id: prev?.question_id ?? (debitWalletData?.question.question_id ?? 0),
+                                            }));
                                         }
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="flex justify-end gap-2 mt-4">
-                                <Button
-                                    type="button"
-                                    variant="outlined"
-                                    onClick={closeCreditDebitModal}
-                                    className="border-[#ff00ff]/30 text-white hover: hover:text-white"
+                                    }}
+                                    className="space-y-2"
                                 >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="button"
-                                    disabled={isCreditDebitLoading || !debitWalletPayload}
-                                    onClick={handleDebitWallet}
-                                    className="bg-gradient-to-r from-primary to-[#ff00ff] hover:opacity-90 transition-opacity"
-                                >
-                                    Debit Wallet
-                                </Button>
-                            </div>
+                                    {/* Gameshow Float option */}
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="gameshow_float" id="gameshow_float" />
+                                        <Label htmlFor="gameshow_float" className="text-white">Gameshow Wallet</Label>
+                                    </div>
 
-                        </DialogBody>
-                    </DialogContent>
-                </Dialog>
-            }
+                                    {/* Divider */}
+                                    <div className="py-1">
+                                        <div className="h-px w-full bg-[#ff00ff]/20"></div>
+                                    </div>
+
+                                    {/* Contestant options */}
+                                    <div className="text-sm text-white mb-1">Contestant Wallets:</div>
+                                    {contestantsData?.data?.map((contestant: any) => (
+                                        <div key={contestant.id} className="flex items-center space-x-2 ml-2">
+                                            <RadioGroupItem
+                                                value={contestant.id.toString()}
+                                                id={`contestant-${contestant.id}`}
+                                            />
+                                            <Label
+                                                htmlFor={`contestant-${contestant.id}`}
+                                                className="text-white"
+                                            >
+                                                {convertKebabAndSnakeToTitleCase(contestant.name || contestant.constestant_attr)}
+                                                <span>
+                                                </span>
+                                            </Label>
+                                        </div>
+                                    ))}
+                                </RadioGroup>
+                            </div>
+                        </div>
+
+
+                        <div className="flex justify-end gap-2 mt-4">
+                            <Button
+                                type="button"
+                                variant="outlined"
+                                onClick={closeCreditDebitModal}
+                                className="border-[#ff00ff]/30 text-white hover: hover:text-white"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="button"
+                                disabled={isCreditDebitLoading || !debitWalletPayload}
+                                onClick={handleDebitWallet}
+                                className="bg-gradient-to-r from-primary to-[#ff00ff] hover:opacity-90 transition-opacity"
+                            >
+                                Debit Wallet
+                            </Button>
+                        </div>
+
+                    </DialogBody>
+                </DialogContent>
+            </Dialog>
+
         </div>
     )
 }

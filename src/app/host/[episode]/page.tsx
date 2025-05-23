@@ -98,6 +98,12 @@ export default function HostPage() {
             // Set active tab based on current stage
             if (contestantsData.game.stage?.includes("STAGE_ONE")) {
                 setActiveStage("stage1")
+                if (contestantsData.game.status == "IN_ACTIVE") {
+                    setGameState((prevState) => ({
+                        ...prevState,
+                        currentStageStep: "start",
+                    }))
+                }
             } else if (contestantsData.game.stage?.includes("STAGE_TWO")) {
                 setActiveStage("stage2")
             } else if (contestantsData.game.stage?.includes("STAGE_THREE")) {
@@ -202,8 +208,8 @@ export default function HostPage() {
                     setGameState((prev) => ({
                         ...prev,
                         lastAction: "game_s1_results_reveal",
-                        currentStageStep: "results",
-                        currentStage: "STAGE_ONE_COMPLETE",
+                        currentStageStep: "init",
+                        currentStage: "STAGE_TWO",
                     }))
                 } else if (eventCode === "game_s2_init") {
                     setGameState((prev) => ({
@@ -326,7 +332,16 @@ export default function HostPage() {
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
         if (currentStage.includes("STAGE_ONE")) {
-            if (currentStageStep === "init") {
+            if (currentStageStep === "start") {
+                return (
+                    <div className="flex justify-center">
+                        <TrapeziumButton onClick={startGame} color="green">
+                            START GAME
+                        </TrapeziumButton>
+                    </div>
+                )
+            }
+            else if (currentStageStep === "init") {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={initStage1} variant="green">
@@ -334,7 +349,8 @@ export default function HostPage() {
                         </TrapeziumButton>
                     </div>
                 )
-            } else if (currentStageStep === "hustle_pick") {
+            }
+            else if (currentStageStep === "hustle_pick") {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={endTimerHustlePick} variant="yellow">
