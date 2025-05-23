@@ -243,7 +243,7 @@ export default function Stage2Questions({
                         <Loader2 className="h-8 w-8 text-[#ff00ff] animate-spin" />
                         <span className="ml-2 text-white">Processing...</span>
                     </div>
-                ) : questionsExhausted ? (
+                ) : (questionsExhausted && allQuestions?.data.proof_questions.length == 0) ? (
                     <div className="flex flex-col items-center justify-center mt-8">
                         <div className="text-center mb-4">
                             <p className="text-white mb-2">All Stage 2 questions completed!</p>

@@ -73,9 +73,9 @@ export const useAssignContestant = () =>
 
 
   export interface CreditDebitContestantRequest {
-  question_id: number;
-  giver_contestant_id: number;
-  credit_source: "gameshow_float" | number;
+  question_id: number | string;
+  giver_contestant_id: number | string;
+  credit_source: "gameshow_float" | "";
 }
 export const creditDebitContestant = async (data: CreditDebitContestantRequest) => {
   const response = await tokenlessAxios.post("api/game/handle_wallet_funding_and_debits/", data)
