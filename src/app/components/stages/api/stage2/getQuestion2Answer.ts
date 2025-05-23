@@ -75,11 +75,16 @@ export const useGetQuestionTwoAnswer = (gameId: number) => {
     refetchInterval: 2000, // Refetch every 2 seconds
     staleTime: 0, // Consider data stale immediately
     cacheTime: 5 * 60 * 1000, // Cache for 5 minutes
+    onSuccess() {
+      queryClient.invalidateQueries(["game-contestants"]);
+    
+    },
   });
 
   // Add a revalidate function to manually trigger refetch
   const revalidate = () => {
-    queryClient.invalidateQueries(["game-contestants", gameId]);
+    // Fix: Invalidate the correct query key
+    queryClient.invalidateQueries(["get-question-2-answer", gameId]);
   };
 
   // Return both the query result and the revalidate function

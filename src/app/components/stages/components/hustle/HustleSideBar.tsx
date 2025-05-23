@@ -38,6 +38,9 @@ const   HustleSideBar = ({
   );
     const {data:allContestsant} =useGetGameContestants(user?.game_episode as number);
     
+    const myContestant = allContestsant?.data?.find(
+      (contestant) => contestant.id === user?.contestant_id
+    );
 
   // Process balances to mark or remove lowest contestants
   // useEffect(() => {
@@ -91,12 +94,12 @@ const   HustleSideBar = ({
             <div className="flex-1 flex px-3 gap-5 h-full flex-col justify-center items-center">
               {allContestsant?.data?.map((bal, idx: number) => (
                 <div
-                  className={`w-[136.73px] bg-[#ae77ff] p-[5px] h-[70.66px] rounded-[12.79px] relative ${bal?.is_eliminated 
+                  className={`w-[136.73px] ${myContestant?.id === bal.id ? " bg-[#FFC125]" : "bg-[#ae77ff]"}  p-[5px] h-[70.66px] rounded-[12.79px] relative ${bal?.is_eliminated 
                     ? "opacity-50"  : ""  }`}
                   key={idx}
                 >
-                  <div className="w-full h-full flex justify-center items-center rounded-[12.79px] 
-                   bg-gradient-to-b from-[#d531f8] to-[#9a5eb2]">
+                  <div className={`w-full h-full flex justify-center items-center rounded-[12.79px] 
+                   bg-gradient-to-b  ${myContestant?.id === bal.id ? "from-amber-500 to-yellow-500 " : "from-[#d531f8] to-[#9a5eb2]"}`}>
                     <div className="w-[30px] h-[30px] absolute -top-3 rounded-full overflow-hidden">
                       <Image
                         src={contestantImages[idx] ?? ""}

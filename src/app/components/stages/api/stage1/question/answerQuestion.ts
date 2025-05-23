@@ -39,7 +39,7 @@ export const useAnswerStageOneQuestion = () => {
     mutationFn: answerStageOneQuestion,
     onSuccess: () => {
       // Invalidate and refetch wallet balance data
-      queryClient.invalidateQueries("get-wallet-balance");
+      queryClient.invalidateQueries("game-contestants");
     }
   });
 };
