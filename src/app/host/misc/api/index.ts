@@ -7,45 +7,13 @@ interface RootObject {
     question_type: string;
 }
 
-interface QuestionData {
-    question: string
-    option_a: string
-    option_b: string
-    option_c: string
-    option_d: string
-    correct_option: string
-    question_id: number
-    question_booster: string
-}
-
-interface HustleReveal {
-    hustle_name: string
-    hustle_number: number
-    hustle_state: string
-    hustle_amount: number
-}
-
-interface Contestant {
-    contestant_id: number
-    contestant_attr: string
-    contestant_name: string
-}
-
-interface SpendBreakdown {
-    contestant_id: number
-    contestant_name: string
-    wallet_balance: number
-    max_question_spend: number
-    booster: string
-    spend_breakdown: Record<string, number>
-}
 
 export interface IGetHustleQuestionAPIResponse {
     status: string
     message: string
     data: {
         question: {
-            questions: QuestionData
+            questions: Stage1QuestionData
             hustle_reveal: HustleReveal
             contestant: Contestant
         }
@@ -72,8 +40,10 @@ export const useNotifyBackendStartQuestionTimer = () => {
         },
     });
 }
-const postNotifyBackendEndTimer = async ({question_id}:{question_id:number | string}) => {
-    const res = await salaryAxios.post(`/api/game/s1_question_time_elapsed/${question_id}`);
+const postNotifyBackendEndTimer = async ({ question_id, stage }: { question_id: number | string, stage?: '1' | '2' }) => {
+    const res = stage === '2' ?
+        await salaryAxios.post(`/api/game/s2_question_time_elapsed/${question_id}`) :
+        await salaryAxios.post(`/api/game/s1_question_time_elapsed/${question_id}`);
     return res.data;
 }
 
@@ -103,6 +73,50 @@ const postEndStageOne = async ({ episode }: { episode: string | number }) => {
 export const useEndStageOne = () => {
     return useMutation({
         mutationFn: postEndStageOne,
-        mutationKey: ["end-stage-1"],
+        mutationKey: ["end-stage-2"],
     });
 }
+const postEndStageTwo = async ({ episode }: { episode: string | number }) => {
+    const res = await salaryAxios.post<IGetHustleQuestionAPIResponse>(`/api/game/end_stage_two/${episode}`);
+    return res.data;
+}
+
+export const useEndStageTwo = () => {
+    return useMutation({
+        mutationFn: postEndStageTwo,
+        mutationKey: ["end-stage-2"],
+    });
+}
+
+
+
+import { useQuery } from 'react-query';
+import { Contestant, HustleReveal, SpendBreakdown, Stage1QuestionData, Stage2Question } from "../types";
+
+interface hustleQuestionPicksProps {
+    status: string;
+    message: string;
+    data: Data;
+}
+
+interface Data {
+    proof_questions: Proofquestion[];
+}
+
+interface Proofquestion {
+    questions: Stage2Question;
+}
+
+
+export const getAllState2Questions = async (episode_id: number) => {
+    if (!episode_id) return null;
+    const response = await salaryAxios.post(`api/game/get_all_proof_questions/${episode_id}?asked=false&won=false`);
+    return response?.data as hustleQuestionPicksProps;
+};
+
+export const useGetAllStage2Questions = (episode_id: number) =>
+    useQuery({
+        queryKey: ["all-stage-2-questions", episode_id],
+        queryFn: () => getAllState2Questions(episode_id),
+    });
+

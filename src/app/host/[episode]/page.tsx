@@ -7,9 +7,10 @@ import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMQTT } from "@/hooks/useMqttService"
 import { useGetGameContestants } from "@/app/admin/misc/api"
-import { useNotifyBackendEndQuestionTimer, useNotifyBackendStartQuestionTimer } from "../misc/api"
+import { useNotifyBackendStartQuestionTimer } from "../misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import Stage1Questions from "./Stage1"
+import Stage2Questions from "./Stage2"
 
 export default function HostPage() {
     const params = useParams()
@@ -27,7 +28,7 @@ export default function HostPage() {
         showQuestions: boolean
         currentStageStep: string
     }>({
-        currentStage: "STAGE_1",
+        currentStage: "STAGE_ONE",
         status: "",
         lastAction: "",
         currentQuestion: 0,
@@ -37,11 +38,6 @@ export default function HostPage() {
     })
     const [isSending, setIsSending] = useState(false)
     const [messageLog, setMessageLog] = useState<Array<{ type: string; message: string; timestamp: string }>>([])
-
-    // Timer state
-    const [timerSeconds, setTimerSeconds] = useState(0)
-    const [timerMinutes, setTimerMinutes] = useState(0)
-    const [timerActive, setTimerActive] = useState(false)
 
     const {
         data: contestantsData,
@@ -90,26 +86,27 @@ export default function HostPage() {
 
     // Initialize game data when contestants data is loaded
     useEffect(() => {
-        if (contestantsData) {
+        if (!isLoadingContestants && contestantsData) {
+            console.log(contestantsData.game.stage, "game stage in contestantsData")
             setGameState((prevState) => ({
                 ...prevState,
-                currentStage: contestantsData.game.stage || "STAGE_1",
+                currentStage: contestantsData.game.stage || "STAGE_ONE",
                 status: contestantsData.game.status,
                 contestants: contestantsData.data,
             }))
 
             // Set active tab based on current stage
-            if (contestantsData.game.stage?.includes("STAGE_1")) {
+            if (contestantsData.game.stage?.includes("STAGE_ONE")) {
                 setActiveStage("stage1")
-            } else if (contestantsData.game.stage?.includes("STAGE_2")) {
+            } else if (contestantsData.game.stage?.includes("STAGE_TWO")) {
                 setActiveStage("stage2")
-            } else if (contestantsData.game.stage?.includes("STAGE_3")) {
+            } else if (contestantsData.game.stage?.includes("STAGE_THREE")) {
                 setActiveStage("stage3")
-            } else if (contestantsData.game.stage?.includes("STAGE_4")) {
+            } else if (contestantsData.game.stage?.includes("STAGE_FOUR")) {
                 setActiveStage("stage4")
             }
         }
-    }, [contestantsData])
+    }, [contestantsData, isLoadingContestants])
 
     // Send message helper function
     const sendGameMessage = useCallback(
@@ -150,7 +147,7 @@ export default function HostPage() {
                         ...prev,
                         status: "IN_PROGRESS",
                         lastAction: "game_start",
-                        currentStage: "STAGE_1",
+                        currentStage: "STAGE_ONE",
                         currentStageStep: "init",
                     }))
                 } else if (eventCode === "game_end") {
@@ -158,7 +155,7 @@ export default function HostPage() {
                 } else if (eventCode === "game_s1_init") {
                     setGameState((prev) => ({
                         ...prev,
-                        currentStage: "STAGE_1",
+                        currentStage: "STAGE_ONE",
                         lastAction: "game_s1_init",
                         currentStageStep: "hustle_pick",
                     }))
@@ -206,7 +203,47 @@ export default function HostPage() {
                         ...prev,
                         lastAction: "game_s1_results_reveal",
                         currentStageStep: "results",
-                        currentStage: "STAGE_1_COMPLETE",
+                        currentStage: "STAGE_ONE_COMPLETE",
+                    }))
+                } else if (eventCode === "game_s2_init") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: "game_s2_init",
+                        currentStageStep: "prep_questions",
+                    }))
+                } else if (eventCode === "game_s2_questions_prep") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: "game_s2_questions_prep",
+                        currentStageStep: "questions",
+                        showQuestions: true,
+                    }))
+                } else if (eventCode == "game_s2_question_reveal") {
+                    const questionNumber = Number.parseInt(eventCode.split("_").pop() || "0")
+                    setGameState((prev) => ({
+                        ...prev,
+                        currentQuestion: questionNumber,
+                        lastAction: eventCode,
+                        currentStageStep: "question_reveal",
+                    }))
+                } else if (eventCode.includes("game_s2_timer_start")) {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: eventCode,
+                        currentStageStep: "timer_running",
+                    }))
+                } else if (eventCode === "question_s2_time_elapsed") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: "question_s1_time_elapsed",
+                        currentStageStep: "questions",
+                    }))
+                } else if (eventCode === "game_s2_results_reveal") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: "game_s2_results_reveal",
+                        currentStageStep: "results",
+                        currentStage: "STAGE_TWO_COMPLETE",
                     }))
                 }
                 // Add other stage handlers here...
@@ -227,12 +264,15 @@ export default function HostPage() {
     const startGame = () => sendGameMessage("game_start")
     const endGame = () => sendGameMessage("game_end")
 
-    // Stage 1 functions
+    //////////////////////////////
+    //////////////////////////////
+    ////////    Stage 1 functions
+    //////////////////////////////
+    //////////////////////////////
     const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
     const endTimerHustlePick = () => sendGameMessage("game_s1_hustle_pick_time_elapse")
     const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
     const prepStage1Questions = () => sendGameMessage("game_s1_questions_prep")
-    const showStage1Results = () => sendGameMessage("game_s1_results_reveal")
 
     // Handle question completion
     const handleQuestionComplete = (questionId: number) => {
@@ -246,6 +286,14 @@ export default function HostPage() {
         }))
     }
 
+    //////////////////////////////
+    //////////////////////////////
+    ////////    Stage 2 functions
+    //////////////////////////////
+    //////////////////////////////
+    const initStage2 = () => sendGameMessage("game_s2_init", { start_time: new Date().toISOString() })
+    const prepStage2Questions = () => sendGameMessage("game_s2_questions_prep")
+
     // Handle timer start
     const handleTimerStart = (questionId: string, startTime: string, questionType: string) => {
         notifyBackendStartTimer({
@@ -255,25 +303,29 @@ export default function HostPage() {
         })
     }
 
-    // Helper to get current stage title and subtitle
     const getStageInfo = () => {
-        if (gameState.currentStage.includes("STAGE_1")) {
+        if (gameState.currentStage.includes("STAGE_ONE")) {
             return { title: "Stage 1", subtitle: "STARTUP CAPITAL" }
-        } else if (gameState.currentStage.includes("STAGE_2")) {
+        } else if (gameState.currentStage.includes("STAGE_TWO")) {
             return { title: "Stage 2", subtitle: "OPPORTUNITY" }
-        } else if (gameState.currentStage.includes("STAGE_3")) {
+        } else if (gameState.currentStage.includes("STAGE_THREE")) {
             return { title: "Stage 3", subtitle: "DUD OR OPPORTUNITY" }
-        } else if (gameState.currentStage.includes("STAGE_4")) {
+        } else if (gameState.currentStage.includes("STAGE_FOUR")) {
             return { title: "Stage 4", subtitle: "FINAL ROUND" }
         }
         return { title: "Game Setup", subtitle: "PREPARE TO START" }
     }
 
-    // Get stage-specific buttons based on current stage and step
+
     const getStageButtons = () => {
         const { currentStage, currentStageStep } = gameState
 
-        if (currentStage.includes("STAGE_1")) {
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////                      STAGE ONE                     /////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        if (currentStage.includes("STAGE_ONE")) {
             if (currentStageStep === "init") {
                 return (
                     <div className="flex justify-center">
@@ -302,7 +354,7 @@ export default function HostPage() {
                 return (
                     <div className="flex justify-center mt-8">
                         <div className="text-center">
-                            <div className="flex justify-center mb-2">
+                            <div className="flex justify-center items-center">
                                 <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
                             </div>
                             <p className="text-white mb-4">Prep Stage 1 Questions</p>
@@ -319,16 +371,57 @@ export default function HostPage() {
                             <img src="/images/trophy.png" alt="Trophy" className="w-20 h-20" />
                         </div>
                         <p className="text-white mb-4">Proceed to stage 2</p>
-                        <TrapeziumButton onClick={() => sendGameMessage("game_s2_init")} color="orange">
-                            START STAGE 2
+                        <TrapeziumButton onClick={initStage2} color="orange">
+                            INITIALIZE STAGE 2
                         </TrapeziumButton>
                     </div>
                 )
             }
 
-            // For questions, question_reveal, and timer_running steps,
-            // we'll use the Stage1Questions component
+
             return null
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////                      STAGE TWO                     /////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        else if (currentStage.includes("STAGE_TWO")) {
+            if (currentStageStep === "init") {
+                return (
+                    <div className="flex justify-center mt-8">
+                        <div className="text-center">
+                            <div className="flex justify-center items-center">
+                                <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
+                            </div>
+                            <p className="text-white mb-4">Prep Stage 2 Questions</p>
+                            <TrapeziumButton onClick={initStage2} variant="orange">
+                                INITIALIZE STAGE 2
+                            </TrapeziumButton>
+                        </div>
+                    </div>
+                )
+            }
+            else if (currentStageStep === "prep_questions") {
+                return (
+                    <div className="flex justify-center">
+                        <TrapeziumButton onClick={prepStage2Questions} variant="green">
+                            PREP STAGE 2
+                        </TrapeziumButton>
+                    </div>
+                )
+            } else if (currentStageStep === "hustle_pick") {
+                return (
+                    <div className="flex justify-center">
+                        <TrapeziumButton onClick={endTimerHustlePick} variant="yellow">
+                            END HUSTLE PICK TIMER
+                        </TrapeziumButton>
+                    </div>
+                )
+            }
+            return null
+
         }
 
         // Default - game not started
@@ -377,7 +470,7 @@ export default function HostPage() {
 
                         {/* Contestants */}
                         {!(
-                            gameState.currentStage.includes("STAGE_1") &&
+                            gameState.currentStage.includes("STAGE_ONE") &&
                             (gameState.currentStageStep === "questions" ||
                                 gameState.currentStageStep === "question_reveal" ||
                                 gameState.currentStageStep === "timer_running")
@@ -405,11 +498,27 @@ export default function HostPage() {
 
                         {/* Stage 1 Questions Component */}
                         {
-                            gameState.currentStage.includes("STAGE_1") &&
+                            gameState.currentStage.includes("STAGE_ONE") &&
                             (gameState.currentStageStep === "questions" ||
                                 gameState.currentStageStep === "question_reveal" ||
                                 gameState.currentStageStep === "timer_running") && (
                                 <Stage1Questions
+                                    gameId={gameId}
+                                    onQuestionComplete={handleQuestionComplete}
+                                    onTimerStart={handleTimerStart}
+                                    sendGameMessage={sendGameMessage}
+                                    currentStageStep={gameState.currentStageStep}
+                                />
+                            )
+                        }
+
+                        {/* Stage 2 Questions Component */}
+                        {
+                            gameState.currentStage.includes("STAGE_TWO") &&
+                            (gameState.currentStageStep === "questions" ||
+                                gameState.currentStageStep === "question_reveal" ||
+                                gameState.currentStageStep === "timer_running") && (
+                                <Stage2Questions
                                     gameId={gameId}
                                     onQuestionComplete={handleQuestionComplete}
                                     onTimerStart={handleTimerStart}
