@@ -456,7 +456,9 @@ export default function GameDetails() {
                                     </TrapeziumButton>
                                     {
                                         !!debitWalletData &&
-                                        <TrapeziumButton variant="yellow" size="sm" backgroundColor="#ff00ff">
+                                        <TrapeziumButton variant="yellow" size="sm" backgroundColor="#ff00ff"
+                                        
+                                        onClick={openCreditDebitModal}>
                                             DEBIT WALLET FOR QUESTION {debitWalletData.question.question_id}
                                         </TrapeziumButton>
                                     }
