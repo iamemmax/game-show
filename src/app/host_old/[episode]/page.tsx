@@ -172,14 +172,13 @@ export default function HostPage() {
     const startGame = () => sendGameMessage("game_start")
     const endGame = () => sendGameMessage("game_end")
     console.log(allStage1Questions?.data?.hustle_questions)
-    console.log(allStage2Questions?.questions)
 
     // Stage 1 functions
     const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
     const endTimerHustlePick = () => sendGameMessage("game_s1_hustle_pick_time_elapse")
     const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
     const prepStage1Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage1Questions?.data?.hustle_questions[num - 1]?.questions.question_id })
-    const prepStage2Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage2Questions?.questions[num - 1]?.question_id })
+    const prepStage2Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage2Questions?.data.proof_questions[num - 1]?.questions.question_id })
     const revealStage1Question = (n: number) => {
         sendGameMessage(`game_s1_question_reveal_${n}`, {question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",});
         if (n == 1) {
