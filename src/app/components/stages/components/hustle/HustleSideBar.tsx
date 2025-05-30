@@ -14,64 +14,32 @@ import { addCommasToNumber } from "@/utils";
 import { processEliminatedContestants } from "@/utils/contestants";
 import Image from "next/image";
 import { useGetGameContestants } from "@/app/admin/misc/api";
+import { useParams } from "next/navigation";
 interface prop {
   showJackpot?: boolean;
   showEmptyCard?: boolean;
   showHustlerCard?: boolean;
   eliminated?: number;
   removeCount?: number;
+  showHustleCardAmt?:boolean
 }
 const   HustleSideBar = ({
   showJackpot = true,
   showEmptyCard = false,
   showHustlerCard = false,
-  eliminated = 0,
-  removeCount = 0,
+  showHustleCardAmt=true
+
 }: prop) => {
   const user = tokenStorage.getUser();
-  const { data: dataBalance, isLoading } = useGetWalletBalance(
-    user?.game_episode as number
-  );
-  const [processedBalances, setProcessedBalances] = useState<any[]>([]);
-  const myBalance = dataBalance?.data?.balances?.find(
-    (contestant) => contestant.contestant_id === user?.contestant_id
-  );
-    const {data:allContestsant} =useGetGameContestants(user?.game_episode as number);
-    
+const params = useParams()
 
-  // Process balances to mark or remove lowest contestants
-  // useEffect(() => {
-  //   if (dataBalance?.data?.balances) {
-  //     // First, sort balances by amount (descending)
-  //     const sortedBalances = [...dataBalance.data.balances].sort(
-  //       (a, b) => parseFloat(String(b.book_balance)) - parseFloat(String(a.book_balance))
-  //     );
-      
-  //     // If removeCount is specified, remove the lowest contestants
-  //     let filteredBalances = sortedBalances;
-  //     if (removeCount > 0) {
-  //       filteredBalances = sortedBalances.slice(
-  //         0, 
-  //         Math.max(0, sortedBalances.length - removeCount)
-  //       );
-  //     }
-      
-  //     // If eliminated is specified, remove those contestants too
-  //     if (eliminated > 0) {
-  //       filteredBalances = filteredBalances.slice(
-  //         0,
-  //         Math.max(0, filteredBalances.length - eliminated)
-  //       );
-  //     }
-      
-  //     setProcessedBalances(filteredBalances);
-      
-  //     console.log(`Processed balances (removed ${removeCount + eliminated}):`, 
-  //       filteredBalances.length);
-  //   } else {
-  //     setProcessedBalances([]);
-  //   }
-  // }, [dataBalance, eliminated, removeCount]);
+  const {data:allContestsant, isLoading} =useGetGameContestants(!params?.episodeId?user?.game_episode as number : Number(params?.episodeId));
+    
+    const myContestant = allContestsant?.data?.find(
+      (contestant) => contestant.id === user?.contestant_id
+    )
+
+ 
 
   return (
     <div className="flex justify-between h-full items-center flex-col">
@@ -88,29 +56,30 @@ const   HustleSideBar = ({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
             </div>
           ) : (
-            <div className="flex-1 flex px-3 gap-5 h-full flex-col justify-center items-center">
+            <div className="flex-1 flex px-3 gap-5 h-full flex-col justify-center items-center  [@media(min-width:2000px)]:gap-10">
               {allContestsant?.data?.map((bal, idx: number) => (
                 <div
-                  className={`w-[136.73px] bg-[#ae77ff] p-[5px] h-[70.66px] rounded-[12.79px] relative ${bal?.is_eliminated ?"hidden":""}`}
+                  className={`w-[8.5456rem] ${myContestant?.id === bal.id ? " bg-[#FFC125]" : "bg-[#ae77ff]"}  p-[5px] h-[70.66px] rounded-[12.79px] [@media(min-width:2000px)]:w-[12rem]  [@media(min-width:2000px)]:h-[7rem] relative ${bal?.is_eliminated 
+                    ? "opacity-50"  : ""  }`}
                   key={idx}
                 >
-                  <div className="w-full h-full flex justify-center items-center rounded-[12.79px] 
-                   bg-gradient-to-b from-[#d531f8] to-[#9a5eb2]">
-                    <div className="w-[30px] h-[30px] absolute -top-3 rounded-full overflow-hidden">
+                  <div className={`w-full h-full flex justify-center items-center rounded-[12.79px] 
+                   bg-gradient-to-b  ${myContestant?.id === bal.id ? "from-amber-500 to-yellow-500 " : "from-[#d531f8] to-[#9a5eb2]"}`}>
+                    <div className="w-[1.875rem] h-[1.875rem] [@media(min-width:2000px)]:w-[4rem] [@media(min-width:2000px)]:h-[4rem]  absolute -top-3  [@media(min-width:2000px)]:-top-[1.5rem] rounded-full overflow-hidden">
                       <Image
                         src={contestantImages[idx] ?? ""}
                         alt="User Image"
                         width={30}
                         height={30}
-                        className="object-cover"
+                        className="object-cover [@media(min-width:2000px)]:w-[4rem] [@media(min-width:2000px)]:h-[4rem]"
                       />
                     </div>
                     {/* Place the dot outside the image container but position it relative to it */}
-                    <div className="z-[999999] bg-green-500 -mt-2 absolute w-2.5 h-2.5 rounded-full" 
+                    <div className="z-[999999] bg-green-500 -mt-2 absolute w-2.5 h-2.5 rounded-full  [@media(min-width:2000px)]:mt-[0.2rem]" 
                          style={{ top: "15px", right: "52px" }} />
                     <div className="relative w-full">
                       <div className="flex flex-col justify-center gap-0 mt-3 items-center w-full">
-                        <GlowyStrokeText
+                       {showHustleCardAmt&& <GlowyStrokeText
                           strokeWidth={2}
                           strokeColor="#a132b7"
                           glowColor="#ce45eb"
@@ -123,14 +92,14 @@ const   HustleSideBar = ({
 
 
                           
-                        </GlowyStrokeText>
+                        </GlowyStrokeText>}
                         <GlowyStrokeText
                           truncate
                           strokeWidth={2}
                           strokeColor="#a132b7"
                           glowColor="#ce45eb"
                           glowIntensity="low"
-                          textclassName="text-[19.18px] font-extrabold font-gilroyHeavy text-white -mt-2 max-w-[110px] truncate"
+                          textclassName="text-[19.18px] font-extrabold font-gilroyHeavy text-white -mt-2 max-w-[110px] truncate  [@media(min-width:2000px)]:text-[1.2rem]"
                           fillColor="#fff"
                         >
                           {bal?.name?.split(" ")[0]}

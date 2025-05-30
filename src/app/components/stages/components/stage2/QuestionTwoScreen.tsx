@@ -153,17 +153,19 @@ const QuestionTwoScreen = () => {
 
   const { mutate: handleAnswerStageTwoQuestion } = useAnswerStageTwoQuestion();
   // Handle submit answer
-  const { data: answerData } = useGetQuestionTwoAnswer(
-    shouldFetchAnswer
-      ? (mqttQuestionData?.question_id as number)
-      : 0
+  const { 
+    data: answerData, 
+    isLoading: isLoadingAnswer,
+    refetch: refetchAnswer,
+    revalidate: revalidateAnswer
+  } = useGetQuestionTwoAnswer(
+    mqttQuestionData?.question_id ? Number(mqttQuestionData.question_id) : 0
   );
   const handleSubmitAnswer = () => {
     if (!selectedOption || !mqttQuestionData) return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
-    const formattedTimestamp =Date.now().toString();
-    // const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
+    const formattedTimestamp = formatTimestamp(new Date());
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after submission
 
@@ -173,7 +175,6 @@ const QuestionTwoScreen = () => {
         question_id: mqttQuestionData?.question_id,
         answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
         timestamp: formattedTimestamp,
-        // question_start_time: formattedGameStartTime, // Add game start time
       },
       {
         onSuccess: () => {
@@ -184,6 +185,13 @@ const QuestionTwoScreen = () => {
               option: selectedOption,
             },
           ]);
+          
+          // Set shouldFetchAnswer to true to fetch and display the answer
+          setShouldFetchAnswer(true);
+          
+          // Revalidate the answer data
+          revalidateAnswer();
+          refetchAnswer();
         },
         onError: (error) => {
           const errorMessage = formatAxiosErrorMessage(error as AxiosError);
@@ -213,7 +221,6 @@ const QuestionTwoScreen = () => {
     if (!mqttQuestionData) return;
     
     const formattedTimestamp = formatTimestamp(new Date());
-    // const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
     setShowNextButton(true); // Enable the Next button after auto-submission
 
@@ -224,7 +231,6 @@ const QuestionTwoScreen = () => {
         question_id: mqttQuestionData?.question_id,
         answer: "N", // "N" for No Answer
         timestamp: formattedTimestamp,
-        // question_start_time: formattedGameStartTime, // Add game start time
       },
       {
         onSuccess: () => {
@@ -238,6 +244,10 @@ const QuestionTwoScreen = () => {
           
           // Set shouldFetchAnswer to true to fetch and display the answer
           setShouldFetchAnswer(true);
+          
+          // Revalidate the answer data
+          revalidateAnswer();
+          refetchAnswer();
         },
         onError: (error) => {
           const errorMessage = formatAxiosErrorMessage(error as AxiosError);
@@ -329,6 +339,15 @@ const QuestionTwoScreen = () => {
       setResultMessageSent(true);
     }
   }, [answerData, shouldFetchAnswer, mqttQuestionData, resultMessageSent, sendMessage]);
+
+  // Automatically refetch answer data when shouldFetchAnswer is true
+  useEffect(() => {
+    if (shouldFetchAnswer && mqttQuestionData?.question_id) {
+      console.log("Fetching answer data for question:", mqttQuestionData.question_id);
+      revalidateAnswer();
+      refetchAnswer();
+    }
+  }, [shouldFetchAnswer, mqttQuestionData?.question_id]);
 
   if(showStage2Prep){
     return <Stage2GetReadyPage />
@@ -495,14 +514,14 @@ const QuestionTwoScreen = () => {
                             </h2>
                           </div>
                           <div className="flex justify-center items-center w-full gap-4">
-                            <div className="bg-[#011B0D] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
-                              <p className="text-sm font-outfit font-normal text-[#04DA6A] ">
+                            <div   className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
+                              <p className="text-sm font-outfit font-normal text-[#FFC125] ">
                                 Win amount
                               </p>
                               <GlowyStrokeText
                                 strokeWidth={1}
-                                strokeColor="#04DA6A"
-                                glowColor="#04DA6A"
+                                strokeColor="#FFC125"
+                                glowColor="#FFC125"
                                 textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
                                 fillColor="#fff"
                                 glowIntensity={"none"}

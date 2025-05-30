@@ -2,11 +2,9 @@
 import { AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion"
-import Stage1 from "./components/stages/Stage1";
-import Hustle from "./components/stages/components/hustle/Hustle";
-import QuestionScreen from "./components/stages/components/hustle/QuestionScreen";
+import HustleBoardNumberPicks from "../components/HustleBoardNumberPicks";
+import ReviewHustle from "../components/ReviewHustle";
 
-import StageOneTally from "./components/stages/components/hustle/StageOneTally";
 // import Stage3CardSelection from "./components/stages/components/stage3/Stage3CardSelection"
 
 export interface resetprop {
@@ -38,10 +36,8 @@ const HomePage = () => {
           transition={{ duration: 0.4 }}
           variants={pageVariants}
         >
-          <Stage1
-            onNext={() => setStep(2)}
-          />
-          {/* <Stage3CardSelection/> */}
+         
+          <HustleBoardNumberPicks onNext={() => setStep(2)} />
         </motion.div>
       )}
       {step === 2 && (
@@ -54,7 +50,7 @@ const HomePage = () => {
           transition={{ duration: 0.4 }}
           variants={pageVariants}
         >
-          <Hustle />
+        <ReviewHustle/>
         </motion.div>
       )}
 
@@ -68,7 +64,7 @@ const HomePage = () => {
           transition={{ duration: 0.4 }}
           variants={pageVariants}
         >
-          <QuestionScreen />
+         3
         </motion.div>
       )}
       {step === 4 && (
@@ -81,7 +77,7 @@ const HomePage = () => {
           transition={{ duration: 0.4 }}
           variants={pageVariants}
         >
-          <StageOneTally />
+         4
         </motion.div>
       )}
     </AnimatePresence>
