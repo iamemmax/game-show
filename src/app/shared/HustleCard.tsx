@@ -14,6 +14,8 @@ type HustleCardPatternProps = {
     amountSize?: string;
     svgProps?: React.SVGProps<SVGSVGElement>;
     id?: string;
+    patternWidth?: number;
+    patternHeight?: number;
 }
 
 const HustleCard = ({
@@ -29,6 +31,8 @@ const HustleCard = ({
     numberSize = "text-8xl",
     svgProps,
     id = `hustlecard-${Math.random().toString(36).substring(2, 9)}`,
+    patternWidth = 121,
+    patternHeight = 77,
     ...props
 }: HustleCardPatternProps) => {
     const patternId = `pattern-${id}`;
@@ -66,13 +70,13 @@ const HustleCard = ({
                     
                     {/* Pattern SVG */}
                     <svg
-                        viewBox="0 0 121 77"
+                        viewBox={`0 0 ${patternWidth} ${patternHeight}`}
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
                         xmlnsXlink="http://www.w3.org/1999/xlink"
                         {...svgProps}
                     >
-                        <rect width={121} height={77} rx={7.3522}  fill={`url(#${patternId})`} />
+                        <rect width={patternWidth} height={patternHeight} rx={7.3522} fill={`url(#${patternId})`} />
                         <defs>
                             <pattern
                                 id={patternId}

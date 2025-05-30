@@ -11,7 +11,7 @@ import { cn } from "@/utils/classNames";
 import CheckIcon from "@/app/icons/CheckIcon";
 import ErrorIcon from "@/app/icons/ErrorIcon";
 import { tokenStorage } from "@/utils/auth";
-import { Button, ErrorModal, GlowyStrokeText } from "@/components/core";
+import { Button, Dialog, ErrorModal, GlowyStrokeText } from "@/components/core";
 import GradientButton from "@/app/shared/GradientButton";
 import Image from "next/image";
 import { useGetAllHustleQuestions } from "../../api/stage1/question/getHustleQuestion";
@@ -25,11 +25,11 @@ import { useGetQuestionAnswer } from "../../api/stage1/question/getQuestionAnswe
 import StageOneTally from "./StageOneTally";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
-import { ContestantSpend, QuestionS1SpendEvent } from "./types";
-import { useGetWalletBalance } from "../../api/stage1/getbalance";
-import { set } from "date-fns";
 import GetReadyScreen from "../GetReadyScreen";
-import { useGetGameContestants } from "@/app/admin/misc/api";
+import { useGetGameContestants } from "@/app/admin/misc/api/contestants";
+// import { Dialog } from "@/components/ui/dialog";
+import { useParams, useRouter } from "next/navigation";
+
 // Add debug log to track component imports
 console.log("GetReadyScreen imported in QuestionScreen");
 
@@ -94,12 +94,32 @@ const QuestionScreen = () => {
     errorModalMessage,
   } = useErrorModalState();
   const { isConnected, onMessage } = useMQTT();
+  const router = useRouter();
   // Get user from storage
   const user = tokenStorage.getUser();
+  const [showEliminationModal, setShowEliminationModal] = useState(false);
 
   const { data: questionData, isLoading } = useGetAllHustleQuestions(
     user?.game_episode as number
   );
+const pamas = useParams
+  // Get contestants data to check elimination status
+  const { data: allContestants } = useGetGameContestants(
+    user?.game_episode as number
+  );
+
+  // Check if current user is eliminated
+  useEffect(() => {
+    if (allContestants?.data && user?.contestant_id) {
+      const currentContestant = allContestants.data.find(
+        (contestant) => contestant.id === user.contestant_id
+      );
+
+      if (currentContestant?.is_eliminated) {
+        setShowEliminationModal(true);
+      }
+    }
+  }, [allContestants?.data, user?.contestant_id]);
 
   // Add wallet balance query
   // const { data: dataBalance } = useGetWalletBalance(
@@ -121,6 +141,7 @@ const QuestionScreen = () => {
   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
 const [showPrepPage, setShowPrepPage] = useState(true);
 
+
  
   // Add new state variables for user-specific bid amounts
   const [userBidAmounts, setUserBidAmounts] = useState<{
@@ -128,7 +149,13 @@ const [showPrepPage, setShowPrepPage] = useState(true);
   }>({});
   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
 
+  // Add state to track correct answer
+  const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
 
+  // Add new state variables
+  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
+  const [resultMessageSent, setResultMessageSent] = useState(false);
+  const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
 
   // Also update questionIdToSubmit when we receive MQTT question data
 
@@ -215,14 +242,9 @@ const [showPrepPage, setShowPrepPage] = useState(true);
   useEffect(() => {
     if (!isConnected) return;
 
-
     const handler = (receivedMessage: any) => {
-
       try {
         // Handle prep page event
-      
-
-        // Handle question reveal event
         if (receivedMessage?.event === "game_s1_question_reveal") {
           setShowPrepPage(false);
 
@@ -240,13 +262,16 @@ const [showPrepPage, setShowPrepPage] = useState(true);
           setSelectedOption(null);
           setIsSubmitted(false);
           resetTimerState();
+          setResultMessageSent(false);
+          setMqttAnswerData(null);
+          setCorrectAnswer(null);
 
           // 3. Set current index and question ID
           setCurrentQuestionIndex((questionData.question_index || 1) - 1);
           const questionId =
             questionData?.question?.questions?.question_id || payload?.question_id;
           if (questionId) {
-            // setQuestionIdToSubmit(Number(questionId));
+            setCurrentQuestionId(questionId.toString());
           }
 
           // 4. Extract and save user's spend breakdown
@@ -258,16 +283,13 @@ const [showPrepPage, setShowPrepPage] = useState(true);
                 )
               : spendBreakdown;
 
-
             if (userData?.spend_breakdown) {
               setUserBidAmounts(userData.spend_breakdown);
 
               const bidKeys = Object.keys(userData.spend_breakdown);
               if (bidKeys.length > 0) {
                 const firstAmount = parseFloat(bidKeys[0]);
-                // const firstBidValue = userData.spend_breakdown[bidKeys[0]];
                 setSelectedAmount(firstAmount);
-                // setSelectedBidValue(firstBidValue);
               }
             } else {
               setUserBidAmounts({});
@@ -276,12 +298,41 @@ const [showPrepPage, setShowPrepPage] = useState(true);
           }
         }
 
-        // Handle other events...
+        // Handle question answer event
+        if (receivedMessage?.event === "game_s1_question_answer") {
+          console.log("📊 Question answer event received:", receivedMessage);
+          
+          const payload = receivedMessage.payload || {};
+          const questionId = payload.question_id;
+          
+          // Only process if this is for the current question
+          if (questionId === currentQuestionId) {
+            const answersData = payload.answers_data?.data;
+            
+            // Store the full answer data for use in FastestFingerResult
+            setMqttAnswerData(answersData);
+            
+            if (answersData?.question?.correct_option) {
+              // Set the correct answer
+              setCorrectAnswer(answersData.question.correct_option);
+              
+              // Mark the question as submitted to show results
+              setIsSubmitted(true);
+              setShowNextButton(true);
+              
+              // Refetch contestant data to update balances
+              refetch();
+            }
+          }
+        }
+
+        // Handle timer start event
         if (receivedMessage.event?.startsWith("game_s1_timer_start")) {
           console.log("⏱️ Timer start event received");
           handleStartTimer();
         }
 
+        // Handle results reveal event
         if (receivedMessage.event === "game_s1_results_reveal") {
           console.log("📊 Results reveal event received");
           setAllQuestionsCompleted(true);
@@ -297,7 +348,7 @@ const [showPrepPage, setShowPrepPage] = useState(true);
       console.log("Cleaning up MQTT message handler");
       onMessage(null);
     };
-  }, [isConnected, onMessage, user?.contestant_id]);
+  }, [isConnected, onMessage, user?.contestant_id, currentQuestionId, refetch]);
 
 
   // Handle option selection - now just selects without checking correctness
@@ -308,19 +359,30 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     }
   };
 
+  // Helper function to check if an option is correct
+  const isCorrectOption = (option: OptionKey): boolean => {
+    if (!correctAnswer) return false;
+    return convertOptionToLetter(option) === correctAnswer;
+  };
+
   const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
   // Handle submit answer
-  const { 
-    data: answerData, 
-    refetch: refetchAnswer,
-    revalidate: revalidateAnswer 
-  } = useGetQuestionAnswer(
-    shouldFetchAnswer
-      ? (mqttQuestionData?.question?.questions?.question_id as number)
-      : 0
-  );
+  // const { 
+  //   data: answerData, 
+  //   refetch: refetchAnswer,
+  //   revalidate: revalidateAnswer 
+  // } = useGetQuestionAnswer(
+  //   shouldFetchAnswer
+  //     ? (mqttQuestionData?.question?.questions?.question_id as number)
+  //     : 0
+  // );
+
+
+
+ 
+
   const handleSubmitAnswer = () => {
-    if (!selectedOption) return;
+    if (!selectedOption || !currentQuestionId) return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
     const formattedTimestamp = new Date().toISOString()
@@ -337,13 +399,10 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     // Use the exact key string from the backend (e.g., "15000.00")
     const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
 
-    // Get the question ID to submit - prioritize MQTT data, then fall back to selected questions
-    const questionId = mqttQuestionData?.question?.questions?.question_id;
-
     handleAnswerStageOneQuestion(
       {
         contestant_id: user?.contestant_id,
-        question_id: questionId,
+        question_id: Number(currentQuestionId),
         answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
         amount_staked: amountToStake, // Send the exact key string from backend
         timestamp: formattedTimestamp,
@@ -351,7 +410,7 @@ const [showPrepPage, setShowPrepPage] = useState(true);
       },
       {
         onSuccess: () => {
-          console.log("Successfully submitted answer for question ID:", questionId);
+          console.log("Successfully submitted answer for question ID:", currentQuestionId);
           // Add to attempted options
           setAttemptedOptions([
             ...attemptedOptions,
@@ -360,9 +419,7 @@ const [showPrepPage, setShowPrepPage] = useState(true);
             },
           ]);
           
-          // Revalidate and refetch the answer data
-          revalidateAnswer();
-          refetchAnswer();
+    
         },
         onError: (error) => {
           console.error("Error submitting answer:", error);
@@ -389,6 +446,8 @@ const [showPrepPage, setShowPrepPage] = useState(true);
 
   // Handle auto-submission when time elapses
   const handleAutoSubmit = () => {
+    if (!currentQuestionId) return;
+    
     const formattedTimestamp = formatTimestamp(new Date());
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
@@ -403,15 +462,13 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     // Use the exact key string from the backend (e.g., "15000.00")
     const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
 
-    // Get the question ID to submit - prioritize MQTT data, then fall back to selected questions
-    const questionId = mqttQuestionData?.question?.questions?.question_id
-    console.log("Auto-submitting answer for question ID:", questionId);
+    console.log("Auto-submitting answer for question ID:", currentQuestionId);
 
     // Create submission data with "N" as the answer
     handleAnswerStageOneQuestion(
       {
         contestant_id: Number(user?.contestant_id),
-        question_id: questionId,
+        question_id: Number(currentQuestionId),
         answer: "N", // "N" for No Answer
         amount_staked: amountToStake, // Send the exact key string from backend
         timestamp: formattedTimestamp,
@@ -426,10 +483,8 @@ const [showPrepPage, setShowPrepPage] = useState(true);
               option: "N" as OptionKey,
             },
           ]);
-          
-          // Revalidate and refetch the answer data
-          revalidateAnswer();
-          refetchAnswer();
+        
+       
         },
         onError: (error) => {
           const errorMessage = formatAxiosErrorMessage(error as AxiosError);
@@ -464,10 +519,43 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     return <StageOneTally eliminationCount={0} removeCount={0} />;
   }
 
-  console.log(contestantData?.data?.find((contestant:any) => contestant.contestant_id === user?.contestant_id));
+  // console.log(contestantData?.data?.find((contestant:any) => contestant.contestant_id === user?.contestant_id));
 
     return (
       <>
+        {/* Elimination Modal */}
+        {showEliminationModal && (
+          <Dialog
+            open={showEliminationModal}
+            onOpenChange={setShowEliminationModal}
+          >
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+              <div className="bg-gradient-to-b from-[#980306] to-[#FE8E8E] p-1 rounded-xl max-w-md w-full">
+                <div className="bg-[#13051E] rounded-lg p-6 flex flex-col items-center">
+                  <h2 className="text-2xl font-bold text-white mb-4">
+                    You've Been Eliminated!
+                  </h2>
+                  <div className="mb-4">
+                    <Trophy height={80} width={80} />
+                  </div>
+                  <p className="text-white text-center mb-6">
+                    Unfortunately, your journey ends here. Thank you for
+                    participating!
+                  </p>
+                  <Button
+                    onClick={() => {
+                      router.push("/login")
+                      setShowEliminationModal(false)
+                    }}
+                    className="bg-[#D91FFF] hover:bg-[#b01ad3] text-white"
+                  >
+                    Return to Login
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Dialog>
+        )}
 
           <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full ">
             {/* Left Sidebar */}
@@ -705,6 +793,9 @@ const [showPrepPage, setShowPrepPage] = useState(true);
                               (option, index) => {
                                 const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
                                 const currentQuestions = mqttQuestionData?.question?.questions || {};
+                                const isCorrect = isCorrectOption(option);
+                                const isSelected = selectedOption === option;
+                                const showResult = isSubmitted && correctAnswer;
 
                                 return (
                                   <button
@@ -712,27 +803,47 @@ const [showPrepPage, setShowPrepPage] = useState(true);
                                     onClick={() => handleOptionSelect(option)}
                                     disabled={!timerActive || isSubmitted || !mqttQuestionData?.question?.questions}
                                     className={cn(
-                                      "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
-                                      selectedOption === option &&
-                                        "bg-[#FCCE19] border-none text-[#745300]",
+                                      "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
+                                      isSelected && !showResult && "bg-[#FCCE19] border-[#FCCE19] text-[#745300]",
+                                      isCorrect && showResult && "bg-[#04DA6A]/20 border-[#04DA6A]",
+                                      isSelected && !isCorrect && showResult && "bg-[#FF3B30]/20 border-[#FF3B30]",
+                                      !isSelected && !isCorrect && !showResult && "border-[#D71BFA]",
                                       (isSubmitted || !timerActive || !mqttQuestionData?.question?.questions) &&
                                         "opacity-70 cursor-not-allowed"
                                     )}
                                   >
                                     {optionLetter}:
                                     <span
-                                      className={`${selectedOption === option ? "text-white font-bold" : ""}`}
+                                      className={cn(
+                                        "ml-2",
+                                        isSelected && !showResult && "text-white font-bold",
+                                        isCorrect && showResult && "text-[#04DA6A] font-bold",
+                                        isSelected && !isCorrect && showResult && "text-[#FF3B30] font-bold"
+                                      )}
                                       style={{
-                                        marginLeft: "9px",
-                                        WebkitTextStroke:
-                                          selectedOption === option
-                                            ? "1px #C76000"
-                                            : "",
+                                        WebkitTextStroke: isSelected && !showResult ? "1px #C76000" : "",
                                       }}
                                     >
-                                      {" "}
                                       {currentQuestions[option] || `...`}
                                     </span>
+                                    
+                                    {/* Correct answer indicator */}
+                                    {isCorrect && showResult && (
+                                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                        <div className=" rounded-full">
+                                          <CheckIcon size={16} color="#FFFFFF" />
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {/* Incorrect answer indicator */}
+                                    {isSelected && !isCorrect && showResult && (
+                                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                        <div className="bg-[#FF3B30] rounded-full p-1">
+                                          <ErrorIcon  color="#FFFFFF" />
+                                        </div>
+                                      </div>
+                                    )}
                                   </button>
                                 );
                               }
@@ -838,10 +949,13 @@ const [showPrepPage, setShowPrepPage] = useState(true);
                             </div>
                           </div>
                         )}
+                        {/* Pass mqttAnswerData and currentQuestionId to FastestFingerResult */}
                         <div className="h-full w-full">
                           <FastestFingerResult
-                            resultArray={answerData}
+                            // resultArray={answerData}
+                            mqttAnswerData={mqttAnswerData}
                             timeElapsed={timeLeft <= 0 || showNextButton}
+                            currentQuestionId={currentQuestionId}
                           />
                         </div>
                       </div>

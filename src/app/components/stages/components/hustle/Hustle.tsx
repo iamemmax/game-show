@@ -10,20 +10,42 @@ import HustleBottomCard from "./HustleBottomCard";
 import { motion } from "framer-motion";
 import InvestCapital from "./InvestCapital";
 import { tokenStorage } from "@/utils/auth";
-import { hustleRevealProps, useGetHustleReveal } from "../../api/stage1/getHustleReveal";
+import {  useGetHustleReveal } from "../../api/stage1/getHustleReveal";
 import { addCommasToNumber } from "@/utils";
-import GetReadyScreen from "../GetReadyScreen";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
 import QuestionScreen from "./QuestionScreen";
+import { Button, Dialog } from "@/components/core";
+import Trophy from "@/app/icons/Trophy";
+import { useRouter } from "next/navigation";
+import { useGetGameContestants } from "@/app/admin/misc/api/contestants";
 
 const Hustle = () => {
   const { isConnected, onMessage } = useMQTT();
-  const [ShowQuestionScreen, setShowQuestionScreen] = useState(false)
+  const [ShowQuestionScreen, setShowQuestionScreen] = useState(false);
+  const router = useRouter();
   const user = tokenStorage.getUser();
-  // const [data, setData] = useState<hustleRevealProps>()
-// const [isLoading, setIsLoading] = useState(false)
-  const {data,isLoading} = useGetHustleReveal(user?.game_episode as number);
+  const [showEliminationModal, setShowEliminationModal] = useState(false);
+  
+  const {data, isLoading} = useGetHustleReveal(user?.game_episode as number);
+  
+  // Get contestants data to check elimination status
+  const { data: allContestants } = useGetGameContestants(
+    user?.game_episode as number
+  );
+
+  // Check if current user is eliminated
+  useEffect(() => {
+    if (allContestants?.data && user?.contestant_id) {
+      const currentContestant = allContestants.data.find(
+        (contestant) => contestant.id === user.contestant_id
+      );
+
+      if (currentContestant?.is_eliminated) {
+        setShowEliminationModal(true);
+      }
+    }
+  }, [allContestants?.data, user?.contestant_id]);
 
   useEffect(() => {
     if (isConnected) {
@@ -32,13 +54,12 @@ const Hustle = () => {
         console.log("Main page received message:", receivedMessage);
         
         // Handle stage transition events
-      
-
+    
         if ( receivedMessage?.event === "game_s1_questions_prep") {
           // Proceed to the next stage
           setShowQuestionScreen(true)
           
-                  }
+     }
       };
       
       onMessage(handler);
@@ -51,87 +72,123 @@ const Hustle = () => {
     return <QuestionScreen />;
   }
   return (
-    <div className="grid grid-cols-[1fr_5fr_1fr] h-full w-full overflow-x-hidden ">
-      {/* Left Sidebar */}
-      <div className="flex flex-col justify-between">
-        <div className="flex justify-center items-center h-3.5 w-full mt-8">
-          <Logo />
-        </div>
-        <div>
-          <HustleStages />
-        </div>
-        <div className="pb-4 ">
-            <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>
+    <>
+      {/* Elimination Modal */}
+      {showEliminationModal && (
+        <Dialog
+          open={showEliminationModal}
+          onOpenChange={setShowEliminationModal}
+        >
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+            <div className="bg-gradient-to-b from-[#980306] to-[#FE8E8E] p-1 rounded-xl max-w-md w-full">
+              <div className="bg-[#13051E] rounded-lg p-6 flex flex-col items-center">
+                <h2 className="text-2xl font-bold text-white mb-4">
+                  You've Been Eliminated!
+                </h2>
+                <div className="mb-4">
+                  <Trophy height={80} width={80} />
+                </div>
+                <p className="text-white text-center mb-6">
+                  Unfortunately, your journey ends here. Thank you for
+                  participating!
+                </p>
+                <Button
+                  onClick={() => {
+                    router.push("/login")
+                    setShowEliminationModal(false)
+                  }}
+                  className="bg-[#D91FFF] hover:bg-[#b01ad3] text-white"
+                >
+                  Return to Login
+                </Button>
+              </div>
+            </div>
           </div>
-      </div>
+        </Dialog>
+      )}
 
-      {/* Center Content */}
-      <div className="flex  flex-col justify-between items-center min-h-full">
-        {/* Top section */}
-        <div className="flex flex-col w-full items-center">
-          <div className="w-full h-[100px] flex items-center justify-center">
-            <HeaderTitleContainer
-              backgroundColor="#791192"
-              color="#ed99ff"
-              text="Pick-Pad"
-              textGradientEnd="#8E17AA"
-              textGradientStart="#8E17AA"
-              borderGradientStart="#f712fc"
-              borderGradientEnd="#e151fe"
-              fontSize={45}
-              fontFamily="Verdana"
-              textStrokeColor="#a219c1"
-              textStrokeWidth={4.4}
-            />
+      {/* Main Component */}
+      <div className="grid grid-cols-[1fr_5fr_1fr] h-full w-full overflow-x-hidden ">
+        {/* Left Sidebar */}
+        <div className="flex flex-col justify-between">
+          <div className="flex justify-center items-center h-3.5 w-full mt-8">
+            <Logo />
           </div>
-          {
+          <div>
+            <HustleStages />
+          </div>
+          <div className="pb-4 ">
+              <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>
+            </div>
+        </div>
 
-          }
-
-          <div className="relative w-full py-[2.5rem] 2xl:py-[4rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
-            {/* Animated border */}
-            <div className="absolute inset-0">
-              <motion.div
-                className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
-                style={{
-                  background: `conic-gradient(from 0deg at 50% 50%,
-                    #d91fff 0deg,
-                    #d91fff 120deg,
-                    #00ffff 100deg,
-                    #00ffff 240deg,
-                    #FFD700 220deg,
-                    #FFD700 360deg,
-                    #d91fff 340deg
-                  )`,
-                }}
-                animate={{
-                  rotate: [0, 360]
-                }}
-                transition={{
-                  duration: 4,
-                  ease: "linear",
-                  repeat: Infinity
-                }}
+        {/* Center Content */}
+        <div className="flex  flex-col justify-between items-center min-h-full">
+          {/* Top section */}
+          <div className="flex flex-col w-full items-center">
+            <div className="w-full h-[100px] flex items-center justify-center">
+              <HeaderTitleContainer
+                backgroundColor="#791192"
+                color="#ed99ff"
+                text="Pick-Pad"
+                textGradientEnd="#8E17AA"
+                textGradientStart="#8E17AA"
+                borderGradientStart="#f712fc"
+                borderGradientEnd="#e151fe"
+                fontSize={45}
+                fontFamily="Verdana"
+                textStrokeColor="#a219c1"
+                textStrokeWidth={4.4}
               />
             </div>
-            
-            {/* Content container - increased border width from 5px to 8px for bolder appearance */}
-            <div className="absolute inset-[8px] bg-[#13051E]  rounded-[.675rem]" />
-            <div className="relative">
-              <div className="flex justify-center flex-col items-center">
-                <div>
-                  <h2 className="text-[2.125rem] text-center font-gilroyHeavy font-extrabold outline-text text-black">
-                    Stage 1: Hustle Kick-off
-                  </h2>
-                  <p className="text-sm font-normal max-w-[23.25rem] text-center text-[#D5B9FF]">
-                  Tap each of the opportunities to determine how much of your start up capital you will like to Risk/Wager
-                  </p>
-                </div>
-{
-  isLoading? <div className="flex justify-center items-center h-full w-full">
-  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-</div>:
-<>
+            {
+
+            }
+
+            <div className="relative w-full py-[2.5rem] 2xl:py-[4rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
+              {/* Animated border */}
+              <div className="absolute inset-0">
+                <motion.div
+                  className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+                  style={{
+                    background: `conic-gradient(from 0deg at 50% 50%,
+                      #d91fff 0deg,
+                      #d91fff 120deg,
+                      #00ffff 100deg,
+                      #00ffff 240deg,
+                      #FFD700 220deg,
+                      #FFD700 360deg,
+                      #d91fff 340deg
+                    )`,
+                  }}
+                  animate={{
+                    rotate: [0, 360]
+                  }}
+                  transition={{
+                    duration: 4,
+                    ease: "linear",
+                    repeat: Infinity
+                  }}
+                />
+              </div>
+              
+              {/* Content container - increased border width from 5px to 8px for bolder appearance */}
+              <div className="absolute inset-[8px] bg-[#13051E]  rounded-[.675rem]" />
+              <div className="relative">
+                <div className="flex justify-center flex-col items-center">
+                  <div>
+                    <h2 className="text-[2.125rem] text-center font-gilroyHeavy font-extrabold outline-text text-black">
+                      Stage 1: Hustle Kick-off
+                    </h2>
+                    <p className="text-sm font-normal max-w-[23.25rem] text-center text-[#D5B9FF]">
+                    Tap each of the opportunities to determine how much of your start up capital you will like to Risk/Wager
+                    </p>
+                  </div>
+  {
+    isLoading? <div className="flex justify-center items-center h-full w-full">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+  </div>:
+  <>
                 <div className="flex mt-4 items-center gap-[1.375rem]">
                   {/* Player Info */}
                   <div className="flex bg-black rounded-10 gap-4 px-[1.125rem] pr-[5rem] items-center py-2">
@@ -177,24 +234,25 @@ const Hustle = () => {
 
                  
                 </div>
-</>
-}
+  </>
+  }
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Bottom Card (sticks to bottom) */}
+          <div className="w-full max-w-[35rem] lg:max-w-[46.5rem] 2xl:max-w-[80rem] mt-2">
+            <HustleBottomCard />
+          </div>
         </div>
 
-        {/* Bottom Card (sticks to bottom) */}
-        <div className="w-full max-w-[35rem] lg:max-w-[46.5rem] 2xl:max-w-[80rem] mt-2">
-          <HustleBottomCard />
+        {/* Right Sidebar */}
+        <div>
+          <HustleSideBar showEmptyCard={false} showHustlerCard={true} />
         </div>
       </div>
-
-      {/* Right Sidebar */}
-      <div>
-        <HustleSideBar showEmptyCard={false} showHustlerCard={true} />
-      </div>
-    </div>
+    </>
   );
 };
 

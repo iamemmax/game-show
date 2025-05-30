@@ -2,99 +2,162 @@ import StagesCard from '@/app/shared/StagesCard'
 import UserBadge from '@/app/shared/UserBadge'
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { contestantImages } from '../../components/mocks/contestantImages'
-import { answerOptionProp } from '../../api/stage1/question/getQuestionAnswer'
-import { answerQuestion2Prop } from '../../api/stage2/getQuestion2Answer'
+import { contestantImages } from '../mocks/contestantImages'
+import { useMQTT } from '@/hooks/useMqttService'
 
 // Create a unified type for contestant answers
 interface ContestantAnswer {
   contestant: {
-    contestant_attr: string;
+    contestant_attr?: string;
     contestant_name: string;
     contestant_id: number;
   };
   answer_supplied: string;
   is_correct: boolean;
   timestamp: string;
+  amount_staked?: number;
 }
 
 interface FastestFingerResultProps {
+  resultArray?: any;
   timeElapsed?: boolean;
-  correctOption?: string;
-  resultArray?: answerOptionProp | answerQuestion2Prop | null | undefined;
-  length?: number;
+  mqttAnswerData?: any;
+  currentQuestionId?: string | null;
 }
 
 const FastestFingerResult = ({ 
-  timeElapsed = false, 
-  resultArray,
-  length=6
+  resultArray, 
+  timeElapsed, 
+  mqttAnswerData,
+  currentQuestionId 
 }: FastestFingerResultProps) => {
-  const [visibleResults, setVisibleResults] = useState<number[]>([]);
+  const [sortedAnswers, setSortedAnswers] = useState<ContestantAnswer[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [questionData, setQuestionData] = useState<any>(null);
+  const { isConnected, onMessage } = useMQTT();
 
-  // Helper function to extract contestant answers from either data format
-  const getContestantAnswers = (): ContestantAnswer[] => {
-    if (!resultArray || !resultArray.data) return [];
-    
-    // Handle Stage 1 format (data is an object with contestant_answers array)
-    if (!Array.isArray(resultArray.data) && resultArray.data.contestant_answers) {
-      return resultArray.data.contestant_answers;
-    }
-    
-    // Handle Stage 2 format (data is an array of objects with contestant_answers array)
-    if (Array.isArray(resultArray.data) && resultArray.data.length > 0 && resultArray.data[0].contestant_answers) {
-      return resultArray.data[0].contestant_answers;
-    }
-    
-    return [];
-  };
-
-  // Helper function to get question data
-  const getQuestionData = () => {
-    if (!resultArray || !resultArray.data) return null;
-    
-    // Handle Stage 1 format
-    if (!Array.isArray(resultArray.data) && resultArray.data.question) {
-      return resultArray.data.question;
-    }
-    
-    // Handle Stage 2 format
-    if (Array.isArray(resultArray.data) && resultArray.data.length > 0 && resultArray.data[0].question) {
-      return resultArray.data[0].question;
-    }
-    
-    return null;
-  };
-
+  // Reset state when question changes
   useEffect(() => {
-    const contestantAnswers = getContestantAnswers();
-    
-    if (timeElapsed && contestantAnswers.length > 0) {
-      // Reset visible results when time elapses
-      setVisibleResults([]);
+    if (currentQuestionId) {
+      setSortedAnswers([]);
+      setShowResults(false);
+      setQuestionData(null);
+    }
+  }, [currentQuestionId]);
+
+  // Handle MQTT events for question answers
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const handler = (receivedMessage: any) => {
+      try {
+        // Handle question answer event
+        if (receivedMessage?.event === "game_s1_question_answer") {
+          console.log("📊 FastestFingerResult received answer event:", receivedMessage);
+          
+          const payload = receivedMessage.payload || {};
+          const questionId = payload.question_id;
+          
+          // Only process if this is for the current question
+          if (!currentQuestionId || questionId === currentQuestionId) {
+            const answersData = payload.answers_data?.data;
+            
+            if (answersData?.contestant_answers) {
+              // Save question data for calculating time differences
+              if (answersData.question) {
+                setQuestionData(answersData.question);
+              }
+              
+              // Process and sort the answers
+              const answers = answersData.contestant_answers;
+              const sorted = [...answers].sort((a, b) => {
+                // First sort by correctness (correct answers first)
+                if (a.is_correct && !b.is_correct) return -1;
+                if (!a.is_correct && b.is_correct) return 1;
+                
+                // Then sort by timestamp for correct answers (fastest first)
+                if (a.is_correct && b.is_correct) {
+                  return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+                }
+                
+                // For incorrect answers, also sort by timestamp
+                return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+              });
+              
+              setSortedAnswers(sorted);
+              setShowResults(true);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error processing MQTT message in FastestFingerResult:", error);
+      }
+    };
+
+    onMessage(handler);
+
+    return () => {
+      console.log("Cleaning up MQTT message handler in FastestFingerResult");
+      onMessage(null);
+    };
+  }, [isConnected, onMessage, currentQuestionId]);
+
+  // Process mqttAnswerData when it changes
+  useEffect(() => {
+    if (mqttAnswerData?.contestant_answers) {
+      // Save question data for calculating time differences
+      if (mqttAnswerData.question) {
+        setQuestionData(mqttAnswerData.question);
+      }
       
-      // Create a copy of the data for sorting
-      const sortedResults = [...contestantAnswers].sort((a, b) => {
-        // Calculate time differences - assuming timestamp is available
-        const timeA = new Date(a.timestamp).getTime();
-        const timeB = new Date(b.timestamp).getTime();
-        
-        // First prioritize correct answers
+      // Process and sort the answers
+      const answers = mqttAnswerData.contestant_answers;
+      const sorted = [...answers].sort((a, b) => {
+        // First sort by correctness (correct answers first)
         if (a.is_correct && !b.is_correct) return -1;
         if (!a.is_correct && b.is_correct) return 1;
         
-        // If both are correct or both are incorrect, sort by time
-        return timeA - timeB;
+        // Then sort by timestamp for correct answers (fastest first)
+        if (a.is_correct && b.is_correct) {
+          return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+        }
+        
+        // For incorrect answers, also sort by timestamp
+        return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
       });
       
-      // Show results one by one with a delay
-      sortedResults.forEach((_, index) => {
-        setTimeout(() => {
-          setVisibleResults(prev => [...prev, index]);
-        }, 500 * (index + 1)); // 500ms delay between each result
-      });
+      setSortedAnswers(sorted);
+      setShowResults(true);
     }
-  }, [timeElapsed, resultArray]);
+  }, [mqttAnswerData]);
+
+  // Process resultArray when it changes or when timeElapsed becomes true
+  useEffect(() => {
+    if (resultArray?.data?.contestant_answers && (timeElapsed || showResults)) {
+      // Save question data for calculating time differences
+      if (resultArray.data.question) {
+        setQuestionData(resultArray.data.question);
+      }
+      
+      const answers = resultArray.data.contestant_answers;
+      const sorted = [...answers].sort((a, b) => {
+        // First sort by correctness (correct answers first)
+        if (a.is_correct && !b.is_correct) return -1;
+        if (!a.is_correct && b.is_correct) return 1;
+        
+        // Then sort by timestamp for correct answers (fastest first)
+        if (a.is_correct && b.is_correct) {
+          return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+        }
+        
+        // For incorrect answers, also sort by timestamp
+        return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+      });
+      
+      setSortedAnswers(sorted);
+      setShowResults(true);
+    }
+  }, [resultArray, timeElapsed, showResults]);
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -116,41 +179,43 @@ const FastestFingerResult = ({
   };
 
   function calculateTimeDifference(startTime: string, endTime: string): string {
-    const start = new Date(startTime).getTime();
-    const end = new Date(endTime).getTime();
-    const diff = end - start;
-    const seconds = Math.floor((diff % 60000) / 1000);
-    return `0.${seconds.toString().padStart(2, '0')}`;
+    try {
+      const start = new Date(startTime).getTime();
+      const end = new Date(endTime).getTime();
+      const diff = end - start;
+      const seconds = Math.floor((diff % 60000) / 1000);
+      const milliseconds = Math.floor((diff % 1000) / 10);
+      return `${seconds}.${milliseconds.toString().padStart(2, '0')}`;
+    } catch (error) {
+      console.error("Error calculating time difference:", error);
+      return "0.00";
+    }
   }
 
-  const contestantAnswers = getContestantAnswers();
-  const questionData = getQuestionData();
+  // Determine which results to show (limit to top 5 for example)
+  const visibleResults = Array.from({ length: Math.min(sortedAnswers.length, 5) }, (_, i) => i);
 
   return (
     <div className="h-full flex items-center flex-col">
-      {timeElapsed && contestantAnswers.length > 0 ? (
-        // Show results when time has elapsed
+      {(timeElapsed || showResults) && sortedAnswers.length > 0 ? (
+        // Show results when time has elapsed or results are available
         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center overflow-y-auto max-h-[600px]">
           <AnimatePresence>
-            {contestantAnswers.map((result, index) => {
+            {visibleResults.map((index) => {
+              const result = sortedAnswers[index];
               const isCorrect = result?.is_correct;
               
               // Calculate answer time - assuming question has start_time
               const answerTime = calculateTimeDifference(
-                questionData?.question_start_time || result.timestamp, 
+                questionData?.question_start_time || new Date().toISOString(), 
                 result.timestamp
               );
               
               // Find the index of the first correct answer in the sorted data
-              const firstCorrectIndex = contestantAnswers.findIndex(item => item.is_correct);
+              const firstCorrectIndex = sortedAnswers.findIndex(item => item.is_correct);
               
               // Only the first correct answer should be active
               const isFirstCorrect = isCorrect && index === firstCorrectIndex;
-              
-              // Only render if this result should be visible
-              if (!visibleResults.includes(index)) {
-                return null;
-              }
               
               return (
                 <motion.div 
@@ -162,7 +227,7 @@ const FastestFingerResult = ({
                   className="w-full"
                 >
                   <UserBadge 
-                    username={result.contestant?.contestant_name}
+                    username={result.contestant?.contestant_name || `Player ${index + 1}`}
                     amount={answerTime}
                     avatarUrl={contestantImages[index % contestantImages.length]} // Use modulo to avoid index errors
                     isOnline={true}
@@ -193,7 +258,7 @@ const FastestFingerResult = ({
       ) : (
         // Show placeholder cards
         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center">
-          {Array.from({length}).map((_, index) => (
+          {Array.from({length: 5}).map((_, index) => (
             <StagesCard 
               key={index}
               title=""
@@ -208,7 +273,7 @@ const FastestFingerResult = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
 export default FastestFingerResult

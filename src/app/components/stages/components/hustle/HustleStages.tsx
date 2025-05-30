@@ -16,6 +16,7 @@ const HustleStages = ({ activeStage = 1 }: prop) => {
           subTitle="Choose Hustle"
           backgroundFill={activeStage === 1 ? "#5d400b" : "#FFC125"}
           isActive={activeStage === 1 ? true : false}
+          className="[@media(min-width:2000px)]:w-[15rem]  [@media(min-width:2000px)]:h-[7rem]"
           //   customDefs={
           //     <defs>
           //       <linearGradient id="bgGradient" x1="0" y1="0" x2="1" y2="1">
@@ -32,6 +33,7 @@ const HustleStages = ({ activeStage = 1 }: prop) => {
           borderColor={activeStage === 2 ? "#5d400b" : "#FFC125"}
           iconText="2"
           backgroundFill={activeStage === 2 ? "#5d400b" : "#FFC125"}
+           className="[@media(min-width:2000px)]:w-[15rem]  [@media(min-width:2000px)]:h-[7rem]"
         />
 
         <StagesCard
@@ -41,6 +43,7 @@ const HustleStages = ({ activeStage = 1 }: prop) => {
           borderColor={activeStage === 3 ? "#5d400b" : "#FFC125"}
           iconText="3"
           backgroundFill={activeStage === 3 ? "#5d400b" : "#FFC125"}
+           className="[@media(min-width:2000px)]:w-[15rem]  [@media(min-width:2000px)]:h-[7rem]"
         />
 
         <StagesCard
@@ -51,6 +54,7 @@ const HustleStages = ({ activeStage = 1 }: prop) => {
           finalStage={true}
           isActive={activeStage === 4 ? true : false}
           backgroundFill={activeStage === 4 ? "#5d400b" : "#FFC125"}
+           className="[@media(min-width:2000px)]:w-[15rem]  [@media(min-width:2000px)]:h-[7rem]"
         />
       </div>
     </div>
