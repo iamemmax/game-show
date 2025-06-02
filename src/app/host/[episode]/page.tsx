@@ -217,7 +217,7 @@ export default function HostPage() {
                         lastAction: "game_s2_init",
                         currentStageStep: "prep_questions",
                     }))
-                } else if (eventCode === "game_s2_questions_prep") {
+                } else if (eventCode === "game_s2_prep") {
                     setGameState((prev) => ({
                         ...prev,
                         lastAction: "game_s2_questions_prep",
@@ -451,7 +451,7 @@ export default function HostPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#1a0b25] text-white bg-[url('/images/host-bg.png')] bg-no-repeat bg-contain bg-bottom">
+        <div className="min-h-screen bg-[#1a0b25] text-white bg-[url('/images/host-bg.png')] bg-no-repeat bg-contain bg-center">
 
 
 

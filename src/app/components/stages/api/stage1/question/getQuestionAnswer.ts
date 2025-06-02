@@ -40,12 +40,12 @@ export const getQuestionAnswer = async (gameId: number) => {
   return response?.data as answerOptionProp;
 };
 
-export const useGetQuestionAnswer = (gameId: number) => {
+export const useGetQuestionAnswer = (gameId?: number) => {
   const queryClient = useQueryClient();
   
   const query = useQuery({
     queryKey: ["get-question-answer", gameId],
-    queryFn: () => getQuestionAnswer(gameId),
+    queryFn: () => getQuestionAnswer(gameId!),
     enabled: !!gameId,
     refetchInterval: 2000, // Refetch every 2 seconds
     staleTime: 0, // Consider data stale immediately

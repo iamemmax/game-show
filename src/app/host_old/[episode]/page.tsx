@@ -180,7 +180,7 @@ export default function HostPage() {
     const prepStage1Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage1Questions?.data?.hustle_questions[num - 1]?.questions.question_id })
     const prepStage2Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage2Questions?.data.proof_questions[num - 1]?.questions.question_id })
     const revealStage1Question = (n: number) => {
-        sendGameMessage(`game_s1_question_reveal_${n}`, {question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",});
+        sendGameMessage(`game_s1_question_reveal`, {question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",});
         if (n == 1) {
             prepStage1Questions(1)
         }

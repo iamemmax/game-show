@@ -44,7 +44,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={cn(sans.variable, display.variable, outfit.variable, montserrat.variable, platypi.variable)}
+      className={cn(sans.className, display.variable, outfit.variable, montserrat.variable, platypi.variable)}
       lang="en"
     >
       <body>

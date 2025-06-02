@@ -21,6 +21,7 @@ import {
 } from '@/components/core';
 import { Spinner } from '@/icons/core';
 import { cn } from '@/utils/classNames';
+import { Loader2 } from 'lucide-react';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -120,26 +121,32 @@ export default function DataTable<TData, TValue>({
 
       <div
         className={cn(
-          'overflow-auto rounded-10 bg-white',
-          hasOuterPadding && 'p-3 md:p-6 md:pt-0 lg:pb-8',
-          tableContainerClassName
+          "overflow-hidden rounded-full opacity-0 transition-opacity",
+          isFetching && !isLoading && "opacity-100",
+        )}
+      >
+        <div className="bg-[#ff00ff]/20 h-1 w-full overflow-hidden">
+          <div className="h-full w-full origin-[0_50%] animate-pulse rounded-full bg-[#ff00ff]"></div>
+        </div>
+      </div>
+
+      <div
+        className={cn(
+          "overflow-auto rounded-lg",
+          hasOuterPadding && "p-3 md:p-6 md:pt-0 lg:pb-8",
+          tableContainerClassName,
         )}
       >
         <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map(headerGroup => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map(header => {
+          <TableHeader className="bg-[#341D44]">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="border-b border-[#ff00ff]/10 hover:bg-transparent">
+                {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                    <TableHead key={header.id} className="px-6 py-4 text-sm font-medium text-white/70">
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
-                  );
+                  )
                 })}
               </TableRow>
             ))}
@@ -147,31 +154,32 @@ export default function DataTable<TData, TValue>({
 
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => (
+              table.getRowModel().rows.map((row) => (
                 <TableRow
-                  data-state={row.getIsSelected() && 'selected'}
+                  data-state={row.getIsSelected() && "selected"}
                   key={row.id}
+                  className="border-b border-[#ff00ff]/10 hover:bg-[#2a1a35]/50"
                 >
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="px-6 py-4">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  className="h-24 text-center"
-                  colSpan={columns.length}
-                >
+                <TableCell className="h-24 text-center text-white" colSpan={columns.length}>
                   {isLoading ? (
-                    <Spinner className="mx-auto inline-flex w-max" />
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-[#ff00ff] mr-2" />
+                      <span>Loading episodes...</span>
+                    </div>
                   ) : (
-                    'No results.'
+                    <div className="flex flex-col items-center justify-center p-12">
+                      <p className="text-white mb-4">No episodes found</p>
+                      <Button className="bg-[#6f2da8] hover:bg-[#8a3ad3] text-white">Create First Episode</Button>
+                    </div>
                   )}
                 </TableCell>
               </TableRow>
@@ -179,81 +187,40 @@ export default function DataTable<TData, TValue>({
           </TableBody>
         </Table>
 
-        <div className="flex items-center space-x-2 py-4">
-          <Button
-            className="gap-2 border-[#C4C4C4]/50"
-            disabled={
-              !table.getCanPreviousPage() ||
-              pageIndex <= 1 ||
-              !table.getRowModel().rows?.length
-            }
-            variant="outlined"
-            onClick={() => table.previousPage()}
-          >
-            <svg
-              fill="none"
-              height={12}
-              viewBox="0 0 12 12"
-              width={12}
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                clipRule="evenodd"
-                d="M1.478 3.643a3.333 3.333 0 0 0-.126 4.582l.126.132L4.91 11.59a.833.833 0 0 0 1.247-1.1l-.069-.079L2.656 7.18a1.667 1.667 0 0 1-.097-2.251l.097-.106L6.09 1.59A.833.833 0 0 0 4.99.342l-.078.07-3.433 3.231Z"
-                fill="#111C38"
-                fillRule="evenodd"
-              />
-              <path
-                clipRule="evenodd"
-                d="M6.478 3.643a3.333 3.333 0 0 0-.126 4.582l.126.132L9.91 11.59a.833.833 0 0 0 1.248-1.1l-.07-.079L7.656 7.18a1.667 1.667 0 0 1-.097-2.251l.097-.106L11.09 1.59A.833.833 0 0 0 9.99.342l-.078.07-3.433 3.231Z"
-                fill="#B8BBC3"
-                fillRule="evenodd"
-              />
-            </svg>
-            <span>Previous</span>
-          </Button>
-          <Button
-            className="gap-2 border-[#C4C4C4]/50"
-            disabled={
-              !table.getCanNextPage() || !table.getRowModel().rows?.length
-            }
-            variant="outlined"
-            onClick={() => table.nextPage()}
-          >
-            Next
-            <svg
-              fill="none"
-              height={12}
-              viewBox="0 0 12 12"
-              width={12}
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                clipRule="evenodd"
-                d="M10.522 3.643a3.334 3.334 0 0 1 .126 4.582l-.126.132L7.09 11.59a.833.833 0 0 1-1.247-1.1l.069-.079L9.344 7.18a1.667 1.667 0 0 0 .097-2.251l-.097-.106L5.91 1.59A.833.833 0 0 1 7.01.342l.078.07 3.433 3.231Z"
-                fill="#111C38"
-                fillRule="evenodd"
-              />
-              <path
-                clipRule="evenodd"
-                d="M5.522 3.643a3.333 3.333 0 0 1 .126 4.582l-.126.132L2.09 11.59a.833.833 0 0 1-1.247-1.1l.069-.079L4.344 7.18a1.667 1.667 0 0 0 .097-2.251l-.097-.106L.91 1.59A.833.833 0 0 1 2.01.342l.078.07 3.433 3.231Z"
-                fill="#B8BBC3"
-                fillRule="evenodd"
-              />
-            </svg>
-          </Button>
-        </div>
-      </div>
-
-      <div
-        className={clsx(
-          'overflow-hidden rounded-full opacity-0 transition-opacity',
-          isFetching && !isLoading && 'opacity-100'
+        {/* Pagination */}
+        {table.getRowModel().rows?.length > 0 && (
+          <div className="flex items-center justify-between mt-6">
+            <div className="flex items-center gap-2">
+              <Button variant="unstyled" className="bg-[#6f2da8] text-white w-8 h-8 p-0 hover:bg-[#8a3ad3]">
+                {pageIndex + 1}
+              </Button>
+              <Button
+                variant="unstyled"
+                className="text-white hover:bg-[#6f2da8] w-8 h-8 p-0"
+                disabled={pageIndex + 2 > pageCount}
+              >
+                {pageIndex + 2}
+              </Button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outlined"
+                className="border-[#ff00ff]/30 text-white hover:bg-[#ff00ff]/10"
+                disabled={!table.getCanPreviousPage()}
+                onClick={() => table.previousPage()}
+              >
+                Previous
+              </Button>
+              <Button
+                className="bg-[#6f2da8] hover:bg-[#8a3ad3] text-white"
+                disabled={!table.getCanNextPage()}
+                onClick={() => table.nextPage()}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         )}
-      >
-        <div className="bg-main-solid/20 h-1 w-full overflow-hidden">
-          <div className="h-full w-full origin-[0_50%] animate-indeterminate-progress rounded-full bg-main-solid "></div>
-        </div>
       </div>
     </>
   );
