@@ -87,7 +87,7 @@ const params = useParams()
                           textclassName="text-[19.18px] font-extrabold font-gilroyHeavy text-white"
                           fillColor="#fff"
                         >
-                  {`₦${addCommasToNumber(Number(bal?.book_balance))}`
+                  {`₦${addCommasToNumber(Number(bal?.actual_balance))}`
 }
 
 

@@ -504,17 +504,17 @@ const Stage1QuestionScreen = () => {
                   ) : (
                     <div className="relative">
                       {/* Question display section */}
-                      <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[6rem] rounded-[1.5rem] bg-[#000000]">
+                      <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000]">
                         <div className="">
-                          <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-lg text-[#04DA6A] font-outfit">
+                          <p className="bg-[#011B0D] rounded-10 px-3 py-2  text-[#04DA6A] font-outfit">
                             Question {mqttQuestionData?.question_index || "..."}
                           </p>
                         </div>
                         <div className="">
                           {mqttQuestionData?.question?.questions?.question ? (
-                            <h2 className="text-white text-xl 2xl:text-7xl text-center font-gilroyMedium font-extrabold">
+                            <p className="text-white text-xl 2xl:text-[3rem] leading-[4rem] text-center font-gilroyMedium font-extrabold">
                               {mqttQuestionData.question.questions.question}
-                            </h2>
+                            </p>
                           ) : (
                             <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
                               Waiting for question from host...

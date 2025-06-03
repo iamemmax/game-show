@@ -52,8 +52,8 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
    
 
       topicsRef.current = {
-        publisher: `test/topic`,
-        subscriber: `test/topic`,
+        publisher: `test/topic/local`,
+        subscriber: `test/topic/local`,
       }; 
 
       mqttClient = mqtt.connect(connectUrl, {

@@ -34,7 +34,7 @@ interface Contestantdetails {
 
 export const getHustleReveal = async (episode_id: number) => {
   if (!episode_id) return null;
-  const response = await salaryAxios.post(`api/game/get_hustle_reveal/${episode_id}/`);
+  const response = await salaryAxios.post(`api/game/get_hustle_reveal/${episode_id}`);
   return response?.data as hustleRevealProps;
 };
 

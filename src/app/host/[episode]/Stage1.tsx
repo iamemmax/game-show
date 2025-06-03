@@ -100,6 +100,7 @@ export default function Stage1Questions({
   }
 
   // Start the timer for the current question
+  // Start the timer for the current question
   const startQuestionTimer = () => {
     if (!currentQuestionData) return
 

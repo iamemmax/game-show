@@ -33,7 +33,7 @@ interface createEpisode {
 
 // Get all games
 export const getAllGames = async ({ season_id }: { season_id: string | number }) => {
-  const response = await tokenlessAxios.get(`api/game/fetch_all_games?season_id=${season_id}`)
+  const response = await tokenlessAxios.post(`api/admin-controller/fetch_all_games/?season_id=${season_id}`)
   return response?.data as IEpisode[]
 }
 
