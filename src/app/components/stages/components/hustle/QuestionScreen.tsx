@@ -17,7 +17,6 @@ import Image from "next/image";
 import { useGetAllHustleQuestions } from "../../api/stage1/question/getHustleQuestion";
 import { contestantImages, revealResults } from "../mocks/contestantImages";
 import { addCommasToNumber, formatAxiosErrorMessage } from "@/utils";
-import FastestFingerResult from "./FastestFingerResult";
 import { useAnswerStageOneQuestion } from "../../api/stage1/question/answerQuestion";
 import { useErrorModalState } from "@/hooks";
 import { AxiosError } from "axios";
@@ -29,6 +28,7 @@ import GetReadyScreen from "../GetReadyScreen";
 import { useGetGameContestants } from "@/app/admin/misc/api/contestants";
 // import { Dialog } from "@/components/ui/dialog";
 import { useParams, useRouter } from "next/navigation";
+import FastestFingerResult from "./FastestFingerResult";
 
 // Add debug log to track component imports
 console.log("GetReadyScreen imported in QuestionScreen");
@@ -40,8 +40,6 @@ interface AttemptedOption {
 
 // Add type for option keys
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
-
-
 
 /**
  * Converts option format (e.g., "option_a") to letter format (e.g., "A")
@@ -86,6 +84,7 @@ interface Contestant {
   max_question_spend: number;
   spend_breakdown: Record<string, number>;
 }
+
 const QuestionScreen = () => {
   const {
     isErrorModalOpen,
@@ -95,17 +94,22 @@ const QuestionScreen = () => {
   } = useErrorModalState();
   const { isConnected, onMessage } = useMQTT();
   const router = useRouter();
-  // Get user from storage
+  
+  // Get user from storage - Fixed: Add null check and fallback
   const user = tokenStorage.getUser();
   const [showEliminationModal, setShowEliminationModal] = useState(false);
 
+  // Add ref to track if component is mounted
+  const mountedRef = useRef(true);
+
+  // Fixed: Add conditional rendering and null checks for user
   const { data: questionData, isLoading } = useGetAllHustleQuestions(
-    user?.game_episode as number
+    user?.game_episode ? Number(user.game_episode) : 0
   );
-const pamas = useParams
-  // Get contestants data to check elimination status
+  
+  // Get contestants data to check elimination status - Fixed: Add null check
   const { data: allContestants } = useGetGameContestants(
-    user?.game_episode as number
+    user?.game_episode ? Number(user.game_episode) : 0
   );
 
   // Check if current user is eliminated
@@ -121,12 +125,11 @@ const pamas = useParams
     }
   }, [allContestants?.data, user?.contestant_id]);
 
-  // Add wallet balance query
-  // const { data: dataBalance } = useGetWalletBalance(
-  //   user?.game_episode as number
-  // );
-
-  const {refetch, data:contestantData} =useGetGameContestants(user?.game_episode as number);
+  // Fixed: Add null check for user
+  const { refetch, data: contestantData } = useGetGameContestants(
+    user?.game_episode ? Number(user.game_episode) : 0
+  );
+  
   // State declarations
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -139,10 +142,8 @@ const pamas = useParams
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
-const [showPrepPage, setShowPrepPage] = useState(true);
+  const [showPrepPage, setShowPrepPage] = useState(true);
 
-
- 
   // Add new state variables for user-specific bid amounts
   const [userBidAmounts, setUserBidAmounts] = useState<{
     [key: string]: number;
@@ -157,15 +158,18 @@ const [showPrepPage, setShowPrepPage] = useState(true);
   const [resultMessageSent, setResultMessageSent] = useState(false);
   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
 
-  // Also update questionIdToSubmit when we receive MQTT question data
+  // Fixed: Add early return if user is not available
+  if (!user) {
+    console.log("No user found, redirecting to login");
+    router.push("/login");
+    return null;
+  }
 
-
-
+  // Cleanup on unmount
   useEffect(() => {
-    // Only initialize game start time, but don't start the timer
-    if (!gameStartTime) {
-      setGameStartTime(new Date());
-    }
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   // Function to handle amount selection
@@ -182,7 +186,6 @@ const [showPrepPage, setShowPrepPage] = useState(true);
       if (exactKey) {
         console.log("Found exact key:", exactKey, "with value:", userBidAmounts[exactKey]);
         setSelectedAmount(parseFloat(exactKey));
-        // setSelectedBidValue(userBidAmounts[exactKey]);
       } else {
         console.warn("No exact key found for amount:", amount);
         // Fallback to using the amount directly
@@ -197,36 +200,35 @@ const [showPrepPage, setShowPrepPage] = useState(true);
 
         if (closestKey) {
           console.log("Using closest key:", closestKey, "with value:", userBidAmounts[closestKey]);
-          // setSelectedBidValue(userBidAmounts[closestKey]);
         }
       }
     }
   };
 
-  // Timer effect
+  // Timer effect - Fixed to properly handle timer state
   useEffect(() => {
-    // This is the critical guard - timer should not run if not active
-    if (!timerActive) {
+    // Only run timer if component is mounted and timer is active
+    if (!mountedRef.current || !timerActive) {
       return;
     }
 
-
     if (timeLeft <= 0) {
-      setShowNextButton(true); // Enable the Next button
+      setShowNextButton(true);
       setShouldFetchAnswer(true);
-      refetch()
+      refetch();
 
       if (!selectedOption && !isSubmitted) {
         console.log("No option selected, auto-submitting with 'N'");
         setSelectedOption("N" as OptionKey);
         handleAutoSubmit();
       }
-
       return;
     }
 
     const timer = setTimeout(() => {
-      setTimeLeft(timeLeft - 1);
+      if (mountedRef.current) {
+        setTimeLeft(prev => prev - 1);
+      }
     }, 1000);
 
     return () => {
@@ -234,19 +236,21 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     };
   }, [timeLeft, selectedOption, isSubmitted, timerActive]);
 
-
-
-
-
-
+  // MQTT message handler - Fixed to properly handle all events
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected || !mountedRef.current) return;
 
     const handler = (receivedMessage: any) => {
+      console.log("🔥 MQTT Message received:", receivedMessage);
+      
       try {
         // Handle prep page event
         if (receivedMessage?.event === "game_s1_question_reveal") {
+          console.log("📋 Question reveal event received");
+          
           setShowPrepPage(false);
+          if (!mountedRef.current) return;
+          
 
           const payload = receivedMessage.payload || {};
           const questionData = payload.data || {};
@@ -261,10 +265,11 @@ const [showPrepPage, setShowPrepPage] = useState(true);
           // 2. Reset related states
           setSelectedOption(null);
           setIsSubmitted(false);
-          resetTimerState();
           setResultMessageSent(false);
           setMqttAnswerData(null);
           setCorrectAnswer(null);
+          setShowNextButton(false);
+          setShouldFetchAnswer(false);
 
           // 3. Set current index and question ID
           setCurrentQuestionIndex((questionData.question_index || 1) - 1);
@@ -298,15 +303,46 @@ const [showPrepPage, setShowPrepPage] = useState(true);
           }
         }
 
+        // Handle timer start event - FIXED
+        if (receivedMessage.event === "game_s1_timer_start") {
+          console.log("⏱️ Timer start event received - Starting timer NOW");
+          
+          if (!mountedRef.current) return;
+          
+          // Immediately start the timer
+          setTimerActive(true);
+          setGameStartTime(new Date());
+          setTimeLeft(10);
+          
+          console.log("✅ Timer activated - timerActive set to true");
+        }
+
         // Handle question answer event
         if (receivedMessage?.event === "game_s1_question_answer") {
           console.log("📊 Question answer event received:", receivedMessage);
+          
+          if (!mountedRef.current) return;
           
           const payload = receivedMessage.payload || {};
           const questionId = payload.question_id;
           
           // Only process if this is for the current question
           if (questionId === currentQuestionId) {
+            // Check if we have direct data in the payload
+            if (payload.data && Array.isArray(payload.data)) {
+              console.log("Setting direct data array from payload");
+              setMqttAnswerData(payload.data);
+              
+              // Mark the question as submitted to show results
+              setIsSubmitted(true);
+              setShowNextButton(true);
+              
+              // Refetch contestant data to update balances
+              refetch();
+              return;
+            }
+            
+            // Check for answers_data structure
             const answersData = payload.answers_data?.data;
             
             // Store the full answer data for use in FastestFingerResult
@@ -326,30 +362,26 @@ const [showPrepPage, setShowPrepPage] = useState(true);
           }
         }
 
-        // Handle timer start event
-        if (receivedMessage.event?.startsWith("game_s1_timer_start")) {
-          console.log("⏱️ Timer start event received");
-          handleStartTimer();
-        }
-
         // Handle results reveal event
         if (receivedMessage.event === "game_s1_results_reveal") {
           console.log("📊 Results reveal event received");
-          setAllQuestionsCompleted(true);
+          if (mountedRef.current) {
+            setAllQuestionsCompleted(true);
+          }
         }
+        
       } catch (error) {
-        console.error("❌ Error processing MQTT message:", error);
+        console.error("❌ Error handling MQTT message:", error);
       }
     };
 
     onMessage(handler);
 
+    // Cleanup function
     return () => {
-      console.log("Cleaning up MQTT message handler");
-      onMessage(null);
+      console.log("🧹 Cleaning up MQTT message handler");
     };
   }, [isConnected, onMessage, user?.contestant_id, currentQuestionId, refetch]);
-
 
   // Handle option selection - now just selects without checking correctness
   const handleOptionSelect = (option: OptionKey) => {
@@ -366,30 +398,17 @@ const [showPrepPage, setShowPrepPage] = useState(true);
   };
 
   const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
-  // Handle submit answer
-  // const { 
-  //   data: answerData, 
-  //   refetch: refetchAnswer,
-  //   revalidate: revalidateAnswer 
-  // } = useGetQuestionAnswer(
-  //   shouldFetchAnswer
-  //     ? (mqttQuestionData?.question?.questions?.question_id as number)
-  //     : 0
-  // );
-
-
-
- 
 
   const handleSubmitAnswer = () => {
     if (!selectedOption || !currentQuestionId) return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
-    const formattedTimestamp = new Date().toISOString()
+    const formattedTimestamp = new Date().toISOString();
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
+    
     setIsSubmitted(true);
-    setShowNextButton(true); // Enable the Next button after submission
-    setShouldFetchAnswer(true); // Set this to true to fetch the answer
+    setShowNextButton(true);
+    setShouldFetchAnswer(true);
 
     // Find the exact string key from the backend that matches the selected amount
     const selectedAmountKey = Object.keys(userBidAmounts).find(
@@ -418,8 +437,6 @@ const [showPrepPage, setShowPrepPage] = useState(true);
               option: selectedOption,
             },
           ]);
-          
-    
         },
         onError: (error) => {
           console.error("Error submitting answer:", error);
@@ -450,9 +467,10 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     
     const formattedTimestamp = formatTimestamp(new Date());
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
+    
     setIsSubmitted(true);
-    setShowNextButton(true); // Enable the Next button after auto-submission
-    setShouldFetchAnswer(true); // Set this to true to fetch the answer
+    setShowNextButton(true);
+    setShouldFetchAnswer(true);
 
     // Find the exact string key from the backend that matches the selected amount
     const selectedAmountKey = Object.keys(userBidAmounts).find(
@@ -483,8 +501,6 @@ const [showPrepPage, setShowPrepPage] = useState(true);
               option: "N" as OptionKey,
             },
           ]);
-        
-       
         },
         onError: (error) => {
           const errorMessage = formatAxiosErrorMessage(error as AxiosError);
@@ -501,15 +517,17 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     setTimeLeft(10); // Reset timer to 10 seconds
   };
 
+  // Fixed: Add loading state while fetching user data
+  if (isLoading && !questionData) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-[#13051E]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+        <span className="ml-2 text-white">Loading question data...</span>
+      </div>
+    );
+  }
 
-  // Add debug log before rendering
-  console.log("Rendering QuestionScreen component with states:", {
-    showPrepPage,
-    allQuestionsCompleted,
-    isConnected
-  });
-
-  if(showPrepPage){
+  if (showPrepPage) {
     console.log("Rendering GetReadyScreen");
     return <GetReadyScreen />;
   }
@@ -519,7 +537,6 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     return <StageOneTally eliminationCount={0} removeCount={0} />;
   }
 
-  // console.log(contestantData?.data?.find((contestant:any) => contestant.contestant_id === user?.contestant_id));
 
     return (
       <>
@@ -953,7 +970,7 @@ const [showPrepPage, setShowPrepPage] = useState(true);
                         <div className="h-full w-full">
                           <FastestFingerResult
                             // resultArray={answerData}
-                            mqttAnswerData={mqttAnswerData}
+                            // mqttAnswerData={mqttAnswerData}
                             timeElapsed={timeLeft <= 0 || showNextButton}
                             currentQuestionId={currentQuestionId}
                           />

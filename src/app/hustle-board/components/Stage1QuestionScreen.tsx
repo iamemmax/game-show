@@ -18,7 +18,6 @@ import { useGetGameContestants } from "@/app/admin/misc/api/contestants";
 // import { Dialog } from "@/components/ui/dialog";
 import { useParams, useRouter } from "next/navigation";
 import StageOneTally from "@/app/components/stages/components/hustle/StageOneTally";
-import FastestFingerResult from "@/app/components/stages/components/hustle/FastestFingerResult";
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
 import { contestantImages } from "@/app/components/stages/components/mocks/contestantImages";
@@ -26,6 +25,7 @@ import GetHustleBoardReadyScreen from "./GettHustleBoardReadyScreen";
 import { useAnswerStageOneQuestion } from "@/app/components/stages/api/stage1/question/answerQuestion";
 import { useGetAllHustleQuestions } from "@/app/components/stages/api/stage1/question/getHustleQuestion";
 import { useGetQuestionAnswer } from "@/app/components/stages/api/stage1/question/getQuestionAnswer";
+import FastestFingerResult from "@/app/components/stages/components/hustle/FastestFingerResult";
 
 // Add debug log to track component imports
 
@@ -155,6 +155,7 @@ const Stage1QuestionScreen = () => {
     if (!isConnected) return;
 
     const handler = (receivedMessage: any) => {
+      console.log("Main page received message:", receivedMessage?.event);
       try {
         // Handle question reveal event
         if (receivedMessage?.event === "game_s1_question_reveal") {
@@ -209,37 +210,37 @@ const Stage1QuestionScreen = () => {
           }
         }
 
-        // Handle question answer event
-        if (receivedMessage?.event === "game_s1_question_answer") {
-          console.log("📊 Question answer event received:", receivedMessage);
+        // // Handle question answer event
+        // if (receivedMessage?.event === "game_s1_question_answer") {
+        //   console.log("📊 Question answer event received:", receivedMessage);
           
-          const payload = receivedMessage.payload || {};
-          const questionId = payload.question_id;
+        //   const payload = receivedMessage.payload || {};
+        //   const questionId = payload.question_id;
           
-          // Only process if this is for the current question
-          if (questionId === currentQuestionId) {
-            const answersData = payload.answers_data?.data;
+        //   // Only process if this is for the current question
+        //   if (questionId === currentQuestionId) {
+        //     const answersData = payload.answers_data?.data;
             
-            // Store the full answer data for use in FastestFingerResult
-            setMqttAnswerData(answersData);
+        //     // Store the full answer data for use in FastestFingerResult
+        //     setMqttAnswerData(answersData);
             
-            if (answersData?.question?.correct_option) {
-              // Set the correct answer
-              setCorrectAnswer(answersData.question.correct_option);
+        //     if (answersData?.question?.correct_option) {
+        //       // Set the correct answer
+        //       setCorrectAnswer(answersData.question.correct_option);
               
-              // Mark the question as submitted to show results
-              setIsSubmitted(true);
-              setShowNextButton(true);
+        //       // Mark the question as submitted to show results
+        //       setIsSubmitted(true);
+        //       setShowNextButton(true);
               
-              // Refetch contestant data to update balances
-              refetch();
-            }
-          }
-        }
+        //       // Refetch contestant data to update balances
+        //       refetch();
+        //     }
+        //   }
+        // }
 
         // Handle timer start event
-        if (receivedMessage.event?.startsWith("game_s1_timer_start")) {
-          console.log("⏱️ Timer start event received");
+        if (receivedMessage.event === "game_s1_timer_start") {
+          console.log("⏱️ Timer start event received", receivedMessage);
           handleStartTimer();
         }
 
