@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { Button, CardDescription } from "@/components/core"
 import { Input } from "@/components/core"
 import { Label } from "@/components/core/Label"
@@ -25,12 +25,20 @@ const createSeasonSchema = z.object({
 
 type CreateSeasonFormValues = z.infer<typeof createSeasonSchema>
 
-export default function Component() {
+export default function Page() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-    const { data: seasons } = useGetAllSeasons();
+    const { data: seasons, isLoading } = useGetAllSeasons();
     const { mutate: createNewSeason } = useCreateSeason()
 
+    React.useEffect(() => {
+        if (isLoading) {
+            console.log("Loading seasons...")
+        }
+        if (seasons) {
+            console.log("Fetched seasons:", seasons)
+        }
+    }    , [isLoading, seasons])
 
     const form = useForm<CreateSeasonFormValues>({
         resolver: zodResolver(createSeasonSchema),
@@ -66,18 +74,24 @@ export default function Component() {
         })
     }
 
+
+    console.log(seasons, "Seasons data")
+
+
     return (
         <div className=" md:w-[90%] container mx-auto px-4 !font-montserrat">
             <div className="space-y-4">  <header className="flex items-center justify-between mb-8">
 
                 <h2 className="text-xl font-bold text-white mb-4">ALL SEASONS</h2>
+                <TrapeziumButton variant={"green"} className="" size={"sm"}
+                    onClick={() => setIsCreateModalOpen(true)}
+                >
+                    Create Season
+                </TrapeziumButton>
+
 
                 <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-                    <DialogTrigger asChild>
-                        <TrapeziumButton variant={"green"} className="" size={"sm"}>
-                            Create Season
-                        </TrapeziumButton>
-                    </DialogTrigger>
+
                     <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white">
                         <DialogHeader>
                             <DialogTitle className="text-xl text-[#ff9500]">Create New Season</DialogTitle>

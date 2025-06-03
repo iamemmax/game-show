@@ -22,7 +22,7 @@ export interface IGetHustleQuestionAPIResponse {
     }
 }
 const postNotifyBackendSTartTimer = async (data: RootObject) => {
-    const res = await tokenlessAxios.post("/api/game/question_start_time/",
+    const res = await tokenlessAxios.post("/api/admin-controller/question_start_time/",
         data
     );
     return res.data;
@@ -40,11 +40,34 @@ export const useNotifyBackendStartQuestionTimer = () => {
         },
     });
 }
-const postNotifyBackendEndTimer = async ({ question_id, stage }: { question_id: number | string, stage?: '1' | '2' }) => {
-    const res = stage === '2' ?
-        await tokenlessAxios.post(`/api/game/s2_question_time_elapsed/${question_id}`) :
-        await tokenlessAxios.post(`/api/game/s1_question_time_elapsed/${question_id}`);
-    return res.data;
+
+
+
+
+
+
+
+interface TimeElapsedResponse {
+    status: string;
+    message: string;
+    data: TcontestantTimeElapsed[];
+}
+
+interface TcontestantTimeElapsed {
+    contestant_id: number;
+    answered_in: number;
+    is_correct: boolean;
+    is_winner: boolean;
+    wallet_balance: number;
+    book_balance: number;
+    stage_balance: number;
+    contestant_name: null;
+    contestant_attr: string;
+}
+const postNotifyBackendEndTimer = async ({ question_id, stage, timestamp }: { question_id: number | string, stage?: '1' | '2', timestamp: string }) => {
+    const endpoint = stage === '2' ? '/api/admin-controller/s2_question_time_elapsed/' : '/api/admin-controller/s1_question_time_elapsed/';
+    const res = await tokenlessAxios.post(endpoint, { question_id, timestamp })
+    return res.data as TimeElapsedResponse;
 }
 
 export const useNotifyBackendEndQuestionTimer = () => {
@@ -55,7 +78,7 @@ export const useNotifyBackendEndQuestionTimer = () => {
 }
 
 const postGetHustleQuestion = async ({ episode }: { episode: string | number }) => {
-    const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/game/request_next_question/${episode}`);
+    const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/admin-controller/request_hustle_reveal_question/${episode}`);
     return res.data;
 }
 
@@ -66,14 +89,14 @@ export const useGetHustleQuestion = () => {
     });
 }
 const postEndStageOne = async ({ episode }: { episode: string | number }) => {
-    const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/game/end_stage_one/${episode}`);
+    const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/admin-controller/end_stage_one/${episode}`);
     return res.data;
 }
 
 export const useEndStageOne = () => {
     return useMutation({
         mutationFn: postEndStageOne,
-        mutationKey: ["end-stage-2"],
+        mutationKey: ["end-stage-1"],
     });
 }
 const postEndStageTwo = async ({ episode }: { episode: string | number }) => {
