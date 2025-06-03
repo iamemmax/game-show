@@ -99,7 +99,7 @@ const Hustle = () => {
                   }}
                   className="bg-[#D91FFF] hover:bg-[#b01ad3] text-white"
                 >
-                  Return to Login
+               Continue
                 </Button>
               </div>
             </div>
