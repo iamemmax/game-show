@@ -9,12 +9,13 @@ import NumberCardContainer from "@/app/shared/NumberContainer";
 // import { questionArray } from "../mocks/sampleQuestion";
 import { cn } from "@/utils/classNames";
 import CheckIcon from "@/app/icons/CheckIcon";
+import ErrorIcon from "@/app/icons/ErrorIcon";
 import { tokenStorage } from "@/utils/auth";
 import { Button, Dialog, ErrorModal, GlowyStrokeText } from "@/components/core";
 import GradientButton from "@/app/shared/GradientButton";
 import Image from "next/image";
 import { useGetAllHustleQuestions } from "../../api/stage1/question/getHustleQuestion";
-import { contestantImages } from "../mocks/contestantImages";
+import { contestantImages, revealResults } from "../mocks/contestantImages";
 import { addCommasToNumber, formatAxiosErrorMessage } from "@/utils";
 import FastestFingerResult from "./FastestFingerResult";
 import { useAnswerStageOneQuestion } from "../../api/stage1/question/answerQuestion";
@@ -29,6 +30,7 @@ import { useGetGameContestants } from "@/app/admin/misc/api/contestants";
 import {  useRouter } from "next/navigation";
 
 // Add debug log to track component imports
+console.log("GetReadyScreen imported in QuestionScreen");
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -143,8 +145,8 @@ const QuestionScreen = () => {
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
 
   // Add new state variables
-  const [resultMessageSent, setResultMessageSent] = useState(false);
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
+  const [resultMessageSent, setResultMessageSent] = useState(false);
   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
 
   // Also update questionIdToSubmit when we receive MQTT question data
@@ -204,7 +206,7 @@ const QuestionScreen = () => {
     if (timeLeft <= 0) {
       setShowNextButton(true); // Enable the Next button
       // setShouldFetchAnswer(true);
-      // refetch()
+    
 
       if (!selectedOption && !isSubmitted) {
         console.log("No option selected, auto-submitting with 'N'");
@@ -263,16 +265,16 @@ const QuestionScreen = () => {
         setIsSubmitted(false);
         resetTimerState();
         setResultMessageSent(false);
-        // setMqttAnswerData(null);
+        setMqttAnswerData(null);
         setCorrectAnswer(null);
 
         // 3. Set current index and question ID
-      setCurrentQuestionIndex((questionData.question_index || 1));
-          const questionId =
-            questionData?.question?.questions?.question_id || payload?.question_id;
-          if (questionId) {
-            setCurrentQuestionId(questionId.toString());
-          }
+        setCurrentQuestionIndex((questionData.question_index || 1));
+        const questionId =
+          questionData?.question?.questions?.question_id || payload?.question_id;
+        if (questionId) {
+          setCurrentQuestionId(questionId.toString());
+        }
 
         // 4. Extract and save user's spend breakdown
         if (spendBreakdown && user?.contestant_id) {
@@ -320,7 +322,7 @@ const QuestionScreen = () => {
               setShowNextButton(true);
               setTimerActive(false); // Stop the timer
 
-              // refetch();
+            
 
             }
           } 
@@ -519,7 +521,7 @@ const QuestionScreen = () => {
   }
 
   // console.log(contestantData?.data?.find((contestant:any) => contestant.contestant_id === user?.contestant_id));
-const contestantBalance = mqttAnswerData?.find((contestant:any) => contestant.contestant_id === user?.contestant_id);
+const contestantBalance = mqttAnswerData?.filter((contestant:any) => contestant.contestant_id === user?.contestant_id);
   return (
     <>
       {/* Elimination Modal */}
@@ -721,55 +723,57 @@ const contestantBalance = mqttAnswerData?.find((contestant:any) => contestant.co
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                     </div>
                   ) : (
-                      <div className="relative">
-                        {/* Question display section */}
-                        <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
-                          <div className="">
-                            <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
-                              Question {currentQuestionIndex + 1}
+                    <div className="relative">
+                      {/* Question display section */}
+                      <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
+                        <div className="">
+                          <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
+                            Question {mqttQuestionData?.question_index || "..."}
+                          </p>
+                        </div>
+                        <div className="">
+                          {mqttQuestionData?.question?.questions?.question ? (
+                            <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
+                              {mqttQuestionData.question.questions.question}
+                            </h2>
+                          ) : (
+                            <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
+                              Waiting for question from host...
+                            </h2>
+                          )}
+                        </div>
+                        <div className="flex justify-center items-center w-full gap-4">
+                          <div className="bg-[#011B0D] rounded-[12px] py-1 px-4 max-xl:max-w-[130px] w-full">
+                            <p
+                              className="text-[25px] text-white font-extrabold font- text-center"
+                              style={{
+                                WebkitTextStroke: "2px #04DA6A",
+                                textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
+                              }}
+                            >
+                              {mqttQuestionData?.question?.questions?.question_booster || "..."}{" "}
+                              <span
+                                className="text-base font-outfit font-normal text-[#04DA6A]"
+                                style={{
+                                  WebkitTextStroke: "0px",
+                                  textShadow: "none",
+                                }}
+                              >
+                                Booster
+                              </span>
                             </p>
                           </div>
-                          <div className="">
-                            <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                              {mqttQuestionData.question.questions.question || "Waiting for question..."}
-                            </h2>
-                          </div>
-                          <div className="flex justify-center items-center w-full gap-4">
-                            <div   className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
-                              <p className="text-sm font-outfit font-normal text-[#FFC125] ">
-                                Win amount
-                              </p>
-                              <GlowyStrokeText
-                                strokeWidth={1}
-                                strokeColor="#FFC125"
-                                glowColor="#FFC125"
-                                textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
-                                fillColor="#fff"
-                                glowIntensity={"none"}
+                          <div className="bg-[#011B0D] rounded-[12px] py-2 px-4 w-full">
+                            <p className="text-xs font-outfit font-normal text-[#04DA6A] ">
+                              Capital:{" "}
+                              <span
+                                className="text-lg text-white font-extrabold font-verdana text-center"
+                                style={{
+                                  WebkitTextStroke: "1px #04DA6A",
+                                  textShadow: "1px 2px 3px rgba(4, 218, 106, 0.4)",
+                                }}
                               >
                                 ₦
-                                {addCommasToNumber(
-                                  Number(
-                                    mqttQuestionData?.allocated_winning_amount
-                                  )
-                                )}
-                              </GlowyStrokeText>
-                            </div>
-                            <div className="bg-[#011B0D] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
-                              <p className="text-sm font-outfit font-normal text-[#04DA6A] ">
-                                Capital:{" "}
-                              </p>
-
-                              <GlowyStrokeText
-                                strokeWidth={1}
-                                strokeColor="#04DA6A"
-                                glowColor="#04DA6A"
-                                glowIntensity="none"
-                                textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
-                                fillColor="#fff"
-                              >
-                                ₦
-                                
                                 {addCommasToNumber(
                               Number(contestantBalance?.wallet_balance)   || Number(
                                     // Use wallet balance from MQTT data if available
@@ -778,88 +782,171 @@ const contestantBalance = mqttAnswerData?.find((contestant:any) => contestant.co
                                     )?.actual_balance 
                                   )
                                 )}
-                              </GlowyStrokeText>
-                            </div>
+                              </span>
+                            </p>
                           </div>
                         </div>
+                      </div>
 
-                        {mqttQuestionData ? (
-                          <>
-                            <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
-                              {(
-                                [
-                                  "option_a",
-                                  "option_b",
-                                  "option_c",
-                                  "option_d",
-                                ] as OptionKey[]
-                              ).map((option, index) => {
-                                const optionLetter = String.fromCharCode(
-                                  65 + index
-                                ); // A, B, C, D
+                      {/* Options display */}
+                      <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
+                        {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
+                          (option, index) => {
+                            const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
+                            const currentQuestions = mqttQuestionData?.question?.questions || {};
+                            const isCorrect = isCorrectOption(option);
+                            const isSelected = selectedOption === option;
+                            const showResult = isSubmitted && correctAnswer;
 
-                                return (
-                                  <button
-                                    key={option}
-                                    onClick={() => handleOptionSelect(option)}
-                                    disabled={!timerActive || isSubmitted || !mqttQuestionData}
-                                    className={cn(
-                                      "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
-                                      selectedOption === option &&
-                                        "bg-[#FCCE19] border-none text-[#745300]",
-                                      (isSubmitted || !timerActive || !mqttQuestionData) &&
-                                        "opacity-70 cursor-not-allowed"
-                                    )}
-                                  >
-                                    {optionLetter}:
-                                    <span
-                                      className={`${selectedOption === option ? "text-white font-bold" : ""}`}
-                                      style={{
-                                        marginLeft: "9px",
-                                        WebkitTextStroke:
-                                          selectedOption === option
-                                            ? "1px #C76000"
-                                            : "",
-                                      }}
-                                    >
-                                      {" "}
-                                      {mqttQuestionData?.[option] || "..."}
-                                    </span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-
-                            {/* Amount buttons, Submit and Next buttons */}
-                            <div className="flex items-center gap-1  mt-7">
-                              <div className="items-end justify-end">
-                                {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
-                                {!isSubmitted && (
-                                  <Button
-                                    className="p-0 bg-transparent"
-                                    onClick={handleSubmitAnswer}
-                                    disabled={
-                                      !timerActive ||
-                                      !selectedOption ||
-                                      isSubmitted
-                                    }
-                                  >
-                                    <GradientButton
-                                      text="Submit"
-                                      className={`uppercase ${!timerActive || !selectedOption ? "opacity-50" : ""}`}
-                                      width={130}
-                                    />
-                                  </Button>
+                            return (
+                              <button
+                                key={option}
+                                onClick={() => handleOptionSelect(option)}
+                                disabled={!timerActive || isSubmitted || !mqttQuestionData?.question?.questions}
+                                className={cn(
+                                  "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
+                                  isSelected && !showResult && "bg-[#FCCE19] border-[#FCCE19] text-[#745300]",
+                                  isCorrect && showResult && "bg-[#04DA6A]/20 border-[#04DA6A]",
+                                  isSelected && !isCorrect && showResult && "bg-[#FF3B30]/20 border-[#FF3B30]",
+                                  !isSelected && !isCorrect && !showResult && "border-[#D71BFA]",
+                                  (isSubmitted || !timerActive || !mqttQuestionData?.question?.questions) &&
+                                  "opacity-70 cursor-not-allowed"
                                 )}
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="flex justify-center items-center h-full mt-4">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-                          </div>
+                              >
+                                {optionLetter}:
+                                <span
+                                  className={cn(
+                                    "ml-2",
+                                    isSelected && !showResult && "text-white font-bold",
+                                    isCorrect && showResult && "text-[#04DA6A] font-bold",
+                                    isSelected && !isCorrect && showResult && "text-[#FF3B30] font-bold"
+                                  )}
+                                  style={{
+                                    WebkitTextStroke: isSelected && !showResult ? "1px #C76000" : "",
+                                  }}
+                                >
+                                  {currentQuestions[option] || `...`}
+                                </span>
+
+                                {/* Correct answer indicator */}
+                                {isCorrect && showResult && (
+                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                    <div className=" rounded-full">
+                                      <CheckIcon size={16} color="#FFFFFF" />
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Incorrect answer indicator */}
+                                {isSelected && !isCorrect && showResult && (
+                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                    <div className="bg-[#FF3B30] rounded-full p-1">
+                                      <ErrorIcon color="#FFFFFF" />
+                                    </div>
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          }
                         )}
                       </div>
+
+                      {/* Amount buttons section */}
+                      <div className="flex flex-col items-start gap-1 mt-7">
+                        <div className="flex items-center w-full">
+                          <div className="flex flex-1 items-center">
+                            <div className="flex gap-2">
+                              {userBidAmounts && Object.keys(userBidAmounts).length > 0 ? (
+                                // Map through the bid amounts
+                                Object.entries(userBidAmounts).map(([amountKey, bidValue], index) => {
+                                  const amount = parseFloat(amountKey);
+
+                                  return (
+                                    <div
+                                      key={index}
+                                      className="flex flex-col items-center"
+                                    >
+                                      <Button
+                                        onClick={() => handleAmountSelect(amount)}
+                                        disabled={
+                                          !timerActive ||
+                                          isSubmitted ||
+                                          timeLeft <= 0 ||
+                                          !mqttQuestionData?.question?.questions
+                                        }
+                                        className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedAmount === amount
+                                          ? "bg-[#04DA6A] text-black"
+                                          : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
+                                          }
+                                         ${!timerActive ||
+                                            isSubmitted ||
+                                            timeLeft <= 0 ||
+                                            !mqttQuestionData?.question?.questions
+                                            ? "opacity-50 cursor-not-allowed"
+                                            : "hover:bg-[#035D2E] hover:text-white"
+                                          }
+                                        `}
+                                      >
+                                        ₦
+                                        {amount.toLocaleString(
+                                          undefined,
+                                          {
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 0,
+                                          }
+                                        )}
+                                      </Button>
+
+                                      {selectedAmount === amount && (
+                                        <div className="text-xs text-[#04DA6A] mt-1 font-bold">
+                                          ₦
+                                          {Number(bidValue).toLocaleString(
+                                            undefined,
+                                            {
+                                              minimumFractionDigits: 0,
+                                              maximumFractionDigits: 0,
+                                            }
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                // Show waiting message if no bid amounts are available yet
+                                <div className="text-white text-sm">
+                                  Waiting for bid options from host...
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="items-end justify-end">
+                            {/* Submit button - only show if not submitted yet AND time hasn't elapsed AND we have question data */}
+                            {!isSubmitted && mqttQuestionData?.question?.questions && (
+                              <Button
+                                className="p-0 bg-transparent"
+                                onClick={handleSubmitAnswer}
+                                disabled={
+                                  !timerActive ||
+                                  !selectedOption ||
+                                  isSubmitted ||
+                                  !userBidAmounts ||
+                                  Object.keys(userBidAmounts).length === 0 ||
+                                  !mqttQuestionData?.question?.questions
+                                }
+                              >
+                                <GradientButton
+                                  text="Submit"
+                                  className={`uppercase ${!timerActive || !selectedOption || !userBidAmounts || Object.keys(userBidAmounts).length === 0 || !mqttQuestionData?.question?.questions ? "opacity-50" : ""}`}
+                                  width={130}
+                                />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
                   {/* Pass mqttAnswerData and currentQuestionId to FastestFingerResult */}
                   <div className="h-full w-full">
