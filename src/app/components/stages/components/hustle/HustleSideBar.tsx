@@ -118,7 +118,7 @@ const HustleSideBar = ({
                             >
                               {allContestsant?.game?.stage !== "STAGE_ONE"
                                 ? `₦${addCommasToNumber(
-                                    Number(contestant?.wallet_balance) || 0
+                                    Number(contestant?.actual_balance) || 0
                                   )}`
                                 : `₦${addCommasToNumber(
                                     Number(contestant?.stage_balance) ||
