@@ -58,6 +58,7 @@ const ViewOnlyQuestionTwoScreen = () => {
   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [completedQuestions, setCompletedQuestions] = useState<Set<number>>(new Set());
+  const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(new Set());
 
   // Timer effect - for display only
   useEffect(() => {
@@ -82,6 +83,11 @@ const ViewOnlyQuestionTwoScreen = () => {
   // Function to check if a question is currently active
   const isQuestionActive = (questionIndex: number) => {
     return mqttQuestionData?.question_index === questionIndex + 1; // Adding 1 because question_index is 1-based
+  };
+
+  // Function to check if a question has been attempted
+  const isQuestionAttempted = (questionIndex: number) => {
+    return attemptedQuestions.has(questionIndex);
   };
 
   // Handle timer start (from events)
@@ -155,6 +161,8 @@ const ViewOnlyQuestionTwoScreen = () => {
             
             // Mark current question as completed
             setCompletedQuestions(prev => new Set([...prev, currentQuestionIndex]));
+            // Also mark as attempted
+            setAttemptedQuestions(prev => new Set([...prev, currentQuestionIndex]));
           }
         }
       }
@@ -163,6 +171,14 @@ const ViewOnlyQuestionTwoScreen = () => {
       if (receivedMessage?.event === "game_s2_timer_start") {
         console.log("✅ Processing game_s2_timer_start");
         handleStartTimer();
+      }
+
+      // Handle timer end event - mark question as attempted when time elapses
+      if (receivedMessage?.event === "game_s2_timer_end") {
+        console.log("✅ Processing game_s2_timer_end");
+        setTimerActive(false);
+        // Mark current question as attempted when timer ends
+        setAttemptedQuestions(prev => new Set([...prev, currentQuestionIndex]));
       }
 
       // Handle results reveal event
@@ -182,6 +198,15 @@ const ViewOnlyQuestionTwoScreen = () => {
       }
     };
   }, [isConnected, onMessage, currentQuestionIndex]);
+
+  // Add effect to mark question as attempted when timer ends
+  useEffect(() => {
+    if (timeLeft <= 0 && timerActive) {
+      setTimerActive(false);
+      // Mark current question as attempted when timer ends
+      setAttemptedQuestions(prev => new Set([...prev, currentQuestionIndex]));
+    }
+  }, [timeLeft, timerActive, currentQuestionIndex]);
 
   if (showStage2Prep) {
     return <StageTwoGetReadyStage />;
@@ -289,11 +314,12 @@ const ViewOnlyQuestionTwoScreen = () => {
               </div>
 
               <div className="grid mt-5 gap-3 grid-cols-[1fr_3fr_1fr] items-start">
-                {/* Question numbers sidebar */}
+                {/* Question numbers sidebar - Updated to show attempted questions */}
                 <div className="flex gap-2 flex-col">
                   {Array.from({ length: 8 }, (_, index) => {
                     const isCompleted = isQuestionCompleted(index);
                     const isActive = isQuestionActive(index);
+                    const isAttempted = isQuestionAttempted(index);
                     
                     return (
                       <div key={index} className="">
@@ -310,18 +336,22 @@ const ViewOnlyQuestionTwoScreen = () => {
                               ? "#FFFFFF"
                               : isCompleted
                                 ? "#fff"
-                                : "#F2C94C"
+                                : isAttempted
+                                  ? "#FFC125"  // Highlight attempted questions
+                                  : "#F2C94C"
                           }
                           backgroundColor={
                             isActive
                               ? "#FEC124"
                               : isCompleted
                                 ? "#04DA6A"
-                                : "black"
+                                : isAttempted
+                                  ? "#997416"  // Different background for attempted questions
+                                  : "black"
                           }
                           width={45}
                           height={45}
-                          active={isActive || isCompleted}
+                          active={isActive || isCompleted || isAttempted}
                           iconPosition={{ y: 33 }}
                           iconSize={30}
                         />
@@ -394,7 +424,7 @@ const ViewOnlyQuestionTwoScreen = () => {
 
                     {mqttQuestionData ? (
                       <>
-                        {/* Answer options - disabled for viewing */}
+                        {/* Answer options - Updated to highlight correct option */}
                         <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
                           {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
                             (option, index) => {
@@ -405,16 +435,23 @@ const ViewOnlyQuestionTwoScreen = () => {
                                 <div
                                   key={option}
                                   className={cn(
-                                    "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left cursor-not-allowed opacity-60",
-                                    isCorrect && correctAnswer && "bg-[#04DA6A] border-[#04DA6A] opacity-100"
+                                    "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left cursor-not-allowed",
+                                    isCorrect 
+                                      ? "bg-[#04DA6A] border-[#04DA6A] opacity-100" // Correct answer
+                                      : correctAnswer && !isCorrect 
+                                        ? "border-[#EB001B] opacity-60" // Wrong answer when correct is known
+                                        : "border-[#D71BFA] opacity-60" // Default state
                                   )}
                                 >
                                   {optionLetter}:
                                   <span
-                                    className={`${isCorrect && correctAnswer ? "text-white font-bold" : ""}`}
+                                    className={cn(
+                                      isCorrect ? "text-white font-bold" : "",
+                                      correctAnswer && !isCorrect ? "text-[#EB001B]" : ""
+                                    )}
                                     style={{
                                       marginLeft: "9px",
-                                      WebkitTextStroke: isCorrect && correctAnswer ? "1px #006400" : "",
+                                      WebkitTextStroke: isCorrect ? "1px #006400" : "",
                                     }}
                                   >
                                     {" "}
@@ -426,13 +463,20 @@ const ViewOnlyQuestionTwoScreen = () => {
                           )}
                         </div>
 
-                        {/* Spectator status */}
+                        {/* Status indicators */}
                         <div className="flex items-center gap-1 mt-7">
-                         
                           {correctAnswer && (
                             <div className="bg-[#04DA6A] px-4 py-2 rounded-lg ml-2">
                               <span className="text-white text-sm font-medium">
                                 ✅ Correct Answer: {convertOptionToLetter(correctAnswer)}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {timeLeft <= 0 && !correctAnswer && (
+                            <div className="bg-[#EB001B] px-4 py-2 rounded-lg ml-2">
+                              <span className="text-white text-sm font-medium">
+                                ⏱️ Time Elapsed - Waiting for correct answer
                               </span>
                             </div>
                           )}
