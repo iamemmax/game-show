@@ -267,12 +267,12 @@ const QuestionScreen = () => {
         setCorrectAnswer(null);
 
         // 3. Set current index and question ID
-        setCurrentQuestionIndex((questionData.question_index || 1) - 1);
-        const questionId =
-          questionData?.question?.questions?.question_id || payload?.question_id;
-        if (questionId) {
-          setCurrentQuestionId(questionId.toString());
-        }
+      setCurrentQuestionIndex((questionData.question_index || 1));
+          const questionId =
+            questionData?.question?.questions?.question_id || payload?.question_id;
+          if (questionId) {
+            setCurrentQuestionId(questionId.toString());
+          }
 
         // 4. Extract and save user's spend breakdown
         if (spendBreakdown && user?.contestant_id) {
@@ -731,7 +731,7 @@ const contestantBalance = mqttAnswerData?.find((contestant:any) => contestant.co
                           </div>
                           <div className="">
                             <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                              {mqttQuestionData?.question || "Waiting for question..."}
+                              {mqttQuestionData.question.questions.question || "Waiting for question..."}
                             </h2>
                           </div>
                           <div className="flex justify-center items-center w-full gap-4">
