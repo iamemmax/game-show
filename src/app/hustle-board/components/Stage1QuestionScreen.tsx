@@ -96,7 +96,7 @@ const Stage1QuestionScreen = () => {
   const user = tokenStorage.getUser();
 
   // Get contestants data to check elimination status
-  const {refetch, data:contestantData} = useGetGameContestants(Number(params?.episodeId));
+  const { data:contestantData} = useGetGameContestants(Number(params?.episodeId));
 
   // Always call hooks at the top level, even if the result is conditionally used
   const { data: questionData, isLoading } = useGetAllHustleQuestions(
@@ -262,7 +262,7 @@ const Stage1QuestionScreen = () => {
               setTimerActive(false); // Stop the timer
 
               // Refetch contestant data to update balances
-              refetch();
+              // refetch();
             }
           } 
         }
@@ -286,7 +286,7 @@ const Stage1QuestionScreen = () => {
       console.log("Cleaning up MQTT message handler");
       onMessage(null);
     };
-  }, [isConnected, onMessage, user?.contestant_id, refetch]);
+  }, [isConnected, onMessage, user?.contestant_id]);
 
 
   // Reset the result message sent flag when a new question is received
