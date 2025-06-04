@@ -9,29 +9,26 @@ import NumberCardContainer from "@/app/shared/NumberContainer";
 // import { questionArray } from "../mocks/sampleQuestion";
 import { cn } from "@/utils/classNames";
 import CheckIcon from "@/app/icons/CheckIcon";
-import ErrorIcon from "@/app/icons/ErrorIcon";
 import { tokenStorage } from "@/utils/auth";
 import { Button, Dialog, ErrorModal, GlowyStrokeText } from "@/components/core";
 import GradientButton from "@/app/shared/GradientButton";
 import Image from "next/image";
 import { useGetAllHustleQuestions } from "../../api/stage1/question/getHustleQuestion";
-import { contestantImages, revealResults } from "../mocks/contestantImages";
+import { contestantImages } from "../mocks/contestantImages";
 import { addCommasToNumber, formatAxiosErrorMessage } from "@/utils";
+import FastestFingerResult from "./FastestFingerResult";
 import { useAnswerStageOneQuestion } from "../../api/stage1/question/answerQuestion";
 import { useErrorModalState } from "@/hooks";
 import { AxiosError } from "axios";
-import { useGetQuestionAnswer } from "../../api/stage1/question/getQuestionAnswer";
 import StageOneTally from "./StageOneTally";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
 import GetReadyScreen from "../GetReadyScreen";
 import { useGetGameContestants } from "@/app/admin/misc/api/contestants";
 // import { Dialog } from "@/components/ui/dialog";
-import { useParams, useRouter } from "next/navigation";
-import FastestFingerResult from "./FastestFingerResult";
+import {  useRouter } from "next/navigation";
 
 // Add debug log to track component imports
-console.log("GetReadyScreen imported in QuestionScreen");
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -40,6 +37,8 @@ interface AttemptedOption {
 
 // Add type for option keys
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
+
+
 
 /**
  * Converts option format (e.g., "option_a") to letter format (e.g., "A")
@@ -77,13 +76,6 @@ const formatTimestamp = (date: Date): string => {
   return `${year}-${month}-${day}:${hours}:${minutes}:${seconds}`;
 };
 
-interface Contestant {
-  contestant_id: number;
-  contestant_name: string;
-  wallet_balance: number;
-  max_question_spend: number;
-  spend_breakdown: Record<string, number>;
-}
 
 const QuestionScreen = () => {
   const {
@@ -94,22 +86,16 @@ const QuestionScreen = () => {
   } = useErrorModalState();
   const { isConnected, onMessage } = useMQTT();
   const router = useRouter();
-  
-  // Get user from storage - Fixed: Add null check and fallback
+  // Get user from storage
   const user = tokenStorage.getUser();
   const [showEliminationModal, setShowEliminationModal] = useState(false);
 
-  // Add ref to track if component is mounted
-  const mountedRef = useRef(true);
-
-  // Fixed: Add conditional rendering and null checks for user
   const { data: questionData, isLoading } = useGetAllHustleQuestions(
-    user?.game_episode ? Number(user.game_episode) : 0
+    user?.game_episode as number
   );
-  
-  // Get contestants data to check elimination status - Fixed: Add null check
+  // Get contestants data to check elimination status
   const { data: allContestants } = useGetGameContestants(
-    user?.game_episode ? Number(user.game_episode) : 0
+    user?.game_episode as number
   );
 
   // Check if current user is eliminated
@@ -125,11 +111,12 @@ const QuestionScreen = () => {
     }
   }, [allContestants?.data, user?.contestant_id]);
 
-  // Fixed: Add null check for user
-  const { refetch, data: contestantData } = useGetGameContestants(
-    user?.game_episode ? Number(user.game_episode) : 0
-  );
-  
+  // Add wallet balance query
+  // const { data: dataBalance } = useGetWalletBalance(
+  //   user?.game_episode as number
+  // );
+
+  const {  data: contestantData } = useGetGameContestants(user?.game_episode as number);
   // State declarations
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -138,11 +125,13 @@ const QuestionScreen = () => {
   const [selectedAmount, setSelectedAmount] = useState(10000); // Default selected amount
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showNextButton, setShowNextButton] = useState(false);
-  const [shouldFetchAnswer, setShouldFetchAnswer] = useState(false);
+  // const [shouldFetchAnswer, setShouldFetchAnswer] = useState(false);
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
   const [showPrepPage, setShowPrepPage] = useState(true);
+
+
 
   // Add new state variables for user-specific bid amounts
   const [userBidAmounts, setUserBidAmounts] = useState<{
@@ -154,22 +143,19 @@ const QuestionScreen = () => {
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
 
   // Add new state variables
-  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
   const [resultMessageSent, setResultMessageSent] = useState(false);
+  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
 
-  // Fixed: Add early return if user is not available
-  if (!user) {
-    console.log("No user found, redirecting to login");
-    router.push("/login");
-    return null;
-  }
+  // Also update questionIdToSubmit when we receive MQTT question data
 
-  // Cleanup on unmount
+
+
   useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
+    // Only initialize game start time, but don't start the timer
+    if (!gameStartTime) {
+      setGameStartTime(new Date());
+    }
   }, []);
 
   // Function to handle amount selection
@@ -186,6 +172,7 @@ const QuestionScreen = () => {
       if (exactKey) {
         console.log("Found exact key:", exactKey, "with value:", userBidAmounts[exactKey]);
         setSelectedAmount(parseFloat(exactKey));
+        // setSelectedBidValue(userBidAmounts[exactKey]);
       } else {
         console.warn("No exact key found for amount:", amount);
         // Fallback to using the amount directly
@@ -200,35 +187,36 @@ const QuestionScreen = () => {
 
         if (closestKey) {
           console.log("Using closest key:", closestKey, "with value:", userBidAmounts[closestKey]);
+          // setSelectedBidValue(userBidAmounts[closestKey]);
         }
       }
     }
   };
 
-  // Timer effect - Fixed to properly handle timer state
+  // Timer effect
   useEffect(() => {
-    // Only run timer if component is mounted and timer is active
-    if (!mountedRef.current || !timerActive) {
+    // This is the critical guard - timer should not run if not active
+    if (!timerActive) {
       return;
     }
 
+
     if (timeLeft <= 0) {
-      setShowNextButton(true);
-      setShouldFetchAnswer(true);
-      refetch();
+      setShowNextButton(true); // Enable the Next button
+      // setShouldFetchAnswer(true);
+      // refetch()
 
       if (!selectedOption && !isSubmitted) {
         console.log("No option selected, auto-submitting with 'N'");
         setSelectedOption("N" as OptionKey);
         handleAutoSubmit();
       }
+
       return;
     }
 
     const timer = setTimeout(() => {
-      if (mountedRef.current) {
-        setTimeLeft(prev => prev - 1);
-      }
+      setTimeLeft(timeLeft - 1);
     }, 1000);
 
     return () => {
@@ -236,152 +224,131 @@ const QuestionScreen = () => {
     };
   }, [timeLeft, selectedOption, isSubmitted, timerActive]);
 
-  // MQTT message handler - Fixed to properly handle all events
+
+
+
+
+
+  const currentQuestionIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!isConnected || !mountedRef.current) return;
+    currentQuestionIdRef.current = currentQuestionId;
+  }, [currentQuestionId]);
+
+
+
+
+  useEffect(() => {
+    if (!isConnected) return;
 
     const handler = (receivedMessage: any) => {
-      console.log("🔥 MQTT Message received:", receivedMessage);
-      
-      try {
-        // Handle prep page event
-        if (receivedMessage?.event === "game_s1_question_reveal") {
-          console.log("📋 Question reveal event received");
-          
-          setShowPrepPage(false);
-          if (!mountedRef.current) return;
-          
 
-          const payload = receivedMessage.payload || {};
-          const questionData = payload.data || {};
-          const spendBreakdown =
-            questionData.spend_breakdown ||
-            payload.spend_breakdown ||
-            payload.data?.spend_breakdown;
+      // Handle prep page event
+      if (receivedMessage?.event === "game_s1_question_reveal") {
+        console.log("✅ Processing game_s1_question_reveal");
+        setShowPrepPage(false);
 
-          // 1. Save full question info
-          setMqttQuestionData(questionData);
+        const payload = receivedMessage.payload || {};
+        const questionData = payload.data || {};
+        const spendBreakdown =
+          questionData.spend_breakdown ||
+          payload.spend_breakdown ||
+          payload.data?.spend_breakdown;
 
-          // 2. Reset related states
-          setSelectedOption(null);
-          setIsSubmitted(false);
-          setResultMessageSent(false);
-          setMqttAnswerData(null);
-          setCorrectAnswer(null);
-          setShowNextButton(false);
-          setShouldFetchAnswer(false);
+        // 1. Save full question info
+        setMqttQuestionData(questionData);
 
-          // 3. Set current index and question ID
-          setCurrentQuestionIndex((questionData.question_index || 1) - 1);
-          const questionId =
-            questionData?.question?.questions?.question_id || payload?.question_id;
-          if (questionId) {
-            setCurrentQuestionId(questionId.toString());
-          }
+        // 2. Reset related states
+        setSelectedOption(null);
+        setIsSubmitted(false);
+        resetTimerState();
+        setResultMessageSent(false);
+        // setMqttAnswerData(null);
+        setCorrectAnswer(null);
 
-          // 4. Extract and save user's spend breakdown
-          if (spendBreakdown && user?.contestant_id) {
-            const userData = Array.isArray(spendBreakdown)
-              ? spendBreakdown.find(
-                  (contestant: any) =>
-                    String(contestant.contestant_id) === String(user.contestant_id)
-                )
-              : spendBreakdown;
+        // 3. Set current index and question ID
+        setCurrentQuestionIndex((questionData.question_index || 1) - 1);
+        const questionId =
+          questionData?.question?.questions?.question_id || payload?.question_id;
+        if (questionId) {
+          setCurrentQuestionId(questionId.toString());
+        }
 
-            if (userData?.spend_breakdown) {
-              setUserBidAmounts(userData.spend_breakdown);
+        // 4. Extract and save user's spend breakdown
+        if (spendBreakdown && user?.contestant_id) {
+          const userData = Array.isArray(spendBreakdown)
+            ? spendBreakdown.find(
+              (contestant: any) =>
+                String(contestant.contestant_id) === String(user.contestant_id)
+            )
+            : spendBreakdown;
 
-              const bidKeys = Object.keys(userData.spend_breakdown);
-              if (bidKeys.length > 0) {
-                const firstAmount = parseFloat(bidKeys[0]);
-                setSelectedAmount(firstAmount);
-              }
-            } else {
-              setUserBidAmounts({});
-              console.warn("⚠️ No spend_breakdown found for user");
+          if (userData?.spend_breakdown) {
+            setUserBidAmounts(userData.spend_breakdown);
+
+            const bidKeys = Object.keys(userData.spend_breakdown);
+            if (bidKeys.length > 0) {
+              const firstAmount = parseFloat(bidKeys[0]);
+              setSelectedAmount(firstAmount);
             }
+          } else {
+            setUserBidAmounts({});
+            console.warn("⚠️ No spend_breakdown found for user");
           }
         }
+      }
 
-        // Handle timer start event - FIXED
-        if (receivedMessage.event === "game_s1_timer_start") {
-          console.log("⏱️ Timer start event received - Starting timer NOW");
-          
-          if (!mountedRef.current) return;
-          
-          // Immediately start the timer
-          setTimerActive(true);
-          setGameStartTime(new Date());
-          setTimeLeft(10);
-          
-          console.log("✅ Timer activated - timerActive set to true");
-        }
-
-        // Handle question answer event
-        if (receivedMessage?.event === "game_s1_question_answer") {
-          console.log("📊 Question answer event received:", receivedMessage);
-          
-          if (!mountedRef.current) return;
-          
+      // Handle question answer event
+     if (receivedMessage?.event === "game_s1_question_answer") {
           const payload = receivedMessage.payload || {};
           const questionId = payload.question_id;
-          
-          // Only process if this is for the current question
-          if (questionId === currentQuestionId) {
-            // Check if we have direct data in the payload
-            if (payload.data && Array.isArray(payload.data)) {
-              console.log("Setting direct data array from payload");
-              setMqttAnswerData(payload.data);
-              
-              // Mark the question as submitted to show results
-              setIsSubmitted(true);
-              setShowNextButton(true);
-              
-              // Refetch contestant data to update balances
-              refetch();
-              return;
-            }
-            
-            // Check for answers_data structure
+
+          // Use ref instead of state
+          if (questionId === currentQuestionIdRef?.current) {
             const answersData = payload.answers_data?.data;
-            
+
+            console.log(answersData, "answersData");
             // Store the full answer data for use in FastestFingerResult
-            setMqttAnswerData(answersData);
-            
+            setMqttAnswerData(payload.answers_data?.data);
+
             if (answersData?.question?.correct_option) {
               // Set the correct answer
               setCorrectAnswer(answersData.question.correct_option);
-              
+
               // Mark the question as submitted to show results
               setIsSubmitted(true);
               setShowNextButton(true);
-              
-              // Refetch contestant data to update balances
-              refetch();
+              setTimerActive(false); // Stop the timer
+
+              // refetch();
+
             }
-          }
+          } 
         }
 
-        // Handle results reveal event
-        if (receivedMessage.event === "game_s1_results_reveal") {
-          console.log("📊 Results reveal event received");
-          if (mountedRef.current) {
-            setAllQuestionsCompleted(true);
-          }
-        }
-        
-      } catch (error) {
-        console.error("❌ Error handling MQTT message:", error);
+      // Handle timer start event
+      if (receivedMessage?.event === "game_s1_timer_start") {
+        console.log("✅ Processing game_s1_timer_start");
+        handleStartTimer();
+      }
+
+      // Handle results reveal event
+      if (receivedMessage?.event === "game_s1_results_reveal") {
+        console.log("✅ Processing game_s1_results_reveal");
+        setAllQuestionsCompleted(true);
       }
     };
 
+    console.log("🔄 Registering MQTT handler");
     onMessage(handler);
 
-    // Cleanup function
     return () => {
-      console.log("🧹 Cleaning up MQTT message handler");
+      if (isConnected) {
+        console.log("🧹 Cleaning up MQTT message handler");
+        onMessage(null);
+      }
     };
-  }, [isConnected, onMessage, user?.contestant_id, currentQuestionId, refetch]);
+  }, [isConnected, onMessage, user?.contestant_id]); // Removed currentQuestionId
 
   // Handle option selection - now just selects without checking correctness
   const handleOptionSelect = (option: OptionKey) => {
@@ -398,17 +365,30 @@ const QuestionScreen = () => {
   };
 
   const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
+  // Handle submit answer
+  // const { 
+  //   data: answerData, 
+  //   refetch: refetchAnswer,
+  //   revalidate: revalidateAnswer 
+  // } = useGetQuestionAnswer(
+  //   shouldFetchAnswer
+  //     ? (mqttQuestionData?.question?.questions?.question_id as number)
+  //     : 0
+  // );
+
+
+
+
 
   const handleSubmitAnswer = () => {
     if (!selectedOption || !currentQuestionId) return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
-    const formattedTimestamp = new Date().toISOString();
+    const formattedTimestamp = new Date().toISOString()
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
-    
     setIsSubmitted(true);
-    setShowNextButton(true);
-    setShouldFetchAnswer(true);
+    setShowNextButton(true); // Enable the Next button after submission
+    // setShouldFetchAnswer(true); // Set this to true to fetch the answer
 
     // Find the exact string key from the backend that matches the selected amount
     const selectedAmountKey = Object.keys(userBidAmounts).find(
@@ -437,6 +417,8 @@ const QuestionScreen = () => {
               option: selectedOption,
             },
           ]);
+
+
         },
         onError: (error) => {
           console.error("Error submitting answer:", error);
@@ -452,7 +434,7 @@ const QuestionScreen = () => {
     setTimerActive(false);
     setTimeLeft(10);
     setShowNextButton(false);
-    setShouldFetchAnswer(false);
+    // setShouldFetchAnswer(false);
     setSelectedAmount(10000); // Reset to default amount
   };
 
@@ -464,13 +446,12 @@ const QuestionScreen = () => {
   // Handle auto-submission when time elapses
   const handleAutoSubmit = () => {
     if (!currentQuestionId) return;
-    
+
     const formattedTimestamp = formatTimestamp(new Date());
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
-    
     setIsSubmitted(true);
-    setShowNextButton(true);
-    setShouldFetchAnswer(true);
+    setShowNextButton(true); // Enable the Next button after auto-submission
+    // setShouldFetchAnswer(true); // Set this to true to fetch the answer
 
     // Find the exact string key from the backend that matches the selected amount
     const selectedAmountKey = Object.keys(userBidAmounts).find(
@@ -501,6 +482,8 @@ const QuestionScreen = () => {
               option: "N" as OptionKey,
             },
           ]);
+
+
         },
         onError: (error) => {
           const errorMessage = formatAxiosErrorMessage(error as AxiosError);
@@ -517,15 +500,13 @@ const QuestionScreen = () => {
     setTimeLeft(10); // Reset timer to 10 seconds
   };
 
-  // Fixed: Add loading state while fetching user data
-  if (isLoading && !questionData) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-[#13051E]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-        <span className="ml-2 text-white">Loading question data...</span>
-      </div>
-    );
-  }
+
+  // // Add debug log before rendering
+  // console.log("Rendering QuestionScreen component with states:", {
+  //   showPrepPage,
+  //   allQuestionsCompleted,
+  //   isConnected
+  // });
 
   if (showPrepPage) {
     console.log("Rendering GetReadyScreen");
@@ -537,84 +518,85 @@ const QuestionScreen = () => {
     return <StageOneTally eliminationCount={0} removeCount={0} />;
   }
 
-
-    return (
-      <>
-        {/* Elimination Modal */}
-        {showEliminationModal && (
-          <Dialog
-            open={showEliminationModal}
-            onOpenChange={setShowEliminationModal}
-          >
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-              <div className="bg-gradient-to-b from-[#980306] to-[#FE8E8E] p-1 rounded-xl max-w-md w-full">
-                <div className="bg-[#13051E] rounded-lg p-6 flex flex-col items-center">
-                  <h2 className="text-2xl font-bold text-white mb-4">
-                    You've Been Eliminated!
-                  </h2>
-                  <div className="mb-4">
-                    <Trophy height={80} width={80} />
-                  </div>
-                  <p className="text-white text-center mb-6">
-                    Unfortunately, your journey ends here. Thank you for
-                    participating!
-                  </p>
-                  <Button
-                    onClick={() => {
-                      router.push("/login")
-                      setShowEliminationModal(false)
-                    }}
-                    className="bg-[#D91FFF] hover:bg-[#b01ad3] text-white"
-                  >
-                   Continue
-                  </Button>
+  // console.log(contestantData?.data?.find((contestant:any) => contestant.contestant_id === user?.contestant_id));
+const contestantBalance = mqttAnswerData?.find((contestant:any) => contestant.contestant_id === user?.contestant_id);
+  return (
+    <>
+      {/* Elimination Modal */}
+      {showEliminationModal && (
+        <Dialog
+          open={showEliminationModal}
+          onOpenChange={setShowEliminationModal}
+        >
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+            <div className="bg-gradient-to-b from-[#980306] to-[#FE8E8E] p-1 rounded-xl max-w-md w-full">
+              <div className="bg-[#13051E] rounded-lg p-6 flex flex-col items-center">
+                <h2 className="text-2xl font-bold text-white mb-4">
+                  You've Been Eliminated!
+                </h2>
+                <div className="mb-4">
+                  <Trophy height={80} width={80} />
                 </div>
+                <p className="text-white text-center mb-6">
+                  Unfortunately, your journey ends here. Thank you for
+                  participating!
+                </p>
+                <Button
+                  onClick={() => {
+                    router.push("/login")
+                    setShowEliminationModal(false)
+                  }}
+                  className="bg-[#D91FFF] hover:bg-[#b01ad3] text-white"
+                >
+                  Return to Login
+                </Button>
               </div>
             </div>
-          </Dialog>
-        )}
+          </div>
+        </Dialog>
+      )}
 
-          <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full ">
-            {/* Left Sidebar */}
-            <div className="flex flex-col justify-between">
-              <div className="flex justify-center items-center h-3.5 w-full mt-8">
-                <Logo />
-              </div>
-              <div>
-                <HustleStages />
-              </div>
-              <div className="pb-4 ">
-                <Salary4LifeTrophy className="max-xl:h-[13.25rem]" />
-              </div>
+      <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full ">
+        {/* Left Sidebar */}
+        <div className="flex flex-col justify-between">
+          <div className="flex justify-center items-center h-3.5 w-full mt-8">
+            <Logo />
+          </div>
+          <div>
+            <HustleStages />
+          </div>
+          <div className="pb-4 ">
+            <Salary4LifeTrophy className="max-xl:h-[13.25rem]" />
+          </div>
+        </div>
+
+        {/* Center Content */}
+        <div className="flex flex-col justify-between items-center min-h-full">
+          {/* Top section */}
+          <div className="flex flex-col w-full items-center">
+            <div className="w-full h-[100px] flex items-center justify-center">
+              <HeaderTitleContainer
+                backgroundColor="#791192"
+                color="#ed99ff"
+                text="Pick-Pad"
+                textGradientEnd="#8E17AA"
+                textGradientStart="#8E17AA"
+                borderGradientStart="#f712fc"
+                borderGradientEnd="#e151fe"
+                fontSize={45}
+                fontFamily="Verdana"
+                textStrokeColor="#a219c1"
+                textStrokeWidth={4.4}
+              />
             </div>
 
-            {/* Center Content */}
-            <div className="flex flex-col justify-between items-center min-h-full">
-              {/* Top section */}
-              <div className="flex flex-col w-full items-center">
-                <div className="w-full h-[100px] flex items-center justify-center">
-                  <HeaderTitleContainer
-                    backgroundColor="#791192"
-                    color="#ed99ff"
-                    text="Pick-Pad"
-                    textGradientEnd="#8E17AA"
-                    textGradientStart="#8E17AA"
-                    borderGradientStart="#f712fc"
-                    borderGradientEnd="#e151fe"
-                    fontSize={45}
-                    fontFamily="Verdana"
-                    textStrokeColor="#a219c1"
-                    textStrokeWidth={4.4}
-                  />
-                </div>
-
-                <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
-                  {/* Animated border */}
-                  <div className="absolute inset-0">
-                    <motion.div
-                      className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
-                      style={{
-                        background: `conic-gradient(from 0deg at 50% 50%,
+            <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
+              {/* Animated border */}
+              <div className="absolute inset-0">
+                <motion.div
+                  className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+                  style={{
+                    background: `conic-gradient(from 0deg at 50% 50%,
                         #d91fff 0deg,
                         #d91fff 120deg,
                         #00ffff 100deg,
@@ -623,383 +605,297 @@ const QuestionScreen = () => {
                         #FFD700 360deg,
                         #d91fff 340deg
                       )`,
-                      }}
-                      animate={{
-                        rotate: [0, 360],
-                      }}
-                      transition={{
-                        duration: 4,
-                        ease: "linear",
-                        repeat: Infinity,
-                      }}
-                    />
+                  }}
+                  animate={{
+                    rotate: [0, 360],
+                  }}
+                  transition={{
+                    duration: 4,
+                    ease: "linear",
+                    repeat: Infinity,
+                  }}
+                />
+              </div>
+
+              {/* Content container - increased border width from 5px to 8px for bolder appearance */}
+              <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
+              <div className="relative">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-[2.75rem] font-extrabold outline-text text-black">
+                      Stage 1: Prove your hustle
+                    </h2>
+                    <p className="text-sm font-normal text-[#D5B9FF]">
+                      Select minimum of 2 number to determine the trivia
+                      questions for this round
+                    </p>
                   </div>
 
-                  {/* Content container - increased border width from 5px to 8px for bolder appearance */}
-                  <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
-                  <div className="relative">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h2 className="text-[2.75rem] font-extrabold outline-text text-black">
-                          Stage 1: Prove your hustle
-                        </h2>
-                        <p className="text-sm font-normal text-[#D5B9FF]">
-                          Select minimum of 2 number to determine the trivia
-                          questions for this round
-                        </p>
-                      </div>
-
-                      {timerActive && (
-                        <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
-                          <span
-                            className="text-[20px] font-extrabold font-verdana text-white"
-                            style={{
-                              WebkitTextStroke: "1.5px #C76000",
-                              textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
-                            }}
-                          >
-                            {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
-                          </span>
-                        </div>
-                      )}
+                  {timerActive && (
+                    <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+                      <span
+                        className="text-[20px] font-extrabold font-verdana text-white"
+                        style={{
+                          WebkitTextStroke: "1.5px #C76000",
+                          textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
+                        }}
+                      >
+                        {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
+                      </span>
                     </div>
+                  )}
+                </div>
 
-                    <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">
-                      <div className="flex flex-col">
-                        {questionData?.data?.hustle_questions?.map((contestant, idx: number) => (
-                          <div className="flex gap-2 items-center" key={idx}>
-                            <div className="">
-                              <NumberCardContainer
-                                text={
-                                  isQuestionAttempted(idx) ? (
-                                    <CheckIcon size={160} />
-                                  ) : (
-                                    contestant?.hustle_reveal?.hustle_number
-                                  )
+                <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">
+                  <div className="flex flex-col">
+                    {questionData?.data?.hustle_questions?.map((contestant, idx: number) => (
+                      <div className="flex gap-2 items-center" key={idx}>
+                        <div className="">
+                          <NumberCardContainer
+                            text={
+                              isQuestionAttempted(idx) ? (
+                                <CheckIcon size={160} />
+                              ) : (
+                                contestant?.hustle_reveal?.hustle_number
+                              )
+                            }
+                            textColor={
+                              mqttQuestionData?.question_index === contestant?.questions?.question_id
+                                ? "#FFFFFF"
+                                : isQuestionAttempted(idx)
+                                  ? "#fff"
+                                  : "#F2C94C"
+                            }
+                            backgroundColor={
+                              mqttQuestionData?.question_index === contestant?.questions?.question_id
+                                ? "#FEC124"
+                                : isQuestionAttempted(idx)
+                                  ? "#04DA6A"
+                                  : "black"
+                            }
+                            width={30}
+                            height={35}
+                            active={
+                              mqttQuestionData?.question_index === contestant?.questions?.question_id ||
+                              isQuestionAttempted(idx)
+                            }
+                            iconPosition={{ y: 33 }}
+                            iconSize={30}
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="h-[1.2rem] w-[1.2rem]  relative">
+                              <Image
+                                alt="User avatar"
+                                src={
+                                  contestantImages[idx] ||
+                                  "/images/userImage.png"
                                 }
-                                textColor={
-                                  mqttQuestionData?.question_index === idx
-                                    ? "#FFFFFF"
-                                    : isQuestionAttempted(idx)
-                                      ? "#fff"
-                                      : "#F2C94C"
-                                }
-                                backgroundColor={
-                                  mqttQuestionData?.question_index === idx
-                                    ? "#FEC124"
-                                    : isQuestionAttempted(idx)
-                                      ? "#04DA6A"
-                                      : "black"
-                                }
-                                width={30}
-                                height={35}
-                                active={
-                                  mqttQuestionData?.question_index === idx ||
-                                  isQuestionAttempted(idx)
-                                }
-                                iconPosition={{ y: 33 }}
-                                iconSize={30}
+                                fill
+                                className="object-cover rounded-full"
                               />
                             </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-2">
-                                <div className="h-[1.2rem] w-[1.2rem]  relative">
-                                  <Image
-                                    alt="User avatar"
-                                    src={
-                                      contestantImages[idx] ||
-                                      "/images/userImage.png"
-                                    }
-                                    fill
-                                    className="object-cover rounded-full"
-                                  />
-                                </div>
 
-                                <GlowyStrokeText
-                                  strokeWidth={3}
-                                  strokeColor="#7E3CE0"
-                                  glowColor="#04DA6A"
-                                  textclassName="text-xs  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
-                                  fillColor="#fff"
-                                  glowIntensity={"none"}
-                                >
-                                  {
-                                    contestant?.contestant?.contestant_name?.split(
-                                      " "
-                                    )[0]
-                                  }
-                                </GlowyStrokeText>
-                              </div>
-                            </div>
+                            <GlowyStrokeText
+                              strokeWidth={3}
+                              strokeColor="#7E3CE0"
+                              glowColor="#04DA6A"
+                              textclassName="text-xs  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
+                              fillColor="#fff"
+                              glowIntensity={"none"}
+                            >
+                              {
+                                contestant?.contestant?.contestant_name?.split(
+                                  " "
+                                )[0]
+                              }
+                            </GlowyStrokeText>
                           </div>
-                        ))}
-                      </div>
-                      {isLoading ? (
-                        <div className="flex justify-center items-center h-full ">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                         </div>
-                      ) : (
-                        <div className="relative">
-                          {/* Question display section */}
-                          <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
-                            <div className="">
-                              <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
-                                Question {mqttQuestionData?.question_index || "..."}
+                      </div>
+                    ))}
+                  </div>
+                  {isLoading ? (
+                    <div className="flex justify-center items-center h-full ">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+                    </div>
+                  ) : (
+                      <div className="relative">
+                        {/* Question display section */}
+                        <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
+                          <div className="">
+                            <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
+                              Question {currentQuestionIndex + 1}
+                            </p>
+                          </div>
+                          <div className="">
+                            <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
+                              {mqttQuestionData?.question || "Waiting for question..."}
+                            </h2>
+                          </div>
+                          <div className="flex justify-center items-center w-full gap-4">
+                            <div   className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
+                              <p className="text-sm font-outfit font-normal text-[#FFC125] ">
+                                Win amount
                               </p>
+                              <GlowyStrokeText
+                                strokeWidth={1}
+                                strokeColor="#FFC125"
+                                glowColor="#FFC125"
+                                textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
+                                fillColor="#fff"
+                                glowIntensity={"none"}
+                              >
+                                ₦
+                                {addCommasToNumber(
+                                  Number(
+                                    mqttQuestionData?.allocated_winning_amount
+                                  )
+                                )}
+                              </GlowyStrokeText>
                             </div>
-                            <div className="">
-                              {mqttQuestionData?.question?.questions?.question ? (
-                                <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                                  {mqttQuestionData.question.questions.question}
-                                </h2>
-                              ) : (
-                                <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                                  Waiting for question from host...
-                                </h2>
-                              )}
-                            </div>
-                            <div className="flex justify-center items-center w-full gap-4">
-                              <div className="bg-[#011B0D] rounded-[12px] py-1 px-4 max-xl:max-w-[130px] w-full">
-                                <p
-                                  className="text-[25px] text-white font-extrabold font- text-center"
-                                  style={{
-                                    WebkitTextStroke: "2px #04DA6A",
-                                    textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
-                                  }}
-                                >
-                                  {mqttQuestionData?.question?.questions?.question_booster || "..."}{" "}
-                                  <span
-                                    className="text-base font-outfit font-normal text-[#04DA6A]"
-                                    style={{
-                                      WebkitTextStroke: "0px",
-                                      textShadow: "none",
-                                    }}
-                                  >
-                                    Booster
-                                  </span>
-                                </p>
-                              </div>
-                              <div className="bg-[#011B0D] rounded-[12px] py-2 px-4 w-full">
-                                <p className="text-xs font-outfit font-normal text-[#04DA6A] ">
-                                  Capital:{" "}
-                                  <span
-                                    className="text-lg text-white font-extrabold font-verdana text-center"
-                                    style={{
-                                      WebkitTextStroke: "1px #04DA6A",
-                                      textShadow: "1px 2px 3px rgba(4, 218, 106, 0.4)",
-                                    }}
-                                  >
-                                    ₦
-                                    {addCommasToNumber(
-                                      Number(
-                                        // Use wallet balance from MQTT data if available
-                                        contestantData?.data?.find(
-                                          (contestant: any) => String(contestant.id) === String(user?.contestant_id)
-                                        )?.actual_balance  
-                                      )
-                                    )}
-                                  </span>
-                                </p>
-                              </div>
+                            <div className="bg-[#011B0D] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
+                              <p className="text-sm font-outfit font-normal text-[#04DA6A] ">
+                                Capital:{" "}
+                              </p>
+
+                              <GlowyStrokeText
+                                strokeWidth={1}
+                                strokeColor="#04DA6A"
+                                glowColor="#04DA6A"
+                                glowIntensity="none"
+                                textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
+                                fillColor="#fff"
+                              >
+                                ₦
+                                
+                                {addCommasToNumber(
+                              Number(contestantBalance?.wallet_balance)   || Number(
+                                    // Use wallet balance from MQTT data if available
+                                    contestantData?.data?.find(
+                                      (contestant: any) => String(contestant.id) === String(user?.contestant_id)
+                                    )?.actual_balance 
+                                  )
+                                )}
+                              </GlowyStrokeText>
                             </div>
                           </div>
+                        </div>
 
-                          {/* Options display */}
-                          <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
-                            {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
-                              (option, index) => {
-                                const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-                                const currentQuestions = mqttQuestionData?.question?.questions || {};
-                                const isCorrect = isCorrectOption(option);
-                                const isSelected = selectedOption === option;
-                                const showResult = isSubmitted && correctAnswer;
+                        {mqttQuestionData ? (
+                          <>
+                            <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
+                              {(
+                                [
+                                  "option_a",
+                                  "option_b",
+                                  "option_c",
+                                  "option_d",
+                                ] as OptionKey[]
+                              ).map((option, index) => {
+                                const optionLetter = String.fromCharCode(
+                                  65 + index
+                                ); // A, B, C, D
 
                                 return (
                                   <button
                                     key={option}
                                     onClick={() => handleOptionSelect(option)}
-                                    disabled={!timerActive || isSubmitted || !mqttQuestionData?.question?.questions}
+                                    disabled={!timerActive || isSubmitted || !mqttQuestionData}
                                     className={cn(
-                                      "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
-                                      isSelected && !showResult && "bg-[#FCCE19] border-[#FCCE19] text-[#745300]",
-                                      isCorrect && showResult && "bg-[#04DA6A]/20 border-[#04DA6A]",
-                                      isSelected && !isCorrect && showResult && "bg-[#FF3B30]/20 border-[#FF3B30]",
-                                      !isSelected && !isCorrect && !showResult && "border-[#D71BFA]",
-                                      (isSubmitted || !timerActive || !mqttQuestionData?.question?.questions) &&
+                                      "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
+                                      selectedOption === option &&
+                                        "bg-[#FCCE19] border-none text-[#745300]",
+                                      (isSubmitted || !timerActive || !mqttQuestionData) &&
                                         "opacity-70 cursor-not-allowed"
                                     )}
                                   >
                                     {optionLetter}:
                                     <span
-                                      className={cn(
-                                        "ml-2",
-                                        isSelected && !showResult && "text-white font-bold",
-                                        isCorrect && showResult && "text-[#04DA6A] font-bold",
-                                        isSelected && !isCorrect && showResult && "text-[#FF3B30] font-bold"
-                                      )}
+                                      className={`${selectedOption === option ? "text-white font-bold" : ""}`}
                                       style={{
-                                        WebkitTextStroke: isSelected && !showResult ? "1px #C76000" : "",
+                                        marginLeft: "9px",
+                                        WebkitTextStroke:
+                                          selectedOption === option
+                                            ? "1px #C76000"
+                                            : "",
                                       }}
                                     >
-                                      {currentQuestions[option] || `...`}
+                                      {" "}
+                                      {mqttQuestionData?.[option] || "..."}
                                     </span>
-                                    
-                                    {/* Correct answer indicator */}
-                                    {isCorrect && showResult && (
-                                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                                        <div className=" rounded-full">
-                                          <CheckIcon size={16} color="#FFFFFF" />
-                                        </div>
-                                      </div>
-                                    )}
-                                    
-                                    {/* Incorrect answer indicator */}
-                                    {isSelected && !isCorrect && showResult && (
-                                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                                        <div className="bg-[#FF3B30] rounded-full p-1">
-                                          <ErrorIcon  color="#FFFFFF" />
-                                        </div>
-                                      </div>
-                                    )}
                                   </button>
                                 );
-                              }
-                            )}
-                          </div>
+                              })}
+                            </div>
 
-                          {/* Amount buttons section */}
-                          <div className="flex flex-col items-start gap-1 mt-7">
-                            <div className="flex items-center w-full">
-                              <div className="flex flex-1 items-center">
-                                <div className="flex gap-2">
-                                  {userBidAmounts && Object.keys(userBidAmounts).length > 0 ? (
-                                    // Map through the bid amounts
-                                    Object.entries(userBidAmounts).map(([amountKey, bidValue], index) => {
-                                      const amount = parseFloat(amountKey);
-
-                                      return (
-                                        <div
-                                          key={index}
-                                          className="flex flex-col items-center"
-                                        >
-                                          <Button
-                                            onClick={() => handleAmountSelect(amount)}
-                                            disabled={
-                                              !timerActive ||
-                                              isSubmitted ||
-                                              timeLeft <= 0 ||
-                                              !mqttQuestionData?.question?.questions
-                                            }
-                                            className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                              selectedAmount === amount
-                                                ? "bg-[#04DA6A] text-black"
-                                                : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
-                                            }
-                                         ${
-                                           !timerActive ||
-                                           isSubmitted ||
-                                           timeLeft <= 0 ||
-                                           !mqttQuestionData?.question?.questions
-                                             ? "opacity-50 cursor-not-allowed"
-                                             : "hover:bg-[#035D2E] hover:text-white"
-                                         }
-                                        `}
-                                            >
-                                              ₦
-                                              {amount.toLocaleString(
-                                                undefined,
-                                                {
-                                                  minimumFractionDigits:0,
-                                                  maximumFractionDigits:0,
-                                                }
-                                              )}
-                                            </Button>
-
-                                            {selectedAmount === amount && (
-                                              <div className="text-xs text-[#04DA6A] mt-1 font-bold">
-                                                ₦
-                                                {Number(bidValue).toLocaleString(
-                                                  undefined,
-                                                  {
-                                                    minimumFractionDigits:0,
-                                                    maximumFractionDigits:0,
-                                                  }
-                                                )}
-                                              </div>
-                                            )}
-                                          </div>
-                                        );
-                                      })
-                                    ) : (
-                                      // Show waiting message if no bid amounts are available yet
-                                      <div className="text-white text-sm">
-                                        Waiting for bid options from host...
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div className="items-end justify-end">
-                                  {/* Submit button - only show if not submitted yet AND time hasn't elapsed AND we have question data */}
-                                  {!isSubmitted && mqttQuestionData?.question?.questions && (
-                                    <Button
-                                      className="p-0 bg-transparent"
-                                      onClick={handleSubmitAnswer}
-                                      disabled={
-                                        !timerActive ||
-                                        !selectedOption ||
-                                        isSubmitted ||
-                                        !userBidAmounts ||
-                                        Object.keys(userBidAmounts).length === 0 ||
-                                        !mqttQuestionData?.question?.questions
-                                      }
-                                    >
-                                      <GradientButton
-                                        text="Submit"
-                                        className={`uppercase ${!timerActive || !selectedOption || !userBidAmounts || Object.keys(userBidAmounts).length === 0 || !mqttQuestionData?.question?.questions ? "opacity-50" : ""}`}
-                                        width={130}
-                                      />
-                                    </Button>
-                                  )}
-                                </div>
+                            {/* Amount buttons, Submit and Next buttons */}
+                            <div className="flex items-center gap-1  mt-7">
+                              <div className="items-end justify-end">
+                                {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
+                                {!isSubmitted && (
+                                  <Button
+                                    className="p-0 bg-transparent"
+                                    onClick={handleSubmitAnswer}
+                                    disabled={
+                                      !timerActive ||
+                                      !selectedOption ||
+                                      isSubmitted
+                                    }
+                                  >
+                                    <GradientButton
+                                      text="Submit"
+                                      className={`uppercase ${!timerActive || !selectedOption ? "opacity-50" : ""}`}
+                                      width={130}
+                                    />
+                                  </Button>
+                                )}
                               </div>
                             </div>
+                          </>
+                        ) : (
+                          <div className="flex justify-center items-center h-full mt-4">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                           </div>
                         )}
-                        {/* Pass mqttAnswerData and currentQuestionId to FastestFingerResult */}
-                        <div className="h-full w-full">
-                          <FastestFingerResult
-                            // resultArray={answerData}
-                            // mqttAnswerData={mqttAnswerData}
-                            timeElapsed={timeLeft <= 0 || showNextButton}
-                            currentQuestionId={currentQuestionId}
-                          />
-                        </div>
                       </div>
-                    </div>
+                  )}
+                  {/* Pass mqttAnswerData and currentQuestionId to FastestFingerResult */}
+                  <div className="h-full w-full">
+                    <FastestFingerResult
+                      resultArray={mqttAnswerData}
+                      mqttAnswerData={mqttAnswerData}
+                      timeElapsed={timeLeft <= 0 || showNextButton}
+                      currentQuestionId={currentQuestionId}
+                      
+                    />
                   </div>
                 </div>
               </div>
-
-              {/* Right Sidebar */}
-              <div>
-                <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={0} />
-              </div>
             </div>
+          </div>
+        </div>
 
-          <ErrorModal
-            isErrorModalOpen={isErrorModalOpen}
-            setErrorModalState={() => {
-              setErrorModalState(false);
-            }}
-            subheading={
-              errorModalMessage || "Please check your inputs and try again."
-            }
-          ></ErrorModal>
-        </>
-      );
+        {/* Right Sidebar */}
+        <div>
+          <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={0} mqttAnswerData={mqttAnswerData}/>
+        </div>
+      </div>
 
-    }
+      <ErrorModal
+        isErrorModalOpen={isErrorModalOpen}
+        setErrorModalState={() => {
+          setErrorModalState(false);
+        }}
+        subheading={
+          errorModalMessage || "Please check your inputs and try again."
+        }
+      ></ErrorModal>
+    </>
+  );
+
+}
 
 
 

@@ -24,7 +24,7 @@ import { contestantImages } from "@/app/components/stages/components/mocks/conte
 import GetHustleBoardReadyScreen from "./GettHustleBoardReadyScreen";
 import { useAnswerStageOneQuestion } from "@/app/components/stages/api/stage1/question/answerQuestion";
 import { useGetAllHustleQuestions } from "@/app/components/stages/api/stage1/question/getHustleQuestion";
-import { useGetQuestionAnswer } from "@/app/components/stages/api/stage1/question/getQuestionAnswer";
+// import { useGetQuestionAnswer } from "@/app/components/stages/api/stage1/question/getQuestionAnswer";
 import FastestFingerResult from "@/app/components/stages/components/hustle/FastestFingerResult";
 
 // Add debug log to track component imports
@@ -128,27 +128,58 @@ const Stage1QuestionScreen = () => {
     [key: string]: number;
   }>({});
 
-  // Always call the question answer hook, but only enable it when needed
-  const { data: answerData } = useGetQuestionAnswer(
-    mqttQuestionData?.question?.questions?.question_id as number || 0
-  );
+  // Add refs for timer management
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const currentQuestionIdRef = useRef<string | null>(null);
 
+  
   // FIXED: Move all useEffect hooks to the top level, before any conditional returns
   
-  // Effect to set correct answer when answer data is received
+  
+  // FIXED: Add timer countdown effect
   useEffect(() => {
-    if (answerData?.data?.question?.question_winner) {
-      setCorrectAnswer(mqttQuestionData?.question?.questions?.correct_option);
+    // Clear any existing timer
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
-  }, [answerData, mqttQuestionData?.question?.questions?.correct_option]);
 
-  // Effect for game initialization
-  useEffect(() => {
-    // Only initialize game start time, but don't start the timer
-    if (!gameStartTime) {
-      setGameStartTime(new Date());
+    // Start countdown if timer is active
+    if (timerActive && timeLeft > 0) {
+      console.log(`⏱️ Starting timer countdown from ${timeLeft} seconds`);
+      
+      timerIntervalRef.current = setInterval(() => {
+        setTimeLeft((prevTime) => {
+          const newTime = prevTime - 1;
+          console.log(`⏱️ Timer countdown: ${newTime} seconds remaining`);
+          
+          // Auto-submit when timer reaches 0
+          if (newTime <= 0) {
+            console.log("⏱️ Timer expired, auto-submitting");
+            setTimerActive(false);
+            setIsSubmitted(true);
+            setShouldFetchAnswer(true);
+            return 0;
+          }
+          
+          return newTime;
+        });
+      }, 1000);
     }
-  }, [gameStartTime]);
+
+    // Cleanup function
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  }, [timerActive, timeLeft]);
+
+  // Effect for current question ID ref
+  useEffect(() => {
+    currentQuestionIdRef.current = currentQuestionId;
+  }, [currentQuestionId]);
 
   // MQTT message handling effect
   useEffect(() => {
@@ -156,9 +187,9 @@ const Stage1QuestionScreen = () => {
 
     const handler = (receivedMessage: any) => {
       console.log("Main page received message:", receivedMessage?.event);
-      try {
         // Handle question reveal event
         if (receivedMessage?.event === "game_s1_question_reveal") {
+          console.log("📝 Processing question reveal event");
           setShowPrepPage(false);
 
           const payload = receivedMessage.payload || {};
@@ -210,37 +241,34 @@ const Stage1QuestionScreen = () => {
           }
         }
 
-        // // Handle question answer event
-        // if (receivedMessage?.event === "game_s1_question_answer") {
-        //   console.log("📊 Question answer event received:", receivedMessage);
-          
-        //   const payload = receivedMessage.payload || {};
-        //   const questionId = payload.question_id;
-          
-        //   // Only process if this is for the current question
-        //   if (questionId === currentQuestionId) {
-        //     const answersData = payload.answers_data?.data;
-            
-        //     // Store the full answer data for use in FastestFingerResult
-        //     setMqttAnswerData(answersData);
-            
-        //     if (answersData?.question?.correct_option) {
-        //       // Set the correct answer
-        //       setCorrectAnswer(answersData.question.correct_option);
-              
-        //       // Mark the question as submitted to show results
-        //       setIsSubmitted(true);
-        //       setShowNextButton(true);
-              
-        //       // Refetch contestant data to update balances
-        //       refetch();
-        //     }
-        //   }
-        // }
+        if (receivedMessage?.event === "game_s1_question_answer") {
+          const payload = receivedMessage.payload || {};
+          const questionId = payload.question_id;
+
+          // Use ref instead of state
+          if (questionId === currentQuestionIdRef?.current) {
+            const answersData = payload.answers_data?.data;
+
+            // Store the full answer data for use in FastestFingerResult
+            setMqttAnswerData(answersData);
+
+            if (answersData?.question?.correct_option) {
+              // Set the correct answer
+              setCorrectAnswer(answersData.question.correct_option);
+
+              // Mark the question as submitted to show results
+              setIsSubmitted(true);
+              setShowNextButton(true);
+              setTimerActive(false); // Stop the timer
+
+              // Refetch contestant data to update balances
+              refetch();
+            }
+          } 
+        }
 
         // Handle timer start event
         if (receivedMessage.event === "game_s1_timer_start") {
-          console.log("⏱️ Timer start event received", receivedMessage);
           handleStartTimer();
         }
 
@@ -249,9 +277,7 @@ const Stage1QuestionScreen = () => {
           console.log("📊 Results reveal event received");
           setAllQuestionsCompleted(true);
         }
-      } catch (error) {
-        console.error("❌ Error processing MQTT message:", error);
-      }
+      
     };
 
     onMessage(handler);
@@ -260,30 +286,8 @@ const Stage1QuestionScreen = () => {
       console.log("Cleaning up MQTT message handler");
       onMessage(null);
     };
-  }, [isConnected, onMessage, user?.contestant_id, refetch, currentQuestionId]);
+  }, [isConnected, onMessage, user?.contestant_id, refetch]);
 
-  // Watch for answer data and publish event when available
-  useEffect(() => {
-    if (answerData && shouldFetchAnswer && mqttQuestionData && !resultMessageSent) {
-      console.log("Answer data received, publishing result event");
-      
-      // Get the question ID from MQTT data
-      const questionId = mqttQuestionData?.question?.questions?.question_id;
-      
-      // Publish event with the structured data
-      sendMessage({
-        event: "contestant_s1_answer_submitted",
-        payload: {
-          question_id: questionId,
-          answers_data: answerData?.data,
-          question_index: mqttQuestionData?.question_index,
-        }
-      });
-      
-      // Set flag to prevent sending the message again
-      setResultMessageSent(true);
-    }
-  }, [answerData, shouldFetchAnswer, mqttQuestionData, resultMessageSent, sendMessage]);
 
   // Reset the result message sent flag when a new question is received
   useEffect(() => {
@@ -291,6 +295,15 @@ const Stage1QuestionScreen = () => {
       setResultMessageSent(false);
     }
   }, [mqttQuestionData?.question?.questions?.question_id]);
+
+  // Cleanup timer on component unmount
+  useEffect(() => {
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Helper function to check if an option is correct - this is not a hook, so it can be defined anywhere
   const isCorrectOption = (option: OptionKey): boolean => {
@@ -302,16 +315,24 @@ const Stage1QuestionScreen = () => {
   const handleOptionSelect = (option: OptionKey) => {
     // Only allow selection if timer is active and not submitted yet
     if (timerActive && !isSubmitted) {
+      console.log(`🎯 Option selected: ${option}`);
       setSelectedOption(option);
     }
   };
 
-  // Add this function to reset the timer state for the next question
+  // FIXED: Add this function to reset the timer state for the next question
   const resetTimerState = () => {
+    console.log("🔄 Resetting timer state");
     setTimerActive(false);
     setTimeLeft(10);
     setShowNextButton(false);
     setShouldFetchAnswer(false);
+    
+    // Clear any existing timer
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
   };
 
   // Function to check if a question has been attempted
@@ -319,11 +340,23 @@ const Stage1QuestionScreen = () => {
     return idx < currentQuestionIndex;
   };
 
+  // FIXED: Enhanced handleStartTimer function
   const handleStartTimer = () => {
-    console.log("handleStartTimer called - activating timer");
+    console.log("🚀 handleStartTimer called - activating timer");
+    
+    // Clear any existing timer first
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    
+    // Reset and start timer
+    setTimeLeft(10); // Reset timer to 10 seconds
     setTimerActive(true);
     setGameStartTime(new Date()); // Reset game start time when timer starts
-    setTimeLeft(10); // Reset timer to 10 seconds
+    setIsSubmitted(false); // Ensure we can make selections
+    
+    console.log("⏱️ Timer activated with 10 seconds");
   };
 
   // FIXED: Now all conditional returns come AFTER all hooks have been called
@@ -441,14 +474,14 @@ const Stage1QuestionScreen = () => {
                               )
                             }
                             textColor={
-                              mqttQuestionData?.question_index === idx+1
+                              mqttQuestionData?.question_index === contestant?.questions?.question_id
                                 ? "#FFFFFF"
                                 : isQuestionAttempted(idx)
                                   ? "#fff"
                                   : "#F2C94C"
                             }
                             backgroundColor={
-                              mqttQuestionData?.question_index === idx
+                              mqttQuestionData?.question_index === contestant?.questions?.question_id
                                 ? "#FEC124"
                                 : isQuestionAttempted(idx)
                                   ? "#04DA6A"
@@ -457,7 +490,7 @@ const Stage1QuestionScreen = () => {
                             width={54}
                             height={64}
                             active={
-                              mqttQuestionData?.question_index === idx ||
+                              mqttQuestionData?.question_index === contestant?.questions?.question_id ||
                               isQuestionAttempted(idx)
                             }
                             iconPosition={{ y: 33 }}
@@ -612,7 +645,7 @@ const Stage1QuestionScreen = () => {
                   )}
                   <div className="h-full w-full">
                     <FastestFingerResult
-                      resultArray={null}
+                      resultArray={mqttAnswerData}
                       mqttAnswerData={mqttAnswerData}
                       timeElapsed={timeLeft <= 0 || showNextButton}
                       currentQuestionId={currentQuestionId}
@@ -626,7 +659,7 @@ const Stage1QuestionScreen = () => {
 
         {/* Right Sidebar */}
         <div>
-          <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={0} />
+          <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={0}  mqttAnswerData={mqttAnswerData}/>
         </div>
       </div>
 

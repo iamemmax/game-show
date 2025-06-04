@@ -20,75 +20,23 @@ interface Datum {
   wallet_balance: number;
   book_balance: number;
   stage_balance: number;
-  contestant_name: null;
+  contestant_name: string | null;
   contestant_attr: string;
 }
 
 interface FastestFingerResultProps {
-  resultArray?: any;
+  resultArray?: Datum[];
   timeElapsed?: boolean;
   mqttAnswerData?: any;
   currentQuestionId?: string | null;
 }
 const FastestFingerResult = ({ 
-
+  resultArray,
+  timeElapsed,
+  mqttAnswerData,
   currentQuestionId 
 }: FastestFingerResultProps) => {
-  const [showResults, setShowResults] = useState(false);
-  const [questionData, setQuestionData] = useState<Datum[] | null>(null); // <-- Re-enable this state
-  const { isConnected, onMessage } = useMQTT();
 
-  useEffect(() => {
-    if (currentQuestionId) {
-      setShowResults(false);
-      setQuestionData(null);
-    }
-  }, [currentQuestionId]);
-
-  useEffect(() => {
-    if (!isConnected) return;
-
-    const handler = (receivedMessage: any) => {
-      try {
-        if (receivedMessage?.event === "game_s1_question_answer") {
-          
-          const payload = receivedMessage.payload || {};
-          const questionId = payload.question_id;
-
-          if (!currentQuestionId || questionId === currentQuestionId) {
-            const answersData = payload.answers_data?.data;
-
-            if (answersData?.contestant_answers) {
-              setQuestionData(answersData.contestant_answers); // <-- Save all results
-              setShowResults(true);
-            }
-          }
-        }else if(receivedMessage?.event === "game_s2_question_answer"){ 
-  
-          const payload = receivedMessage.payload || {};
-          const questionId = payload.question_id;
-
-          if (!currentQuestionId || questionId === currentQuestionId) {
-            const answersData = payload.answers_data?.data;
-
-            if (answersData?.contestant_answers) {
-              setQuestionData(answersData.contestant_answers); // <-- Save all results
-              setShowResults(true);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("❌ Error processing MQTT message in FastestFingerResult:", error);
-      }
-    };
-
-    onMessage(handler);
-
-    return () => {
-      console.log("Cleaning up MQTT message handler in FastestFingerResult");
-      onMessage(null);
-    };
-  }, [isConnected, onMessage, currentQuestionId]);
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -96,19 +44,31 @@ const FastestFingerResult = ({
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
   };
 
+  console.log("Rendering FastestFingerResult with props:", {
+    resultArray,
+    timeElapsed,
+    mqttAnswerData,
+    currentQuestionId
+  });
+  
   return (
     <div className="h-full flex items-center flex-col">
-      {showResults && questionData ? (
+     
+      
+      {/* Show results when time has elapsed or results are available */}
+      {(timeElapsed) && resultArray&&resultArray?.length > 0 ? (
         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center overflow-y-auto max-h-[600px]">
           <AnimatePresence>
-            {questionData.map((result, index) => {
-              const username = result.contestant_name || result.contestant_attr || `Player ${index + 1}`;
-              const answerTime = result.answered_in.toFixed(2) + 's';
-              const isCorrect = result.is_correct;
-              const isFirstCorrect = result.is_winner;
-
+            {resultArray?.map((result, index) => {
+              
+              // Display the answered_in time exactly as it comes from the backend
+              const answerTime = result.answered_in;
+              
+         
+              const contestantName = result.contestant_name || `Player ${index + 1}`;
+              
               return (
-                <motion.div
+                <motion.div 
                   key={index}
                   variants={itemVariants}
                   initial="hidden"
@@ -116,28 +76,28 @@ const FastestFingerResult = ({
                   exit="exit"
                   className="w-full"
                 >
-                  <UserBadge
-                    username={username}
-                    amount={answerTime}
-                    avatarUrl={contestantImages[index % contestantImages.length]}
+                  <UserBadge 
+                    username={contestantName}
+                    amount={`0.${String(answerTime?.toFixed(0))}` }
+                    avatarUrl={contestantImages[index % contestantImages.length]} // Use modulo to avoid index errors
                     isOnline={true}
-                    isActive={isFirstCorrect}
+                    isActive={result.is_winner&& result?.is_correct} // Only active if it's the first correct answer
                     borderColor="#FFC125"
                     backgroundGradient={{
                       middleColor: "#997416",
                       endColor: "#FEC124",
                       startColor: "#FFC125",
-                      direction: "vertical",
+                      direction: "vertical"
                     }}
                     textGradient={{
                       startColor: "#FFFFFF",
                       endColor: "#FFC125",
-                      direction: "horizontal",
+                      direction: "horizontal"
                     }}
                     color="#FFFFFF"
-                    correctAnswerColor={isCorrect ? "#04DA6A" : "#EB001B"}
-                    usernameClassName="mt-[6px] text-white text-xs"
-                    dotPosition={{ y: 36 }}
+                    correctAnswerColor={result.is_correct ? "#04DA6A" : "#EB001B"}
+                    usernameClassName='mt-[6px] text-white text-xs'
+                    dotPosition={{y:36}}
                     width={130}
                   />
                 </motion.div>
@@ -146,15 +106,16 @@ const FastestFingerResult = ({
           </AnimatePresence>
         </div>
       ) : (
+        // Show placeholder cards
         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <StagesCard
+          {Array.from({length: 5}).map((_, index) => (
+            <StagesCard 
               key={index}
               title=""
               subTitle=""
-              borderColor="#FFC125"
-              iconText=""
-              showIcon={false}
+              borderColor="#FFC125" 
+              iconText="" 
+              showIcon={false} 
               width={130}
               className="2xl:w-[260px]"
             />

@@ -153,7 +153,7 @@ export default function Stage2Questions({
 
         const questionId = currentQuestionData.question_id.toString()
 
-        endTimer({ question_id: questionId, stage: "2" },
+        endTimer({ question_id: questionId, stage: "2", timestamp: new Date().toISOString() },
             {
                 onSuccess: () => {
                     sendGameMessage(`question_s2_time_elapsed`, {

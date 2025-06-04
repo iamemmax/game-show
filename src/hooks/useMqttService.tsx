@@ -167,6 +167,7 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
       if (callback !== null) {
         clientRef.current.on('message', (topic, payload) => {
           console.log(`Received message on topic: ${topic}`);
+          console.log(`Received payload: ${payload.toString()}`);
           try {
             const message = JSON.parse(payload.toString());
             callback(message);
