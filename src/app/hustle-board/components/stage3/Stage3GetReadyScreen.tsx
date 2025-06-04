@@ -1,21 +1,20 @@
 "use client"
 import Logo from "@/app/icons/Logo";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-
-
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
 import Stage3CardSelection from "./Stage3CardSelectionScreen";
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
 
+// Rename component to match the import in StageOneTally
 const Stage3BoardGetReadyPage = () => {
+  console.log("Stage3BoardGetReadyPage rendering"); // Add debug log
   const { isConnected, onMessage } = useMQTT();
-  const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
+  const [showCardRevealScreen, setShowCardRevealScreen] = useState(false);
 
-  
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -42,11 +41,10 @@ const Stage3BoardGetReadyPage = () => {
     }
   };
   
-  
   useEffect(() => {
     if (isConnected) {
       const handler = (receivedMessage: any) => {
-        console.log("Main page received message:", receivedMessage);
+        console.log("Stage3BoardGetReadyPage received message:", receivedMessage);
         
         // Handle stage transition events
         if (receivedMessage?.event === "game_s3_start") {
@@ -65,16 +63,13 @@ const Stage3BoardGetReadyPage = () => {
     }
   }, [isConnected, onMessage]);
 
-
- 
-
-if(showCardRevealScreen){
-    return <Stage3CardSelection/>
-
-}
+  if(showCardRevealScreen){
+    console.log("Navigating to Stage3CardSelection");
+    return <Stage3CardSelection />
+  }
   
   return (
-     <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait">
       <motion.div
         key="getReadyScreen"
         initial="hidden"
@@ -92,7 +87,7 @@ if(showCardRevealScreen){
             <Logo />
           </div>
           <div>
-            <HustleStages />
+            <HustleStages activeStage={3} />
           </div>
           <div className="pb-4">
             <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>
@@ -213,5 +208,6 @@ if(showCardRevealScreen){
   );
 };
 
+// Make sure to export the component with the correct name
 export default Stage3BoardGetReadyPage;
 

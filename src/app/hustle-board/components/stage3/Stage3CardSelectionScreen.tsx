@@ -1093,8 +1093,8 @@ const Stage3CardSelection = () => {
                             <PickCardContainer
                               backgroundColor={style.backgroundColor}
                               text={cardText}
-                              width={"10px"}
-                              height={"10px"}
+                              width={"150px"}
+                              height={"150px"}
                               // height="100px"
                               rayColor={style.rayColor}
                               innerCircleColor={style.innerCircleColor}

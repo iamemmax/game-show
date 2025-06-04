@@ -124,12 +124,19 @@ const StageOneTally = ({
     return <QuestionTwoScreen />;
   }
   if (goToStage3) {
+    console.log("Navigating to Stage 3", { 
+      hasEpisodeId: !!params?.episodeId,
+      episodeId: params?.episodeId
+    });
+    
     if (params?.episodeId) {
-      return <Stage3BoardGetReadyPage />;
+      console.log("Rendering Stage3BoardGetReadyPage");
+      // Ensure the component is properly rendered with key for React reconciliation
+      return <Stage3BoardGetReadyPage key="stage3-board-ready" />;
     } else {
-      return <Stage3GetReadyPage />;
+      console.log("Rendering Stage3GetReadyPage");
+      return <Stage3GetReadyPage key="stage3-ready" />;
     }
-    // return <Stage3GetReadyPage />;
   }
 
   return (
