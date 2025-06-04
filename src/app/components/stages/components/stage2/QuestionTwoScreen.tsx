@@ -316,9 +316,9 @@ const QuestionTwoScreen = () => {
         setCorrectAnswer(null);
 
         // 3. Set current index and question ID
-        setCurrentQuestionIndex((questionData.question_index || 1) - 1);
+        setCurrentQuestionIndex((questionData.question_index));
         const questionId =
-          questionData?.question?.question_id || payload?.question_id;
+          questionData?.question?.question_id ;
         if (questionId) {
           setCurrentQuestionId(questionId.toString());
         }
@@ -677,7 +677,7 @@ const QuestionTwoScreen = () => {
                        <FastestFingerResult
                       resultArray={mqttAnswerData}
                       mqttAnswerData={mqttAnswerData}
-                      timeElapsed={answerReceived && (timeLeft <= 0 || showNextButton)}
+                       timeElapsed={timeLeft <= 0 || !timerActive}
                       currentQuestionId={currentQuestionId}
                       
                     />

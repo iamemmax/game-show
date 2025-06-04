@@ -126,7 +126,7 @@ const ViewOnlyQuestionTwoScreen = () => {
         setMqttAnswerData(null);
 
         // Set current index and question ID
-        const questionIndex = (questionData.question_index || 1) - 1;
+        const questionIndex = (questionData.question_index || 1);
         setCurrentQuestionIndex(questionIndex);
         
         const questionId = questionData?.question?.question_id || payload?.question_id;

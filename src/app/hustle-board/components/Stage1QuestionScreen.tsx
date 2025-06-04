@@ -196,7 +196,7 @@ const Stage1QuestionScreen = () => {
           setMqttAnswerData(null);
 
           // 3. Set current index and question ID
-          setCurrentQuestionIndex((questionData.question_index || 1) - 1);
+          setCurrentQuestionIndex((questionData.question_index || 1));
           const questionId =
             questionData?.question?.questions?.question_id || payload?.question_id;
           if (questionId) {
