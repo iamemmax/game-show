@@ -12,22 +12,24 @@ import { addCommasToNumber } from "@/utils";
 import { cn } from "@/utils/classNames";
 import { Button, Dialog, GlowyStrokeText } from "@/components/core";
 import { tokenStorage } from "@/utils/auth";
-import { useGetWalletBalance } from "../../api/stage1/getbalance";
 import { contestantImages } from "../mocks/contestantImages";
 import { useMQTT } from "@/hooks/useMqttService";
 import Stage3CardSelection from "../stage3/Stage3CardSelection";
 import QuestionTwoScreen from "../stage2/QuestionTwoScreen";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import { useRouter } from "next/navigation";
+import Stage3GetReadyPage from "../stage3/Stage3GetReadyPage";
 
 interface StageOneTallyProps {
   eliminationCount?: number;
   removeCount?: number;
+  title?: string;
 }
 
 const StageOneTally = ({
   eliminationCount = 2,
   removeCount = 0,
+  title = "Stage 1",
 }: StageOneTallyProps) => {
   const borderArray = [
     "#7E3CE0",
@@ -120,7 +122,7 @@ const StageOneTally = ({
     return <QuestionTwoScreen />;
   }
   if (goToStage3) {
-    return <Stage3CardSelection />;
+    return <Stage3GetReadyPage />;
     // return <Stage3GetReadyPage />;
   }
 
@@ -190,7 +192,7 @@ const StageOneTally = ({
               <HeaderTitleContainer
                 backgroundColor="#791192"
                 color="#ed99ff"
-                text="Stage1"
+                text={title}
                 textGradientEnd="#8E17AA"
                 className="font-display"
                 textGradientStart="#8E17AA"

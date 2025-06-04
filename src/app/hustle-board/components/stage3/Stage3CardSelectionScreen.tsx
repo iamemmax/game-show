@@ -5,14 +5,14 @@ import { GlowyStrokeText, Button } from "@/components/core";
 import { cn } from "@/utils/classNames";
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useState, useEffect } from "react";
-import HustleSideBar from "../hustle/HustleSideBar";
-import HustleStages from "../hustle/HustleStages";
 import { useMQTT } from "@/hooks/useMqttService";
 import { tokenStorage } from "@/utils/auth";
 import PickCardContainer from "@/app/shared/PickCardContainer";
 import { useErrorModalState } from "@/hooks";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import { Card, CARD_STYLES, PASS_CARD_STYLE } from "./CardStyles";
+import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
+import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
 
 
 const Stage3CardSelection = () => {
@@ -591,8 +591,42 @@ const Stage3CardSelection = () => {
     );
   };
 
- 
+  // Add a function to check if the PASS card is still available
+  const isPassCardAvailable = () => {
+    // Check if any card with originalType="PASS" is not yet revealed
+    return cards.some(card => card.originalType === CARD_TYPES.PASS && !card.revealed);
+  };
 
+  // Add a debug button to reveal the PASS card location (for testing)
+  const DebugControls = () => {
+    if (process.env.NODE_ENV !== 'development') return null;
+    
+    const handleRevealPassLocation = () => {
+      const passCardIndex = cards.findIndex(card => card.originalType === CARD_TYPES.PASS);
+      if (passCardIndex >= 0) {
+        alert(`PASS card is at index ${passCardIndex} (position ${passCardIndex + 1})`);
+      } else {
+        alert("No PASS card found in the array!");
+      }
+    };
+    
+    return (
+      <div className="absolute bottom-4 right-4 z-50 flex flex-col gap-2">
+        <button 
+          onClick={() => setIsMyTurn(true)}
+          className="bg-red-500 text-white px-2 py-1 rounded text-xs"
+        >
+          Reset Turn (Debug)
+        </button>
+        <button 
+          onClick={handleRevealPassLocation}
+          className="bg-yellow-500 text-white px-2 py-1 rounded text-xs"
+        >
+          Reveal PASS Location (Debug)
+        </button>
+      </div>
+    );
+  };
 
   // Handle MQTT messages for real-time updates
   useEffect(() => {
@@ -713,107 +747,107 @@ const Stage3CardSelection = () => {
     }
   };
   
-  // // Handle card click with improved PASS card logic
-  // const handleCardClick = (index: number) => {
-  //   // Don't allow clicking if card is already revealed
-  //   if (cards[index].revealed) return;
+  // Handle card click with improved PASS card logic
+  const handleCardClick = (index: number) => {
+    // Don't allow clicking if card is already revealed
+    if (cards[index].revealed) return;
     
-  //   // Don't allow clicking if pass is already found
-  //   if (passFound) return;
+    // Don't allow clicking if pass is already found
+    if (passFound) return;
     
-  //   // Don't allow clicking if we're currently sending a selection
-  //   if (isSending) return;
+    // Don't allow clicking if we're currently sending a selection
+    if (isSending) return;
     
-  //   // Don't allow clicking if any card is currently flipping
-  //   if (flippingCards.length > 0) return;
+    // Don't allow clicking if any card is currently flipping
+    if (flippingCards.length > 0) return;
     
-  //   // Only enforce turn-based selection after the first card has been revealed
-  //   if (!isMyTurn) {
-  //     console.log("Not your turn");
-  //     return;
-  //   }
+    // Only enforce turn-based selection after the first card has been revealed
+    if (!isMyTurn) {
+      console.log("Not your turn");
+      return;
+    }
     
-  //   // Add this card to flipping cards
-  //   setFlippingCards([index]);
+    // Add this card to flipping cards
+    setFlippingCards([index]);
     
-  //   // Increment attempts
-  //   const newAttempts = attempts + 1;
-  //   setAttempts(newAttempts);
+    // Increment attempts
+    const newAttempts = attempts + 1;
+    setAttempts(newAttempts);
     
-  //   // Get the original card type (what the card actually is)
-  //   const originalCardType = cards[index].originalType;
+    // Get the original card type (what the card actually is)
+    const originalCardType = cards[index].originalType;
     
-  //   // Count how many cards are already revealed
-  //   const revealedCount = cards.filter(card => card.revealed).length;
+    // Count how many cards are already revealed
+    const revealedCount = cards.filter(card => card.revealed).length;
     
-  //   // Special case: if this is the last card, it must be the PASS
-  //   const isLastCard = revealedCount === 23;
+    // Special case: if this is the last card, it must be the PASS
+    const isLastCard = revealedCount === 23;
     
-  //   // Determine what type to reveal based on attempts and original type
-  //   let revealedType = originalCardType;
+    // Determine what type to reveal based on attempts and original type
+    let revealedType = originalCardType;
     
-  //   if (originalCardType === CARD_TYPES.PASS) {
-  //     // Only reveal the PASS card if enough cards have been revealed or it's the last card
-  //     if (revealedCount >= MIN_CARDS_BEFORE_PASS - 1 || isLastCard) {
-  //       revealedType = CARD_TYPES.PASS;
-  //       console.log("PASS card found!");
-  //     } else {
-  //       // Otherwise, show a DUD card for now
-  //       revealedType = CARD_TYPES.DUD;
-  //     }
-  //   } else if (isLastCard) {
-  //     // If this is the last card and not originally PASS, make it PASS anyway
-  //     revealedType = CARD_TYPES.PASS;
-  //     console.log("Last card forced to be PASS");
-  //   }
+    if (originalCardType === CARD_TYPES.PASS) {
+      // Only reveal the PASS card if enough cards have been revealed or it's the last card
+      if (revealedCount >= MIN_CARDS_BEFORE_PASS - 1 || isLastCard) {
+        revealedType = CARD_TYPES.PASS;
+        console.log("PASS card found!");
+      } else {
+        // Otherwise, show a DUD card for now
+        revealedType = CARD_TYPES.DUD;
+      }
+    } else if (isLastCard) {
+      // If this is the last card and not originally PASS, make it PASS anyway
+      revealedType = CARD_TYPES.PASS;
+      console.log("Last card forced to be PASS");
+    }
     
-  //   // After the flip animation completes, update the card state
-  //   setTimeout(() => {
-  //     // Create a new array with the clicked card revealed
-  //     const newCards = [...cards];
-  //     newCards[index] = {
-  //       ...newCards[index],
-  //       revealed: true,
-  //       type: revealedType,
-  //       contestant_id: user?.contestant_id || null,
-  //       // Update style based on the revealed type
-  //       style: revealedType === CARD_TYPES.PASS ? PASS_CARD_STYLE : newCards[index].style
-  //     };
-  //     setCards(newCards);
+    // After the flip animation completes, update the card state
+    setTimeout(() => {
+      // Create a new array with the clicked card revealed
+      const newCards = [...cards];
+      newCards[index] = {
+        ...newCards[index],
+        revealed: true,
+        type: revealedType,
+        contestant_id: user?.contestant_id || null,
+        // Update style based on the revealed type
+        style: revealedType === CARD_TYPES.PASS ? PASS_CARD_STYLE : newCards[index].style
+      };
+      setCards(newCards);
       
-  //     // If this is the PASS card, update the passCardIndex
-  //     if (revealedType === CARD_TYPES.PASS) {
-  //       setPassCardIndex(index);
-  //     }
+      // If this is the PASS card, update the passCardIndex
+      if (revealedType === CARD_TYPES.PASS) {
+        setPassCardIndex(index);
+      }
       
-  //     // Send the selection to other contestants
-  //     sendCardSelection(index, revealedType);
+      // Send the selection to other contestants
+      sendCardSelection(index, revealedType);
       
-  //     // Remove from flipping cards
-  //     setFlippingCards([]);
+      // Remove from flipping cards
+      setFlippingCards([]);
       
-  //     // If PASS was found, handle the pass found logic
-  //     if (revealedType === CARD_TYPES.PASS) {
-  //       // Play a success sound if available
-  //       const successSound = new Audio("/sounds/success-sound.wav");
-  //       successSound.play().catch(e => console.log("Could not play sound", e));
+      // If PASS was found, handle the pass found logic
+      if (revealedType === CARD_TYPES.PASS) {
+        // Play a success sound if available
+        const successSound = new Audio("/sounds/success-sound.wav");
+        successSound.play().catch(e => console.log("Could not play sound", e));
         
-  //       // Set the finder's name (current user)
-  //       setPassFinderName(user?.name || "You");
-  //       setPassFinderIsCurrentUser(true);
+        // Set the finder's name (current user)
+        setPassFinderName(user?.name || "You");
+        setPassFinderIsCurrentUser(true);
         
-  //       setPassRevealed(true);
-  //       // Set a small delay before showing the pass found message/animation
-  //       setTimeout(() => {
-  //         setPassFound(true);
-  //       }, 300);
-  //     } else {
-  //       // Switch turns - now it's the other contestant's turn
-  //       setCurrentTurn(otherContestantId);
-  //       setIsMyTurn(false);
-  //     }
-  //   }, 600); // Wait for full flip animation (300ms * 2)
-  // };
+        setPassRevealed(true);
+        // Set a small delay before showing the pass found message/animation
+        setTimeout(() => {
+          setPassFound(true);
+        }, 300);
+      } else {
+        // Switch turns - now it's the other contestant's turn
+        setCurrentTurn(otherContestantId);
+        setIsMyTurn(false);
+      }
+    }, 600); // Wait for full flip animation (300ms * 2)
+  };
 
  
 
@@ -937,7 +971,7 @@ const Stage3CardSelection = () => {
                 isLoadingContestants? <div className="flex justify-center items-center h-full w-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
               </div>:
-                <div className="mt-4 flex flex-wrap justify-center gap-6 ">
+                <div className="mt-4 flex flex-wrap justify-center gap-y-1 ">
                 {(() => {
       
                   
@@ -983,7 +1017,7 @@ const Stage3CardSelection = () => {
                     return (
                       <div 
                         key={index} 
-                        // onClick={() => handleCardClick(index)}
+                        onClick={() => handleCardClick(index)}
                         className={cn(
                           "relative transition-transform perspective-[1000px]",
                           card.revealed ? "cursor-default pointer-events-none opacity-70" : 
@@ -1018,8 +1052,8 @@ const Stage3CardSelection = () => {
                             <PickCardContainer
                               backgroundColor={style.backgroundColor}
                               text={cardText}
-                              width="135px"
-                              height="160px"
+                              width="108px"
+                              height="100px"
                               rayColor={style.rayColor}
                               innerCircleColor={style.innerCircleColor}
                               textColor={style.textColor}

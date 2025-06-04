@@ -7,10 +7,9 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
-import HustleStages from "../hustle/HustleStages";
-import HustleSideBar from "../hustle/HustleSideBar";
-import QuestionTwoScreen from "../stage2/QuestionTwoScreen";
-import Stage3CardSelection from "./Stage3CardSelection";
+import Stage3CardSelection from "./Stage3CardSelectionScreen";
+import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
+import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
 
 const Stage3GetReadyPage = () => {
   const { isConnected, onMessage } = useMQTT();

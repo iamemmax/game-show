@@ -78,7 +78,7 @@ const FastestFingerResult = ({
                 >
                   <UserBadge 
                     username={contestantName}
-                    amount={String(answerTime) }
+                    amount={`0.${String(answerTime?.toFixed(0))}` }
                     avatarUrl={contestantImages[index % contestantImages.length]} // Use modulo to avoid index errors
                     isOnline={true}
                     isActive={result.is_winner&& result?.is_correct} // Only active if it's the first correct answer

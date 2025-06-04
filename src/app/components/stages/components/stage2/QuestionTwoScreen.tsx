@@ -23,7 +23,6 @@ import StageOneTally from "../hustle/StageOneTally";
 import { useGetWalletBalance } from "../../api/stage1/getbalance";
 // import { useGetAllStage2Questions } from "../../api/stage2/getQuestion2";
 import { useAnswerStageTwoQuestion } from "../../api/stage2/answerStage2Question";
-import { useGetQuestionTwoAnswer } from "../../api/stage2/getQuestion2Answer";
 import Stage2GetReadyPage from "./Stage2GetReadyPage";
 
 // Add new interface for attempted options
@@ -33,6 +32,7 @@ interface AttemptedOption {
 
 // Add type for option keys
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
+
 
 
 /**
@@ -98,20 +98,28 @@ const QuestionTwoScreen = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
   const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>([]);
-  const [selectedAmount, setSelectedAmount] = useState(10000); // Default selected amount
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showNextButton, setShowNextButton] = useState(false);
   const [shouldFetchAnswer, setShouldFetchAnswer] = useState(false);
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
+  const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
+  
   const [timerActive, setTimerActive] = useState(false);
   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
   const [showStage2Prep, setShowStage2Prep] = useState(true);
+  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
   // Add state for MQTT question data
   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   // Add state to track if we've sent the result message
   const [resultMessageSent, setResultMessageSent] = useState(false);
-
+  // Add new state variables
+  const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
+  // Add state to track attempted questions
+  const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(new Set());
+  // Add state to track if answer has been received
+  const [answerReceived, setAnswerReceived] = useState(false);
+  
   useEffect(() => {
     // Only initialize game start time, but don't start the timer
     if (!gameStartTime) {
@@ -125,7 +133,6 @@ const QuestionTwoScreen = () => {
     if (!timerActive) return;
 
     if (timeLeft <= 0) {
-      setShowNextButton(true); // Enable the Next button
       setShouldFetchAnswer(true);
 
       if (!selectedOption && !isSubmitted) {
@@ -153,21 +160,24 @@ const QuestionTwoScreen = () => {
 
   const { mutate: handleAnswerStageTwoQuestion } = useAnswerStageTwoQuestion();
   // Handle submit answer
-  const { 
-    data: answerData, 
-    isLoading: isLoadingAnswer,
-    refetch: refetchAnswer,
-    revalidate: revalidateAnswer
-  } = useGetQuestionTwoAnswer(
-    mqttQuestionData?.question_id ? Number(mqttQuestionData.question_id) : 0
-  );
+  // const { 
+  //   data: answerData, 
+  //   isLoading: isLoadingAnswer,
+  //   refetch: refetchAnswer,
+  //   revalidate: revalidateAnswer
+  // } = useGetQuestionTwoAnswer(
+  //   mqttQuestionData?.question_id ? Number(mqttQuestionData.question_id) : 0
+  // );
   const handleSubmitAnswer = () => {
     if (!selectedOption || !mqttQuestionData) return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
     const formattedTimestamp = formatTimestamp(new Date());
     setIsSubmitted(true);
-    setShowNextButton(true); // Enable the Next button after submission
+    // Don't set showNextButton here - wait for answer event
+    
+    // Mark current question as attempted
+    setAttemptedQuestions(prev => new Set([...prev, currentQuestionIndex]));
 
     handleAnswerStageTwoQuestion(
       {
@@ -190,8 +200,7 @@ const QuestionTwoScreen = () => {
           setShouldFetchAnswer(true);
           
           // Revalidate the answer data
-          revalidateAnswer();
-          refetchAnswer();
+       
         },
         onError: (error) => {
           const errorMessage = formatAxiosErrorMessage(error as AxiosError);
@@ -206,14 +215,13 @@ const QuestionTwoScreen = () => {
     setTimerActive(false);
     setTimeLeft(10);
     setShowNextButton(false);
-    setShouldFetchAnswer(false);
-    setSelectedAmount(10000); // Reset to default amount
     setResultMessageSent(false); // Reset the flag
+    setAnswerReceived(false); // Reset answer received flag
   };
 
   // Function to check if a question has been attempted
   const isQuestionAttempted = (idx: number) => {
-    return idx < currentQuestionIndex;
+    return attemptedQuestions.has(idx);
   };
 
   // Handle auto-submission when time elapses
@@ -222,7 +230,10 @@ const QuestionTwoScreen = () => {
     
     const formattedTimestamp = formatTimestamp(new Date());
     setIsSubmitted(true);
-    setShowNextButton(true); // Enable the Next button after auto-submission
+    // Don't set showNextButton here - wait for answer event
+    
+    // Mark current question as attempted
+    setAttemptedQuestions(prev => new Set([...prev, currentQuestionIndex]));
 
     // Create submission data with "N" as the answer
     handleAnswerStageTwoQuestion(
@@ -245,9 +256,7 @@ const QuestionTwoScreen = () => {
           // Set shouldFetchAnswer to true to fetch and display the answer
           setShouldFetchAnswer(true);
           
-          // Revalidate the answer data
-          revalidateAnswer();
-          refetchAnswer();
+         
         },
         onError: (error) => {
           const errorMessage = formatAxiosErrorMessage(error as AxiosError);
@@ -257,6 +266,11 @@ const QuestionTwoScreen = () => {
     );
   };
 
+  
+  
+
+  
+   
   const handleStartTimer = () => {
     setTimerActive(true);
     setGameStartTime(new Date()); // Reset game start time when timer starts
@@ -264,96 +278,116 @@ const QuestionTwoScreen = () => {
   };
 
   // Add useEffect for MQTT message handling
-  useEffect(() => {
-    if (isConnected) {
-      const handler = (receivedMessage: any) => {
-        console.log("Question Two screen received message:", receivedMessage);
+ 
 
-        // Handle question reveal events (game_s2_question_reveal)
-        if (receivedMessage?.event === "game_s2_question_reveal") {
-          setShowStage2Prep(false);
-          
-          // Store the question data from MQTT - handle both payload formats
-          const questionData = receivedMessage?.payload?.questions || 
-                              receivedMessage?.payload?.question_data;
-                              
-          if (questionData) {
-            setMqttQuestionData(questionData);
-            
-            // Update current question index if available
-            if (receivedMessage?.payload?.question_index) {
-              setCurrentQuestionIndex(receivedMessage.payload.question_index);
+
+
+  const currentQuestionIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    currentQuestionIdRef.current = currentQuestionId;
+  }, [currentQuestionId]);
+
+
+
+
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const handler = (receivedMessage: any) => {
+
+      // Handle prep page event
+      if (receivedMessage?.event === "game_s2_question_reveal") {
+        console.log("✅ Processing game_s1_question_reveal");
+        setShowStage2Prep(false);
+
+        const payload = receivedMessage.payload || {};
+        const questionData = payload.data || {};
+       
+        // 1. Save full question info
+        setMqttQuestionData(questionData?.question);
+
+        // 2. Reset related states
+        setSelectedOption(null);
+        setIsSubmitted(false);
+        resetTimerState();
+        setResultMessageSent(false);
+        setMqttAnswerData(null); // Clear previous answer data
+        setCorrectAnswer(null);
+
+        // 3. Set current index and question ID
+        setCurrentQuestionIndex((questionData.question_index || 1) - 1);
+        const questionId =
+          questionData?.question?.question_id || payload?.question_id;
+        if (questionId) {
+          setCurrentQuestionId(questionId.toString());
+        }
+
+       
+      }
+
+      // Handle question answer event
+     if (receivedMessage?.event === "game_s2_question_answer") {
+          const payload = receivedMessage.payload || {};
+          const questionId = payload.question_id;
+
+          // Use ref instead of state
+          if (questionId === currentQuestionIdRef?.current) {
+            const answersData = payload.answers_data?.data;
+
+            console.log(answersData, "answersData");
+            // Store the full answer data for use in FastestFingerResult
+            setMqttAnswerData(payload.answers_data?.data);
+
+            if (answersData?.question?.correct_option) {
+              // Set the correct answer
+              setCorrectAnswer(answersData.question.correct_option);
+
+              // Mark the question as submitted to show results
+              setIsSubmitted(true);
+              setShowNextButton(true);
+              setTimerActive(false); // Stop the timer
+              setAnswerReceived(true); // Mark that answer has been received
+
+              // refetch();
+
             }
-            
-            // Reset states for new question
-            setSelectedOption(null);
-            setIsSubmitted(false);
-            resetTimerState();
-            setResultMessageSent(false); // Reset the flag
-          }
+          } 
         }
 
-        // Handle timer start events (game_s2_timer_start)
-        if (
-          receivedMessage?.event &&
-          receivedMessage.event.startsWith("game_s2_timer_start")
-        ) {
-          handleStartTimer();
-        }
+      // Handle timer start event
+      if (receivedMessage?.event === "game_s2_timer_start") {
+        console.log("✅ Processing game_s2_timer_start");
+        handleStartTimer();
+      }
 
-        if (receivedMessage?.event === "game_s2_results_reveal") {
-          // Proceed to the next stage
-          setAllQuestionsCompleted(true);
-        }
-      };
+      // Handle results reveal event
+      if (receivedMessage?.event === "game_s2_results_reveal") {
+        console.log("✅ Processing game_s2_results_reveal");
+        setAllQuestionsCompleted(true);
+      }
+    };
 
-      // Register the message handler
-      onMessage(handler);
+    console.log("🔄 Registering MQTT handler");
+    onMessage(handler);
 
-      // Clean up function to remove the handler when component unmounts
-      return () => {
+    return () => {
+      if (isConnected) {
+        console.log("🧹 Cleaning up MQTT message handler");
         onMessage(null);
-      };
-    }
-  }, [isConnected, onMessage]);
-
-  // Debug current question - remove reference to questionData
-  useEffect(() => {
-    if (mqttQuestionData) {
-      console.log("Current question data from MQTT:", mqttQuestionData);
-    }
-  }, [mqttQuestionData]);
+      }
+    };
+  }, [isConnected, onMessage, user?.contestant_id]);
 
   // Watch for answer data and publish event when available
-  useEffect(() => {
-    if (answerData && shouldFetchAnswer && mqttQuestionData && !resultMessageSent) {
-      console.log("Answer data received, publishing result event:", answerData);
-      
-      // Publish event with the result
-      sendMessage({
-        event: "contestant_s2_answer_submitted",
-        payload: answerData
-      });
-      
-      // Set flag to prevent sending the message again
-      setResultMessageSent(true);
-    }
-  }, [answerData, shouldFetchAnswer, mqttQuestionData, resultMessageSent, sendMessage]);
 
   // Automatically refetch answer data when shouldFetchAnswer is true
-  useEffect(() => {
-    if (shouldFetchAnswer && mqttQuestionData?.question_id) {
-      console.log("Fetching answer data for question:", mqttQuestionData.question_id);
-      revalidateAnswer();
-      refetchAnswer();
-    }
-  }, [shouldFetchAnswer, mqttQuestionData?.question_id]);
 
   if(showStage2Prep){
     return <Stage2GetReadyPage />
   }
   if(allQuestionsCompleted){
-    return <StageOneTally eliminationCount={2} removeCount={2}/>
+    return <StageOneTally eliminationCount={2} removeCount={2} title="stage 2" />
   }
 
   return (
@@ -460,7 +494,7 @@ const QuestionTwoScreen = () => {
                     <div className="flex gap-2 flex-col">
                       {/* Remove the mapping over selectedQuestions since we're not using it anymore */}
                        {Array.from({ length: 8 }, (_, index) => ( 
-                          <div className="">
+                          <div className="" key={index}>
                           <NumberCardContainer
                             // text={index + 1}
                             text={
@@ -470,14 +504,14 @@ const QuestionTwoScreen = () => {
                                 index + 1
                               )}
                             textColor={
-                              mqttQuestionData?.question_index === index
+                              mqttQuestionData?.question_index - 1 === index
                                 ? "#FFFFFF"
                                 : isQuestionAttempted(index)
                                   ? "#fff"
                                   : "#F2C94C"
                             }
                             backgroundColor={
-                              mqttQuestionData?.question_index === index
+                              mqttQuestionData?.question_index - 1 === index
                                 ? "#FEC124"
                                 : isQuestionAttempted(index)
                                   ? "#04DA6A"
@@ -486,7 +520,7 @@ const QuestionTwoScreen = () => {
                             width={45}
                             height={45}
                             active={
-                              mqttQuestionData?.question_index === index ||
+                              mqttQuestionData?.question_index - 1 === index ||
                               isQuestionAttempted(index)
                             }
                             iconPosition={{ y: 33 }}
@@ -640,11 +674,13 @@ const QuestionTwoScreen = () => {
                       </div>
                     )}
                     <div className="">
-                      <FastestFingerResult
-                        resultArray={answerData}
-                        timeElapsed={timeLeft <= 0 || showNextButton}
-                        length={4}
-                      />
+                       <FastestFingerResult
+                      resultArray={mqttAnswerData}
+                      mqttAnswerData={mqttAnswerData}
+                      timeElapsed={answerReceived && (timeLeft <= 0 || showNextButton)}
+                      currentQuestionId={currentQuestionId}
+                      
+                    />
                     </div>
                   </div>
                 </div>
