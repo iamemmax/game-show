@@ -252,6 +252,20 @@ export default function HostPage() {
                         currentStage: "STAGE_TWO_COMPLETE",
                     }))
                 }
+                else if (eventCode === "game_s3_init") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: "game_s3_init",
+                        currentStageStep: "prep_dud_opportunity_pick",
+                    }))
+                } else if (eventCode === "game_s3_prep") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: "game_s3_dud_opportunity_prep",
+                        currentStageStep: "start_dud_opportunity_pick",
+                        showQuestions: true,
+                    }))
+                }
                 // Add other stage handlers here...
                 else {
                     setGameState((prev) => ({ ...prev, lastAction: eventCode }))
@@ -298,7 +312,7 @@ export default function HostPage() {
     //////////////////////////////
     //////////////////////////////
     const initStage2 = () => sendGameMessage("game_s2_init", { start_time: new Date().toISOString() })
-    const prepStage2Questions = () => sendGameMessage("game_s2_questions_prep")
+    const prepStage2Questions = () => sendGameMessage("game_s2_prep")
 
     // Handle timer start
     const handleTimerStart = (questionId: string, startTime: string, questionType: string) => {
@@ -309,6 +323,16 @@ export default function HostPage() {
         })
     }
 
+    //////////////////////////////
+    //////////////////////////////
+    ////////    Stage 3 functions
+    //////////////////////////////
+    //////////////////////////////
+    const initStage3 = () => sendGameMessage("game_s3_init", { start_time: new Date().toISOString() })
+    const prepStage3Picks = () => sendGameMessage("game_s3_prep")
+    const startStage3Picks = () => sendGameMessage("game_s3_start")
+
+ 
     const getStageInfo = () => {
         if (gameState.currentStage.includes("STAGE_ONE")) {
             return { title: "Stage 1", subtitle: "STARTUP CAPITAL" }
@@ -439,6 +463,50 @@ export default function HostPage() {
             return null
 
         }
+     
+     
+     
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////                      STAGE THREE                    /////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        else if (currentStage.includes("STAGE_THREE")) {
+            if (currentStageStep === "init") {
+                return (
+                    <div className="flex justify-center mt-8">
+                        <div className="text-center">
+                            <div className="flex justify-center items-center">
+                                <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
+                            </div>
+                            <p className="text-white mb-4">Prep Stage 3 Questions</p>
+                            <TrapeziumButton onClick={initStage3} variant="orange">
+                                INITIALIZE STAGE 3
+                            </TrapeziumButton>
+                        </div>
+                    </div>
+                )
+            }
+            else if (currentStageStep === "prep_dud_opportunity_pick") {
+                return (
+                    <div className="flex justify-center">
+                        <TrapeziumButton onClick={prepStage3Picks} variant="green">
+                            PREP STAGE 3
+                        </TrapeziumButton>
+                    </div>
+                )
+            } else if (currentStageStep === "start_dud_opportunity_pick") {
+                return (
+                    <div className="flex justify-center">
+                        <TrapeziumButton onClick={startStage3Picks} variant="yellow">
+                            START DUD/OPPORTUNITY PICK
+                        </TrapeziumButton>
+                    </div>
+                )
+            }
+            return null
+
+        }
 
         // Default - game not started
         return (
@@ -452,8 +520,6 @@ export default function HostPage() {
 
     return (
         <div className="min-h-screen bg-[#1a0b25] text-white bg-[url('/images/host-bg.png')] bg-no-repeat bg-contain bg-center">
-
-
 
             {isLoadingContestants ? (
                 <div className="flex flex-col items-center justify-center h-dvh">

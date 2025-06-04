@@ -252,7 +252,6 @@ const QuestionScreen = () => {
     if (!isConnected) return;
 
     const handler = (receivedMessage: any) => {
-      console.log("📨 Received MQTT message:", receivedMessage?.event, receivedMessage);
 
       // Handle prep page event
       if (receivedMessage?.event === "game_s1_question_reveal") {
@@ -310,21 +309,17 @@ const QuestionScreen = () => {
       }
 
       // Handle question answer event
-      if (receivedMessage?.event === "game_s1_question_answer") {
-        console.log("✅ Processing game_s1_question_answer");
-        const payload = receivedMessage.payload || {};
-        const questionId = payload.question_id;
-
-        // Use ref instead of state
-        if (questionId === currentQuestionIdRef.current) {
-          console.log("✅ Question ID matches, processing answer");
+     if (receivedMessage?.event === "game_s1_question_answer") {
           const payload = receivedMessage.payload || {};
           const questionId = payload.question_id;
-          if (questionId === currentQuestionId) {
+
+          // Use ref instead of state
+          if (questionId === currentQuestionIdRef?.current) {
             const answersData = payload.answers_data?.data;
 
+            console.log(answersData, "answersData");
             // Store the full answer data for use in FastestFingerResult
-            setMqttAnswerData(answersData);
+            setMqttAnswerData(payload.answers_data?.data);
 
             if (answersData?.question?.correct_option) {
               // Set the correct answer
@@ -333,15 +328,13 @@ const QuestionScreen = () => {
               // Mark the question as submitted to show results
               setIsSubmitted(true);
               setShowNextButton(true);
+              setTimerActive(false); // Stop the timer
 
-              // Refetch contestant data to update balances
               refetch();
+
             }
-          }
-        } else {
-          console.log("⚠️ Question ID mismatch:", questionId, "vs", currentQuestionIdRef.current);
+          } 
         }
-      }
 
       // Handle timer start event
       if (receivedMessage?.event === "game_s1_timer_start") {
@@ -965,12 +958,13 @@ const QuestionScreen = () => {
                   )}
                   {/* Pass mqttAnswerData and currentQuestionId to FastestFingerResult */}
                   <div className="h-full w-full">
-                    {/* <FastestFingerResult
-                      // resultArray={answerData}
+                    <FastestFingerResult
+                      resultArray={mqttAnswerData}
                       mqttAnswerData={mqttAnswerData}
                       timeElapsed={timeLeft <= 0 || showNextButton}
                       currentQuestionId={currentQuestionId}
-                    /> */}
+                      
+                    />
                   </div>
                 </div>
               </div>

@@ -8,6 +8,28 @@ interface RootObject {
 }
 
 
+export interface IGetProofQuestionAPIResponse {
+    status: string;
+    message: string;
+    data: {
+        question: {
+            question: string;
+            option_a: string;
+            option_b: string;
+            option_c: string;
+            option_d: string;
+            correct_option: string;
+            question_id: number;
+            allocated_winning_amount: number;
+        };
+        index: number;
+    };
+}
+
+
+
+
+
 export interface IGetHustleQuestionAPIResponse {
     status: string
     message: string
@@ -88,6 +110,7 @@ export const useGetHustleQuestion = () => {
         mutationKey: ["get-hustle-question"],
     });
 }
+
 const postEndStageOne = async ({ episode }: { episode: string | number }) => {
     const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/admin-controller/end_stage_one/${episode}`);
     return res.data;
@@ -99,8 +122,25 @@ export const useEndStageOne = () => {
         mutationKey: ["end-stage-1"],
     });
 }
+
+
+
+//////////////////////////////////////////////////////////
+///////////                STAGE TWO        ///////////////
+//////////////////////////////////////////////////////////
+const postGetProofQuestion = async ({ episode }: { episode: string | number }) => {
+    const res = await tokenlessAxios.post<IGetProofQuestionAPIResponse>(`/api/admin-controller/request_proof_hustle_question/${episode}`);
+    return res.data;
+}
+
+export const useGetProofQuestion = () => {
+    return useMutation({
+        mutationFn: postGetProofQuestion,
+        mutationKey: ["get-proof-question"],
+    });
+}
 const postEndStageTwo = async ({ episode }: { episode: string | number }) => {
-    const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/game/end_stage_two/${episode}`);
+    const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/admin-controller/end_stage_two/${episode}`);
     return res.data;
 }
 

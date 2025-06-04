@@ -32,7 +32,7 @@ export default function Stage1Questions({
     const [currentQuestionData, setCurrentQuestionData] = useState<IGetHustleQuestionAPIResponse | null>(null)
     const [timerActive, setTimerActive] = useState(false)
     const [timerSeconds, setTimerSeconds] = useState(10)
-    const [questionExhausted, setQuestionExhausted] = useState(false)
+    const [questionsExhausted, setQuestionsExhausted] = useState(false)
     const [sentAnswers, setSentAnswers] = useState<Set<string>>(new Set())
 
     const { mutate: fetchNextQuestion, data: hustleQuestionsData, isLoading } = useGetHustleQuestion()
@@ -68,7 +68,7 @@ export default function Stage1Questions({
                 onError: (error: any) => {
                     console.log(error?.response?.data)
                     if (error?.response?.data?.code === "700") {
-                        setQuestionExhausted(true)
+                        setQuestionsExhausted(true)
                     }
                     setLoading(false)
                     toast.error("Failed to fetch next question")
@@ -84,7 +84,7 @@ export default function Stage1Questions({
             {
                 onSuccess: (data) => {
                     toast.success("Stage 1 results revealed successfully")
-                    setQuestionExhausted(false)
+                    setQuestionsExhausted(false)
                     sendGameMessage("game_s1_results_reveal", {
                         game_id: gameId,
                     })
@@ -156,7 +156,7 @@ export default function Stage1Questions({
                     <Loader2 className="h-8 w-8 text-[#ff00ff] animate-spin" />
                     <span className="ml-2 text-white">Loading question...</span>
                 </div>
-            ) : questionExhausted ? (
+            ) : questionsExhausted ? (
                 <div className="flex flex-col items-center justify-center mt-8">
                     <TrapeziumButton onClick={handleRevealStage1Result} variant="purple">
                         REVEAL STAGE RESULTS
@@ -286,7 +286,7 @@ export default function Stage1Questions({
             )}
 
             <div className="flex justify-center mt-6">
-                {!loading && currentQuestionData && currentStageStep === "questions" && (
+                {!loading && currentQuestionData && currentStageStep === "questions" && !questionsExhausted && (
                     <TrapeziumButton onClick={handleFetchNextQuestion} variant="orange">
                         FETCH NEXT QUESTION
                     </TrapeziumButton>
