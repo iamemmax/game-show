@@ -24,6 +24,7 @@ import { useGetWalletBalance } from "../../api/stage1/getbalance";
 // import { useGetAllStage2Questions } from "../../api/stage2/getQuestion2";
 import { useAnswerStageTwoQuestion } from "../../api/stage2/answerStage2Question";
 import Stage2GetReadyPage from "./Stage2GetReadyPage";
+import { useGetGameContestants } from "@/app/admin/misc/api";
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -95,7 +96,6 @@ const QuestionTwoScreen = () => {
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
   // Add state for MQTT question data
   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
   // Add state to track if we've sent the result message
   const [resultMessageSent, setResultMessageSent] = useState(false);
   // Add new state variables
@@ -144,6 +144,9 @@ const QuestionTwoScreen = () => {
   };
 
   const { mutate: handleAnswerStageTwoQuestion } = useAnswerStageTwoQuestion();
+  const { refetch, isLoading } = useGetGameContestants(
+       Number(user?.game_episode)
+    );
   // Handle submit answer
   // const { 
   //   data: answerData, 
@@ -221,34 +224,7 @@ const QuestionTwoScreen = () => {
     setAttemptedQuestions(prev => new Set([...prev, currentQuestionIndex]));
 
     // Create submission data with "N" as the answer
-    handleAnswerStageTwoQuestion(
-      {
-        contestant_id: Number(user?.contestant_id),
-        question_id: mqttQuestionData?.question_id,
-        answer: "N", // "N" for No Answer
-        timestamp: formattedTimestamp,
-      },
-      {
-        onSuccess: () => {
-          // Add to attempted options with "N" option
-          setAttemptedOptions([
-            ...attemptedOptions,
-            {
-              option: "N" as OptionKey,
-            },
-          ]);
-          
-          // Set shouldFetchAnswer to true to fetch and display the answer
-          setShouldFetchAnswer(true);
-          
-         
-        },
-        onError: (error) => {
-          const errorMessage = formatAxiosErrorMessage(error as AxiosError);
-          openErrorModalWithMessage(String(errorMessage));
-        },
-      }
-    );
+
   };
 
   
@@ -350,6 +326,9 @@ const QuestionTwoScreen = () => {
       if (receivedMessage?.event === "game_s2_results_reveal") {
         console.log("✅ Processing game_s2_results_reveal");
         setAllQuestionsCompleted(true);
+      }
+      if (receivedMessage?.event === "game_s2_debit_wallet") {
+        refetch();
       }
     };
 

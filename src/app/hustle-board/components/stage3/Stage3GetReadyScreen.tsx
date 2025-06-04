@@ -11,7 +11,7 @@ import Stage3CardSelection from "./Stage3CardSelectionScreen";
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
 
-const Stage3GetReadyPage = () => {
+const Stage3BoardGetReadyPage = () => {
   const { isConnected, onMessage } = useMQTT();
   const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
 
@@ -213,5 +213,5 @@ if(showCardRevealScreen){
   );
 };
 
-export default Stage3GetReadyPage;
+export default Stage3BoardGetReadyPage;
 

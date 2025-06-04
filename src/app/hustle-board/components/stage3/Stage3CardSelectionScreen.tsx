@@ -1,7 +1,7 @@
 import Logo from "@/app/icons/Logo";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
-import { GlowyStrokeText, Button } from "@/components/core";
+import { GlowyStrokeText, Button, Dialog } from "@/components/core";
 import { cn } from "@/utils/classNames";
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useState, useEffect } from "react";
@@ -13,11 +13,17 @@ import { useGetGameContestants } from "@/app/admin/misc/api";
 import { Card, CARD_STYLES, PASS_CARD_STYLE } from "./CardStyles";
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
+import { useParams, useRouter } from "next/navigation";
+import Trophy from "@/app/icons/Trophy";
 
 
 const Stage3CardSelection = () => {
-  const user = tokenStorage.getUser();
   const { isConnected, sendMessage, onMessage } = useMQTT();
+    const router = useRouter();
+  const [showEliminationModal, setShowEliminationModal] = useState(false);
+  const user = tokenStorage.getUser();
+  const params = useParams()
+
   const {
     isErrorModalOpen,
     setErrorModalState,
@@ -878,6 +884,41 @@ const Stage3CardSelection = () => {
 
   // Add the status indicator to the main component return
   return (
+
+    <>
+     {/* Elimination Modal */}
+          {showEliminationModal && (
+            <Dialog
+              open={showEliminationModal}
+              onOpenChange={setShowEliminationModal}
+            >
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+                <div className="bg-gradient-to-b from-[#980306] to-[#FE8E8E] p-1 rounded-xl max-w-md w-full">
+                  <div className="bg-[#13051E] rounded-lg p-6 flex flex-col items-center">
+                    <h2 className="text-2xl font-bold text-white mb-4">
+                      You've Been Eliminated!
+                    </h2>
+                    <div className="mb-4">
+                      <Trophy height={80} width={80} />
+                    </div>
+                    <p className="text-white text-center mb-6">
+                      Unfortunately, your journey ends here. Thank you for
+                      participating!
+                    </p>
+                    <Button
+                      onClick={() => {
+                        router.push("/login");
+                        setShowEliminationModal(false);
+                      }}
+                      className="bg-[#D91FFF] hover:bg-[#b01ad3] text-white"
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Dialog>
+          )}
     <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full relative">
       
 
@@ -903,7 +944,7 @@ const Stage3CardSelection = () => {
             <HeaderTitleContainer
               backgroundColor="#791192"
               color="#ed99ff"
-              text="Pick-Pad"
+              text="Hustle Board"
               textGradientEnd="#8E17AA"
               textGradientStart="#8E17AA"
               borderGradientStart="#f712fc"
@@ -1052,8 +1093,9 @@ const Stage3CardSelection = () => {
                             <PickCardContainer
                               backgroundColor={style.backgroundColor}
                               text={cardText}
-                              width="108px"
-                              height="100px"
+                              width={"10px"}
+                              height={"10px"}
+                              // height="100px"
                               rayColor={style.rayColor}
                               innerCircleColor={style.innerCircleColor}
                               textColor={style.textColor}
@@ -1133,6 +1175,7 @@ const Stage3CardSelection = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

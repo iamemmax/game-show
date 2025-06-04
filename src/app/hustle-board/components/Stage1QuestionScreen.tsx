@@ -649,7 +649,7 @@ const Stage1QuestionScreen = () => {
         </div>
       </div>
 
-      <ErrorModal
+      {/* <ErrorModal
         isErrorModalOpen={isErrorModalOpen}
         setErrorModalState={() => {
           setErrorModalState(false);
@@ -657,7 +657,7 @@ const Stage1QuestionScreen = () => {
         subheading={
           errorModalMessage || "Please check your inputs and try again."
         }
-      />
+      /> */}
     </>
   );
 };

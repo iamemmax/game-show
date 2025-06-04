@@ -17,8 +17,9 @@ import { useMQTT } from "@/hooks/useMqttService";
 import Stage3CardSelection from "../stage3/Stage3CardSelection";
 import QuestionTwoScreen from "../stage2/QuestionTwoScreen";
 import { useGetGameContestants } from "@/app/admin/misc/api";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Stage3GetReadyPage from "../stage3/Stage3GetReadyPage";
+import Stage3BoardGetReadyPage from "@/app/hustle-board/components/stage3/Stage3GetReadyScreen";
 
 interface StageOneTallyProps {
   eliminationCount?: number;
@@ -50,6 +51,7 @@ const StageOneTally = ({
   const { data: allContestsant } = useGetGameContestants(
     user?.game_episode as number
   );
+  const params = useParams()
 
   // Check if current user is eliminated
   useEffect(() => {
@@ -122,7 +124,11 @@ const StageOneTally = ({
     return <QuestionTwoScreen />;
   }
   if (goToStage3) {
-    return <Stage3GetReadyPage />;
+    if(params?.episodeId){
+      return <Stage3BoardGetReadyPage />
+    }else{
+      return <Stage3GetReadyPage />;
+    }
     // return <Stage3GetReadyPage />;
   }
 

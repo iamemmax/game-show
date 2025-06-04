@@ -1,8 +1,7 @@
-
 import JackpotContainer from "@/app/shared/JackpotContainer";
 import StagesCard from "@/app/shared/StagesCard";
 // import UserBadge from "@/app/shared/UserBadge";
-import {  GlowyStrokeText } from "@/components/core";
+import { GlowyStrokeText } from "@/components/core";
 import React from "react";
 import { contestantImages } from "../mocks/contestantImages";
 // import { useGetWalletBalance } from "../../api/stage1/getbalance";
@@ -28,13 +27,15 @@ const HustleSideBar = ({
   showEmptyCard = false,
   showHustlerCard = false,
   showHustleCardAmt = true,
-  mqttAnswerData
+  mqttAnswerData,
 }: prop) => {
   const user = tokenStorage.getUser();
   const params = useParams();
 
   const { data: allContestsant, isLoading } = useGetGameContestants(
-    !params?.episodeId ? user?.game_episode as number : Number(params?.episodeId)
+    !params?.episodeId
+      ? (user?.game_episode as number)
+      : Number(params?.episodeId)
   );
 
   const myContestant = allContestsant?.data?.find(
@@ -42,14 +43,14 @@ const HustleSideBar = ({
   );
 
   // Only use allContestsant when mqttAnswerData is empty array, undefined, or null
-  const dataToRender = !mqttAnswerData || mqttAnswerData.length === 0 
-    ? allContestsant?.data || []
-    : mqttAnswerData;
+  const dataToRender =
+    !mqttAnswerData || mqttAnswerData.length === 0
+      ? allContestsant?.data || []
+      : mqttAnswerData;
 
   return (
     <div className="flex justify-between h-full items-center flex-col">
-      <div className="relative flex flex-col justify-center items-center">
-      </div>
+      <div className="relative flex flex-col justify-center items-center"></div>
 
       {showHustlerCard && (
         <>
@@ -64,12 +65,14 @@ const HustleSideBar = ({
                 let contestantInfo = contestant;
                 if (mqttAnswerData && mqttAnswerData.length > 0) {
                   // Find the contestant details from allContestsant based on contestant_id
-                  contestantInfo = allContestsant?.data?.find(
-                    (c: any) => c.id === contestant.contestant_id
-                  ) || contestant;
+                  contestantInfo =
+                    allContestsant?.data?.find(
+                      (c: any) => c.id === contestant.contestant_id
+                    ) || contestant;
                 }
 
-                const isMyContestant = contestantInfo.id === myContestant?.id || 
+                const isMyContestant =
+                  contestantInfo.id === myContestant?.id ||
                   contestant.contestant_id === myContestant?.id;
 
                 return (
@@ -113,11 +116,15 @@ const HustleSideBar = ({
                               textclassName="text-[19.18px] font-extrabold font-gilroyHeavy text-white"
                               fillColor="#fff"
                             >
-                              {`₦${addCommasToNumber(
-                                Number(contestant?.stage_balance) || 
-                                Number(contestantInfo?.actual_balance) || 
-                                0
-                              )}`}
+                              {allContestsant?.game?.stage !== "STAGE_ONE"
+                                ? `₦${addCommasToNumber(
+                                    Number(contestant?.wallet_balance) || 0
+                                  )}`
+                                : `₦${addCommasToNumber(
+                                    Number(contestant?.stage_balance) ||
+                                      Number(contestantInfo?.actual_balance) ||
+                                      0
+                                  )}`}
                             </GlowyStrokeText>
                           )}
                           <GlowyStrokeText

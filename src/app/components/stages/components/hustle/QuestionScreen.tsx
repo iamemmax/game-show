@@ -465,34 +465,34 @@ const QuestionScreen = () => {
 
     console.log("Auto-submitting answer for question ID:", currentQuestionId);
 
-    // Create submission data with "N" as the answer
-    handleAnswerStageOneQuestion(
-      {
-        contestant_id: Number(user?.contestant_id),
-        question_id: Number(currentQuestionId),
-        answer: "N", // "N" for No Answer
-        amount_staked: amountToStake, // Send the exact key string from backend
-        timestamp: formattedTimestamp,
-        question_start_time: formattedGameStartTime, // Add game start time
-      },
-      {
-        onSuccess: () => {
-          // Add to attempted options with "N" option
-          setAttemptedOptions([
-            ...attemptedOptions,
-            {
-              option: "N" as OptionKey,
-            },
-          ]);
+    // // Create submission data with "N" as the answer
+    // handleAnswerStageOneQuestion(
+    //   {
+    //     contestant_id: Number(user?.contestant_id),
+    //     question_id: Number(currentQuestionId),
+    //     // answer: "N", // "N" for No Answer
+    //     amount_staked: amountToStake, // Send the exact key string from backend
+    //     timestamp: formattedTimestamp,
+    //     question_start_time: formattedGameStartTime, // Add game start time
+    //   },
+    //   {
+    //     onSuccess: () => {
+    //       // Add to attempted options with "N" option
+    //       setAttemptedOptions([
+    //         ...attemptedOptions,
+    //         {
+    //           option: "N" as OptionKey,
+    //         },
+    //       ]);
 
 
-        },
-        onError: (error) => {
-          const errorMessage = formatAxiosErrorMessage(error as AxiosError);
-          openErrorModalWithMessage(String(errorMessage));
-        },
-      }
-    );
+    //     },
+    //     onError: (error) => {
+    //       const errorMessage = formatAxiosErrorMessage(error as AxiosError);
+    //       openErrorModalWithMessage(String(errorMessage));
+    //     },
+    //   }
+    // );
   };
 
   const handleStartTimer = () => {
@@ -970,7 +970,7 @@ const contestantBalance = mqttAnswerData?.filter((contestant:any) => contestant.
         </div>
       </div>
 
-      <ErrorModal
+      {/* <ErrorModal
         isErrorModalOpen={isErrorModalOpen}
         setErrorModalState={() => {
           setErrorModalState(false);
@@ -978,7 +978,7 @@ const contestantBalance = mqttAnswerData?.filter((contestant:any) => contestant.
         subheading={
           errorModalMessage || "Please check your inputs and try again."
         }
-      ></ErrorModal>
+      ></ErrorModal> */}
     </>
   );
 
