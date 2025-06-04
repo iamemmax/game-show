@@ -18,6 +18,7 @@ import HustleStages from "@/app/components/stages/components/hustle/HustleStages
 import StageOneTally from "@/app/components/stages/components/hustle/StageOneTally";
 import StageTwoGetReadyStage from "./StageTwoGetReadyStage";
 import { useParams } from "next/navigation";
+import { useGetGameContestants } from "@/app/admin/misc/api";
 
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
 
@@ -59,6 +60,9 @@ const ViewOnlyQuestionTwoScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [completedQuestions, setCompletedQuestions] = useState<Set<number>>(new Set());
   const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(new Set());
+  const { refetch } = useGetGameContestants(
+         Number(params?.episodeId)
+      );
 
   // Timer effect - for display only
   useEffect(() => {
@@ -185,6 +189,10 @@ const ViewOnlyQuestionTwoScreen = () => {
       if (receivedMessage?.event === "game_s2_results_reveal") {
         console.log("✅ Processing game_s2_results_reveal");
         setAllQuestionsCompleted(true);
+      }
+
+      if (receivedMessage?.event === "game_s2_debit_wallet") {
+        refetch();
       }
     };
 

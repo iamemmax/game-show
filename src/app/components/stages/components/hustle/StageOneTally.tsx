@@ -14,7 +14,7 @@ import { Button, Dialog, GlowyStrokeText } from "@/components/core";
 import { tokenStorage } from "@/utils/auth";
 import { contestantImages } from "../mocks/contestantImages";
 import { useMQTT } from "@/hooks/useMqttService";
-import Stage3CardSelection from "../stage3/Stage3CardSelection";
+// import Stage3CardSelection from "../stage3/Stage3CardSelection";
 import QuestionTwoScreen from "../stage2/QuestionTwoScreen";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import { useParams, useRouter } from "next/navigation";
@@ -51,7 +51,7 @@ const StageOneTally = ({
   const { data: allContestsant } = useGetGameContestants(
     user?.game_episode as number
   );
-  const params = useParams()
+  const params = useParams();
 
   // Check if current user is eliminated
   useEffect(() => {
@@ -124,9 +124,9 @@ const StageOneTally = ({
     return <QuestionTwoScreen />;
   }
   if (goToStage3) {
-    if(params?.episodeId){
-      return <Stage3BoardGetReadyPage />
-    }else{
+    if (params?.episodeId) {
+      return <Stage3BoardGetReadyPage />;
+    } else {
       return <Stage3GetReadyPage />;
     }
     // return <Stage3GetReadyPage />;
