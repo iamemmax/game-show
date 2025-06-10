@@ -29,11 +29,10 @@ import { convertKebabAndSnakeToTitleCase } from "@/utils/strings"
 import toast from "react-hot-toast"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import { useMQTT } from "@/hooks/useMqttService"
-import { Question2AnswerData } from "@/app/components/stages/api/stage2/getQuestion2Answer"
+import { Question2AnswerData, Question2AnswerDataAPIResponse } from "@/app/components/stages/api/stage2/getQuestion2Answer"
 import { useBooleanStateControl } from "@/hooks"
 import { Label } from "@/components/core/Label"
 import { useGetGameContestants, useAssignContestant, useCreditDebitContestant, CreditDebitContestantRequest } from "@/app/admin/misc/api"
-import { GAME_STATUSES_ENUMS } from "@/utils/enums"
 
 const assignContestantSchema = z.object({
     constestants_attr: z.string().min(1, "Please select a contestant position"),
@@ -46,7 +45,7 @@ type AssignContestantFormValues = z.infer<typeof assignContestantSchema>
 
 export default function GameDetails() {
     const params = useParams()
-    const gameId = params.episode_id as string
+    const gameId = params.episode as string
     const router = useRouter()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const {
@@ -60,7 +59,7 @@ export default function GameDetails() {
     const [isSending, setIsSending] = useState(false)
 
 
-    const [debitWalletData, setDebitWalletData] = useState<Question2AnswerData | null>(null)
+    const [debitWalletData, setDebitWalletData] = useState<Question2AnswerDataAPIResponse | null>(null)
     const [debitWalletPayload, setDebitWalletPayload] = useState<CreditDebitContestantRequest | null>()
 
     const sendGameMessage = React.useCallback(
@@ -96,7 +95,7 @@ export default function GameDetails() {
     React.useEffect(() => {
         const handleMessage = (message: any) => {
             console.log("Received message:", message)
-            if (message.event === "contestant_s2_answer_submitted") {
+            if (message.event === "game_s2_question_answer") {
                 setDebitWalletData(message.payload.data)
             }
         }
@@ -210,7 +209,7 @@ export default function GameDetails() {
         };
 
         const payload: CreditDebitContestantRequest = {
-            question_id: Number(debitWalletData?.question.question_id),
+            question_id: Number(debitWalletData?.question_id),
             giver_contestant_id: debitWalletPayload.credit_source === "gameshow_float"
                 ? ""
                 : debitWalletPayload.giver_contestant_id,
@@ -220,14 +219,14 @@ export default function GameDetails() {
         };
 
         creditDebit(payload, {
-            onSuccess: (data) => {
+            onSuccess: () => {
                 toast.success("Wallet debited successfully");
                 setDebitWalletData(null);
                 setDebitWalletPayload(null);
                 closeCreditDebitModal();
                 refetchContestants();
             },
-            onError: (error) => {
+            onError: (error: unknown) => {
                 console.error("Failed to debit wallet:", error);
                 toast.error("Failed to debit wallet");
                 refetchContestants();
@@ -244,9 +243,9 @@ export default function GameDetails() {
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
-                        <button onClick={() => router.back()} className="text-primary hover:text-[#ff00ff] transition-colors">
+                        <Link href="/admin" className="text-primary hover:text-[#ff00ff] transition-colors">
                             <ArrowLeft className="h-5 w-5" />
-                        </button>
+                        </Link>
                         <h1 className="text-xl font-bold text-white">EPISODES</h1>
                     </div>
                     <div className="text-sm text-white">Dashboard / Episodes / {gameId}</div>
@@ -269,15 +268,13 @@ export default function GameDetails() {
                                     <div className="rounded-lg space-y-3">
                                         <div>
                                             <div className="text-[0.65rem] text-white mb-1">Episode Name</div>
-                                            <div className="font-medium text-[0.825rem]">{contestantsData?.game.game_nick || "Episode Name Not Available"}</div>
+                                            <div className="font-medium text-[0.825rem]">The Hustle S1</div>
                                         </div>
                                         <div>
                                             <div className="text-[0.65rem] text-white mb-1">Status</div>
                                             <div className="flex items-center gap-1.5 text-[0.825rem]">
                                                 <div className="size-2 rounded-full bg-[#d400ff] animate-pulse"></div>
-                                                <span>
-                                                    {GAME_STATUSES_ENUMS[contestantsData?.game.status || ""] || "Status Not Available"}
-                                                </span>
+                                                <span>In Progress</span>
                                             </div>
                                         </div>
                                         <div>
@@ -468,8 +465,7 @@ export default function GameDetails() {
                                                     </div>
                                                 </article>
                                             )
-                                        })
-                                    }
+                                        })}
                                 </div>
                                 <div className="flex justify-center gap-4 mt-8 mb-4">
                                     <TrapeziumButton variant="red" size="sm" backgroundColor="#ff00ff" onClick={startGameEpisode}>
@@ -480,7 +476,8 @@ export default function GameDetails() {
                                         <TrapeziumButton variant="yellow" size="sm" backgroundColor="#ff00ff"
 
                                             onClick={openCreditDebitModal}>
-                                            DEBIT WALLET FOR QUESTION {debitWalletData.question.question_id}
+                                            pp
+                                            {/* DEBIT WALLET FOR QUESTION {debitWalletData..question_id} */}
                                         </TrapeziumButton>
                                     }
                                     <TrapeziumButton variant="green" size="sm" backgroundColor="#ff00ff">
@@ -582,14 +579,18 @@ export default function GameDetails() {
                 <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white">
                     <DialogHeader>
                         <DialogTitle className="text-xl text-primary">
-                            Winning Contestant: {convertKebabAndSnakeToTitleCase(debitWalletData?.winner_details?.contestant_name)}
+                            Winning Contestant: {convertKebabAndSnakeToTitleCase(debitWalletData?.data.find((item) => item.is_winner)?.contestant_name || "Unknown")}
                         </DialogTitle>
                     </DialogHeader>
 
                     <DialogBody>
                         <div className="grid gap-2 mt-2">
-                            <div className="text-sm text-gray-300">Contestant ID: {debitWalletData?.winner_details?.contestant_id}</div>
-                            <div className="text-sm text-gray-300">Contestant Phone Number: {debitWalletData?.winner_details?.contestant_attr}</div>
+                            <div className="text-sm text-gray-300">Contestant ID:
+                                {
+                                    debitWalletData?.data.find((item) => item.is_winner)?.contestant_id || "Unknown"
+                                }
+                            </div>
+                            {/* <div className="text-sm text-gray-300">Contestant Phone Number: {debitWalletData?.winner_details?.contestant_attr}</div> */}
                             {/* <div className="text-sm text-gray-300">Winning Amount: ₦{debitWalletData.contestant_answers}</div> */}
                         </div>
 
@@ -608,7 +609,7 @@ export default function GameDetails() {
                                                 ...prev,
                                                 credit_source: "gameshow_float",
                                                 giver_contestant_id: "",
-                                                question_id: prev?.question_id ?? (debitWalletData?.question.question_id ?? 0),
+                                                question_id: prev?.question_id ?? (debitWalletData?.question_id ?? 0),
                                             }));
                                         } else {
                                             // For contestant options, value will be the contestant ID
@@ -616,7 +617,7 @@ export default function GameDetails() {
                                                 ...prev,
                                                 credit_source: "",
                                                 giver_contestant_id: Number(value),
-                                                question_id: prev?.question_id ?? (debitWalletData?.question.question_id ?? 0),
+                                                question_id: prev?.question_id ?? (debitWalletData?.question_id ?? 0),
                                             }));
                                         }
                                     }}
@@ -635,8 +636,14 @@ export default function GameDetails() {
 
                                     {/* Contestant options */}
                                     <div className="text-sm text-white mb-1">Contestant Wallets:</div>
-                                    {
-                                        contestantsData?.data?.filter(contestant => contestant.id !== debitWalletData?.winner_details?.contestant_id).map((contestant: any) => (
+
+                                    {contestantsData?.data
+                                        ?.filter(
+                                            (contestant: any) =>
+                                                contestant.id !==
+                                                debitWalletData?.data.find((item: any) => item.is_winner)?.contestant_id
+                                        )
+                                        .map((contestant: any) => (
                                             <div key={contestant.id} className="flex items-center space-x-2 ml-2">
                                                 <RadioGroupItem
                                                     value={contestant.id.toString()}

@@ -79,7 +79,7 @@ export const useAssignContestant = () =>
   credit_source: "gameshow_float" | "";
 }
 export const creditDebitContestant = async (data: CreditDebitContestantRequest) => {
-  const response = await tokenlessAxios.post("api/game/handle_wallet_funding_and_debits/", data)
+  const response = await tokenlessAxios.post("api/admin-controller/handle_wallet_funding_and_debits/", data)
   return response?.data 
 }
 

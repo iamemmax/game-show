@@ -11,33 +11,38 @@ export interface answerQuestion2Prop {
   status: string;
   message: string;
   data: Question2AnswerData[];
+  question_id: number | string;
+
 }
 
 export interface answerOptionProp {
   status: string;
   message: string;
   data: Question2AnswerData;
+  question_id: number | string;
+
+}
+
+
+export interface Question2AnswerDataAPIResponse{
+  status: string;
+  message: string;
+  data: Question2AnswerData[];
+  question_id: number | string;
 }
 
 export interface Question2AnswerData {
-  contestant_answers: Contestantanswer[];
-  question: Question;
-  winner_details?: Contestant;
-}
-
-interface Question {
-  question_id: string;
-  question_start_time: null;
-  question_winner: null;
-  correct_option?: string; // Add the correct_option property
-}
-
-interface Contestantanswer {
-  contestant: Contestant;
-  answer_supplied: string;
+  contestant_id: number;
+  answered_in: number;
   is_correct: boolean;
-  timestamp: string;
+  is_winner: boolean;
+  wallet_balance: number;
+  book_balance: number;
+  stage_balance: number;
+  contestant_name: null;
+  contestant_attr: string;
 }
+
 
 interface Contestant {
   contestant_attr: string;
