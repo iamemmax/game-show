@@ -151,7 +151,7 @@ export default function Page() {
 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6">
-                    {seasons?.data?.map((season) => (
+                    {seasons?.map((season) => (
                         <Card
                             key={season.id}
                             className="text-white hover:border-[#ff00ff]/50 transition-all group cursor-pointer"
@@ -180,7 +180,7 @@ export default function Page() {
                     ))}
                 </div>
 
-                {seasons?.data?.length === 0 && (
+                {seasons?.length === 0 && (
                     <div className="text-center py-12">
                         <Trophy className="h-16 w-16 mx-auto mb-4 text-[#ff00ff]/50" />
                         <h3 className="text-xl font-bold text-white mb-2">No Seasons Found</h3>

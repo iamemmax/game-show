@@ -183,7 +183,7 @@ export default function EpisodesPage() {
                                     Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="hover:bg-[#ff00ff]/10">
-                                    <Link href={`.${season_id}/episodes/${episode.game_episode}`} className="flex items-center">
+                                    <Link href={`/admin/${episode.game_episode}`} className="flex items-center">
                                         <Eye className="h-4 w-4 mr-2" />
                                         View Details
                                     </Link>

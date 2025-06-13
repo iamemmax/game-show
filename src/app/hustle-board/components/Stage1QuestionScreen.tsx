@@ -9,7 +9,7 @@ import { cn } from "@/utils/classNames";
 import CheckIcon from "@/app/icons/CheckIcon";
 import ErrorIcon from "@/app/icons/ErrorIcon";
 import { tokenStorage } from "@/utils/auth";
-import { Button, Dialog, ErrorModal, GlowyStrokeText } from "@/components/core";
+import { GlowyStrokeText } from "@/components/core";
 import Image from "next/image";
 import { useErrorModalState } from "@/hooks";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
@@ -120,6 +120,11 @@ const Stage1QuestionScreen = () => {
 
   
   // FIXED: Move all useEffect hooks to the top level, before any conditional returns
+  
+
+
+
+
   
   
   // FIXED: Add timer countdown effect
@@ -328,7 +333,6 @@ const Stage1QuestionScreen = () => {
 
   // FIXED: Enhanced handleStartTimer function
   const handleStartTimer = () => {
-    console.log("🚀 handleStartTimer called - activating timer");
     
     // Clear any existing timer first
     if (timerIntervalRef.current) {
@@ -342,7 +346,6 @@ const Stage1QuestionScreen = () => {
     setGameStartTime(new Date()); // Reset game start time when timer starts
     setIsSubmitted(false); // Ensure we can make selections
     
-    console.log("⏱️ Timer activated with 10 seconds");
   };
 
   // FIXED: Now all conditional returns come AFTER all hooks have been called
@@ -583,8 +586,11 @@ const Stage1QuestionScreen = () => {
                                 className={cn(
                                   "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
                                   selectedOption === option && !showResult && "bg-[#FCCE19] border-none text-[#745300]",
-                                  isCorrect && showResult && "bg-[#04DA6A]/20 border-[#04DA6A]",
-                                  isSelected && !isCorrect && showResult && "bg-[#FF3B30]/20 border-[#FF3B30]",
+                                  
+
+ mqttAnswerData && currentQuestions?.correct_option ===  convertOptionToLetter(option) ?"!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100":"",
+                                
+
                                   (isSubmitted || !timerActive || !mqttQuestionData?.question?.questions) &&
                                     "opacity-70 cursor-not-allowed"
                                 )}
@@ -649,15 +655,7 @@ const Stage1QuestionScreen = () => {
         </div>
       </div>
 
-      {/* <ErrorModal
-        isErrorModalOpen={isErrorModalOpen}
-        setErrorModalState={() => {
-          setErrorModalState(false);
-        }}
-        subheading={
-          errorModalMessage || "Please check your inputs and try again."
-        }
-      /> */}
+     
     </>
   );
 };

@@ -25,6 +25,7 @@ import { useGetWalletBalance } from "../../api/stage1/getbalance";
 import { useAnswerStageTwoQuestion } from "../../api/stage2/answerStage2Question";
 import Stage2GetReadyPage from "./Stage2GetReadyPage";
 import { useGetGameContestants } from "@/app/admin/misc/api";
+import GameResultModal from "../ResultBalnceModal";
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -104,6 +105,8 @@ const QuestionTwoScreen = () => {
   const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(new Set());
   // Add state to track if answer has been received
   const [answerReceived, setAnswerReceived] = useState(false);
+    const [openModals, setOpenModals] = useState<Record<number, boolean>>({});
+  
   
   useEffect(() => {
     // Only initialize game start time, but don't start the timer
@@ -136,12 +139,15 @@ const QuestionTwoScreen = () => {
   }, [timeLeft, selectedOption, isSubmitted, timerActive]);
 
   // Handle option selection - now just selects without checking correctness
-  const handleOptionSelect = (option: OptionKey) => {
-    // Only allow selection if timer is active and not submitted yet
-    if (timerActive && !isSubmitted) {
-      setSelectedOption(option);
-    }
-  };
+ const handleOptionSelect = (option: OptionKey) => {
+  // Only allow selection if timer is active and not submitted yet
+  if (timerActive && !isSubmitted) {
+    setSelectedOption(option);
+    
+    // Auto-submit immediately after selection
+   
+  }
+};
 
   const { mutate: handleAnswerStageTwoQuestion } = useAnswerStageTwoQuestion();
   const { refetch, isLoading } = useGetGameContestants(
@@ -156,6 +162,8 @@ const QuestionTwoScreen = () => {
   // } = useGetQuestionTwoAnswer(
   //   mqttQuestionData?.question_id ? Number(mqttQuestionData.question_id) : 0
   // );
+
+  
   const handleSubmitAnswer = () => {
     if (!selectedOption || !mqttQuestionData) return;
 
@@ -229,7 +237,22 @@ const QuestionTwoScreen = () => {
 
   
   
-
+  // Auto-submit effect when both option and amount are selected
+  useEffect(() => {
+    if (
+      selectedOption &&
+      !isSubmitted &&
+      timerActive &&
+      currentQuestionId
+    ) {
+      handleSubmitAnswer();
+    }
+  }, [
+    selectedOption,
+    isSubmitted,
+    timerActive,
+    currentQuestionId,
+  ]);
   
    
   const handleStartTimer = () => {
@@ -277,7 +300,7 @@ const QuestionTwoScreen = () => {
         setCorrectAnswer(null);
 
         // 3. Set current index and question ID
-        setCurrentQuestionIndex((questionData.question_index));
+        setCurrentQuestionIndex(questionData?.index);
         const questionId =
           questionData?.question?.question_id ;
         if (questionId) {
@@ -288,33 +311,63 @@ const QuestionTwoScreen = () => {
       }
 
       // Handle question answer event
+    //  if (receivedMessage?.event === "game_s2_question_answer") {
+    //       const payload = receivedMessage.payload || {};
+    //       const questionId = payload.question_id;
+
+    //       // Use ref instead of state
+    //       if (questionId === currentQuestionIdRef?.current) {
+    //         const answersData = payload.answers_data?.data;
+
+    //         console.log(answersData, "answersData");
+    //         // Store the full answer data for use in FastestFingerResult
+    //         setMqttAnswerData(payload.answers_data?.data);
+
+    //         if (answersData?.question?.correct_option) {
+    //           // Set the correct answer
+    //           setCorrectAnswer(answersData.question.correct_option);
+
+    //           // Mark the question as submitted to show results
+    //           setIsSubmitted(true);
+    //           setShowNextButton(true);
+    //           setTimerActive(false); // Stop the timer
+    //           setAnswerReceived(true); // Mark that answer has been received
+
+    //           // refetch();
+
+    //         }
+    //       } 
+    //     }
+
      if (receivedMessage?.event === "game_s2_question_answer") {
-          const payload = receivedMessage.payload || {};
-          const questionId = payload.question_id;
+        const payload = receivedMessage.payload || {};
+        const questionId = payload.question_id;
 
-          // Use ref instead of state
-          if (questionId === currentQuestionIdRef?.current) {
-            const answersData = payload.answers_data?.data;
+        if (questionId === currentQuestionIdRef?.current) {
+          const answersData = payload.answers_data?.data;
+          setMqttAnswerData(answersData); // Store for rendering modals
 
-            console.log(answersData, "answersData");
-            // Store the full answer data for use in FastestFingerResult
-            setMqttAnswerData(payload.answers_data?.data);
+          // Mark submitted and stop timer
+          if (answersData?.question?.correct_option) {
+            setCorrectAnswer(answersData.question.correct_option);
+            setIsSubmitted(true);
+            setShowNextButton(true);
+            setTimerActive(false);
 
-            if (answersData?.question?.correct_option) {
-              // Set the correct answer
-              setCorrectAnswer(answersData.question.correct_option);
-
-              // Mark the question as submitted to show results
-              setIsSubmitted(true);
-              setShowNextButton(true);
-              setTimerActive(false); // Stop the timer
-              setAnswerReceived(true); // Mark that answer has been received
-
-              // refetch();
-
-            }
-          } 
+            // FIXED: Open modals for all contestants with a slight delay to ensure state is updated
+            setTimeout(() => {
+              const newOpenModals: Record<number, boolean> = {};
+              if (answersData?.data && Array.isArray(answersData.data)) {
+                answersData.data.forEach((c: any) => {
+                  if (c?.contestant_id) {
+                    newOpenModals[c.contestant_id] = true;
+                  }
+                });
+              }
+            }, 100);
+          }
         }
+      }
 
       // Handle timer start event
       if (receivedMessage?.event === "game_s2_timer_start") {
@@ -354,6 +407,11 @@ const QuestionTwoScreen = () => {
     return <StageOneTally eliminationCount={2} removeCount={2} title="stage 2" />
   }
 
+
+
+   // Timer effect
+   
+    
   return (
     <>
     
@@ -393,11 +451,11 @@ const QuestionTwoScreen = () => {
 
               <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[65rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
                 {/* Animated border */}
-                <div className="absolute inset-0">
+                {/* <div className="absolute inset-0">
                   <motion.div
                     className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
                     style={{
-                      background: `conic-gradient(from 0deg at 50% 50%,
+                      background: currentQuestionIndex>=4 ?"": `conic-gradient(from 0deg at 50% 50%,
                       #d91fff 0deg,
                       #d91fff 120deg,
                       #00ffff 100deg,
@@ -416,7 +474,117 @@ const QuestionTwoScreen = () => {
                       repeat: Infinity,
                     }}
                   />
-                </div>
+                </div> */}
+
+                <div className="absolute inset-0">
+  <motion.div
+    className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+    style={{
+      background: currentQuestionIndex > 4 
+        ? `conic-gradient(from 0deg at 50% 50%,
+           #ff0000 0deg,
+           #ff4444 120deg,
+           #cc0000 240deg,
+           #ff0000 360deg
+         )`
+        : `conic-gradient(from 0deg at 50% 50%,
+           #d91fff 0deg,
+           #d91fff 120deg,
+           #00ffff 100deg,
+           #00ffff 240deg,
+           #FFD700 220deg,
+           #FFD700 360deg,
+           #d91fff 340deg
+         )`,
+    }}
+    animate={{
+      rotate: [0, 360],
+    }}
+    transition={{
+      duration: currentQuestionIndex >5 ? 2 : 4, // Faster rotation in danger zone
+      ease: "linear",
+      repeat: Infinity,
+    }}
+  />
+</div><div className="absolute inset-0">
+  <motion.div
+    className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+    style={{
+      background: currentQuestionIndex > 4 
+        ? `conic-gradient(from 0deg at 50% 50%,
+           #ff0000 0deg, #ff0000 10deg,
+           #8b0000 10deg, #8b0000 20deg,
+           #ff4444 20deg, #ff4444 30deg,
+           #cc0000 30deg, #cc0000 40deg,
+           #ff6666 40deg, #ff6666 50deg,
+           #990000 50deg, #990000 60deg,
+           #ff3333 60deg, #ff3333 70deg,
+           #b30000 70deg, #b30000 80deg,
+           #ff1111 80deg, #ff1111 90deg,
+           #660000 90deg, #660000 100deg,
+           #ff5555 100deg, #ff5555 110deg,
+           #aa0000 110deg, #aa0000 120deg,
+           #ff2222 120deg, #ff2222 130deg,
+           #770000 130deg, #770000 140deg,
+           #ff7777 140deg, #ff7777 150deg,
+           #dd0000 150deg, #dd0000 160deg,
+           #ff0000 160deg, #ff0000 170deg,
+           #440000 170deg, #440000 180deg,
+           #ff8888 180deg, #ff8888 190deg,
+           #ee0000 190deg, #ee0000 200deg,
+           #ff1111 200deg, #ff1111 210deg,
+           #550000 210deg, #550000 220deg,
+           #ff4444 220deg, #ff4444 230deg,
+           #bb0000 230deg, #bb0000 240deg,
+           #ff9999 240deg, #ff9999 250deg,
+           #880000 250deg, #880000 260deg,
+           #ff3333 260deg, #ff3333 270deg,
+           #ff0000 270deg, #ff0000 280deg,
+           #330000 280deg, #330000 290deg,
+           #ff6666 290deg, #ff6666 300deg,
+           #cc0000 300deg, #cc0000 310deg,
+           #ff2222 310deg, #ff2222 320deg,
+           #990000 320deg, #990000 330deg,
+           #ff5555 330deg, #ff5555 340deg,
+           #ff0000 340deg, #ff0000 360deg
+         )`
+        : `conic-gradient(from 0deg at 50% 50%,
+           #d91fff 0deg,
+           #d91fff 120deg,
+           #00ffff 100deg,
+           #00ffff 240deg,
+           #FFD700 220deg,
+           #FFD700 360deg,
+           #d91fff 340deg
+         )`,
+    }}
+    animate={{
+      rotate: [0, 360],
+      ...(currentQuestionIndex > 4 && {
+        filter: [
+          "brightness(1) saturate(1)",
+          "brightness(1.5) saturate(1.5)",
+          "brightness(0.8) saturate(1.2)",
+          "brightness(1.3) saturate(1.8)",
+          "brightness(1) saturate(1)"
+        ]
+      })
+    }}
+    transition={{
+      duration: currentQuestionIndex > 5 ? 2 : 4,
+      ease: "linear",
+      repeat: Infinity,
+      ...(currentQuestionIndex > 4 && {
+        filter: {
+          duration: 0.3,
+          ease: "easeInOut",
+          repeat: Infinity,
+          repeatType: "reverse"
+        }
+      })
+    }}
+  />
+</div>
 
                 {/* Content container - increased border width from 5px to 8px for bolder appearance */}
                 <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
@@ -468,14 +636,14 @@ const QuestionTwoScreen = () => {
                                 index + 1
                               )}
                             textColor={
-                              mqttQuestionData?.question_index - 1 === index
+                              currentQuestionIndex === index
                                 ? "#FFFFFF"
                                 : isQuestionAttempted(index)
                                   ? "#fff"
                                   : "#F2C94C"
                             }
                             backgroundColor={
-                              mqttQuestionData?.question_index - 1 === index
+                              currentQuestionIndex  === index
                                 ? "#FEC124"
                                 : isQuestionAttempted(index)
                                   ? "#04DA6A"
@@ -484,8 +652,7 @@ const QuestionTwoScreen = () => {
                             width={45}
                             height={45}
                             active={
-                              mqttQuestionData?.question_index - 1 === index ||
-                              isQuestionAttempted(index)
+                              currentQuestionIndex === index
                             }
                             iconPosition={{ y: 33 }}
                             iconSize={30}
@@ -500,7 +667,43 @@ const QuestionTwoScreen = () => {
                     ) : (
                       <div className="relative">
                         {/* Question display section */}
-                        <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
+                   
+<motion.div 
+  className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000] ${
+    currentQuestionIndex > 4 ? 'border-red-500' : 'border-[#D71BFA]'
+  }`}
+  animate={currentQuestionIndex > 4 ? {
+    borderColor: [
+      '#ff0000', // bright red
+      '#ff4444', // light red  
+      '#cc0000', // dark red
+      '#ff6666', // pink red
+      '#990000', // deep red
+      '#ff3333', // medium red
+      '#ff0000'  // back to bright red
+    ],
+    boxShadow: [
+      '0 0 20px #ff0000',
+      '0 0 40px #ff4444', 
+      '0 0 25px #cc0000',
+      '0 0 35px #ff6666',
+      '0 0 30px #990000',
+      '0 0 45px #ff3333',
+      '0 0 20px #ff0000'
+    ],
+    scale: [1, 1.02, 1, 1.01, 1]
+  } : {}}
+  transition={currentQuestionIndex > 4 ? {
+    duration: 0.5,
+    ease: "easeInOut",
+    repeat: Infinity,
+    repeatType: "loop"
+  } : {}}
+>      
+                        
+                        
+                        
+                        
                           <div className="">
                             <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
                               Question {currentQuestionIndex + 1}
@@ -557,7 +760,7 @@ const QuestionTwoScreen = () => {
                               </GlowyStrokeText>
                             </div>
                           </div>
-                        </div>
+                        </motion.div>
 
                         {mqttQuestionData ? (
                           <>
@@ -573,6 +776,8 @@ const QuestionTwoScreen = () => {
                                 const optionLetter = String.fromCharCode(
                                   65 + index
                                 ); // A, B, C, D
+                            const showResult = isSubmitted && correctAnswer;
+                            const isSelected = selectedOption === option;
 
                                 return (
                                   <button
@@ -580,12 +785,22 @@ const QuestionTwoScreen = () => {
                                     onClick={() => handleOptionSelect(option)}
                                     disabled={!timerActive || isSubmitted || !mqttQuestionData}
                                     className={cn(
-                                      "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
-                                      selectedOption === option &&
-                                        "bg-[#FCCE19] border-none text-[#745300]",
-                                      (isSubmitted || !timerActive || !mqttQuestionData) &&
-                                        "opacity-70 cursor-not-allowed"
-                                    )}
+                                                                    "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
+                                                                    !showResult &&
+                                                                      isSelected ?
+                                                                      "bg-[#FCCE19] border-[#FCCE19] text-[#745300]":"",
+                                                                    (isSubmitted ||
+                                                                      !timerActive ||
+                                                                      !mqttQuestionData?.question?.questions) ?
+                                                                      "opacity-70 cursor-not-allowed":"",
+                                                                    // mqttAnswerData &&
+                                                                    //   isSelected &&
+                                                                    //   !isCorrect &&
+                                                                    //   "bg-[#FF3B30]/20 border-[#FF3B30] text-[#FF3B30] font-bold",
+                                                                  (mqttAnswerData && mqttQuestionData?.correct_option ===  convertOptionToLetter(option))
+                                                                       ?
+                                                                      "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100":""
+                                                                  )}
                                   >
                                     {optionLetter}:
                                     <span
@@ -607,9 +822,8 @@ const QuestionTwoScreen = () => {
                             </div>
 
                             {/* Amount buttons, Submit and Next buttons */}
-                            <div className="flex items-center gap-1  mt-7">
+                            {/* <div className="flex items-center gap-1  mt-7">
                               <div className="items-end justify-end">
-                                {/* Submit button - only show if not submitted yet AND time hasn't elapsed */}
                                 {!isSubmitted && (
                                   <Button
                                     className="p-0 bg-transparent"
@@ -628,7 +842,14 @@ const QuestionTwoScreen = () => {
                                   </Button>
                                 )}
                               </div>
-                            </div>
+                            </div> */}
+                             {mqttAnswerData&& <GameResultModal
+                                key={user?.contestant_id}
+                                isOpen={!!mqttAnswerData}
+                                data={mqttAnswerData}
+                                // setIsOpen={setOpenModals}
+                                
+                              />}
                           </>
                         ) : (
                           <div className="flex justify-center items-center h-full mt-4">
