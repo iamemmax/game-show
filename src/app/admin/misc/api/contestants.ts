@@ -79,13 +79,24 @@ export const useAssignContestant = () =>
   credit_source: "gameshow_float" | "";
 }
 export const creditDebitContestant = async (data: CreditDebitContestantRequest) => {
-  const response = await tokenlessAxios.post("api/admin-controller/handle_wallet_funding_and_debits/", data)
+  const response = await tokenlessAxios.post("api/game/debit_for_proof_hustle", data)
   return response?.data 
 }
 
 export const useCreditDebitContestant = () =>
   useMutation({
     mutationFn: creditDebitContestant,
+  })
+
+
+export const hustleTimeELapse = async (data: {game_episode?: number | string}) => {
+  const response = await tokenlessAxios.post("api/admin-controller/hustle_pick_time_elapsed/", data)
+  return response?.data 
+}
+
+export const useHandleHustlePickTimeElapse = () =>
+  useMutation({
+    mutationFn: hustleTimeELapse,
   })
 
 
