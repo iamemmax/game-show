@@ -75,7 +75,7 @@ export const useAssignContestant = () =>
 
   export interface CreditDebitContestantRequest {
   question_id: number | string;
-  giver_contestant_id: number | string;
+  giver_contestant_ids: (number | string)[];
   credit_source: "gameshow_float" | "";
 }
 export const creditDebitContestant = async (data: CreditDebitContestantRequest) => {
