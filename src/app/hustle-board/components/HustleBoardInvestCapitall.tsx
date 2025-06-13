@@ -34,7 +34,7 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
   }
 
   return (
-    <div className="flex flex-col gap-2 w-full max-w-[1400px] mx-auto px-4">
+    <div className="flex flex-col gap-2 w-full mx-auto px-4">
       {hustleReveal.data.map((contestant, idx) => (
     <div key={contestant.contestant_id} className="grid grid-cols-[1fr_5fr] items-start gap-3">
   {/* Contestant Card - Purple card style */}
@@ -88,7 +88,7 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
           titleContainer="w-full flex justify-center items-center absolute left-0 truncate top-0 font-bold text-white leading-tight line-clamp-2"
           titleClassName="text-[1.3rem] truncate"
           numberClassName="text-[2.5rem] mt-[15px]"
-          amountClassName="text-[1.3rem] font-bold -mt-2"
+          amountClassName="2xl:text-[1.8rem] text-[1.4rem] font-bold -mt-2"
           className="h-full w-full"
         />
 

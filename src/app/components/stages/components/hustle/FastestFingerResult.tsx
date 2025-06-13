@@ -52,7 +52,7 @@ const FastestFingerResult = ({
   });
   
   return (
-    <div className="h-full flex items-center flex-col">
+    <div className="h-full !z-[999999999999] flex items-center flex-col">
      
       
       {/* Show results when time has elapsed or results are available */}

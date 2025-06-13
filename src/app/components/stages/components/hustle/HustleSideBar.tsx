@@ -49,7 +49,7 @@ const HustleSideBar = ({
       : mqttAnswerData;
 
   return (
-    <div className="flex justify-between h-full items-center flex-col">
+    <div className="flex justify-between !z-[999999999999] h-full items-center flex-col">
       <div className="relative flex flex-col justify-center items-center"></div>
 
       {showHustlerCard && (
@@ -78,7 +78,11 @@ const HustleSideBar = ({
                 return (
                   <div
                     className={`w-[8.5456rem] ${
-                      isMyContestant ? "bg-[#FFC125]" : "bg-[#ae77ff]"
+                      params?.episodeId
+                        ? "bg-[#ae77ff]"
+                        : isMyContestant
+                          ? "bg-[#FFC125]"
+                          : "bg-[#ae77ff]"
                     } p-[5px] h-[70.66px] rounded-[12.79px] [@media(min-width:2000px)]:w-[12rem] [@media(min-width:2000px)]:h-[7rem] relative ${
                       contestantInfo?.is_eliminated ? "opacity-50 hidden" : ""
                     }`}
@@ -86,9 +90,11 @@ const HustleSideBar = ({
                   >
                     <div
                       className={`w-full h-full flex justify-center items-center rounded-[12.79px] bg-gradient-to-b ${
-                        isMyContestant
-                          ? "from-amber-500 to-yellow-500"
-                          : "from-[#d531f8] to-[#9a5eb2]"
+                        params?.episodeId
+                          ? "from-[#d531f8] to-[#9a5eb2]"
+                          : isMyContestant
+                            ? "from-amber-500 to-yellow-500"
+                            : "from-[#d531f8] to-[#9a5eb2]"
                       }`}
                     >
                       <div className="w-[1.875rem] h-[1.875rem] [@media(min-width:2000px)]:w-[4rem] [@media(min-width:2000px)]:h-[4rem] absolute -top-3 [@media(min-width:2000px)]:-top-[1.5rem] rounded-full overflow-hidden">
