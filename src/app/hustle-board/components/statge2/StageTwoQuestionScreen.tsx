@@ -19,6 +19,7 @@ import StageOneTally from "@/app/components/stages/components/hustle/StageOneTal
 import StageTwoGetReadyStage from "./StageTwoGetReadyStage";
 import { useParams } from "next/navigation";
 import { useGetGameContestants } from "@/app/admin/misc/api";
+import ErrorIcon from "@/app/icons/ErrorIcon";
 
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
 
@@ -40,7 +41,7 @@ const convertOptionToLetter = (option: string | null): string => {
 const ViewOnlyQuestionTwoScreen = () => {
   const { isConnected, onMessage } = useMQTT();
   const user = tokenStorage.getUser();
-  const params = useParams()
+  const params = useParams();
 
   // Get wallet balances for display
   const { data: balanceData } = useGetWalletBalance(
@@ -54,15 +55,21 @@ const ViewOnlyQuestionTwoScreen = () => {
   const [timerActive, setTimerActive] = useState(false);
   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
   const [showStage2Prep, setShowStage2Prep] = useState(true);
-  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
+  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(
+    null
+  );
   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [completedQuestions, setCompletedQuestions] = useState<Set<number>>(new Set());
-  const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(new Set());
-  const { refetch } = useGetGameContestants(
-         Number(params?.episodeId)
-      );
+  const [completedQuestions, setCompletedQuestions] = useState<Set<number>>(
+    new Set()
+  );
+  const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(
+    new Set()
+  );
+  const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
+
+  const { refetch } = useGetGameContestants(Number(params?.episodeId));
 
   // Timer effect - for display only
   useEffect(() => {
@@ -90,8 +97,8 @@ const ViewOnlyQuestionTwoScreen = () => {
   };
 
   // Function to check if a question has been attempted
-  const isQuestionAttempted = (questionIndex: number) => {
-    return attemptedQuestions.has(questionIndex);
+ const isQuestionAttempted = (idx: number) => {
+    return idx < currentQuestionIndex;
   };
 
   // Handle timer start (from events)
@@ -105,7 +112,10 @@ const ViewOnlyQuestionTwoScreen = () => {
     setTimerActive(false);
     setTimeLeft(10);
   };
-
+  const isCorrectOption = (option: OptionKey): boolean => {
+    if (!correctAnswer) return false;
+    return convertOptionToLetter(option) === correctAnswer;
+  };
   const currentQuestionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -136,10 +146,9 @@ const ViewOnlyQuestionTwoScreen = () => {
         setMqttAnswerData(null);
 
         // Set current index and question ID
-        const questionIndex = (questionData.question_index || 1);
-        setCurrentQuestionIndex(questionIndex);
-        
-        const questionId = questionData?.question?.question_id || payload?.question_id;
+     setCurrentQuestionIndex(questionData?.index);
+
+       const questionId = questionData?.question?.question_id;
         if (questionId) {
           setCurrentQuestionId(questionId.toString());
         }
@@ -162,11 +171,15 @@ const ViewOnlyQuestionTwoScreen = () => {
             setCorrectAnswer(answersData.question.correct_option);
             // Stop the timer
             setTimerActive(false);
-            
+
             // Mark current question as completed
-            setCompletedQuestions(prev => new Set([...prev, currentQuestionIndex]));
+            setCompletedQuestions(
+              (prev) => new Set([...prev, currentQuestionIndex])
+            );
             // Also mark as attempted
-            setAttemptedQuestions(prev => new Set([...prev, currentQuestionIndex]));
+            setAttemptedQuestions(
+              (prev) => new Set([...prev, currentQuestionIndex])
+            );
           }
         }
       }
@@ -182,7 +195,9 @@ const ViewOnlyQuestionTwoScreen = () => {
         console.log("✅ Processing game_s2_timer_end");
         setTimerActive(false);
         // Mark current question as attempted when timer ends
-        setAttemptedQuestions(prev => new Set([...prev, currentQuestionIndex]));
+        setAttemptedQuestions(
+          (prev) => new Set([...prev, currentQuestionIndex])
+        );
       }
 
       // Handle results reveal event
@@ -212,7 +227,7 @@ const ViewOnlyQuestionTwoScreen = () => {
     if (timeLeft <= 0 && timerActive) {
       setTimerActive(false);
       // Mark current question as attempted when timer ends
-      setAttemptedQuestions(prev => new Set([...prev, currentQuestionIndex]));
+      setAttemptedQuestions((prev) => new Set([...prev, currentQuestionIndex]));
     }
   }, [timeLeft, timerActive, currentQuestionIndex]);
 
@@ -221,11 +236,17 @@ const ViewOnlyQuestionTwoScreen = () => {
   }
 
   if (allQuestionsCompleted) {
-    return <StageOneTally eliminationCount={2} removeCount={2} title={params?.episodeId ?"Hustle Board":"Stage 2"} />;
+    return (
+      <StageOneTally
+        eliminationCount={2}
+        removeCount={2}
+        title={params?.episodeId ? "Hustle Board" : "Stage 2"}
+      />
+    );
   }
 
   return (
-    <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full">
+    <div className="grid grid-cols-[1fr_5fr_1fr] h-full">
       {/* Left Sidebar */}
       <div className="flex flex-col justify-between">
         <div className="flex justify-center items-center h-3.5 w-full mt-8">
@@ -259,32 +280,121 @@ const ViewOnlyQuestionTwoScreen = () => {
             />
           </div>
 
-          <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[65rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
+          <div className="relative w-full py-[2rem] 2xl:py-[2.5rem]  px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
             {/* Animated border */}
-            <div className="absolute inset-0">
-              <motion.div
-                className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
-                style={{
-                  background: `conic-gradient(from 0deg at 50% 50%,
-                    #d91fff 0deg,
-                    #d91fff 120deg,
-                    #00ffff 100deg,
-                    #00ffff 240deg,
-                    #FFD700 220deg,
-                    #FFD700 360deg,
-                    #d91fff 340deg
-                  )`,
-                }}
-                animate={{
-                  rotate: [0, 360],
-                }}
-                transition={{
-                  duration: 4,
-                  ease: "linear",
-                  repeat: Infinity,
-                }}
-              />
-            </div>
+          <div className="absolute inset-0">
+                          <motion.div
+                            className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+                            style={{
+                              background:
+                                currentQuestionIndex > 4
+                                  ? `conic-gradient(from 0deg at 50% 50%,
+                     #ff0000 0deg,
+                     #ff4444 120deg,
+                     #cc0000 240deg,
+                     #ff0000 360deg
+                   )`
+                                  : `conic-gradient(from 0deg at 50% 50%,
+                     #d91fff 0deg,
+                     #d91fff 120deg,
+                     #00ffff 100deg,
+                     #00ffff 240deg,
+                     #FFD700 220deg,
+                     #FFD700 360deg,
+                     #d91fff 340deg
+                   )`,
+                            }}
+                            animate={{
+                              rotate: [0, 360],
+                            }}
+                            transition={{
+                              duration: currentQuestionIndex > 5 ? 2 : 4, // Faster rotation in danger zone
+                              ease: "linear",
+                              repeat: Infinity,
+                            }}
+                          />
+                        </div>
+
+                         <div className="absolute inset-0">
+                                        <motion.div
+                                          className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+                                          style={{
+                                            background:
+                                              currentQuestionIndex > 4
+                                                ? `conic-gradient(from 0deg at 50% 50%,
+                                   #ff0000 0deg, #ff0000 10deg,
+                                   #8b0000 10deg, #8b0000 20deg,
+                                   #ff4444 20deg, #ff4444 30deg,
+                                   #cc0000 30deg, #cc0000 40deg,
+                                   #ff6666 40deg, #ff6666 50deg,
+                                   #990000 50deg, #990000 60deg,
+                                   #ff3333 60deg, #ff3333 70deg,
+                                   #b30000 70deg, #b30000 80deg,
+                                   #ff1111 80deg, #ff1111 90deg,
+                                   #660000 90deg, #660000 100deg,
+                                   #ff5555 100deg, #ff5555 110deg,
+                                   #aa0000 110deg, #aa0000 120deg,
+                                   #ff2222 120deg, #ff2222 130deg,
+                                   #770000 130deg, #770000 140deg,
+                                   #ff7777 140deg, #ff7777 150deg,
+                                   #dd0000 150deg, #dd0000 160deg,
+                                   #ff0000 160deg, #ff0000 170deg,
+                                   #440000 170deg, #440000 180deg,
+                                   #ff8888 180deg, #ff8888 190deg,
+                                   #ee0000 190deg, #ee0000 200deg,
+                                   #ff1111 200deg, #ff1111 210deg,
+                                   #550000 210deg, #550000 220deg,
+                                   #ff4444 220deg, #ff4444 230deg,
+                                   #bb0000 230deg, #bb0000 240deg,
+                                   #ff9999 240deg, #ff9999 250deg,
+                                   #880000 250deg, #880000 260deg,
+                                   #ff3333 260deg, #ff3333 270deg,
+                                   #ff0000 270deg, #ff0000 280deg,
+                                   #330000 280deg, #330000 290deg,
+                                   #ff6666 290deg, #ff6666 300deg,
+                                   #cc0000 300deg, #cc0000 310deg,
+                                   #ff2222 310deg, #ff2222 320deg,
+                                   #990000 320deg, #990000 330deg,
+                                   #ff5555 330deg, #ff5555 340deg,
+                                   #ff0000 340deg, #ff0000 360deg
+                                 )`
+                                                : `conic-gradient(from 0deg at 50% 50%,
+                                   #d91fff 0deg,
+                                   #d91fff 120deg,
+                                   #00ffff 100deg,
+                                   #00ffff 240deg,
+                                   #FFD700 220deg,
+                                   #FFD700 360deg,
+                                   #d91fff 340deg
+                                 )`,
+                                          }}
+                                          animate={{
+                                            rotate: [0, 360],
+                                            ...(currentQuestionIndex > 4 && {
+                                              filter: [
+                                                "brightness(1) saturate(1)",
+                                                "brightness(1.5) saturate(1.5)",
+                                                "brightness(0.8) saturate(1.2)",
+                                                "brightness(1.3) saturate(1.8)",
+                                                "brightness(1) saturate(1)",
+                                              ],
+                                            }),
+                                          }}
+                                          transition={{
+                                            duration: currentQuestionIndex > 5 ? 2 : 4,
+                                            ease: "linear",
+                                            repeat: Infinity,
+                                            ...(currentQuestionIndex > 4 && {
+                                              filter: {
+                                                duration: 0.3,
+                                                ease: "easeInOut",
+                                                repeat: Infinity,
+                                                repeatType: "reverse",
+                                              },
+                                            }),
+                                          }}
+                                        />
+                                      </div>
 
             {/* Content container */}
             <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
@@ -324,48 +434,39 @@ const ViewOnlyQuestionTwoScreen = () => {
               <div className="grid mt-5 gap-3 grid-cols-[1fr_3fr_1fr] items-start">
                 {/* Question numbers sidebar - Updated to show attempted questions */}
                 <div className="flex gap-2 flex-col">
-                  {Array.from({ length: 8 }, (_, index) => {
-                    const isCompleted = isQuestionCompleted(index);
-                    const isActive = isQuestionActive(index);
-                    const isAttempted = isQuestionAttempted(index);
-                    
-                    return (
-                      <div key={index} className="">
+                    {Array.from({ length: 8 }, (_, index) => (
+                      <div className="" key={index}>
                         <NumberCardContainer
+                          // text={index + 1}
                           text={
-                            isCompleted ? (
+                            isQuestionAttempted(index+1) ? (
                               <CheckIcon size={160} />
                             ) : (
                               index + 1
                             )
                           }
                           textColor={
-                            isActive
+                            currentQuestionIndex === index+1
                               ? "#FFFFFF"
-                              : isCompleted
+                              : isQuestionAttempted(index+1)
                                 ? "#fff"
-                                : isAttempted
-                                  ? "#FFC125"  // Highlight attempted questions
-                                  : "#F2C94C"
+                                : "#F2C94C"
                           }
                           backgroundColor={
-                            isActive
+                            currentQuestionIndex === index+1
                               ? "#FEC124"
-                              : isCompleted
+                              : isQuestionAttempted(index+1)
                                 ? "#04DA6A"
-                                : isAttempted
-                                  ? "#997416"  // Different background for attempted questions
-                                  : "black"
+                                : "black"
                           }
-                          width={45}
-                          height={45}
-                          active={isActive || isCompleted || isAttempted}
+                          width={75}
+                          height={75}
+                          active={currentQuestionIndex > index+1}
                           iconPosition={{ y: 33 }}
                           iconSize={30}
                         />
                       </div>
-                    );
-                  })}
+                    ))}
                 </div>
 
                 {isLoading ? (
@@ -375,125 +476,177 @@ const ViewOnlyQuestionTwoScreen = () => {
                 ) : (
                   <div className="relative">
                     {/* Question display section */}
-                    <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
+                   <motion.div
+                                          className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000] ${
+                                            currentQuestionIndex > 4
+                                              ? "border-red-500"
+                                              : "border-[#D71BFA]"
+                                          }`}
+                                          animate={
+                                            currentQuestionIndex > 4
+                                              ? {
+                                                  borderColor: [
+                                                    "#ff0000", // bright red
+                                                    "#ff4444", // light red
+                                                    "#cc0000", // dark red
+                                                    "#ff6666", // pink red
+                                                    "#990000", // deep red
+                                                    "#ff3333", // medium red
+                                                    "#ff0000", // back to bright red
+                                                  ],
+                                                  boxShadow: [
+                                                    "0 0 20px #ff0000",
+                                                    "0 0 40px #ff4444",
+                                                    "0 0 25px #cc0000",
+                                                    "0 0 35px #ff6666",
+                                                    "0 0 30px #990000",
+                                                    "0 0 45px #ff3333",
+                                                    "0 0 20px #ff0000",
+                                                  ],
+                                                  scale: [1, 1.02, 1, 1.01, 1],
+                                                }
+                                              : {}
+                                          }
+                                          transition={
+                                            currentQuestionIndex > 4
+                                              ? {
+                                                  duration: 0.5,
+                                                  ease: "easeInOut",
+                                                  repeat: Infinity,
+                                                  repeatType: "loop",
+                                                }
+                                              : {}
+                                          }
+                                        >
                       <div className="">
-                        <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
-                          Question {currentQuestionIndex + 1}
+                        <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-2xl text-[#04DA6A] font-outfit">
+                          Question {currentQuestionIndex}
                         </p>
                       </div>
                       <div className="">
-                        <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                          {mqttQuestionData?.question || "Waiting for question..."}
+                        <h2 className="text-white  2xl:text-[3rem] text-center font-gilroyMedium font-extrabold">
+                          {mqttQuestionData?.question ||
+                            "Waiting for question..."}
                         </h2>
                       </div>
                       <div className="flex justify-center items-center w-full gap-4">
                         <div className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
-                          <p className="text-sm font-outfit font-normal text-[#FFC125]">
+                          <p className="text-xl font-outfit font-normal text-[#FFC125]">
                             Win amount
                           </p>
                           <GlowyStrokeText
                             strokeWidth={1}
                             strokeColor="#FFC125"
                             glowColor="#FFC125"
-                            textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
+                            textclassName="text-[40px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
                             fillColor="#fff"
                             glowIntensity={"none"}
                           >
                             ₦
                             {addCommasToNumber(
-                              Number(mqttQuestionData?.allocated_winning_amount || 0)
-                            )}
-                          </GlowyStrokeText>
-                        </div>
-                        <div className="bg-[#011B0D] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
-                          <p className="text-sm font-outfit font-normal text-[#04DA6A]">
-                            Capital:
-                          </p>
-                          <GlowyStrokeText
-                            strokeWidth={1}
-                            strokeColor="#04DA6A"
-                            glowColor="#04DA6A"
-                            glowIntensity="none"
-                            textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
-                            fillColor="#fff"
-                          >
-                            ₦
-                            {addCommasToNumber(
                               Number(
-                                balanceData?.data?.balances?.find(
-                                  (balance:any) => balance.contestant_id === user?.contestant_id
-                                )?.actual_balance || 0
+                                mqttQuestionData?.allocated_winning_amount || 0
                               )
                             )}
                           </GlowyStrokeText>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
 
                     {mqttQuestionData ? (
                       <>
                         {/* Answer options - Updated to highlight correct option */}
-                        <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
-                          {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
-                            (option, index) => {
-                              const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-                              const isCorrect = correctAnswer === option;
+                        <div className="grid grid-cols-2 gap-[.625rem] mt-[1.625rem]">
+                          {(
+                            [
+                              "option_a",
+                              "option_b",
+                              "option_c",
+                              "option_d",
+                            ] as OptionKey[]
+                          ).map((option, index) => {
+                            const optionLetter = String.fromCharCode(
+                              65 + index
+                            ); // A, B, C, D
+                            
+                            const isCorrect = isCorrectOption(option);
+                            const isSelected = selectedOption === option;
+                            const showResult = correctAnswer;
 
-                              return (
-                                <div
-                                  key={option}
+                            return (
+                              <button
+                                key={option}
+                                className={cn(
+                                  "bg-[#000000] border-2 rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
+                                  !showResult && isSelected
+                                    ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
+                                    : "",
+                                  !timerActive ||
+                                    !mqttQuestionData?.question?.questions
+                                    ? "opacity-70 cursor-not-allowed"
+                                    : "",
+                                  // mqttAnswerData &&
+                                  //   isSelected &&
+                                  //   !isCorrect &&
+                                  //   "bg-[#FF3B30]/20 border-[#FF3B30] text-[#FF3B30] font-bold",
+                                  mqttAnswerData &&
+                                    mqttQuestionData?.correct_option ===
+                                      convertOptionToLetter(option)
+                                    ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                                    : ""
+                                )}
+                              >
+                                {optionLetter}:
+                                <span
                                   className={cn(
-                                    "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left cursor-not-allowed",
-                                    isCorrect 
-                                      ? "bg-[#04DA6A] border-[#04DA6A] opacity-100" // Correct answer
-                                      : correctAnswer && !isCorrect 
-                                        ? "border-[#EB001B] opacity-60" // Wrong answer when correct is known
-                                        : "border-[#D71BFA] opacity-60" // Default state
+                                    "ml-2",
+                                    selectedOption === option && !showResult
+                                      ? "text-white font-bold"
+                                      : "",
+                                    isCorrect && showResult
+                                      ? "text-[#04DA6A] font-bold"
+                                      : "",
+                                    isSelected && !isCorrect && showResult
+                                      ? "text-[#FF3B30] font-bold"
+                                      : ""
                                   )}
+                                  style={{
+                                    WebkitTextStroke:
+                                      selectedOption === option && !showResult
+                                        ? "1px #C76000"
+                                        : "",
+                                  }}
                                 >
-                                  {optionLetter}:
-                                  <span
-                                    className={cn(
-                                      isCorrect ? "text-white font-bold" : "",
-                                      correctAnswer && !isCorrect ? "text-[#EB001B]" : ""
-                                    )}
-                                    style={{
-                                      marginLeft: "9px",
-                                      WebkitTextStroke: isCorrect ? "1px #006400" : "",
-                                    }}
-                                  >
-                                    {" "}
-                                    {mqttQuestionData?.[option] || "..."}
-                                  </span>
-                                </div>
-                              );
-                            }
-                          )}
-                        </div>
-
-                        {/* Status indicators */}
-                        <div className="flex items-center gap-1 mt-7">
-                          {correctAnswer && (
-                            <div className="bg-[#04DA6A] px-4 py-2 rounded-lg ml-2">
-                              <span className="text-white text-sm font-medium">
-                                ✅ Correct Answer: {convertOptionToLetter(correctAnswer)}
-                              </span>
-                            </div>
-                          )}
-                          
-                          {timeLeft <= 0 && !correctAnswer && (
-                            <div className="bg-[#EB001B] px-4 py-2 rounded-lg ml-2">
-                              <span className="text-white text-sm font-medium">
-                                ⏱️ Time Elapsed - Waiting for correct answer
-                              </span>
-                            </div>
-                          )}
+                                  {" "}
+                                  {mqttQuestionData?.[option] || "..."}
+                                </span>
+                                {/* Correct answer indicator */}
+                                {isCorrect && showResult && (
+                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                    <div className="bg-[#04DA6A] rounded-full p-1">
+                                      <CheckIcon size={16} />
+                                    </div>
+                                  </div>
+                                )}
+                                {/* Incorrect answer indicator */}
+                                {!isCorrect && showResult && (
+                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                    <div className="bg-[#FF3B30] rounded-full p-1">
+                                      <ErrorIcon />
+                                    </div>
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </>
                     ) : (
                       <div className="flex justify-center items-center h-full mt-4">
                         <div className="text-[#D5B9FF] text-lg">
-                          {isConnected ? "Waiting for next question..." : "Connecting..."}
+                          {isConnected
+                            ? "Waiting for next question..."
+                            : "Connecting..."}
                         </div>
                       </div>
                     )}

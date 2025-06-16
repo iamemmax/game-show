@@ -40,6 +40,7 @@ const StageOneTally = ({
     "#E5AA18",
     "##9E5CFF",
   ];
+  const params = useParams();
   const { isConnected, onMessage } = useMQTT();
   const router = useRouter();
   const [goToStage2, setGoToStage2] = useState(false);
@@ -49,9 +50,11 @@ const StageOneTally = ({
   // const { data: dataBalance, isLoading } = useGetWalletBalance(user?.game_episode as number);
   const [processedBalances, setProcessedBalances] = useState<any[]>([]);
   const { data: allContestsant } = useGetGameContestants(
-    user?.game_episode as number
-  );
-  const params = useParams();
+!params?.episodeId
+      ? (user?.game_episode as number)
+      : Number(params?.episodeId)
+  )
+  
 
   // Check if current user is eliminated
   useEffect(() => {
@@ -124,13 +127,12 @@ const StageOneTally = ({
     return <QuestionTwoScreen />;
   }
   if (goToStage3) {
-    console.log("Navigating to Stage 3", { 
+    console.log("Navigating to Stage 3", {
       hasEpisodeId: !!params?.episodeId,
-      episodeId: params?.episodeId
+      episodeId: params?.episodeId,
     });
-    
+
     if (params?.episodeId) {
-      console.log("Rendering Stage3BoardGetReadyPage");
       // Ensure the component is properly rendered with key for React reconciliation
       return <Stage3BoardGetReadyPage key="stage3-board-ready" />;
     } else {
@@ -175,7 +177,7 @@ const StageOneTally = ({
         </Dialog>
       )}
 
-      <div className="grid grid-cols-[1fr_2.5fr_1fr] 2xl:grid-cols-[1fr_1.5fr_1fr] h-full ">
+      <div className={`grid ${params?.episodeId ?"grid-cols-[1fr_4fr_1fr] ":"grid-cols-[1fr_2.5fr_1fr] 2xl:grid-cols-[1fr_1.5fr_1fr]"} h-full `}>
         {/* Left Sidebar */}
         <div className="flex flex-col justify-between">
           <div className="flex justify-center items-center h-3.5 w-full mt-8">
@@ -219,7 +221,7 @@ const StageOneTally = ({
             </div>
 
             <div
-              className={`relative w-full ${processedBalances?.length <= 4 ? "py-[3rem]" : "py-[1rem]"}   2xl:py-[2.5rem] max-xl:max-w-[40.5rem] 2xl:max-w-[60rem] px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden`}
+              className={`relative w-full ${processedBalances?.length <= 4 ? "py-[3rem]" : "py-[1rem]"}   2xl:py-[2.5rem] ${params?.episodeId?"w-full":"max-xl:max-w-[40.5rem] 2xl:max-w-[60rem]"}  px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden`}
               style={{
                 backdropFilter: "blur(74px)",
                 WebkitBackdropFilter: "blur(74px)", // For Safari support
@@ -267,7 +269,7 @@ const StageOneTally = ({
                       strokeColor="#D91FFF"
                       // glowColor="transparent"
                       glowIntensity="low"
-                      textclassName="text-[2.5rem] font-extrabold font-display"
+                      textclassName={`${params?.episodeId?"text-[4.5rem]":"text-[2.5rem]"} font-extrabold font-display`}
                       fillColor="#000"
                     >
                       Stage tally
@@ -303,7 +305,7 @@ const StageOneTally = ({
                         className={`flex justify-center gap-[.6875rem] 2xl:gap-1 items-center ${tally.is_eliminated ? "opacity-50" : ""}`}
                       >
                         <div
-                          className={`${cn(`h-[3.125rem] grid grid-cols-[1fr_3fr] 2xl:grid-cols-[1fr_2fr] w-[7.8125rem] bg-[#1C0240] 2xl:h-[3.8rem] p-2 border-[.0531rem] border-opacity-55 border-[${borderArray[idx]}] rounded-[.4594rem]`)} `}
+                          className={`${cn(`${params?.episodeId ? "!h-[6rem] !pt-4 !w-[12.8125rem]":"h-[3.125rem] w-[7.8125rem]" } gap-3  grid grid-cols-[1fr_3fr] 2xl:grid-cols-[1fr_2fr]  bg-[#1C0240] 2xl:h-[3.8rem] p-2 border-[.0531rem] border-opacity-55 border-[${borderArray[idx]}] rounded-[.4594rem]`)} `}
                         >
                           <div className="shrink-0">
                             <Image
@@ -311,11 +313,11 @@ const StageOneTally = ({
                               src={contestantImages[idx]}
                               width={18}
                               height={18}
-                              className="rounded-full shrink-0 2xl:w-[30px] 2xl:h-[30px]"
+                              className={`rounded-full shrink-0 ${params?.episodeId?"w-[80px] h-[60px]":"2xl:w-[60px] 2xl:h-[30px]"} `}
                             />
                           </div>
                           <div className={`${cn(` flex flex-col`)}`}>
-                            <p className="text-xs 2xl:text-sm font-gilroyMedium font-normal text-white">
+                            <p className={`${params?.episodeId?"text-xl":"text-xs 2xl:text-sm"}  font-gilroyMedium font-normal text-white`}>
                               {tally.name?.split(" ")[0]}
                             </p>
                             <p className="text-xs 2xl:text-sm font-gilroyMedium font-normal text-white">
@@ -331,7 +333,7 @@ const StageOneTally = ({
                                 : tallyArray[idx]
                             }
                             fontSize={30}
-                            className="2xl:w-[700px] 2xl:h-[90px]"
+                            className={`${params?.episodeId?"w-full h-[120px]":"2xl:w-[700px] 2xl:h-[90px]"} `}
                             color="#fff"
                             amount={`₦${addCommasToNumber(Number(tally?.actual_balance) ?? 0)}`}
                             badgeColor={

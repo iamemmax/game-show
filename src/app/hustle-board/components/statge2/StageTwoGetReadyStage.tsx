@@ -14,12 +14,6 @@ import HustleStages from "@/app/components/stages/components/hustle/HustleStages
 
 
 const StageTwoGetReadyStage = () => {
-  // MQTT hooks are kept for future use but not currently used
-  // const { isConnected, onMessage } = useMQTT();
-  // const [showQuestionScreen, setshowQuestionScreen] = useState(false);
-
-  // Add debug log to track component rendering
-
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -55,32 +49,7 @@ const StageTwoGetReadyStage = () => {
     }
   };
 
-  // useEffect(() => {
-  //   if (isConnected) {
-  //     const handler = (receivedMessage: any) => {
-  //       console.log("Main page received message:", receivedMessage);
-
-  //       // Handle stage transition events
-  //       if (receivedMessage?.event === "game_s1_question_reveal") {
-  //         // Proceed to the next stage
-  //         setshowQuestionScreen(true);
-  //       }
-  //     };
-
-  //     // Register the message handler
-  //     onMessage(handler);
-
-  //     // Clean up function to remove the handler when component unmounts
-  //     return () => {
-  //       onMessage(null);
-  //     };
-  //   }
-  // }, [isConnected, onMessage]);
-
-  // if(showQuestionScreen){
-  //   return <QuestionScreen/>
-  // }
-
+ 
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -131,7 +100,7 @@ const StageTwoGetReadyStage = () => {
             </motion.div>
 
             <motion.div
-              className="relative w-full py-[2rem] 2xl:py-[6.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
+              className="relative w-full py-[2rem] 2xl:py-[3.5rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
               variants={itemVariants}
             >
               {/* Animated border */}
@@ -161,14 +130,14 @@ const StageTwoGetReadyStage = () => {
               </div>
 
               {/* Content container - increased border width from 5px to 8px for bolder appearance */}
-              <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
+              <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem] " />
               <div className="relative flex flex-col items-center w-full">
                 <motion.div
-                  className="flex flex-col justify-between items-start gap-4 p-6 rounded-lg shadow-md"
+                  className="flex flex-col justify-between  w-full items-start gap-4 p-6 rounded-lg shadow-md"
                   variants={itemVariants}
                 >
                   <motion.h2
-                    className="text-[2.75rem] font-extrabold outline-text text-black"
+                    className="text-[4.75rem] font-extrabold outline-text text-black"
                     variants={itemVariants}
                     animate={{
                       scale: [1, 1.05, 1],
@@ -180,11 +149,11 @@ const StageTwoGetReadyStage = () => {
                       repeatType: "reverse"
                     }}
                   >
-                    Get Ready
+                 Get Ready for stage 2
                   </motion.h2>
 
                   <motion.p
-                    className="text-sm font-outfit text-white max-w-2xl"
+                    className="text-3xl font-outfit text-white"
                     variants={itemVariants}
                   >
                     Welcome to the <span className="font-semibold text-[#d91fff] px-1">Fastest Finger Q&A</span> round!
@@ -194,7 +163,7 @@ const StageTwoGetReadyStage = () => {
                   </motion.p>
 
                   <motion.p
-                    className="text-sm font-outfit text-white max-w-2xl"
+                    className="text-3xl font-outfit text-white"
                     variants={itemVariants}
                   >
                     At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">two contestants with the lowest scores</span>
@@ -202,10 +171,10 @@ const StageTwoGetReadyStage = () => {
                   </motion.p>
 
                   <motion.ul
-                    className="list-disc pl-5 leading-7 text-sm text-white font-outfit"
+                    className="list-disc pl-5 mt-3 leading-[4rem] text-3xl text-white font-outfit"
                     variants={itemVariants}
                   >
-                     {[
+                    {[
                       "Each contestant gets <strong>2 questions</strong>.",
                       "<strong>Only the first correct answer</strong> wins the point.",
                       "Speed matters — think fast, answer faster!",
@@ -235,3 +204,4 @@ const StageTwoGetReadyStage = () => {
 };
 
 export default StageTwoGetReadyStage;
+

@@ -1663,7 +1663,7 @@ useEffect(() => {
       await sendMessage(payload, "stage3_card_selection");
       handleCard({
         contestant_id:user?.contestant_id,
-        game_game_episode:Number(user?.game_episode),
+        game_episode:Number(user?.game_episode),
         pick:type?.toUpperCase()
       })
     } catch (error) {

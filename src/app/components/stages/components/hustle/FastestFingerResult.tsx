@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { contestantImages } from '../mocks/contestantImages'
 import { useMQTT } from '@/hooks/useMqttService'
+import { usePathname } from 'next/navigation'
 
 // Create a unified type for contestant answers
 interface ContestantAnswer {
@@ -44,13 +45,9 @@ const FastestFingerResult = ({
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
   };
 
-  console.log("Rendering FastestFingerResult with props:", {
-    resultArray,
-    timeElapsed,
-    mqttAnswerData,
-    currentQuestionId
-  });
-  
+  const pathname = usePathname();
+  const isBoardRoute = pathname?.includes('/hustle-board/');
+
   return (
     <div className="h-full !z-[999999999999] flex items-center flex-col">
      
@@ -98,7 +95,8 @@ const FastestFingerResult = ({
                     correctAnswerColor={result.is_correct ? "#04DA6A" : "#EB001B"}
                     usernameClassName='mt-[6px] text-white text-xs'
                     dotPosition={{y:36}}
-                    width={130}
+                  width={isBoardRoute?230:130}
+                  height={isBoardRoute?80:53}
                   />
                 </motion.div>
               );
@@ -116,7 +114,8 @@ const FastestFingerResult = ({
               borderColor="#FFC125" 
               iconText="" 
               showIcon={false} 
-              width={130}
+              width={isBoardRoute?230:130}
+                  height={isBoardRoute?80:53}
               className="2xl:w-[260px]"
             />
           ))}

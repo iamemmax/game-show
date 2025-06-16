@@ -30,7 +30,7 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
   ];
 
   if (!hustleReveal?.data || hustleReveal.data.length === 0) {
-    return <div>No hustle data available</div>;
+    return <div className="text-white text-base">No hustle data available</div>;
   }
 
   return (
@@ -74,9 +74,9 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
   </div>
 
   {/* Hustle Cards - Existing code */}
-  <div className="grid grid-cols-5 gap-4 flex-grow [@media(min-width:2000px)]:gap-[4rem]">
+  <div className="grid grid-cols-5 relative gap-4 flex-grow [@media(min-width:2000px)]:gap-[4rem]">
     {contestant.reveals?.map((card, cardIdx) => (
-      <div key={card.id} className="aspect-video relative">
+      <div key={card.id} className=" relative">
         <HustleCardTwo
           id={card.id.toString()}
           title={convertKebabAndSnakeToTitleCase(
@@ -85,11 +85,11 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
           number={card.hustle_number}
           amount={`₦${addCommasToNumber(Number(card.hustle_amount.toFixed(0)))}`}
           pattern={hustlePattern[cardIdx % hustlePattern.length].pattern}
-          titleContainer="w-full flex justify-center items-center absolute left-0 truncate top-0 font-bold text-white leading-tight line-clamp-2"
-          titleClassName="text-[1.3rem] truncate"
-          numberClassName="text-[2.5rem] mt-[15px]"
-          amountClassName="2xl:text-[1.8rem] text-[1.4rem] font-bold -mt-2"
-          className="h-full w-full"
+          titleContainer="w-full flex justify-center items-center absolute left-0 truncate top-[10px] font-bold text-white leading-tight line-clamp-2"
+          titleClassName="text-[1.5rem] truncate"
+          numberClassName="text-[3rem] top-6 "
+          amountClassName="2xl:text-[1.2rem] top-5 text-[1.4rem] 3xl:text-[1.8rem] font-bold "
+          className=" w-full 2xl:h-[7rem] 3xl:h-[10rem]"
         />
 
         <motion.div 
@@ -102,7 +102,7 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
             card?.hustle_state === "DUD" 
               ? "bg-[#2D0408] text-[#EB001B]" 
               : "bg-[#011B0D] text-[#04DA6A]"
-          } px-3 py-[7px] rounded-10 text-white`}>
+          } px-3 py-2 rounded-10 text-white`}>
             {convertKebabAndSnakeToTitleCase(card.hustle_state)}
           </p>
         </motion.div>
