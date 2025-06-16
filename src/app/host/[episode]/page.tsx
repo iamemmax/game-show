@@ -7,7 +7,7 @@ import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMQTT } from "@/hooks/useMqttService"
 import { useGetGameContestants, useHandleHustlePickTimeElapse } from "@/app/admin/misc/api"
-import { useNotifyBackendStartQuestionTimer } from "../misc/api"
+import { useInitStage2, useNotifyBackendStartQuestionTimer } from "../misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import Stage1Questions from "./Stage1"
 import Stage2Questions from "./Stage2"
@@ -319,7 +319,18 @@ export default function HostPage() {
     ////////    Stage 2 functions
     //////////////////////////////
     //////////////////////////////
-    const initStage2 = () => sendGameMessage("game_s2_init", { start_time: new Date().toISOString() })
+    const { mutate: handleInitStage2 } = useInitStage2()
+    const initStage2 = () => {
+        handleInitStage2({ game_episode: gameId }, {
+            onSuccess() {
+                sendGameMessage("game_s2_init", { start_time: new Date().toISOString() })
+            },
+            onError(error) {
+                console.error("Error initializing stage 2:", error)
+                toast.error("Failed to initialize stage 2")
+            },
+        })
+    }
     const prepStage2Questions = () => sendGameMessage("game_s2_prep")
 
     // Handle timer start

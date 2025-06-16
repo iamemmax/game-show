@@ -110,6 +110,17 @@ export const useGetHustleQuestion = () => {
         mutationKey: ["get-hustle-question"],
     });
 }
+const postInitStageTwo = async (data: { game_episode: string | number }) => {
+    const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/admin-controller/init_stage_two/`, data);
+    return res.data;
+}
+
+export const useInitStage2 = () => {
+    return useMutation({
+        mutationFn: postInitStageTwo,
+        mutationKey: ["initialize-stage-2"],
+    });
+}
 
 const postEndStageOne = async ({ episode }: { episode: string | number }) => {
     const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/admin-controller/end_stage_one/${episode}`);
