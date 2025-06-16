@@ -6,7 +6,7 @@ import Link from "next/link"
 import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMQTT } from "@/hooks/useMqttService"
-import { useGetGameContestants } from "@/app/admin/misc/api"
+import { useGetGameContestants, useHandleHustlePickTimeElapse } from "@/app/admin/misc/api"
 import { useNotifyBackendStartQuestionTimer } from "../misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import Stage1Questions from "./Stage1"
@@ -290,7 +290,15 @@ export default function HostPage() {
     //////////////////////////////
     //////////////////////////////
     const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
-    const endTimerHustlePick = () => sendGameMessage("game_s1_hustle_pick_time_elapse")
+    const { mutate: handleTimeElapse } = useHandleHustlePickTimeElapse()
+    const endTimerHustlePick = () => {
+        handleTimeElapse({ game_episode: gameId }, {
+            onSuccess() {
+                sendGameMessage("game_s1_hustle_pick_time_elapse")
+            }
+        },)
+    }
+
     const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
     const prepStage1Questions = () => sendGameMessage("game_s1_questions_prep")
 
@@ -332,7 +340,7 @@ export default function HostPage() {
     const prepStage3Picks = () => sendGameMessage("game_s3_prep")
     const startStage3Picks = () => sendGameMessage("game_s3_start")
 
- 
+
     const getStageInfo = () => {
         if (gameState.currentStage.includes("STAGE_ONE")) {
             return { title: "Stage 1", subtitle: "STARTUP CAPITAL" }
@@ -463,9 +471,9 @@ export default function HostPage() {
             return null
 
         }
-     
-     
-     
+
+
+
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////                      STAGE THREE                    /////////////////////////
