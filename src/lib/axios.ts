@@ -4,12 +4,18 @@ import type { AxiosInstance } from "axios";
 const ADMIN_API_BASE_URL = process.env
   .NEXT_PUBLIC_SALARY_4_LIFE_API_BASE_URL as string;
 
+  console.log("Admin API Base URL:", ADMIN_API_BASE_URL);
+
 export const salaryAxios = Axios.create({
   baseURL: ADMIN_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   }
 });
+
+  console.log("Admin API Base URL axios:", salaryAxios);
+
+
 export const tokenlessAxios = Axios.create({
   baseURL: ADMIN_API_BASE_URL,
   headers: {
