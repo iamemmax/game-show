@@ -20,6 +20,7 @@ interface prop {
   removeCount?: number;
   showHustleCardAmt?: boolean;
   mqttAnswerData?: any;
+  // mqttAnswerBalanceData?: any;
 }
 
 const HustleSideBar = ({
@@ -28,6 +29,7 @@ const HustleSideBar = ({
   showHustlerCard = false,
   showHustleCardAmt = true,
   mqttAnswerData,
+  // mqttAnswerBalanceData
 }: prop) => {
   const user = tokenStorage.getUser();
   const params = useParams();
@@ -60,7 +62,7 @@ const HustleSideBar = ({
       </div>
     ) : (
       <div className={`flex-1 flex px-3 gap-6 h-full flex-col justify-center items-center`}>
-        {dataToRender.map((contestant: any, idx: number) => {
+        {dataToRender?.map((contestant: any, idx: number) => {
           const isBoardRoute = typeof params?.episodeId !== "undefined";
 
           let contestantInfo = contestant;

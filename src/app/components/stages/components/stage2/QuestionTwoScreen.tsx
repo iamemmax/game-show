@@ -744,28 +744,7 @@ const QuestionTwoScreen = () => {
                             })}
                           </div>
 
-                          {/* Amount buttons, Submit and Next buttons */}
-                          {/* <div className="flex items-center gap-1  mt-7">
-                              <div className="items-end justify-end">
-                                {!isSubmitted && (
-                                  <Button
-                                    className="p-0 bg-transparent"
-                                    onClick={handleSubmitAnswer}
-                                    disabled={
-                                      !timerActive ||
-                                      !selectedOption ||
-                                      isSubmitted
-                                    }
-                                  >
-                                    <GradientButton
-                                      text="Submit"
-                                      className={`uppercase ${!timerActive || !selectedOption ? "opacity-50" : ""}`}
-                                      width={130}
-                                    />
-                                  </Button>
-                                )}
-                              </div>
-                            </div> */}
+                        
                           {mqttAnswerData && (
                             <GameResultModal
                               key={user?.contestant_id}

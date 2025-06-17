@@ -2,14 +2,13 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { tokenStorage } from "@/utils/auth";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import HustleBoardNumberPicks from "../components/HustleBoardNumberPicks";
 import ReviewHustle from "../components/ReviewHustle";
 import Stage1QuestionScreen from "../components/Stage1QuestionScreen";
 import ViewOnlyQuestionTwoScreen from "../components/statge2/StageTwoQuestionScreen";
 import Stage3GetReadyPage from "@/app/components/stages/components/stage3/Stage3GetReadyPage";
-import Stage3CardSelection from "../components/stage3/Stage3CardSelectionScreen";
+import Stage3CardSelectionScreens from "../components/stage3/Stage3CardSelectionScreen";
 
 const pageVariants = {
   initial: { opacity: 0, x: 50 },
@@ -82,7 +81,7 @@ const HomePage = () => {
 
       {step === 6 && (
         <motion.div key="step6" className="h-full" {...motionProps}>
-          <Stage3CardSelection />
+          <Stage3CardSelectionScreens />
         </motion.div>
       )}
     </AnimatePresence>

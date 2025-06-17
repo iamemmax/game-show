@@ -132,6 +132,7 @@ const QuestionScreen = () => {
     null
   );
   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
+  const [mqttAnswerBalanceData, setMqttAnsweBalanceData] = useState<any>(null);
 
   useEffect(() => {
     // Only initialize game start time, but don't start the timer
@@ -286,6 +287,7 @@ const QuestionScreen = () => {
         if (questionId === currentQuestionIdRef?.current) {
           const answersData = payload.answers_data?.data;
           setMqttAnswerData(answersData); // Store for rendering modals
+          setMqttAnsweBalanceData(answersData); // Store for rendering modals
 
           // Mark submitted and stop timer
           if (answersData?.question?.correct_option) {
@@ -892,7 +894,8 @@ const QuestionScreen = () => {
             showEmptyCard={false}
             showHustlerCard={true}
             eliminated={0}
-            mqttAnswerData={mqttAnswerData}
+            mqttAnswerData={mqttAnswerBalanceData}
+            // mqttAnswerBalanceData={mqttAnswerBalanceData}
           />
         </div>
       </div>

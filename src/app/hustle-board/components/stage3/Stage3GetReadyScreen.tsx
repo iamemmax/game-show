@@ -8,6 +8,7 @@ import { useMQTT } from "@/hooks/useMqttService";
 import Stage3CardSelection from "./Stage3CardSelectionScreen";
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
+import Stage3CardSelectionScreens from "./Stage3CardSelectionScreen";
 
 // Rename component to match the import in StageOneTally
 const Stage3BoardGetReadyPage = () => {
@@ -65,7 +66,7 @@ const Stage3BoardGetReadyPage = () => {
 
   if(showCardRevealScreen){
     console.log("Navigating to Stage3CardSelection");
-    return <Stage3CardSelection />
+    return <Stage3CardSelectionScreens />
   }
   
   return (

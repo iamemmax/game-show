@@ -1403,7 +1403,7 @@ useEffect(() => {
           <span className="font-gilroyBold text-sm uppercase tracking-wide">
             {otherContestantName || "OPPONENT"}
           </span>
-        </div> */}
+        </div>
       {/* </div> */}
       
       {/* Turn Status */}
@@ -1729,15 +1729,7 @@ useEffect(() => {
     }, 600);
   };
 
-  // Status Indicator
-  // const StatusIndicator = () => {
-  //   if (passFound) return null;
-  //   return (
-  //     <div className="absolute top-2 right-1 transform flex items-center bg-transparent bg-opacity-70 px-4 py-2 rounded-full z-30">
-  //       <div className={`w-4 h-4 rounded-full ${isMyTurn ? 'bg-green-500' : 'bg-red-500'} animate-pulse mr-3`}></div>
-  //     </div>
-  //   );
-  // };
+  
 
   // Show elimination modal if user is eliminated
   if (isEliminated) {
@@ -1748,17 +1740,7 @@ useEffect(() => {
    
   return (
     <>
-    {/* <GameResultModal
-        isOpen={open}
-        onOpenChange={setOpen}
-        isWinner={true}
-        playerName="Demola"
-        fastestTime="0.12s"
-        earnedAmount={110000}
-        startUp={120000}
-        lost={22000}
-        balance={120000}
-      /> */}
+   
     <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full relative">
       {/* Left Sidebar */}
       <div className="flex flex-col justify-between">
