@@ -141,9 +141,7 @@ const HustleSideBar = ({
                               Number(contestant?.actual_balance) || 0
                             )}`
                           : `₦${addCommasToNumber(
-                              Number(contestant?.stage_balance) ||
-                                Number(contestantInfo?.actual_balance) ||
-                                0
+                              Number(contestant?.stage_balance)
                             )}`}
                       </GlowyStrokeText>
                     )}

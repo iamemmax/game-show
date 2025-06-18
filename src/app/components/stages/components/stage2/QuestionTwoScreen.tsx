@@ -750,6 +750,7 @@ const QuestionTwoScreen = () => {
                               key={user?.contestant_id}
                               isOpen={!!mqttAnswerData}
                               data={mqttAnswerData}
+                              questions={mqttQuestionData}
                               // setIsOpen={setOpenModals}
                             />
                           )}

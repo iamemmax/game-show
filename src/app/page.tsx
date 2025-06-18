@@ -1,4 +1,3 @@
-
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -10,6 +9,7 @@ import { useGetGameContestants } from "./admin/misc/api";
 import QuestionTwoScreen from "./components/stages/components/stage2/QuestionTwoScreen";
 import Stage3CardSelection from "./hustle-board/components/stage3/Stage3CardSelectionScreen";
 import Stage3GetReadyPage from "./components/stages/components/stage3/Stage3GetReadyPage";
+// import StageOneTally from "./components/stages/components/hustle/StageOneTally"; // optional
 
 const pageVariants = {
   initial: { opacity: 0, x: 50 },
@@ -18,48 +18,38 @@ const pageVariants = {
 };
 
 const ContestantHomePage = () => {
-  const [step, setStep] = useState<number | null>(1); // null until we decide
+  const [step, setStep] = useState<number | null>(null);
   const user = tokenStorage.getUser();
+  const { data: allContestants, isLoading } = useGetGameContestants(user?.game_episode as number);
 
-  const { data: allContestants, isLoading } = useGetGameContestants(
-user?.game_episode as number
-    
-  );
+  useEffect(() => {
+    if (isLoading || !allContestants?.data || !user?.contestant_id) return;
 
+    const myContestant = allContestants.data.find((c) => c.id === user?.contestant_id);
+    const gameStage = allContestants?.game?.stage;
 
+    console.log("Game Stage:", gameStage);
+    console.log("Is Eliminated:", myContestant?.is_eliminated);
 
-useEffect(() => {
-  if (isLoading || !allContestants?.data) return;
+    if (!myContestant || myContestant?.is_eliminated) return;
 
-  const myContestant = allContestants.data.find(
-    (c) => c.id === user?.contestant_id
-  );
-  const gameStage = allContestants.game?.stage;
+    setStep((prevStep) => {
+      if (prevStep !== null) return prevStep; // don't override if already set
 
-  console.log("Game Stage:", gameStage);
-  console.log("Is Eliminated:", myContestant?.is_eliminated);
+      switch (gameStage) {
+        case "STAGE_ONE":
+          return 1;
+        case "STAGE_TWO":
+          return 4;
+        case "STAGE_THREE":
+          return 5;
+        default:
+          return 1;
+      }
+    });
+  }, [isLoading, allContestants?.data, user?.contestant_id]);
 
-  if (myContestant?.is_eliminated) {
-    return;
-  }
-
-  switch (gameStage) {
-    case "STAGE_ONE":
-      setStep(1);
-      break;
-    case "STAGE_TWO":
-      setStep(4);
-      break;
-    case "STAGE_THREE":
-      setStep(5);
-      break;
-    default:
-      setStep(1);
-  }
-}, [isLoading, allContestants]);
-
-
-  if (step === null || isLoading) return null; // or show loader
+  if (step === null || isLoading) return null;
 
   return (
     <AnimatePresence mode="wait">
@@ -105,9 +95,10 @@ useEffect(() => {
         </motion.div>
       )}
 
+      {/* Optional Tally View */}
       {/* {step === 4 && (
         <motion.div
-          key="step4"
+          key="step4-tally"
           className="h-full"
           initial="initial"
           animate="animate"
@@ -118,9 +109,10 @@ useEffect(() => {
           <StageOneTally />
         </motion.div>
       )} */}
+
       {step === 4 && (
         <motion.div
-          key="step4"
+          key="step4-question"
           className="h-full"
           initial="initial"
           animate="animate"
@@ -131,9 +123,10 @@ useEffect(() => {
           <QuestionTwoScreen />
         </motion.div>
       )}
-      {step ===5 && (
+
+      {step === 5 && (
         <motion.div
-          key="step4"
+          key="step5"
           className="h-full"
           initial="initial"
           animate="animate"
@@ -144,9 +137,10 @@ useEffect(() => {
           <Stage3GetReadyPage />
         </motion.div>
       )}
+
       {step === 6 && (
         <motion.div
-          key="step4"
+          key="step6"
           className="h-full"
           initial="initial"
           animate="animate"
@@ -154,7 +148,7 @@ useEffect(() => {
           transition={{ duration: 0.4 }}
           variants={pageVariants}
         >
-       <Stage3CardSelection/>
+          <Stage3CardSelection />
         </motion.div>
       )}
     </AnimatePresence>

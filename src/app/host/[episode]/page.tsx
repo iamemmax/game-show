@@ -7,7 +7,7 @@ import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMQTT } from "@/hooks/useMqttService"
 import { useGetGameContestants, useHandleHustlePickTimeElapse } from "@/app/admin/misc/api"
-import { useInitStage2, useNotifyBackendStartQuestionTimer } from "../misc/api"
+import { useInitStage2, useNotifyBackendStartQuestionTimer, useStartGame } from "../misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import Stage1Questions from "./Stage1"
 import Stage2Questions from "./Stage2"
@@ -281,7 +281,18 @@ export default function HostPage() {
     )
 
     // Game control functions
-    const startGame = () => sendGameMessage("game_start")
+    const { mutate: gameStartMutation, isLoading: isStartingGame } = useStartGame()
+    const startGame = () => {
+        gameStartMutation({ game_episode: gameId }, {
+            onSuccess() {
+                sendGameMessage("game_start", { start_time: new Date().toISOString() })
+            },
+            onError(error) {
+                console.error("Error starting game:", error)
+                toast.error("Failed to start game")
+            },
+        })
+    }
     const endGame = () => sendGameMessage("game_end")
 
     //////////////////////////////
@@ -380,6 +391,11 @@ export default function HostPage() {
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={startGame} color="green">
                             START GAME
+                            {
+                                isStartingGame && (
+                                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                                )
+                            }
                         </TrapeziumButton>
                     </div>
                 )

@@ -13,6 +13,7 @@ import { Card, CARD_STYLES, PASS_CARD_STYLE } from "./CardStyles";
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import { useParams } from "next/navigation";
+import StageThreeWinnerModal from "@/app/components/stages/components/StageThreeWinnerModal";
 
 const Stage3CardSelectionScreens = () => {
   const user = tokenStorage.getUser();
@@ -166,7 +167,7 @@ const params = useParams()
     return (
       <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
         {/* Ribbons falling from top */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 !z-[999999999999999999]">
           {Array.from({ length: 40 }).map((_, i) => {
             const width = Math.random() * 8 + 4;
             const height = Math.random() * 200 + 100;
@@ -210,52 +211,7 @@ const params = useParams()
         </div>
         
         {/* Celebration content */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-          <div className="relative">
-            <motion.div
-              className="w-48 h-48 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 flex items-center justify-center"
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <span className="text-7xl">🎉</span>
-              <span className="text-7xl absolute">🙌</span>
-            </motion.div>
-          </div>
-          
-          <div className="mt-8 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-            >
-              <GlowyStrokeText
-                strokeWidth={3}
-                strokeColor="black"
-                glowColor="#FF7D01"
-                glowIntensity="high"
-                textclassName="text-[4rem] font-extrabold font-gilroyBold"
-                fillColor="#FFFFFF"
-              >
-                PASS FOUND!
-              </GlowyStrokeText>
-            </motion.div>
-            
-            <motion.div
-              className="bg-black bg-opacity-70 p-4 rounded-lg mt-4 border-2 border-yellow-400"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 1, duration: 0.5 }}
-            >
-              <p className="text-white text-xl mb-2">Winner:</p>
-              <p className="text-yellow-400 text-3xl font-gilroyBold">
-                {finderName}
-              </p>
-              <p className="text-white text-lg mt-4">
-                {finderName} found the PASS card!
-              </p>
-            </motion.div>
-          </div>
-        </div>
+         <StageThreeWinnerModal/>
       </div>
     );
   };

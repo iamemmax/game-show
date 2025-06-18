@@ -31,6 +31,7 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
   const username = process.env.NEXT_PUBLIC_MQTT_USERNAME;
   const password = process.env.NEXT_PUBLIC_MQTT_PASSWORD;
   const connectUrl = `wss://${broker}:${port}/mqtt`;
+  // const connectUrl = `ws://192.168.0.186:8090`;
 
   const [isConnected, setIsConnected] = useState(false);
   const clientRef = useRef<MqttClient | null>(null);

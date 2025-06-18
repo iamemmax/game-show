@@ -9,11 +9,11 @@ import NumberCardContainer from "@/app/shared/NumberContainer";
 import { cn } from "@/utils/classNames";
 import CheckIcon from "@/app/icons/CheckIcon";
 import { tokenStorage } from "@/utils/auth";
-import { Button, Dialog,  GlowyStrokeText } from "@/components/core";
+import { Button, Dialog, GlowyStrokeText } from "@/components/core";
 import Image from "next/image";
 import { useGetAllHustleQuestions } from "../../api/stage1/question/getHustleQuestion";
-import { contestantImages, revealResults } from "../mocks/contestantImages";
-import { addCommasToNumber, formatAxiosErrorMessage } from "@/utils";
+import { contestantImages } from "../mocks/contestantImages";
+import { addCommasToNumber } from "@/utils";
 import FastestFingerResult from "./FastestFingerResult";
 import { useAnswerStageOneQuestion } from "../../api/stage1/question/answerQuestion";
 import { AxiosError } from "axios";
@@ -141,16 +141,10 @@ const QuestionScreen = () => {
     }
   }, []);
 
-  // Function to handle amount selection - FIXED: Properly disable when no option selected
+  // Function to handle amount selection - FIXED: Allow selection anytime except when time elapsed or submitted
   const handleAmountSelect = (amount: number) => {
-    // Only allow selection if timer is active, not submitted, option is selected, and time left
-    if (
-      timerActive &&
-      !isSubmitted &&
-      timeLeft > 0 &&
-      selectedOption &&
-      selectedOption !== "N"
-    ) {
+    // Only prevent selection if time has elapsed or already submitted
+    if (timeLeft > 0 && !isSubmitted) {
       // Find the exact key that matches the amount
       const exactKey = Object.keys(userBidAmounts).find(
         (key) => Math.abs(parseFloat(key) - amount) < 0.01
@@ -172,7 +166,6 @@ const QuestionScreen = () => {
       }
     }
   };
-
   // Auto-submit effect when both option and amount are selected
   useEffect(() => {
     if (
@@ -339,10 +332,9 @@ const QuestionScreen = () => {
     if (timerActive && !isSubmitted) {
       setSelectedOption(option);
       // Reset amount selection when option changes
-      setSelectedAmount(null);
+      // setSelectedAmount(null);
     }
   };
-
 
   const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
 
@@ -666,7 +658,7 @@ const QuestionScreen = () => {
                               </h2>
                             )}
                           </div>
-                         <div className="flex justify-center items-center w-full gap-4">
+                          <div className="flex justify-center items-center w-full gap-4">
                             <div className="bg-[#011B0D] rounded-[12px] py-1 px-1 w-full">
                               <p
                                 className="text-[25px] text-white font-extrabold font- text-center"
@@ -734,18 +726,9 @@ const QuestionScreen = () => {
                             const currentQuestions =
                               mqttQuestionData?.question?.questions || {};
                             const showResult = isSubmitted && correctAnswer;
-                            const isCorrect =
-                              showResult &&
-                              String(currentQuestions?.correct_option) ===
                                 convertOptionToLetter(option);
                             const isSelected = selectedOption === option;
-                            console.log({
-                              correct_option: currentQuestions?.correct_option,
-                              converted: convertOptionToLetter(option),
-                              isCorrect:
-                                String(currentQuestions?.correct_option) ===
-                                convertOptionToLetter(option)
-                            });
+                           
 
                             return (
                               <button
@@ -753,20 +736,23 @@ const QuestionScreen = () => {
                                 onClick={() => handleOptionSelect(option)}
                                 className={cn(
                                   "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
-                                  !showResult &&
-                                    isSelected ?
-                                    "bg-[#FCCE19] border-[#FCCE19] text-[#745300]":"",
-                                  (isSubmitted ||
+                                  !showResult && isSelected
+                                    ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
+                                    : "",
+                                  isSubmitted ||
                                     !timerActive ||
-                                    !mqttQuestionData?.question?.questions) ?
-                                    "opacity-70 cursor-not-allowed":"",
+                                    !mqttQuestionData?.question?.questions
+                                    ? "opacity-70 cursor-not-allowed"
+                                    : "",
                                   // mqttAnswerData &&
                                   //   isSelected &&
                                   //   !isCorrect &&
                                   //   "bg-[#FF3B30]/20 border-[#FF3B30] text-[#FF3B30] font-bold",
-                                (mqttAnswerData && currentQuestions?.correct_option ===  convertOptionToLetter(option))
-                                     ?
-                                    "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100":""
+                                  mqttAnswerData &&
+                                    currentQuestions?.correct_option ===
+                                      convertOptionToLetter(option)
+                                    ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                                    : ""
                                 )}
                               >
                                 {optionLetter}:
@@ -774,7 +760,6 @@ const QuestionScreen = () => {
                                   {currentQuestions[option] || `...`}
                                 </span>
                                 {/* Optional: Show checkmark for correct */}
-                               
                               </button>
                             );
                           })}
@@ -803,29 +788,19 @@ const QuestionScreen = () => {
                                               handleAmountSelect(amount)
                                             }
                                             disabled={
-                                              !timerActive ||
-                                              isSubmitted ||
-                                              timeLeft <= 0 ||
-                                              !selectedOption ||
-                                              selectedOption === "N" ||
-                                              !mqttQuestionData?.question
-                                                ?.questions
+                                              timeLeft <= 0 || // Disable when time has elapsed
+                                              isSubmitted // Disable when already submitted
                                             }
-                                            className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                            className={`px-6 py-3 rounded-lg text-base font-bold transition-all ${
                                               selectedAmount === amount
                                                 ? "bg-[#04DA6A] text-black"
                                                 : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
                                             }
-                                         ${
-                                           !timerActive ||
-                                           isSubmitted ||
-                                           timeLeft <= 0 ||
-                                           !mqttQuestionData?.question
-                                             ?.questions
-                                             ? "opacity-50 cursor-not-allowed"
-                                             : "hover:bg-[#035D2E] hover:text-white"
-                                         }
-                                        `}
+  ${
+    timeLeft <= 0 || isSubmitted // Only disable styling when time elapsed or submitted
+      ? "opacity-50 cursor-not-allowed"
+      : "hover:bg-[#035D2E] hover:text-white"
+  }`}
                                           >
                                             ₦
                                             {amount.toLocaleString(undefined, {
@@ -867,6 +842,7 @@ const QuestionScreen = () => {
                           key={user?.contestant_id}
                           isOpen={!!mqttAnswerData}
                           data={mqttAnswerData}
+                          questions={mqttQuestionData?.question?.questions}
                           // setIsOpen={setIsOpen}
                         />
                       )}
