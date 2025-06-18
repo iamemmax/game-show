@@ -82,7 +82,7 @@ const QuestionScreen = () => {
     user?.game_episode as number
   );
   // Get contestants data to check elimination status
-  const { data: allContestants } = useGetGameContestants(
+  const { data: allContestants,refetch } = useGetGameContestants(
     user?.game_episode as number
   );
 
@@ -276,11 +276,12 @@ const QuestionScreen = () => {
       if (receivedMessage?.event === "game_s1_question_answer") {
         const payload = receivedMessage.payload || {};
         const questionId = payload.question_id;
-
+        
         if (questionId === currentQuestionIdRef?.current) {
           const answersData = payload.answers_data?.data;
           setMqttAnswerData(answersData); // Store for rendering modals
           setMqttAnsweBalanceData(answersData); // Store for rendering modals
+          refetch()
 
           // Mark submitted and stop timer
           if (answersData?.question?.correct_option) {
@@ -288,6 +289,7 @@ const QuestionScreen = () => {
             setIsSubmitted(true);
             setShowNextButton(true);
             setTimerActive(false);
+            
 
             // FIXED: Open modals for all contestants with a slight delay to ensure state is updated
             setTimeout(() => {

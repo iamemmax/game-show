@@ -19,8 +19,15 @@ interface Datum {
   stage_balance: number;
   contestant_name: string | null;
   contestant_attr: string;
+  profit_loss: ProfitLoss;
+   startup_balance: number;
 }
 
+type ProfitLoss = {
+  contestant_id: number;
+  amount_gained: number;
+  amount_lost: number;
+};
 interface Questions {
   question: string;
   option_a: string;
@@ -38,6 +45,9 @@ interface GameResultModalProps {
   data: Datum[];
   questions: Questions;
 }
+
+
+
 
 export default function GameResultModal({
   isOpen,
@@ -200,7 +210,7 @@ export default function GameResultModal({
                         Earned:{" "}
                         <span className="text-[#04DA6A] font-bold">
                           {" "}
-                          ₦{item?.stage_balance?.toLocaleString()}
+                          ₦{item?.profit_loss?.amount_gained?.toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -301,7 +311,7 @@ export default function GameResultModal({
                         <p className="text-white text-sm">
                           Lost amount:{" "}
                           <span className="text-[#E9001B] font-bold text-sm">
-                            ₦{item?.stage_balance?.toLocaleString()}
+                            ₦{item?.profit_loss?.amount_lost?.toLocaleString()}
                           </span>
                         </p>
                       </div>
@@ -313,7 +323,7 @@ export default function GameResultModal({
                   <div className="flex justify-between gap-4 text-center">
                     <div className="flex-1 bg-purple-700/20 p-4 rounded-lg">
                       <div className="text-lg font-bold text-purple-400">
-                        ₦{item?.wallet_balance?.toLocaleString()}
+                        ₦{item?.startup_balance?.toLocaleString()}
                       </div>
                       <div className="text-sm text-purple-300">
                         Start up amount
@@ -321,20 +331,20 @@ export default function GameResultModal({
                     </div>
                     <div className="flex-1 bg-purple-700/20 p-4 rounded-lg">
                       <div className="text-lg font-bold text-purple-400">
-                        ₦{item?.book_balance?.toLocaleString()}
+                        ₦{item?.stage_balance?.toLocaleString()}
                       </div>
-                      <div className="text-sm text-purple-300">Lost amount</div>
+                      <div className="text-sm text-purple-300"> Current balance</div>
                     </div>
                   </div>
 
-                  <div className="text-center bg-purple-700/30 py-4 rounded-lg">
+                  {/* <div className="text-center bg-purple-700/30 py-4 rounded-lg">
                     <div className="text-2xl font-bold text-purple-300">
                       ₦{item?.wallet_balance?.toLocaleString()}
                     </div>
                     <div className="text-sm text-purple-200">
                       Current balance
                     </div>
-                  </div>
+                  </div> */}
 
                   <p className="text-center text-sm text-purple-300">
                     You are going home with your current balance you have by the

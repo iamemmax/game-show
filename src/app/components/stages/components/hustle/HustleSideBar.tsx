@@ -9,8 +9,9 @@ import { tokenStorage } from "@/utils/auth";
 import { addCommasToNumber } from "@/utils";
 // import { processEliminatedContestants } from "@/utils/contestants";
 import Image from "next/image";
-import { useGetGameContestants } from "@/app/admin/misc/api";
+
 import { useParams } from "next/navigation";
+import { useGetGameContestants } from "@/app/admin/misc/api";
 
 interface prop {
   showJackpot?: boolean;
@@ -137,8 +138,8 @@ const HustleSideBar = ({
                         fillColor="#fff"
                       >
                         {allContestsant?.game?.stage !== "STAGE_ONE"
-                          ? `₦${addCommasToNumber(
-                              Number(contestant?.actual_balance) || 0
+                          ?  `₦${addCommasToNumber(
+                              Number(contestant?.actual_balance)  ?? myContestant?.wallet_balance
                             )}`
                           : `₦${addCommasToNumber(
                               Number(contestant?.stage_balance)
