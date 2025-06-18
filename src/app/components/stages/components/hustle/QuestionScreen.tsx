@@ -82,7 +82,7 @@ const QuestionScreen = () => {
     user?.game_episode as number
   );
   // Get contestants data to check elimination status
-  const { data: allContestants,refetch } = useGetGameContestants(
+  const { data: allContestants, refetch } = useGetGameContestants(
     user?.game_episode as number
   );
 
@@ -276,12 +276,12 @@ const QuestionScreen = () => {
       if (receivedMessage?.event === "game_s1_question_answer") {
         const payload = receivedMessage.payload || {};
         const questionId = payload.question_id;
-        
+
         if (questionId === currentQuestionIdRef?.current) {
           const answersData = payload.answers_data?.data;
           setMqttAnswerData(answersData); // Store for rendering modals
           setMqttAnsweBalanceData(answersData); // Store for rendering modals
-          refetch()
+          refetch();
 
           // Mark submitted and stop timer
           if (answersData?.question?.correct_option) {
@@ -289,7 +289,6 @@ const QuestionScreen = () => {
             setIsSubmitted(true);
             setShowNextButton(true);
             setTimerActive(false);
-            
 
             // FIXED: Open modals for all contestants with a slight delay to ensure state is updated
             setTimeout(() => {
@@ -399,7 +398,7 @@ const QuestionScreen = () => {
 
   // Function to check if a question has been attempted
   const isQuestionAttempted = (idx: number) => {
-    return idx < currentQuestionIndex;
+    return mqttQuestionData?.question?.hustle_reveal?.hustle_number > idx;
   };
 
   // Handle auto-submission when time elapses
@@ -431,7 +430,7 @@ const QuestionScreen = () => {
   // const filterOption = (option:string)=>{
   // const filter = mqttAnswerData?.filter((res)=>res?.)
   // }
-  //  console.log();
+  //  console.log(mqttQuestionData?.question?.hustle_reveal?.hustle_number);
 
   return (
     <>
@@ -561,78 +560,71 @@ const QuestionScreen = () => {
 
                 <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">
                   <div className="flex flex-col">
-                    {questionData?.data?.hustle_questions?.map(
-                      (contestant, idx: number) => (
-                        <div className="flex gap-2 items-center" key={idx}>
-                          <div className="">
-                            <NumberCardContainer
-                              text={
-                                isQuestionAttempted(idx) ? (
-                                  <CheckIcon size={160} />
-                                ) : (
-                                  contestant?.hustle_reveal?.hustle_number
-                                )
-                              }
-                              textColor={
-                                mqttQuestionData?.question_index ===
-                                contestant?.questions?.question_id
-                                  ? "#FFFFFF"
-                                  : isQuestionAttempted(idx)
-                                    ? "#fff"
-                                    : "#F2C94C"
-                              }
-                              backgroundColor={
-                                mqttQuestionData?.question_index ===
-                                contestant?.questions?.question_id
-                                  ? "#FEC124"
-                                  : isQuestionAttempted(idx)
-                                    ? "#04DA6A"
-                                    : "black"
-                              }
-                              width={30}
-                              height={35}
-                              active={
-                                mqttQuestionData?.question_index ===
-                                  contestant?.questions?.question_id ||
-                                isQuestionAttempted(idx)
-                              }
-                              iconPosition={{ y: 33 }}
-                              iconSize={30}
-                            />
-                          </div>
+                    {questionData?.map((contestant, idx: number) => (
+                      <div className="flex gap-2 items-center" key={idx}>
+                        <div className="">
+                          <NumberCardContainer
+                            text={
+                              isQuestionAttempted(contestant?.hustle_number) ? (
+                                <CheckIcon size={160} />
+                              ) : (
+                                contestant?.hustle_number
+                              )
+                            }
+                            textColor={
+                              mqttQuestionData?.question?.hustle_reveal?.hustle_number ===
+                              contestant?.hustle_number
+                                ? "#FFFFFF"
+                                : isQuestionAttempted(contestant?.hustle_number)
+                                  ? "#fff"
+                                  : "#F2C94C"
+                            }
+                            backgroundColor={
+                              mqttQuestionData?.question?.hustle_reveal?.hustle_number ===
+                              contestant?.hustle_number
+                                ? "#FEC124"
+                                : isQuestionAttempted(contestant?.hustle_number)
+                                  ? "#04DA6A"
+                                  : "black"
+                            }
+                            width={30}
+                            height={35}
+                            active={
+                              mqttQuestionData?.question?.hustle_reveal?.hustle_number >
+                                contestant?.hustle_number
+                            }
+                            iconPosition={{ y: 33 }}
+                            iconSize={30}
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
                           <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2">
-                              <div className="h-[1.2rem] w-[1.2rem]  relative">
-                                <Image
-                                  alt="User avatar"
-                                  src={
-                                    contestantImages[idx] ||
-                                    "/images/userImage.png"
-                                  }
-                                  fill
-                                  className="object-cover rounded-full"
-                                />
-                              </div>
-
-                              <GlowyStrokeText
-                                strokeWidth={3}
-                                strokeColor="#7E3CE0"
-                                glowColor="#04DA6A"
-                                textclassName="text-xs  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
-                                fillColor="#fff"
-                                glowIntensity={"none"}
-                              >
-                                {
-                                  contestant?.contestant?.contestant_name?.split(
-                                    " "
-                                  )[0]
+                            <div className="h-[1.2rem] w-[1.2rem]  relative">
+                              <Image
+                                alt="User avatar"
+                                src={
+                                  contestantImages[idx] ||
+                                  "/images/userImage.png"
                                 }
-                              </GlowyStrokeText>
+                                fill
+                                className="object-cover rounded-full"
+                              />
                             </div>
+
+                            <GlowyStrokeText
+                              strokeWidth={3}
+                              strokeColor="#7E3CE0"
+                              glowColor="#04DA6A"
+                              textclassName="text-xs  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
+                              fillColor="#fff"
+                              glowIntensity={"none"}
+                            >
+                              {contestant?.contestant_name?.split(" ")[0]}
+                            </GlowyStrokeText>
                           </div>
                         </div>
-                      )
-                    )}
+                      </div>
+                    ))}
                   </div>
                   {isLoading ? (
                     <div className="flex justify-center items-center h-full ">
@@ -728,9 +720,8 @@ const QuestionScreen = () => {
                             const currentQuestions =
                               mqttQuestionData?.question?.questions || {};
                             const showResult = isSubmitted && correctAnswer;
-                                convertOptionToLetter(option);
+                            convertOptionToLetter(option);
                             const isSelected = selectedOption === option;
-                           
 
                             return (
                               <button
@@ -766,9 +757,9 @@ const QuestionScreen = () => {
                             );
                           })}
                         </div>
-
                         {/* Amount buttons section */}
-                        <div className="flex flex-col items-start gap-1 mt-7">
+                        <div className="flex flex-col items-start gap-1 mt-4">
+<p className="text-white text-xs pb-1 font-gilroyMedium">Select wager amount</p>
                           <div className="flex items-center w-full">
                             <div className="flex flex-1 items-center">
                               <div className="flex gap-2">

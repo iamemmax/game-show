@@ -215,7 +215,7 @@ const QuestionTwoScreen = () => {
   };
 
   // Function to check if a question has been attempted
-   const isQuestionAttempted = (idx: number) => {
+  const isQuestionAttempted = (idx: number) => {
     return idx < currentQuestionIndex;
   };
 
@@ -284,8 +284,6 @@ const QuestionTwoScreen = () => {
           setCurrentQuestionId(questionId.toString());
         }
       }
-
-      
 
       if (receivedMessage?.event === "game_s2_question_answer") {
         const payload = receivedMessage.payload || {};
@@ -396,8 +394,6 @@ const QuestionTwoScreen = () => {
             </div>
 
             <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[65rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
-             
-
               <div className="absolute inset-0">
                 <motion.div
                   className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
@@ -555,23 +551,23 @@ const QuestionTwoScreen = () => {
                         <NumberCardContainer
                           // text={index + 1}
                           text={
-                            isQuestionAttempted(index+1) ? (
+                            isQuestionAttempted(index + 1) ? (
                               <CheckIcon size={160} />
                             ) : (
                               index + 1
                             )
                           }
                           textColor={
-                            currentQuestionIndex === index+1
+                            currentQuestionIndex === index + 1
                               ? "#FFFFFF"
                               : isQuestionAttempted(index)
                                 ? "#fff"
                                 : "#F2C94C"
                           }
                           backgroundColor={
-                            currentQuestionIndex === index+1
+                            currentQuestionIndex === index + 1
                               ? "#FEC124"
-                              : isQuestionAttempted(index+1)
+                              : isQuestionAttempted(index + 1)
                                 ? "#04DA6A"
                                 : "black"
                           }
@@ -712,39 +708,40 @@ const QuestionTwoScreen = () => {
                               const isSelected = selectedOption === option;
 
                               return (
-                               <button
-                                                              key={option}
-                                                              onClick={() => handleOptionSelect(option)}
-                                                              className={cn(
-                                                                "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
-                                                                !showResult &&
-                                                                  isSelected ?
-                                                                  "bg-[#FCCE19] border-[#FCCE19] text-[#745300]":"",
-                                                                (isSubmitted ||
-                                                                  !timerActive ||
-                                                                  !mqttQuestionData?.question?.questions) ?
-                                                                  "opacity-70 cursor-not-allowed":"",
-                                                                // mqttAnswerData &&
-                                                                //   isSelected &&
-                                                                //   !isCorrect &&
-                                                                //   "bg-[#FF3B30]/20 border-[#FF3B30] text-[#FF3B30] font-bold",
-                                                              (mqttAnswerData && mqttQuestionData?.correct_option ===  convertOptionToLetter(option))
-                                                                   ?
-                                                                  "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100":""
-                                                              )}
-                                                            >
-                                                              {optionLetter}:
-                                                              <span className="ml-2">
-                                                                {mqttQuestionData[option] || `...`}
-                                                              </span>
-                                                              {/* Optional: Show checkmark for correct */}
-                                                             
-                                                            </button>
+                                <button
+                                  key={option}
+                                  onClick={() => handleOptionSelect(option)}
+                                  className={cn(
+                                    "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
+                                    !showResult && isSelected
+                                      ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
+                                      : "",
+                                    isSubmitted ||
+                                      !timerActive ||
+                                      !mqttQuestionData?.question?.questions
+                                      ? "opacity-70 cursor-not-allowed"
+                                      : "",
+                                    // mqttAnswerData &&
+                                    //   isSelected &&
+                                    //   !isCorrect &&
+                                    //   "bg-[#FF3B30]/20 border-[#FF3B30] text-[#FF3B30] font-bold",
+                                    mqttAnswerData &&
+                                      mqttQuestionData?.correct_option ===
+                                        convertOptionToLetter(option)
+                                      ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                                      : ""
+                                  )}
+                                >
+                                  {optionLetter}:
+                                  <span className="ml-2">
+                                    {mqttQuestionData[option] || `...`}
+                                  </span>
+                                  {/* Optional: Show checkmark for correct */}
+                                </button>
                               );
                             })}
                           </div>
 
-                        
                           {mqttAnswerData && (
                             <GameResultModal
                               key={user?.contestant_id}

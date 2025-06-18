@@ -324,7 +324,7 @@ const Stage1QuestionScreen = () => {
 
   // Function to check if a question has been attempted
   const isQuestionAttempted = (idx: number) => {
-    return idx < currentQuestionIndex;
+    return mqttQuestionData?.question?.hustle_reveal?.hustle_number < idx;
   };
 
   // FIXED: Enhanced handleStartTimer function
@@ -446,39 +446,39 @@ if (allQuestionsCompleted) {
 
                 <div className="grid mt-8 gap-2 grid-cols-[1fr_3fr_1fr]">
                   <div className="flex flex-col">
-                    {questionData?.data?.hustle_questions?.map(
+                    {questionData?.map(
                       (contestant, idx: number) => (
                         <div className="flex gap-2 items-center" key={idx}>
                           <div className="select-none">
                             <NumberCardContainer
                               text={
-                                isQuestionAttempted(idx) ? (
+                                isQuestionAttempted(contestant?.hustle_number) ? (
                                   <CheckIcon size={160} />
                                 ) : (
-                                  contestant?.hustle_reveal?.hustle_number
+                                  contestant?.hustle_number
                                 )
                               }
                               textColor={
-                                mqttQuestionData?.question_index ===
-                                contestant?.questions?.question_id
+                                mqttQuestionData?.question?.hustle_reveal?.hustle_number ===
+                                contestant?.hustle_number
                                   ? "#FFFFFF"
-                                  : isQuestionAttempted(idx)
+                                  : isQuestionAttempted(contestant?.hustle_number)
                                     ? "#fff"
                                     : "#F2C94C"
                               }
                               backgroundColor={
-                                mqttQuestionData?.question_index ===
-                                contestant?.questions?.question_id
+                                mqttQuestionData?.question?.hustle_reveal?.hustle_number ===
+                                contestant?.hustle_number
                                   ? "#FEC124"
-                                  : isQuestionAttempted(idx)
+                                  : isQuestionAttempted(contestant?.hustle_number)
                                     ? "#04DA6A"
                                     : "black"
                               }
                               width={54}
                               height={64}
                               active={
-                                mqttQuestionData?.question_index ===
-                                  contestant?.questions?.question_id ||
+                                mqttQuestionData?.question?.hustle_reveal?.hustle_number ===
+                                  contestant?.hustle_number ||
                                 isQuestionAttempted(idx)
                               }
                               iconPosition={{ y: 33 }}
@@ -509,7 +509,7 @@ if (allQuestionsCompleted) {
                                 glowIntensity={"none"}
                               >
                                 {
-                                  contestant?.contestant?.contestant_name?.split(
+                                  contestant?.contestant_name?.split(
                                     " "
                                   )[0]
                                 }

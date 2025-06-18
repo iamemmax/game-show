@@ -1,50 +1,20 @@
 import { salaryAxios } from '@/lib/axios';
 import { useQuery } from 'react-query';
 
-interface hustleQuestionPicksProps {
-  status: string;
-  message: string;
-  data: Data;
-}
 
-interface Data {
-  hustle_questions: Hustlequestion[];
-}
 
-interface Hustlequestion {
-  questions: Questions;
-  hustle_reveal: Hustlereveal;
-  contestant: Contestant;
-  question_number?: number;
-}
-
-interface Contestant {
-  contestant_id: number;
-  contestant_attr: string;
-  contestant_name: null | string;
-}
-
-interface Hustlereveal {
+export interface hustleQuestionPicksProps {
+  hustle_number: number;
   hustle_name: string;
-  hustle_number: number | string;
-  hustle_state: string;
-  hustle_amount: number;
+  contestant_name: string;
+  contestant_id: number;
 }
 
-interface Questions {
-  question: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  correct_option: string;
-  question_id: number | string;
-  question_booster: string;
-}
+
 export const getAllHustleQuestions = async (episode_id: number) => {
   if (!episode_id) return null;
-  const response = await salaryAxios.post(`api/game/get_hustle_questions/${episode_id}`);
-  return response?.data as hustleQuestionPicksProps;
+  const response = await salaryAxios.get(`api/game/hustle_opportunities?game_episode=${episode_id}`);
+  return response?.data as hustleQuestionPicksProps[];
 };
 
 export const useGetAllHustleQuestions = (episode_id: number) =>
