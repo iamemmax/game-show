@@ -68,10 +68,10 @@ const HustleCardTwo = ({
           {/* <h2  className="w-full font-bold font-gilroyHeavy "  style={{ WebkitTextStroke: "1.2px black" }}>{title}</h2> */}
 
           <GlowyStrokeText
-            strokeWidth={4}
+            strokeWidth={3}
             strokeColor="#000"
             glowColor="#13051E"
-            glowIntensity="low"
+            glowIntensity="none"
             textclassName={cn(
               `text-[1.8rem]  font-extrabold font-gilroyHeavy [@media(min-width:2000px)]:text-[3rem]`,
               titleClassName

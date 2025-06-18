@@ -22,7 +22,6 @@ import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideB
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
 import { contestantImages } from "@/app/components/stages/components/mocks/contestantImages";
 import GetHustleBoardReadyScreen from "./GettHustleBoardReadyScreen";
-import { useAnswerStageOneQuestion } from "@/app/components/stages/api/stage1/question/answerQuestion";
 import { useGetAllHustleQuestions } from "@/app/components/stages/api/stage1/question/getHustleQuestion";
 // import { useGetQuestionAnswer } from "@/app/components/stages/api/stage1/question/getQuestionAnswer";
 import FastestFingerResult from "@/app/components/stages/components/hustle/FastestFingerResult";
@@ -57,8 +56,6 @@ const convertOptionToLetter = (option: string | null): string => {
   return optionMap[option] || "";
 };
 
-
-
 interface Contestant {
   contestant_id: number;
   contestant_name: string;
@@ -82,7 +79,9 @@ const Stage1QuestionScreen = () => {
   const user = tokenStorage.getUser();
 
   // Get contestants data to check elimination status
-  const { data:contestantData} = useGetGameContestants(Number(params?.episodeId));
+  const { data: contestantData } = useGetGameContestants(
+    Number(params?.episodeId)
+  );
 
   // Always call hooks at the top level, even if the result is conditionally used
   const { data: questionData, isLoading } = useGetAllHustleQuestions(
@@ -93,7 +92,9 @@ const Stage1QuestionScreen = () => {
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
-  const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>([]);
+  const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>(
+    []
+  );
   const [selectedAmount, setSelectedAmount] = useState(10000); // Default selected amount
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showNextButton, setShowNextButton] = useState(false);
@@ -105,7 +106,9 @@ const Stage1QuestionScreen = () => {
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
-  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
+  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(
+    null
+  );
   const [resultMessageSent, setResultMessageSent] = useState(false);
   const [showEliminationModal, setShowEliminationModal] = useState(false);
 
@@ -118,15 +121,8 @@ const Stage1QuestionScreen = () => {
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentQuestionIdRef = useRef<string | null>(null);
 
-  
   // FIXED: Move all useEffect hooks to the top level, before any conditional returns
-  
 
-
-
-
-  
-  
   // FIXED: Add timer countdown effect
   useEffect(() => {
     // Clear any existing timer
@@ -138,12 +134,12 @@ const Stage1QuestionScreen = () => {
     // Start countdown if timer is active
     if (timerActive && timeLeft > 0) {
       console.log(`⏱️ Starting timer countdown from ${timeLeft} seconds`);
-      
+
       timerIntervalRef.current = setInterval(() => {
         setTimeLeft((prevTime) => {
           const newTime = prevTime - 1;
           console.log(`⏱️ Timer countdown: ${newTime} seconds remaining`);
-          
+
           // Auto-submit when timer reaches 0
           if (newTime <= 0) {
             console.log("⏱️ Timer expired, auto-submitting");
@@ -152,7 +148,7 @@ const Stage1QuestionScreen = () => {
             setShouldFetchAnswer(true);
             return 0;
           }
-          
+
           return newTime;
         });
       }, 1000);
@@ -178,97 +174,98 @@ const Stage1QuestionScreen = () => {
 
     const handler = (receivedMessage: any) => {
       console.log("Main page received message:", receivedMessage?.event);
-        // Handle question reveal event
-        if (receivedMessage?.event === "game_s1_question_reveal") {
-          console.log("📝 Processing question reveal event");
-          setShowPrepPage(false);
+      // Handle question reveal event
+      if (receivedMessage?.event === "game_s1_question_reveal") {
+        console.log("📝 Processing question reveal event");
+        setShowPrepPage(false);
 
-          const payload = receivedMessage.payload || {};
-          const questionData = payload.data || {};
-          const spendBreakdown =
-            questionData.spend_breakdown ||
-            payload.spend_breakdown ||
-            payload.data?.spend_breakdown;
+        const payload = receivedMessage.payload || {};
+        const questionData = payload.data || {};
+        const spendBreakdown =
+          questionData.spend_breakdown ||
+          payload.spend_breakdown ||
+          payload.data?.spend_breakdown;
 
-          // 1. Save full question info
-          setMqttQuestionData(questionData);
+        // 1. Save full question info
+        setMqttQuestionData(questionData);
 
-          // 2. Reset related states
-          setSelectedOption(null);
-          setIsSubmitted(false);
-          resetTimerState();
-          setResultMessageSent(false);
-          setMqttAnswerData(null);
+        // 2. Reset related states
+        setSelectedOption(null);
+        setIsSubmitted(false);
+        resetTimerState();
+        setResultMessageSent(false);
+        setMqttAnswerData(null);
 
-          // 3. Set current index and question ID
-          setCurrentQuestionIndex((questionData.question_index || 1));
-          const questionId =
-            questionData?.question?.questions?.question_id || payload?.question_id;
-          if (questionId) {
-            setCurrentQuestionId(questionId.toString());
-          }
+        // 3. Set current index and question ID
+        setCurrentQuestionIndex(questionData.question_index || 1);
+        const questionId =
+          questionData?.question?.questions?.question_id ||
+          payload?.question_id;
+        if (questionId) {
+          setCurrentQuestionId(questionId.toString());
+        }
 
-          // 4. Extract and save user's spend breakdown
-          if (spendBreakdown && user?.contestant_id) {
-            const userData = Array.isArray(spendBreakdown)
-              ? spendBreakdown.find(
-                  (contestant: any) =>
-                    String(contestant.contestant_id) === String(user.contestant_id)
-                )
-              : spendBreakdown;
+        // 4. Extract and save user's spend breakdown
+        if (spendBreakdown && user?.contestant_id) {
+          const userData = Array.isArray(spendBreakdown)
+            ? spendBreakdown.find(
+                (contestant: any) =>
+                  String(contestant.contestant_id) ===
+                  String(user.contestant_id)
+              )
+            : spendBreakdown;
 
-            if (userData?.spend_breakdown) {
-              setUserBidAmounts(userData.spend_breakdown);
+          if (userData?.spend_breakdown) {
+            setUserBidAmounts(userData.spend_breakdown);
 
-              const bidKeys = Object.keys(userData.spend_breakdown);
-              if (bidKeys.length > 0) {
-                const firstAmount = parseFloat(bidKeys[0]);
-                setSelectedAmount(firstAmount);
-              }
-            } else {
-              setUserBidAmounts({});
-              console.warn("⚠️ No spend_breakdown found for user");
+            const bidKeys = Object.keys(userData.spend_breakdown);
+            if (bidKeys.length > 0) {
+              const firstAmount = parseFloat(bidKeys[0]);
+              setSelectedAmount(firstAmount);
             }
+          } else {
+            setUserBidAmounts({});
+            console.warn("⚠️ No spend_breakdown found for user");
           }
         }
+      }
 
-        if (receivedMessage?.event === "game_s1_question_answer") {
-          const payload = receivedMessage.payload || {};
-          const questionId = payload.question_id;
+      if (receivedMessage?.event === "game_s1_question_answer") {
+        const payload = receivedMessage.payload || {};
+        const questionId = payload.question_id;
 
-          // Use ref instead of state
-          if (questionId === currentQuestionIdRef?.current) {
-            const answersData = payload.answers_data?.data;
+        // Use ref instead of state
+        if (questionId === currentQuestionIdRef?.current) {
+          const answersData = payload.answers_data?.data;
 
-            // Store the full answer data for use in FastestFingerResult
-            setMqttAnswerData(answersData);
+          // Store the full answer data for use in FastestFingerResult
+          setMqttAnswerData(answersData);
 
-            if (answersData?.question?.correct_option) {
-              // Set the correct answer
-              setCorrectAnswer(answersData.question.correct_option);
+          if (answersData?.question?.correct_option) {
+            // Set the correct answer
+            setCorrectAnswer(answersData.question.correct_option);
 
-              // Mark the question as submitted to show results
-              setIsSubmitted(true);
-              setShowNextButton(true);
-              setTimerActive(false); // Stop the timer
+            // Mark the question as submitted to show results
+            setIsSubmitted(true);
+            setShowNextButton(true);
+            setTimerActive(false); // Stop the timer
 
-              // Refetch contestant data to update balances
-              // refetch();
-            }
-          } 
+            // Refetch contestant data to update balances
+            // refetch();
+          }
         }
+      }
 
-        // Handle timer start event
-        if (receivedMessage.event === "game_s1_timer_start") {
-          handleStartTimer();
-        }
+      // Handle timer start event
+      if (receivedMessage.event === "game_s1_timer_start") {
+        handleStartTimer();
+      }
 
-        // Handle results reveal event
-        if (receivedMessage.event === "game_s1_results_reveal") {
-          console.log("📊 Results reveal event received");
-          setAllQuestionsCompleted(true);
-        }
-      
+      // Handle results reveal event
+      if (receivedMessage.event === "game_s1_results_reveal") {
+        console.log("📊 Results reveal event received");
+        setAllQuestionsCompleted(true);
+      }
     };
 
     onMessage(handler);
@@ -278,7 +275,6 @@ const Stage1QuestionScreen = () => {
       onMessage(null);
     };
   }, [isConnected, onMessage, user?.contestant_id]);
-
 
   // Reset the result message sent flag when a new question is received
   useEffect(() => {
@@ -318,7 +314,7 @@ const Stage1QuestionScreen = () => {
     setTimeLeft(10);
     setShowNextButton(false);
     setShouldFetchAnswer(false);
-    
+
     // Clear any existing timer
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -328,34 +324,33 @@ const Stage1QuestionScreen = () => {
 
   // Function to check if a question has been attempted
   const isQuestionAttempted = (idx: number) => {
-    return idx < currentQuestionIndex;
+    return mqttQuestionData?.question?.hustle_reveal?.hustle_number < idx;
   };
 
   // FIXED: Enhanced handleStartTimer function
   const handleStartTimer = () => {
-    
     // Clear any existing timer first
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
-    
+
     // Reset and start timer
     setTimeLeft(10); // Reset timer to 10 seconds
     setTimerActive(true);
     setGameStartTime(new Date()); // Reset game start time when timer starts
     setIsSubmitted(false); // Ensure we can make selections
-    
   };
 
   // FIXED: Now all conditional returns come AFTER all hooks have been called
-  if(showPrepPage){
+  if (showPrepPage) {
     return <GetHustleBoardReadyScreen />;
   }
 
-  if (allQuestionsCompleted) {
+if (allQuestionsCompleted) {
     return <StageOneTally eliminationCount={0} removeCount={0} />;
   }
+
 
   return (
     <>
@@ -425,10 +420,10 @@ const Stage1QuestionScreen = () => {
               <div className="relative">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-[2.75rem] font-extrabold outline-text text-black">
+                    <h2 className="text-[3.75rem] font-extrabold outline-text text-black">
                       Stage 1: Prove your hustle
                     </h2>
-                    <p className="text-sm font-normal text-[#D5B9FF]">
+                    <p className="text-xl font-normal text-[#D5B9FF]">
                       Select minimum of 2 number to determine the trivia
                       questions for this round
                     </p>
@@ -449,76 +444,81 @@ const Stage1QuestionScreen = () => {
                   )}
                 </div>
 
-                <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">
+                <div className="grid mt-8 gap-2 grid-cols-[1fr_3fr_1fr]">
                   <div className="flex flex-col">
-                    {questionData?.data?.hustle_questions?.map((contestant, idx: number) => (
-                      <div className="flex gap-2 items-center" key={idx}>
-                        <div className="select-none">
-                          <NumberCardContainer
-                            text={
-                              isQuestionAttempted(idx) ? (
-                                <CheckIcon size={160} />
-                              ) : (
-                                contestant?.hustle_reveal?.hustle_number
-                              )
-                            }
-                            textColor={
-                              mqttQuestionData?.question_index === contestant?.questions?.question_id
-                                ? "#FFFFFF"
-                                : isQuestionAttempted(idx)
-                                  ? "#fff"
-                                  : "#F2C94C"
-                            }
-                            backgroundColor={
-                              mqttQuestionData?.question_index === contestant?.questions?.question_id
-                                ? "#FEC124"
-                                : isQuestionAttempted(idx)
-                                  ? "#04DA6A"
-                                  : "black"
-                            }
-                            width={54}
-                            height={64}
-                            active={
-                              mqttQuestionData?.question_index === contestant?.questions?.question_id ||
-                              isQuestionAttempted(idx)
-                            }
-                            iconPosition={{ y: 33 }}
-                            iconSize={30}
-                            className="select-none"
-                          />
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-4">
-                            <div className="h-[2rem] w-[2rem]  relative">
-                              <Image
-                                alt="User avatar"
-                                src={
-                                  contestantImages[idx] ||
-                                  "/images/userImage.png"
-                                }
-                                fill
-                                className="object-cover rounded-full"
-                              />
-                            </div>
-
-                            <GlowyStrokeText
-                              strokeWidth={2}
-                              strokeColor="#7E3CE0"
-                              glowColor="#13051e"
-                              textclassName="text-base  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
-                              fillColor="#fff"
-                              glowIntensity={"none"}
-                            >
-                              {
-                                contestant?.contestant?.contestant_name?.split(
-                                  " "
-                                )[0]
+                    {questionData?.map(
+                      (contestant, idx: number) => (
+                        <div className="flex gap-2 items-center" key={idx}>
+                          <div className="select-none">
+                            <NumberCardContainer
+                              text={
+                                isQuestionAttempted(contestant?.hustle_number) ? (
+                                  <CheckIcon size={160} />
+                                ) : (
+                                  contestant?.hustle_number
+                                )
                               }
-                            </GlowyStrokeText>
+                              textColor={
+                                mqttQuestionData?.question?.hustle_reveal?.hustle_number ===
+                                contestant?.hustle_number
+                                  ? "#FFFFFF"
+                                  : isQuestionAttempted(contestant?.hustle_number)
+                                    ? "#fff"
+                                    : "#F2C94C"
+                              }
+                              backgroundColor={
+                                mqttQuestionData?.question?.hustle_reveal?.hustle_number ===
+                                contestant?.hustle_number
+                                  ? "#FEC124"
+                                  : isQuestionAttempted(contestant?.hustle_number)
+                                    ? "#04DA6A"
+                                    : "black"
+                              }
+                              width={54}
+                              height={64}
+                              active={
+                                mqttQuestionData?.question?.hustle_reveal?.hustle_number ===
+                                  contestant?.hustle_number ||
+                                isQuestionAttempted(idx)
+                              }
+                              iconPosition={{ y: 33 }}
+                              iconSize={30}
+                              className="select-none"
+                            />
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4">
+                              <div className="h-[2rem] w-[2rem]  relative">
+                                <Image
+                                  alt="User avatar"
+                                  src={
+                                    contestantImages[idx] ||
+                                    "/images/userImage.png"
+                                  }
+                                  fill
+                                  className="object-cover rounded-full"
+                                />
+                              </div>
+
+                              <GlowyStrokeText
+                                strokeWidth={2}
+                                strokeColor="#7E3CE0"
+                                glowColor="#13051e"
+                                textclassName="text-base  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
+                                fillColor="#fff"
+                                glowIntensity={"none"}
+                              >
+                                {
+                                  contestant?.contestant_name?.split(
+                                    " "
+                                  )[0]
+                                }
+                              </GlowyStrokeText>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                   {isLoading ? (
                     <div className="flex justify-center items-center h-full ">
@@ -550,10 +550,12 @@ const Stage1QuestionScreen = () => {
                               className="text-[25px] text-white font-extrabold font- text-center"
                               style={{
                                 WebkitTextStroke: "2px #04DA6A",
-                                textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
+                                textShadow:
+                                  "0px 2px 4px rgba(4, 218, 106, 0.5)",
                               }}
                             >
-                              {mqttQuestionData?.question?.questions?.question_booster || "..."}{" "}
+                              {mqttQuestionData?.question?.questions
+                                ?.question_booster || "..."}{" "}
                               <span
                                 className="text-base font-outfit font-normal text-[#04DA6A]"
                                 style={{
@@ -570,68 +572,91 @@ const Stage1QuestionScreen = () => {
 
                       {/* Options display */}
                       <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
-                        {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
-                          (option, index) => {
-                            const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-                            const currentQuestions = mqttQuestionData?.question?.questions || {};
-                            const isCorrect = isCorrectOption(option);
-                            const isSelected = selectedOption === option;
-                            const showResult = isSubmitted && correctAnswer;
+                        {(
+                          [
+                            "option_a",
+                            "option_b",
+                            "option_c",
+                            "option_d",
+                          ] as OptionKey[]
+                        ).map((option, index) => {
+                          const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
+                          const currentQuestions =
+                            mqttQuestionData?.question?.questions || {};
+                          const isCorrect = isCorrectOption(option);
+                          const isSelected = selectedOption === option;
+                          const showResult = isSubmitted && correctAnswer;
 
-                            return (
-                              <button
-                                key={option}
-                                onClick={() => handleOptionSelect(option)}
-                                disabled={!timerActive || isSubmitted || !mqttQuestionData?.question?.questions}
+                          return (
+                            <button
+                              key={option}
+                              onClick={() => handleOptionSelect(option)}
+                              disabled={
+                                !timerActive ||
+                                isSubmitted ||
+                                !mqttQuestionData?.question?.questions
+                              }
+                              className={cn(
+                                "bg-[#000000] border-2 border-[#D71BFA] cursor-none rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
+                                selectedOption === option &&
+                                  !showResult &&
+                                  "bg-[#FCCE19] border-none text-[#745300]",
+
+                                mqttAnswerData &&
+                                  currentQuestions?.correct_option ===
+                                    convertOptionToLetter(option)
+                                  ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                                  : "",
+
+                                (isSubmitted ||
+                                  !timerActive ||
+                                  !mqttQuestionData?.question?.questions) &&
+                                  "opacity-70 cursor-not-allowed"
+                              )}
+                            >
+                              {optionLetter}:
+                              <span
                                 className={cn(
-                                  "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
-                                  selectedOption === option && !showResult && "bg-[#FCCE19] border-none text-[#745300]",
-                                  
-
- mqttAnswerData && currentQuestions?.correct_option ===  convertOptionToLetter(option) ?"!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100":"",
-                                
-
-                                  (isSubmitted || !timerActive || !mqttQuestionData?.question?.questions) &&
-                                    "opacity-70 cursor-not-allowed"
+                                  "ml-2",
+                                  selectedOption === option && !showResult
+                                    ? "text-white font-bold"
+                                    : "",
+                                  isCorrect && showResult
+                                    ? "text-[#04DA6A] font-bold"
+                                    : "",
+                                  isSelected && !isCorrect && showResult
+                                    ? "text-[#FF3B30] font-bold"
+                                    : ""
                                 )}
+                                style={{
+                                  WebkitTextStroke:
+                                    selectedOption === option && !showResult
+                                      ? "1px #C76000"
+                                      : "",
+                                }}
                               >
-                                {optionLetter}:
-                                <span
-                                  className={cn(
-                                    "ml-2",
-                                    selectedOption === option && !showResult ? "text-white font-bold" : "",
-                                    isCorrect && showResult ? "text-[#04DA6A] font-bold" : "",
-                                    isSelected && !isCorrect && showResult ? "text-[#FF3B30] font-bold" : ""
-                                  )}
-                                  style={{
-                                    WebkitTextStroke: selectedOption === option && !showResult ? "1px #C76000" : "",
-                                  }}
-                                >
-                                  {" "}
-                                  {currentQuestions[option] || `...`}
-                                </span>
-                                
-                                {/* Correct answer indicator */}
-                                {isCorrect && showResult && (
-                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                                    <div className="bg-[#04DA6A] rounded-full p-1">
-                                      <CheckIcon size={16} />
-                                    </div>
+                                {" "}
+                                {currentQuestions[option] || `...`}
+                              </span>
+                              {/* Correct answer indicator */}
+                              {isCorrect && showResult && (
+                                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                  <div className="bg-[#04DA6A] rounded-full p-1">
+                                    <CheckIcon size={16} />
                                   </div>
-                                )}
-                                
-                                {/* Incorrect answer indicator */}
-                                {isSelected && !isCorrect && showResult && (
-                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                                    <div className="bg-[#FF3B30] rounded-full p-1">
-                                      <ErrorIcon  />
-                                    </div>
+                                </div>
+                              )}
+                              {/* Incorrect answer indicator */}
+                              {isSelected && !isCorrect && showResult && (
+                                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                  <div className="bg-[#FF3B30] rounded-full p-1">
+                                    <ErrorIcon />
                                   </div>
-                                )}
-                              </button>
-                            );
-                          }
-                        )}
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -651,11 +676,14 @@ const Stage1QuestionScreen = () => {
 
         {/* Right Sidebar */}
         <div>
-          <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={0}  mqttAnswerData={mqttAnswerData}/>
+          <HustleSideBar
+            showEmptyCard={false}
+            showHustlerCard={true}
+            eliminated={0}
+            mqttAnswerData={mqttAnswerData}
+          />
         </div>
       </div>
-
-     
     </>
   );
 };

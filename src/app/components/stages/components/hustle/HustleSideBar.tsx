@@ -20,6 +20,7 @@ interface prop {
   removeCount?: number;
   showHustleCardAmt?: boolean;
   mqttAnswerData?: any;
+  // mqttAnswerBalanceData?: any;
 }
 
 const HustleSideBar = ({
@@ -28,6 +29,7 @@ const HustleSideBar = ({
   showHustlerCard = false,
   showHustleCardAmt = true,
   mqttAnswerData,
+  // mqttAnswerBalanceData
 }: prop) => {
   const user = tokenStorage.getUser();
   const params = useParams();
@@ -53,107 +55,129 @@ const HustleSideBar = ({
       <div className="relative flex flex-col justify-center items-center"></div>
 
       {showHustlerCard && (
-        <>
-          {isLoading ? (
-            <div className="flex-1 flex px-3 h-full flex-col justify-center items-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-            </div>
-          ) : (
-            <div className="flex-1 flex px-3 gap-5 h-full flex-col justify-center items-center [@media(min-width:2000px)]:gap-10">
-              {dataToRender.map((contestant: any, idx: number) => {
-                // For mqttAnswerData (when it has data), find the corresponding contestant info
-                let contestantInfo = contestant;
-                if (mqttAnswerData && mqttAnswerData.length > 0) {
-                  // Find the contestant details from allContestsant based on contestant_id
-                  contestantInfo =
-                    allContestsant?.data?.find(
-                      (c: any) => c.id === contestant.contestant_id
-                    ) || contestant;
-                }
+  <>
+    {isLoading ? (
+      <div className="flex-1 flex px-3 h-full flex-col justify-center items-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+      </div>
+    ) : (
+      <div className={`flex-1 flex px-3 gap-6 h-full flex-col justify-center items-center`}>
+        {dataToRender?.map((contestant: any, idx: number) => {
+          const isBoardRoute = typeof params?.episodeId !== "undefined";
 
-                const isMyContestant =
-                  contestantInfo.id === myContestant?.id ||
-                  contestant.contestant_id === myContestant?.id;
+          let contestantInfo = contestant;
+          if (mqttAnswerData && mqttAnswerData.length > 0) {
+            contestantInfo =
+              allContestsant?.data?.find(
+                (c: any) => c.id === contestant.contestant_id
+              ) || contestant;
+          }
 
-                return (
-                  <div
-                    className={`w-[8.5456rem] ${
-                      params?.episodeId
-                        ? "bg-[#ae77ff]"
-                        : isMyContestant
-                          ? "bg-[#FFC125]"
-                          : "bg-[#ae77ff]"
-                    } p-[5px] h-[70.66px] rounded-[12.79px] [@media(min-width:2000px)]:w-[12rem] [@media(min-width:2000px)]:h-[7rem] relative ${
-                      contestantInfo?.is_eliminated ? "opacity-50 hidden" : ""
-                    }`}
-                    key={idx}
-                  >
-                    <div
-                      className={`w-full h-full flex justify-center items-center rounded-[12.79px] bg-gradient-to-b ${
-                        params?.episodeId
-                          ? "from-[#d531f8] to-[#9a5eb2]"
-                          : isMyContestant
-                            ? "from-amber-500 to-yellow-500"
-                            : "from-[#d531f8] to-[#9a5eb2]"
-                      }`}
+          const isMyContestant =
+            contestantInfo.id === myContestant?.id ||
+            contestant.contestant_id === myContestant?.id;
+
+          const baseCardBg = isBoardRoute
+            ? "bg-[#ae77ff]"
+            : isMyContestant
+              ? "bg-[#FFC125]"
+              : "bg-[#ae77ff]";
+
+          const baseGradient = isBoardRoute
+            ? "from-[#d531f8] to-[#9a5eb2]"
+            : isMyContestant
+              ? "from-amber-500 to-yellow-500"
+              : "from-[#d531f8] to-[#9a5eb2]";
+
+          return (
+            <div
+              key={idx}
+              className={`${isBoardRoute ? "w-[12rem] h-[7rem] mt-3" : "w-[8.5456rem] h-[70.66px]"} ${baseCardBg} p-[5px] rounded-[12.79px] relative ${
+                contestantInfo?.is_eliminated ? "opacity-50 hidden" : ""
+              }`}
+            >
+              <div
+                className={`w-full h-full flex justify-center items-center rounded-[12.79px] bg-gradient-to-b ${baseGradient}`}
+              >
+                {/* Avatar */}
+                <div
+                  className={`absolute ${isBoardRoute?"-top-6":"-top-3"}  rounded-full overflow-hidden ${
+                    isBoardRoute ? "h-[4rem] w-[4rem]" : "h-[1.875rem] w-[1.875rem]"
+                  }`}
+                >
+                  <Image
+                    src={contestantImages[idx] ?? ""}
+                    alt="User Image"
+                    width={isBoardRoute ? 64 : 30}
+                    height={isBoardRoute ? 64 : 30}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+
+                {/* Green Dot */}
+                <div
+                  className="z-[999999] bg-green-500 -mt-2 absolute w-2.5 h-2.5 rounded-full"
+                  style={{ top:isBoardRoute?"35px": "15px", right: isBoardRoute?"60px" :"52px" }}
+                />
+
+                {/* Balance & Name */}
+                <div className={`relative w-full ${isBoardRoute?"mt-4":""}`}>
+                  <div className="flex flex-col justify-center gap-0 mt-3 items-center w-full">
+                    {showHustleCardAmt && (
+                      <GlowyStrokeText
+                        strokeWidth={2}
+                        strokeColor="#a132b7"
+                        glowColor="#ce45eb"
+                        glowIntensity="low"
+                        textclassName={`${
+                          isBoardRoute
+                            ? "text-[1.3rem]"
+                            : "text-[19.18px]"
+                        } font-extrabold font-gilroyHeavy text-white`}
+                        fillColor="#fff"
+                      >
+                        {allContestsant?.game?.stage !== "STAGE_ONE"
+                          ?  `₦${addCommasToNumber(
+                              Number(contestant?.actual_balance)
+                            )}`
+                          : !mqttAnswerData ?
+                        `₦${addCommasToNumber(
+                              Number(myContestant?.actual_balance)
+                            )}`
+                            :
+                            `₦${addCommasToNumber(
+                              Number(contestant?.stage_balance)
+                            )}`
+                        
+                        }
+                      </GlowyStrokeText>
+                    )}
+                    <GlowyStrokeText
+                      truncate
+                      strokeWidth={2}
+                      strokeColor="#a132b7"
+                      glowColor="#ce45eb"
+                      glowIntensity="low"
+                      textclassName={`${
+                        isBoardRoute
+                          ? "text-[1.2rem]"
+                          : "text-[19.18px]"
+                      } font-extrabold font-gilroyHeavy text-white -mt-1   max-w-[110px] truncate`}
+                      fillColor="#fff"
                     >
-                      <div className="w-[1.875rem] h-[1.875rem] [@media(min-width:2000px)]:w-[4rem] [@media(min-width:2000px)]:h-[4rem] absolute -top-3 [@media(min-width:2000px)]:-top-[1.5rem] rounded-full overflow-hidden">
-                        <Image
-                          src={contestantImages[idx] ?? ""}
-                          alt="User Image"
-                          width={30}
-                          height={30}
-                          className="object-cover [@media(min-width:2000px)]:w-[4rem] [@media(min-width:2000px)]:h-[4rem]"
-                        />
-                      </div>
-                      {/* Place the dot outside the image container but position it relative to it */}
-                      <div
-                        className="z-[999999] bg-green-500 -mt-2 absolute w-2.5 h-2.5 rounded-full [@media(min-width:2000px)]:mt-[0.2rem]"
-                        style={{ top: "15px", right: "52px" }}
-                      />
-                      <div className="relative w-full">
-                        <div className="flex flex-col justify-center gap-0 mt-3 items-center w-full">
-                          {showHustleCardAmt && (
-                            <GlowyStrokeText
-                              strokeWidth={2}
-                              strokeColor="#a132b7"
-                              glowColor="#ce45eb"
-                              glowIntensity="low"
-                              textclassName="text-[19.18px] font-extrabold font-gilroyHeavy text-white"
-                              fillColor="#fff"
-                            >
-                              {allContestsant?.game?.stage !== "STAGE_ONE"
-                                ? `₦${addCommasToNumber(
-                                    Number(contestant?.actual_balance) || 0
-                                  )}`
-                                : `₦${addCommasToNumber(
-                                    Number(contestant?.stage_balance) ||
-                                      Number(contestantInfo?.actual_balance) ||
-                                      0
-                                  )}`}
-                            </GlowyStrokeText>
-                          )}
-                          <GlowyStrokeText
-                            truncate
-                            strokeWidth={2}
-                            strokeColor="#a132b7"
-                            glowColor="#ce45eb"
-                            glowIntensity="low"
-                            textclassName="text-[19.18px] font-extrabold font-gilroyHeavy text-white -mt-2 max-w-[110px] truncate [@media(min-width:2000px)]:text-[1.2rem]"
-                            fillColor="#fff"
-                          >
-                            {contestantInfo?.name?.split(" ")[0]}
-                          </GlowyStrokeText>
-                        </div>
-                      </div>
-                    </div>
+                      {contestantInfo?.name?.split(" ")[0]}
+                    </GlowyStrokeText>
                   </div>
-                );
-              })}
+                </div>
+              </div>
             </div>
-          )}
-        </>
-      )}
+          );
+        })}
+      </div>
+    )}
+  </>
+)}
+
 
       {showEmptyCard && (
         <div className="flex-1 flex px-3 h-full 2xl:gap-4 flex-col justify-center items-center">

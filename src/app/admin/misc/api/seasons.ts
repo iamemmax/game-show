@@ -33,7 +33,7 @@ export interface THustleSeason {
 
 
 export const getAllSeasons = async () => {
-    const response = await tokenlessAxios.get(`/api/admin-controller/fetch_hustle_seasons/`)
+    const response = await tokenlessAxios.get(`api/admin-controller/fetch_hustle_seasons/`)
     return response?.data as THustleSeason[]
 }
 
