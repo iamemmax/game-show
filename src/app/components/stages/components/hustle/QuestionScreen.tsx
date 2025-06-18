@@ -558,7 +558,7 @@ const QuestionScreen = () => {
                   )}
                 </div>
 
-                <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">
+                <div className="grid mt-5 gap-3 grid-cols-[1fr_3fr_1fr]">
                   <div className="flex flex-col">
                     {questionData?.map((contestant, idx: number) => (
                       <div className="flex gap-2 items-center" key={idx}>
@@ -784,7 +784,7 @@ const QuestionScreen = () => {
                                               timeLeft <= 0 || // Disable when time has elapsed
                                               isSubmitted // Disable when already submitted
                                             }
-                                            className={`px-6 py-3 rounded-lg text-base font-bold transition-all ${
+                                            className={`px-4 py-3 rounded-lg text-base font-bold transition-all ${
                                               selectedAmount === amount
                                                 ? "bg-[#04DA6A] text-black"
                                                 : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"

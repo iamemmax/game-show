@@ -42,7 +42,7 @@ className="!z-[99999]"
       </motion.div>
 
       <motion.div
-      className="absolute bottom-4"
+      className="absolute bottom-4 !z-[9999999999]"
         initial={{ y: -100, scale: 0.7 }}
         animate={{ y: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 200 }}
@@ -54,9 +54,7 @@ className="!z-[99999]"
  {/* CTA */}
 
       </div>
-      <button className="bg-[#390047] border-[3px] border-[#f18b1e] hover:bg-purple-800 text-[#f18b1e] font-gilroyBold font-semibold px-6 py-3 rounded-full shadow-lg transition-all">
-        SHARE YOUR WIN
-      </button>
+     
 
    
     </div>

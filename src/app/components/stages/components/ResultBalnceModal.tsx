@@ -217,7 +217,7 @@ export default function GameResultModal({
                   </div>
                 )}
                 {!item?.is_winner && item?.is_correct && (
-                  <div className="bg-[#E27A171A]/10 border-[0.3px] border-[#CF9008] gap-3 rounded-10 flex text-white p-3 ">
+                  <div className="bg-[#54493f] border-[0.3px] border-[#CF9008] gap-3 rounded-10 flex text-white p-3 ">
                     <div className="bg-[#CF9008] rounded-10 p-4 flex justify-center items-center">
                       <svg
                         width="50"
@@ -264,7 +264,7 @@ export default function GameResultModal({
                 )}
 
                 {!item?.is_correct && (
-                  <div className="bg-[#34080D80]/50 border-[0.3px] border-[#760F1B] gap-3 rounded-10 flex text-white p-3 ">
+                  <div className="bg-[#20070d] border-[0.3px] border-[#760F1B] gap-3 rounded-10 flex text-white p-3 ">
                     <div className="bg-[#760F1B] rounded-10 p-4 flex justify-center items-center">
                       <svg
                         width="48"
