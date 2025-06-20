@@ -1,21 +1,19 @@
 "use client"
 import Logo from "@/app/icons/Logo";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-
-
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
-import HustleStages from "../hustle/HustleStages";
-import HustleSideBar from "../hustle/HustleSideBar";
-import Stage3CardSelection from "./Stage3CardSelection";
+import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
+import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
+import RevealBallNumber from "./RevealBallNumber";
 
-const Stage3GetReadyPage = () => {
+// Rename component to match the import in StageOneTally
+const Stage4BoardGetReadyPage = () => {
   const { isConnected, onMessage } = useMQTT();
-  const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
+  const [showCardSRevealBall, setShowCardSRevealBall] = useState(true);
 
-  
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -42,16 +40,13 @@ const Stage3GetReadyPage = () => {
     }
   };
   
-  
   useEffect(() => {
     if (isConnected) {
-      const handler = (receivedMessage: any) => {
-        console.log("Main page received message:", receivedMessage);
-        
+      const handler = (receivedMessage: any) => {        
         // Handle stage transition events
-        if (receivedMessage?.event === "game_s3_start") {
+        if (receivedMessage?.event === "game_s4_start") {
           // Proceed to the next stage
-          setShowCardRevealScreen(true);
+          setShowCardSRevealBall(true);
         }
       };
       
@@ -65,16 +60,12 @@ const Stage3GetReadyPage = () => {
     }
   }, [isConnected, onMessage]);
 
-
- 
-
-if(showCardRevealScreen){
-    return <Stage3CardSelection/>
-
-}
+  if(showCardSRevealBall){
+    return <RevealBallNumber />
+  }
   
   return (
-     <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait">
       <motion.div
         key="getReadyScreen"
         initial="hidden"
@@ -213,5 +204,6 @@ if(showCardRevealScreen){
   );
 };
 
-export default Stage3GetReadyPage;
+// Make sure to export the component with the correct name
+export default Stage4BoardGetReadyPage;
 

@@ -9,6 +9,7 @@ import Stage1QuestionScreen from "../components/Stage1QuestionScreen";
 import ViewOnlyQuestionTwoScreen from "../components/statge2/StageTwoQuestionScreen";
 import Stage3GetReadyPage from "@/app/components/stages/components/stage3/Stage3GetReadyPage";
 import Stage3CardSelectionScreens from "../components/stage3/Stage3CardSelectionScreen";
+import Stage4BoardGetReadyPage from "../components/stage4/ShowStage4Prep";
 
 const pageVariants = {
   initial: { opacity: 0, x: 50 },
@@ -34,13 +35,16 @@ const HomePage = () => {
           setStep(1); // Stage 1 Question Screen (final step of Stage 1)
           break;
         case "STAGE_TWO":
-          setStep(4); // Stage 2 question viewer
+          setStep(7); // Stage 2 question viewer
           break;
         case "STAGE_THREE":
           setStep(6); // Card Selection (most visual/interactive for viewers)
           break;
+        case "STAGE_FOUR":
+          setStep(7); // Card Selection (most visual/interactive for viewers)
+          break;
         default:
-          setStep(3);
+          setStep(1);
       }
     }
   }, [isLoading, gameStage]);
@@ -63,7 +67,8 @@ const HomePage = () => {
 
       {step === 3 && (
         <motion.div key="step3" className="h-full" {...motionProps}>
-          <Stage1QuestionScreen />
+          {/* <Stage1QuestionScreen /> */}
+             <Stage4BoardGetReadyPage />
         </motion.div>
       )}
 
@@ -82,6 +87,11 @@ const HomePage = () => {
       {step === 6 && (
         <motion.div key="step6" className="h-full" {...motionProps}>
           <Stage3CardSelectionScreens />
+        </motion.div>
+      )}
+      {step === 7 && (
+        <motion.div key="step6" className="h-full" {...motionProps}>
+          <Stage4BoardGetReadyPage />
         </motion.div>
       )}
     </AnimatePresence>
