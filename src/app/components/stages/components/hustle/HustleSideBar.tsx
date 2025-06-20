@@ -11,6 +11,7 @@ import { addCommasToNumber } from "@/utils";
 import Image from "next/image";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import { useParams } from "next/navigation";
+import { balanceProp, useGetWalletBalance } from "../../api/stage1/getbalance";
 
 interface prop {
   showJackpot?: boolean;
@@ -20,6 +21,7 @@ interface prop {
   removeCount?: number;
   showHustleCardAmt?: boolean;
   mqttAnswerData?: any;
+  balanceData?: balanceProp | null | undefined
   // mqttAnswerBalanceData?: any;
 }
 
@@ -29,6 +31,8 @@ const HustleSideBar = ({
   showHustlerCard = false,
   showHustleCardAmt = true,
   mqttAnswerData,
+  balanceData
+
   // mqttAnswerBalanceData
 }: prop) => {
   const user = tokenStorage.getUser();
@@ -47,14 +51,16 @@ const HustleSideBar = ({
       : mqttAnswerData;
 
   const getContestantInfo = (id: number) => {
-    const allconstestant = allContestsant?.data?.find((contestant) => contestant.id === id);
-    
-    return allconstestant
+    const allconstestant = allContestsant?.data?.find(
+      (contestant) => contestant.id === id
+    );
+
+    return allconstestant;
   };
 
   const myContestant = getContestantInfo(Number(user?.contestant_id));
 
-  
+
 
   return (
     <div className="flex justify-between !z-[999999999999] h-full items-center flex-col">
@@ -153,23 +159,20 @@ const HustleSideBar = ({
                             >
                               {/* {getContestantInfo(Number(contestant?.id))?.actual_balance} */}
                               {allContestsant?.game?.stage !== "STAGE_ONE"
-                                ?!mqttAnswerData
-                                  ? `₦${addCommasToNumber(
-                                      Number(
-                                        getContestantInfo(
-                                          contestant?.id
-                                        )?.wallet_balance
-                                      )
-                                    )}`
-                                  :  `₦${addCommasToNumber(
-                                    Number(contestant?.wallet_balance)
+                                ? `₦${addCommasToNumber(
+                                    Number(
+                                      balanceData?.data?.balances?.find(
+                                        (balance) =>
+                                          balance.contestant_id ===
+                                          user?.contestant_id
+                                      )?.actual_balance || 0
+                                    )
                                   )}`
                                 : !mqttAnswerData
                                   ? `₦${addCommasToNumber(
                                       Number(
-                                        getContestantInfo(
-                                          contestant?.id
-                                        )?.actual_balance
+                                        getContestantInfo(contestant?.id)
+                                          ?.actual_balance
                                       )
                                     )}`
                                   : `₦${addCommasToNumber(

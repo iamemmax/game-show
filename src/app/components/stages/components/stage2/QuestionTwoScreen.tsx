@@ -69,7 +69,7 @@ const QuestionTwoScreen = () => {
   const user = tokenStorage.getUser();
 
   // Get wallet balances to determine eliminated contestants
-  const { data: balanceData } = useGetWalletBalance(
+  const { data: balanceData, refetch: refetchBalance } = useGetWalletBalance(
     user?.game_episode as number
   );
 
@@ -155,7 +155,6 @@ const QuestionTwoScreen = () => {
   const { refetch, isLoading } = useGetGameContestants(
     Number(user?.game_episode)
   );
-
 
   const handleSubmitAnswer = () => {
     if (!selectedOption || !mqttQuestionData) return;
@@ -269,7 +268,7 @@ const QuestionTwoScreen = () => {
         setResultMessageSent(false);
         setMqttAnswerData(null); // Clear previous answer data
         setCorrectAnswer(null);
-        setOpenModals(false)
+        setOpenModals(false);
 
         // 3. Set current index and question ID
         setCurrentQuestionIndex(questionData?.index);
@@ -282,11 +281,11 @@ const QuestionTwoScreen = () => {
       if (receivedMessage?.event === "game_s2_question_answer") {
         const payload = receivedMessage.payload || {};
         const questionId = payload.question_id;
-        setOpenModals(payload?.show_modal)
+        setOpenModals(payload?.show_modal);
         if (questionId === currentQuestionIdRef?.current) {
           const answersData = payload.answers_data?.data;
           setMqttAnswerData(answersData); // Store for rendering modals
-
+          refetchBalance();
           // Mark submitted and stop timer
           if (answersData?.question?.correct_option) {
             setCorrectAnswer(answersData.question.correct_option);
@@ -579,9 +578,8 @@ const QuestionTwoScreen = () => {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                     </div>
                   ) : (
-
                     <>
-                    {/* <div className="relative">
+                      {/* <div className="relative">
                     
                       <motion.div
                         className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000] ${
@@ -751,191 +749,244 @@ const QuestionTwoScreen = () => {
                       )}
                     </div> */}
 
+                      <div className="relative">
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={`question-${currentQuestionIndex}-${mqttQuestionData?.question_id}`}
+                            className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000] ${
+                              currentQuestionIndex > 4
+                                ? "border-red-500"
+                                : "border-[#D71BFA]"
+                            }`}
+                            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                            animate={{
+                              opacity: 1,
+                              y: 0,
+                              scale: 1,
+                              borderColor:
+                                currentQuestionIndex > 4
+                                  ? [
+                                      "#ff0000",
+                                      "#ff4444",
+                                      "#cc0000",
+                                      "#ff6666",
+                                      "#990000",
+                                      "#ff3333",
+                                      "#ff0000",
+                                    ]
+                                  : "#D71BFA",
+                              boxShadow:
+                                currentQuestionIndex > 4
+                                  ? [
+                                      "0 0 20px #ff0000",
+                                      "0 0 40px #ff4444",
+                                      "0 0 25px #cc0000",
+                                      "0 0 35px #ff6666",
+                                      "0 0 30px #990000",
+                                      "0 0 45px #ff3333",
+                                      "0 0 20px #ff0000",
+                                    ]
+                                  : "0 0 10px rgba(215, 27, 250, 0.3)",
+                            }}
+                            exit={{ opacity: 0, y: -50, scale: 0.9 }}
+                            transition={{
+                              duration: 0.6,
+                              ease: "easeInOut",
+                              borderColor:
+                                currentQuestionIndex > 4
+                                  ? {
+                                      duration: 0.5,
+                                      repeat: Infinity,
+                                      repeatType: "loop",
+                                    }
+                                  : { duration: 0.6 },
+                              boxShadow:
+                                currentQuestionIndex > 4
+                                  ? {
+                                      duration: 0.5,
+                                      repeat: Infinity,
+                                      repeatType: "loop",
+                                    }
+                                  : { duration: 0.6 },
+                            }}
+                          >
+                            <motion.div
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.2, duration: 0.4 }}
+                            >
+                              <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
+                                Question {currentQuestionIndex}
+                              </p>
+                            </motion.div>
 
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.3, duration: 0.5 }}
+                            >
+                              <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
+                                {mqttQuestionData?.question ||
+                                  "Waiting for question..."}
+                              </h2>
+                            </motion.div>
 
-<div className="relative">
-                    <AnimatePresence mode="wait">
-  <motion.div
-  key={`question-${currentQuestionIndex}-${mqttQuestionData?.question_id}`}
-  className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000] ${
-    currentQuestionIndex > 4
-      ? "border-red-500"
-      : "border-[#D71BFA]"
-  }`}
-  initial={{ opacity: 0, y: 50, scale: 0.9 }}
-  animate={{ 
-    opacity: 1, 
-    y: 0, 
-    scale: 1,
-    borderColor: currentQuestionIndex > 4 ? [
-      "#ff0000", "#ff4444", "#cc0000", "#ff6666", 
-      "#990000", "#ff3333", "#ff0000"
-    ] : "#D71BFA",
-    boxShadow: currentQuestionIndex > 4 ? [
-      "0 0 20px #ff0000", "0 0 40px #ff4444", "0 0 25px #cc0000",
-      "0 0 35px #ff6666", "0 0 30px #990000", "0 0 45px #ff3333",
-      "0 0 20px #ff0000"
-    ] : "0 0 10px rgba(215, 27, 250, 0.3)"
-  }}
-  exit={{ opacity: 0, y: -50, scale: 0.9 }}
-  transition={{
-    duration: 0.6,
-    ease: "easeInOut",
-    borderColor: currentQuestionIndex > 4 ? {
-      duration: 0.5,
-      repeat: Infinity,
-      repeatType: "loop"
-    } : { duration: 0.6 },
-    boxShadow: currentQuestionIndex > 4 ? {
-      duration: 0.5,
-      repeat: Infinity,
-      repeatType: "loop"
-    } : { duration: 0.6 }
-  }}
->
-  <motion.div
-    initial={{ opacity: 0, x: -20 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ delay: 0.2, duration: 0.4 }}
-  >
-    <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
-      Question {currentQuestionIndex}
-    </p>
-  </motion.div>
-  
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.3, duration: 0.5 }}
-  >
-    <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-      {mqttQuestionData?.question || "Waiting for question..."}
-    </h2>
-  </motion.div>
-  
-  <motion.div 
-    className="flex justify-center items-center w-full gap-4"
-    initial={{ opacity: 0, scale: 0.8 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ delay: 0.4, duration: 0.4 }}
-  >
-    <div className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
-      <p className="text-sm font-outfit font-normal text-[#FFC125]">
-        Win amount
-      </p>
-      <GlowyStrokeText
-        strokeWidth={1}
-        strokeColor="#FFC125"
-        glowColor="#FFC125"
-        textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
-        fillColor="#fff"
-        glowIntensity={"none"}
-      >
-        ₦{addCommasToNumber(Number(mqttQuestionData?.allocated_winning_amount))}
-      </GlowyStrokeText>
-    </div>
-    <div className="bg-[#011B0D] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
-      <p className="text-sm font-outfit font-normal text-[#04DA6A]">
-        Capital:
-      </p>
-      <GlowyStrokeText
-        strokeWidth={1}
-        strokeColor="#04DA6A"
-        glowColor="#04DA6A"
-        glowIntensity="none"
-        textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
-        fillColor="#fff"
-      >
-        ₦{addCommasToNumber(Number(balanceData?.data?.balances?.find(
-          (balance) => balance.contestant_id === user?.contestant_id
-        )?.actual_balance || 0))}
-      </GlowyStrokeText>
-    </div>
-  </motion.div>
-  </motion.div>
-</AnimatePresence>
+                            <motion.div
+                              className="flex justify-center items-center w-full gap-4"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.4, duration: 0.4 }}
+                            >
+                              <div className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
+                                <p className="text-sm font-outfit font-normal text-[#FFC125]">
+                                  Win amount
+                                </p>
+                                <GlowyStrokeText
+                                  strokeWidth={1}
+                                  strokeColor="#FFC125"
+                                  glowColor="#FFC125"
+                                  textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
+                                  fillColor="#fff"
+                                  glowIntensity={"none"}
+                                >
+                                  ₦
+                                  {addCommasToNumber(
+                                    Number(
+                                      mqttQuestionData?.allocated_winning_amount
+                                    )
+                                  )}
+                                </GlowyStrokeText>
+                              </div>
+                              <div className="bg-[#011B0D] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
+                                <p className="text-sm font-outfit font-normal text-[#04DA6A]">
+                                  Capital:
+                                </p>
+                                <GlowyStrokeText
+                                  strokeWidth={1}
+                                  strokeColor="#04DA6A"
+                                  glowColor="#04DA6A"
+                                  glowIntensity="none"
+                                  textclassName="text-[20px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
+                                  fillColor="#fff"
+                                >
+                                  ₦
+                                  {addCommasToNumber(
+                                    Number(
+                                      balanceData?.data?.balances?.find(
+                                        (balance) =>
+                                          balance.contestant_id ===
+                                          user?.contestant_id
+                                      )?.actual_balance || 0
+                                    )
+                                  )}
+                                </GlowyStrokeText>
+                              </div>
+                            </motion.div>
+                          </motion.div>
+                        </AnimatePresence>
 
-{/* Also animate the options grid with AnimatePresence */}
-<AnimatePresence mode="wait">
-  {mqttQuestionData ? (
-    <motion.div 
-      key={`options-${currentQuestionIndex}-${mqttQuestionData?.question_id}`}
-      className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -30 }}
-      transition={{ delay: 0.5, duration: 0.5 }}
-    >
-      {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map((option, index) => {
-        const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-        const showResult = isSubmitted && correctAnswer;
-        const isSelected = selectedOption === option;
+                        {/* Also animate the options grid with AnimatePresence */}
+                        <AnimatePresence mode="wait">
+                          {mqttQuestionData ? (
+                            <motion.div
+                              key={`options-${currentQuestionIndex}-${mqttQuestionData?.question_id}`}
+                              className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]"
+                              initial={{ opacity: 0, y: 30 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -30 }}
+                              transition={{ delay: 0.5, duration: 0.5 }}
+                            >
+                              {(
+                                [
+                                  "option_a",
+                                  "option_b",
+                                  "option_c",
+                                  "option_d",
+                                ] as OptionKey[]
+                              ).map((option, index) => {
+                                const optionLetter = String.fromCharCode(
+                                  65 + index
+                                ); // A, B, C, D
+                                const showResult = isSubmitted && correctAnswer;
+                                const isSelected = selectedOption === option;
 
-        return (
-          <motion.button
-            key={option}
-            onClick={() => handleOptionSelect(option)}
-            className={cn(
-              "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
-              !showResult && isSelected
-                ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
-                : "",
-              isSubmitted || !timerActive || !mqttQuestionData?.question?.questions
-                ? "opacity-70 cursor-not-allowed"
-                : "",
-              mqttAnswerData && mqttQuestionData?.correct_option === convertOptionToLetter(option)
-                ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
-                : ""
-            )}
-            initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ 
-              delay: 0.6 + (index * 0.1), 
-              duration: 0.4,
-              type: "spring",
-              stiffness: 100
-            }}
-            whileHover={!isSubmitted && timerActive ? { 
-              scale: 1.02,
-              borderColor: "#FCCE19"
-            } : {}}
-            whileTap={!isSubmitted && timerActive ? { scale: 0.98 } : {}}
-          >
-            {optionLetter}:
-            <span className="ml-2">
-              {mqttQuestionData[option] || `...`}
-            </span>
-          </motion.button>
-        );
-      })}
-    </motion.div>
-  ) : (
-    <motion.div 
-      key="loading"
-      className="flex justify-center items-center h-full mt-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-    </motion.div>
-  )}
-</AnimatePresence>
-
-</div>
-
-
-                          {mqttAnswerData && (
-                            <GameResultModal
-                              key={user?.contestant_id}
-                              isOpen={!!mqttAnswerData &&!!openModals}
-                              data={mqttAnswerData}
-                              questions={mqttQuestionData}
-                              
-                            />
+                                return (
+                                  <motion.button
+                                    key={option}
+                                    onClick={() => handleOptionSelect(option)}
+                                    className={cn(
+                                      "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
+                                      !showResult && isSelected
+                                        ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
+                                        : "",
+                                      isSubmitted ||
+                                        !timerActive ||
+                                        !mqttQuestionData?.question?.questions
+                                        ? "opacity-70 cursor-not-allowed"
+                                        : "",
+                                      mqttAnswerData &&
+                                        mqttQuestionData?.correct_option ===
+                                          convertOptionToLetter(option)
+                                        ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                                        : ""
+                                    )}
+                                    initial={{
+                                      opacity: 0,
+                                      x: index % 2 === 0 ? -20 : 20,
+                                    }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    transition={{
+                                      delay: 0.6 + index * 0.1,
+                                      duration: 0.4,
+                                      type: "spring",
+                                      stiffness: 100,
+                                    }}
+                                    whileHover={
+                                      !isSubmitted && timerActive
+                                        ? {
+                                            scale: 1.02,
+                                            borderColor: "#FCCE19",
+                                          }
+                                        : {}
+                                    }
+                                    whileTap={
+                                      !isSubmitted && timerActive
+                                        ? { scale: 0.98 }
+                                        : {}
+                                    }
+                                  >
+                                    {optionLetter}:
+                                    <span className="ml-2">
+                                      {mqttQuestionData[option] || `...`}
+                                    </span>
+                                  </motion.button>
+                                );
+                              })}
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="loading"
+                              className="flex justify-center items-center h-full mt-4"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+                            </motion.div>
                           )}
+                        </AnimatePresence>
+                      </div>
+
+                      {mqttAnswerData && (
+                        <GameResultModal
+                          key={user?.contestant_id}
+                          isOpen={!!mqttAnswerData && !!openModals}
+                          data={mqttAnswerData}
+                          questions={mqttQuestionData}
+                        />
+                      )}
                     </>
                   )}
                   <div className="">
@@ -958,6 +1009,7 @@ const QuestionTwoScreen = () => {
             showEmptyCard={false}
             showHustlerCard={true}
             eliminated={2}
+            balanceData={balanceData}
           />
         </div>
       </div>
