@@ -1128,6 +1128,7 @@ ${
             showHustlerCard={true}
             eliminated={0}
             mqttAnswerData={mqttAnswerBalanceData}
+            balanceData={null}
             // mqttAnswerBalanceData={mqttAnswerBalanceData}
           />
         </div>
