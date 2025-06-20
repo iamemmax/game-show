@@ -176,12 +176,15 @@ const HustleSideBar = ({
                                           ?.actual_balance
                                       )
                                     )}`
-                                  : `₦${addCommasToNumber(
-                                      Number(
-                                        getContestantInfo(contestant?.id)
-                                          ?.actual_balance
-                                      )
+                                  : `₦${Number(
+                                      balanceData?.data?.balances?.find(
+                                        (balance) =>
+                                          balance.contestant_id ===
+                                          user?.contestant_id
+                                      )?.actual_balance || 0
                                     )}`
+
+                                    
                                 
                                 : !mqttAnswerData
                                   ? `₦${addCommasToNumber(
