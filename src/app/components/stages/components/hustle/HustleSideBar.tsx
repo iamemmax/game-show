@@ -159,15 +159,30 @@ const HustleSideBar = ({
                             >
                               {/* {getContestantInfo(Number(contestant?.id))?.actual_balance} */}
                               {allContestsant?.game?.stage !== "STAGE_ONE"
-                                ? `₦${addCommasToNumber(
-                                    Number(
-                                      balanceData?.data?.balances?.find(
-                                        (balance) =>
-                                          balance.contestant_id ===
-                                          user?.contestant_id
-                                      )?.actual_balance || 0
-                                    )
-                                  )}`
+                                // ? `₦${addCommasToNumber(
+                                //     Number(
+                                //       balanceData?.data?.balances?.find(
+                                //         (balance) =>
+                                //           balance.contestant_id ===
+                                //           user?.contestant_id
+                                //       )?.actual_balance || 0
+                                //     )
+                                //   )}`
+
+                                ?!mqttAnswerData
+                                  ? `₦${addCommasToNumber(
+                                      Number(
+                                        getContestantInfo(contestant?.id)
+                                          ?.actual_balance
+                                      )
+                                    )}`
+                                  : `₦${addCommasToNumber(
+                                      Number(
+                                        getContestantInfo(contestant?.id)
+                                          ?.actual_balance
+                                      )
+                                    )}`
+                                
                                 : !mqttAnswerData
                                   ? `₦${addCommasToNumber(
                                       Number(
