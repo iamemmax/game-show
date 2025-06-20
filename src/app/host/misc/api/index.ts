@@ -111,7 +111,7 @@ export const useGetHustleQuestion = () => {
     });
 }
 
-const postStartGame = async ({game_episode}: { game_episode: string | number }) => {
+const postStartGame = async ({ game_episode }: { game_episode: string | number }) => {
     const res = await tokenlessAxios.post(`/api/admin-controller/start_game_episode/${game_episode}`);
     return res.data;
 }
@@ -207,3 +207,21 @@ export const useGetAllStage2Questions = (episode_id: number) =>
         queryFn: () => getAllState2Questions(episode_id),
     });
 
+
+
+
+
+//////////////////////////////////////////////////////////
+///////////             STAGE THREE        ///////////////
+//////////////////////////////////////////////////////////
+const postEndStageThree = async ({ episode }: { episode: string | number }) => {
+    const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/admin-controller/end_stage_three/${episode}`);
+    return res.data;
+}
+
+export const useEndStageThree = () => {
+    return useMutation({
+        mutationFn: postEndStageThree,
+        mutationKey: ["end-stage-3"],
+    });
+}

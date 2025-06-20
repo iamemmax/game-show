@@ -130,6 +130,7 @@ export default function Stage1Questions({
                         question_id: questionId,
                         answers_data: data,
                         question_index: currentQuestionData.data.question_index,
+                        show_modal: true,
                     })
 
                     setSentAnswers((prev) => new Set(prev).add(questionId))

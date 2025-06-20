@@ -138,6 +138,7 @@ export default function Stage2Questions({
                         question_id: questionId,
                         answers_data: data,
                         question_index: currentQuestionData.data.index,
+                        show_modal: currentQuestionData.data.index  > 4 ? false : true,
                     })
 
                     setTimerActive(false)
