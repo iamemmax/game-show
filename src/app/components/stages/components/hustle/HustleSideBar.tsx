@@ -154,7 +154,7 @@ const HustleSideBar = ({
                               {/* {getContestantInfo(Number(contestant?.id))?.actual_balance} */}
                               {allContestsant?.game?.stage !== "STAGE_ONE"
                                 ? `₦${addCommasToNumber(
-                                    Number(contestant?.actual_balance)
+                                    Number(contestant?.wallet_balance)
                                   )}`
                                 : !mqttAnswerData
                                   ? `₦${addCommasToNumber(
