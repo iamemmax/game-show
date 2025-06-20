@@ -65,13 +65,8 @@ interface Contestant {
 }
 
 const Stage1QuestionScreen = () => {
-  const {
-    isErrorModalOpen,
-    setErrorModalState,
-    openErrorModalWithMessage,
-    errorModalMessage,
-  } = useErrorModalState();
-  const { isConnected, onMessage, sendMessage } = useMQTT();
+
+  const { isConnected, onMessage } = useMQTT();
   const router = useRouter();
   const params = useParams();
 

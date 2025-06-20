@@ -48,7 +48,6 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
   const [timeLeft, setTimeLeft] = useState(60);
 
   // State to track current user's picks and other contestants' picks separately
-  const [myPicks, setMyPicks] = useState<number[]>([]);
   const [otherContestantsPicks, setOtherContestantsPicks] = useState<number[]>([]);
 
   // Add state to track recently updated numbers for visual feedback
