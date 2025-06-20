@@ -239,6 +239,7 @@ const QuestionTwoScreen = () => {
   };
 
   // Add useEffect for MQTT message handling
+  // Add useEffect for MQTT message handling
 
   const currentQuestionIdRef = useRef<string | null>(null);
 
