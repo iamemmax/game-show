@@ -31,6 +31,7 @@ const RevealBallNumber = () => {
     Number(params?.episodeId)
   );
   const pickNumbers = [3, 10, 41, null, null];
+  
 
   return (
     <div className="min-h-screen grid grid-cols-[1fr_5fr_1fr] h-full">

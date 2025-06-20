@@ -1,7 +1,7 @@
 import { salaryAxios } from '@/lib/axios';
 import {  useQuery } from 'react-query';
 
-interface balanceProp {
+export interface balanceProp {
   status: string;
   message: string;
   data: Data;
