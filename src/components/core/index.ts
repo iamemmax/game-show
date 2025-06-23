@@ -68,7 +68,16 @@ export {
 
 export { Popover, PopoverTrigger, PopoverContent } from './Popover';
 
-
+export {
+  useFormField,
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage,
+  FormField,
+} from './Form'
 
 export { Avatar, AvatarImage, AvatarFallback } from './Avatar';
 
