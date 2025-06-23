@@ -26,6 +26,7 @@ import { useAnswerStageTwoQuestion } from "../../api/stage2/answerStage2Question
 import Stage2GetReadyPage from "./Stage2GetReadyPage";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import GameResultModal from "../ResultBalnceModal";
+import { formatAmount } from "@/utils/currency";
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -108,7 +109,6 @@ const QuestionTwoScreen = () => {
   // Add state to track if answer has been received
   const [answerReceived, setAnswerReceived] = useState(false);
   const [openModals, setOpenModals] = useState(false);
-
   const [showModal, setshowModal] = useState(false)
   useEffect(() => {
     // Only initialize game start time, but don't start the timer
@@ -164,7 +164,7 @@ const QuestionTwoScreen = () => {
     // Don't set showNextButton here - wait for answer event
 
     // Mark current question as attempted
-    setAttemptedQuestions((prev) => new Set([...prev, currentQuestionIndex]));
+    // setAttemptedQuestions((prev) => new Set([...prev, currentQuestionIndex]));
 
     handleAnswerStageTwoQuestion(
       {
@@ -281,6 +281,7 @@ const QuestionTwoScreen = () => {
         const payload = receivedMessage.payload || {};
         const questionId = payload.question_id;
         setOpenModals(payload?.show_modal);
+        setshowModal(payload?.show_modal)
         if (questionId === currentQuestionIdRef?.current) {
           const answersData = payload.answers_data?.data;
           setMqttAnswerData(answersData); // Store for rendering modals
@@ -289,7 +290,7 @@ const QuestionTwoScreen = () => {
           if (answersData?.question?.correct_option) {
             setCorrectAnswer(answersData.question.correct_option);
             setIsSubmitted(true);
-           setshowModal(payload?.show_modal)
+          //  setshowModal(payload?.show_modal)
             setTimerActive(false);
 
             // FIXED: Open modals for all contestants with a slight delay to ensure state is updated
@@ -681,7 +682,7 @@ const QuestionTwoScreen = () => {
                                   glowIntensity={"none"}
                                 >
                                   ₦
-                                  {addCommasToNumber(
+                                  {formatAmount(
                                     Number(
                                       mqttQuestionData?.allocated_winning_amount
                                     )
@@ -701,7 +702,7 @@ const QuestionTwoScreen = () => {
                                   fillColor="#fff"
                                 >
                                   ₦
-                                  {addCommasToNumber(
+                                  {formatAmount(
                                     Number(
                                       balanceData?.data?.balances?.find(
                                         (balance) =>
@@ -810,7 +811,7 @@ const QuestionTwoScreen = () => {
                         </AnimatePresence>
                       </div>
 
-                      {(mqttAnswerData && showModal) && (
+                      {mqttAnswerData && openModals&& (
                         <GameResultModal
                           key={user?.contestant_id}
                           isOpen={!!mqttAnswerData && !!openModals}

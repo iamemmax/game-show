@@ -50,7 +50,7 @@ const Stage1 = ({ onNext }: Props) => {
 
   // Explicitly type the state with number[]
   const [selectedNumbers, setSelectedNumbers] = useState<Array<number>>([]);
-  const [timeLeft, setTimeLeft] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(30);
   const [isLoading, setIsLoading] = useState(false);
 
   // State to track current user's picks and other contestants' picks separately

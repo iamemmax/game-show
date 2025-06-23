@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from "react";
 import { tokenStorage } from "@/utils/auth";
+import { formatAmount } from "@/utils/currency";
 interface Datum {
   contestant_id: number;
   answered_in: number;
@@ -210,7 +211,7 @@ export default function GameResultModal({
                         Earned:{" "}
                         <span className="text-[#04DA6A] font-bold">
                           {" "}
-                          ₦{item?.profit_loss?.amount_gained?.toLocaleString()}
+                          ₦{formatAmount(item?.profit_loss?.amount_gained)}
                         </span>
                       </div>
                     </div>
@@ -311,7 +312,7 @@ export default function GameResultModal({
                         <p className="text-white text-sm">
                           Lost amount:{" "}
                           <span className="text-[#E9001B] font-bold text-sm">
-                            ₦{item?.profit_loss?.amount_lost?.toLocaleString()}
+                            ₦{formatAmount(item?.profit_loss?.amount_lost)}
                           </span>
                         </p>
                       </div>
@@ -323,7 +324,7 @@ export default function GameResultModal({
                   <div className="flex justify-between gap-4 text-center">
                     <div className="flex-1 bg-purple-700/20 p-4 rounded-lg">
                       <div className="text-lg font-bold text-purple-400">
-                        ₦{item?.startup_balance?.toLocaleString()}
+                        ₦{formatAmount(item?.startup_balance)}
                       </div>
                       <div className="text-sm text-purple-300">
                         Start up amount
@@ -331,7 +332,7 @@ export default function GameResultModal({
                     </div>
                     <div className="flex-1 bg-purple-700/20 p-4 rounded-lg">
                       <div className="text-lg font-bold text-purple-400">
-                        ₦{item?.stage_balance?.toLocaleString()}
+                        ₦{formatAmount(item?.stage_balance)}
                       </div>
                       <div className="text-sm text-purple-300"> Current balance</div>
                     </div>

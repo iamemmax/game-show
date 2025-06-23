@@ -297,6 +297,7 @@ import Image from "next/image";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import { useParams } from "next/navigation";
 import { balanceProp, useGetWalletBalance } from "../../api/stage1/getbalance";
+import { formatAmount } from "@/utils/currency";
 
 interface prop {
   showJackpot?: boolean;
@@ -486,7 +487,7 @@ const ContestantCard = ({
                   }`}
                   fillColor="#fff"
                 >
-                  ₦{addCommasToNumber(animatedBalance)}
+                  ₦{formatAmount(animatedBalance)}
                 </GlowyStrokeText>
               </div>
             )}
@@ -552,9 +553,9 @@ const HustleSideBar = ({
   };
 
   const myContestant = getContestantInfo(Number(user?.contestant_id));
-  const currentContestantData = mqttAnswerData?.filter(
-    (item) => item?.contestant_id === user?.contestant_id
-  );
+  // const currentContestantData = mqttAnswerData?.filter(
+  //   (item) => item?.contestant_id === user?.contestant_id
+  // );
 
   // Helper function to calculate balance with fallback logic
   const calculateBalance = (contestant: any, contestantInfo: any) => {
@@ -586,12 +587,12 @@ const HustleSideBar = ({
     }
 
     // Final fallback - return 0 but log for debugging
-    console.warn('Balance calculation fallback to 0 for contestant:', {
-      contestant,
-      contestantInfo,
-      stage: allContestsant?.game?.stage,
-      hasMqttData: !!(mqttAnswerData && mqttAnswerData.length > 0)
-    });
+    // console.warn('Balance calculation fallback to 0 for contestant:', {
+    //   contestant,
+    //   contestantInfo,
+    //   stage: allContestsant?.game?.stage,
+    //   hasMqttData: !!(mqttAnswerData && mqttAnswerData.length > 0)
+    // });
     
     return 0;
   };

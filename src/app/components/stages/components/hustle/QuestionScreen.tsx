@@ -30,6 +30,7 @@ import {
   questionElementVariants,
   questionVariants,
 } from "../animation/animateQuestions";
+import { formatAmount } from "@/utils/currency";
 
 // Add debug log to track component imports
 
@@ -78,21 +79,505 @@ const formatTimestamp = (date: Date): string => {
 };
 
 const QuestionScreen = () => {
-  const { isConnected, onMessage } = useMQTT();
-  const router = useRouter();
-  // Get user from storage
-  const user = tokenStorage.getUser();
-  const [showEliminationModal, setShowEliminationModal] = useState(false);
+//   const { isConnected, onMessage } = useMQTT();
+//   const router = useRouter();
+//   // Get user from storage
+//   const user = tokenStorage.getUser();
+//   const [showEliminationModal, setShowEliminationModal] = useState(false);
 
+//   const { data: questionData, isLoading } = useGetAllHustleQuestions(
+//     user?.game_episode as number
+//   );
+//   // Get contestants data to check elimination status
+//   const { data: allContestants, refetch } = useGetGameContestants(
+//     user?.game_episode as number
+//   );
+
+//   // Check if current user is eliminated
+//   useEffect(() => {
+//     if (allContestants?.data && user?.contestant_id) {
+//       const currentContestant = allContestants.data.find(
+//         (contestant) => contestant.id === user.contestant_id
+//       );
+
+//       if (currentContestant?.is_eliminated) {
+//         setShowEliminationModal(true);
+//       }
+//     }
+//   }, [allContestants?.data, user?.contestant_id]);
+
+//   const { data: contestantData } = useGetGameContestants(
+//     user?.game_episode as number
+//   );
+//   // State declarations
+//   const [timeLeft, setTimeLeft] = useState<number>(10);
+//   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+//   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
+//   const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>(
+//     []
+//   );
+//   const [showBidPrompt, setShowBidPrompt] = useState(false);
+// const [animatedCapital, setAnimatedCapital] = useState(0);
+//   const [selectedAmount, setSelectedAmount] = useState<number | null>(null); // Changed to null initially
+//   const [isSubmitted, setIsSubmitted] = useState(false);
+//   const [showNextButton, setShowNextButton] = useState(false);
+//   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
+//   const [timerActive, setTimerActive] = useState(false);
+//   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
+//   const [showPrepPage, setShowPrepPage] = useState(true);
+//   const [isOpen, setIsOpen] = useState<Record<number, boolean>>({}); // ✅ object where keys are contestant IDs
+
+//   const [questionKey, setQuestionKey] = useState<string>("initial");
+//   // Add new state variables for user-specific bid amounts
+//   const [userBidAmounts, setUserBidAmounts] = useState<{
+//     [key: string]: number;
+//   }>({});
+//   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
+
+//   // Add state to track correct answer
+//   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
+
+//   // Add new state variables
+//   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(
+//     null
+//   );
+//   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
+//   const [mqttAnswerBalanceData, setMqttAnsweBalanceData] = useState<any>(null);
+
+//   useEffect(() => {
+//     // Only initialize game start time, but don't start the timer
+//     if (!gameStartTime) {
+//       setGameStartTime(new Date());
+//     }
+//   }, []);
+
+//   // Function to handle amount selection - FIXED: Allow selection anytime except when time elapsed or submitted
+//   // const handleAmountSelect = (amount: number) => {
+//   //   // Only prevent selection if time has elapsed or already submitted
+//   //   if (timeLeft > 0 && !isSubmitted) {
+//   //     // Find the exact key that matches the amount
+//   //     const exactKey = Object.keys(userBidAmounts).find(
+//   //       (key) => Math.abs(parseFloat(key) - amount) < 0.01
+//   //     );
+
+//   //     if (exactKey) {
+//   //       setSelectedAmount(parseFloat(exactKey));
+//   //     } else {
+//   //       // Fallback to using the amount directly
+//   //       setSelectedAmount(amount);
+
+//   //       // Try to find a close match
+//   //       const closestKey = Object.keys(userBidAmounts).reduce((prev, curr) => {
+//   //         return Math.abs(parseFloat(curr) - amount) <
+//   //           Math.abs(parseFloat(prev) - amount)
+//   //           ? curr
+//   //           : prev;
+//   //       });
+//   //     }
+//   //     setShowBidPrompt(false)
+//   //   }
+//   // };
+
+//   const handleAmountSelect = (amount: number) => {
+//   // Only prevent selection if time has elapsed or already submitted
+//   if (timeLeft > 0 && !isSubmitted) {
+//     // Find the exact key that matches the amount
+//     const exactKey = Object.keys(userBidAmounts).find(
+//       (key) => Math.abs(parseFloat(key) - amount) < 0.01
+//     );
+
+//     if (exactKey) {
+//       setSelectedAmount(parseFloat(exactKey));
+//     } else {
+//       // Fallback to using the amount directly
+//       setSelectedAmount(amount);
+
+//       // Try to find a close match
+//       const closestKey = Object.keys(userBidAmounts).reduce((prev, curr) => {
+//         return Math.abs(parseFloat(curr) - amount) <
+//           Math.abs(parseFloat(prev) - amount)
+//           ? curr
+//           : prev;
+//       });
+//     }
+//     setShowBidPrompt(false);
+//   }
+// };
+//   // Auto-submit effect when both option and amount are selected
+//   useEffect(() => {
+//     if (
+//       selectedOption &&
+//       selectedAmount !== null &&
+//       !isSubmitted &&
+//       timerActive &&
+//       currentQuestionId
+//     ) {
+//       handleSubmitAnswer();
+//     }
+//   }, [
+//     selectedOption,
+//     selectedAmount,
+//     isSubmitted,
+//     timerActive,
+//     currentQuestionId,
+//   ]);
+
+//   // Timer effect
+//   useEffect(() => {
+//     // This is the critical guard - timer should not run if not active
+//     if (!timerActive) {
+//       return;
+//     }
+
+//     if (timeLeft <= 0) {
+//       setShowNextButton(true); // Enable the Next button
+
+//       if (!selectedOption && !isSubmitted) {
+//         console.log("No option selected, auto-submitting with 'N'");
+//         setSelectedOption("N" as OptionKey);
+//         handleAutoSubmit();
+//       }
+
+//       return;
+//     }
+
+//     const timer = setTimeout(() => {
+//       setTimeLeft(timeLeft - 1);
+//     }, 1000);
+
+//     return () => {
+//       clearTimeout(timer);
+//     };
+//   }, [timeLeft, selectedOption, isSubmitted, timerActive]);
+
+//   const currentQuestionIdRef = useRef<string | null>(null);
+
+//   useEffect(() => {
+//     currentQuestionIdRef.current = currentQuestionId;
+//   }, [currentQuestionId]);
+
+//   useEffect(() => {
+//     if (!isConnected) return;
+
+//     const handler = (receivedMessage: any) => {
+//       // Handle prep page event
+//       if (receivedMessage?.event === "game_s1_question_reveal") {
+//         setShowPrepPage(false);
+
+//         const payload = receivedMessage.payload || {};
+//         const questionData = payload.data || {};
+//         const spendBreakdown =
+//           questionData.spend_breakdown ||
+//           payload.spend_breakdown ||
+//           payload.data?.spend_breakdown;
+
+//         // 1. Save full question info
+//         setMqttQuestionData(questionData);
+//         setQuestionKey(`question-${questionData.question_index || Date.now()}`);
+// // Show prompt toast/modal
+// setShowBidPrompt(true);
+// // setTimeout(() => setShowBidPrompt(false), 5000);
+
+//         // 2. Reset related states
+//         setSelectedOption(null);
+//         setSelectedAmount(null); // Reset to null
+//         setIsSubmitted(false);
+//         resetTimerState();
+//         // setResultMessageSent(false);
+//         setMqttAnswerData(null);
+//         setCorrectAnswer(null);
+
+//         // 3. Set current index and question ID
+//         setCurrentQuestionIndex(questionData.question_index || 1);
+//         const questionId =
+//           questionData?.question?.questions?.question_id ||
+//           payload?.question_id;
+//         if (questionId) {
+//           setCurrentQuestionId(questionId.toString());
+//         }
+
+//         // 4. Extract and save user's spend breakdown
+//         if (spendBreakdown && user?.contestant_id) {
+//           const userData = Array.isArray(spendBreakdown)
+//             ? spendBreakdown.find(
+//                 (contestant: any) =>
+//                   String(contestant.contestant_id) ===
+//                   String(user.contestant_id)
+//               )
+//             : spendBreakdown;
+
+//           if (userData?.spend_breakdown) {
+//             setUserBidAmounts(userData.spend_breakdown);
+//           } else {
+//             setUserBidAmounts({});
+//           }
+//         }
+//       }
+
+//       if (receivedMessage?.event === "game_s1_question_answer") {
+//         const payload = receivedMessage.payload || {};
+//         const questionId = payload.question_id;
+
+//         if (questionId === currentQuestionIdRef?.current) {
+//           const answersData = payload.answers_data?.data;
+//           setMqttAnswerData(answersData); // Store for rendering modals
+//           setMqttAnsweBalanceData(answersData); // Store for rendering modals
+//           refetch();
+
+//           // Mark submitted and stop timer
+//           if (answersData?.question?.correct_option) {
+//             setCorrectAnswer(answersData.question.correct_option);
+//             setIsSubmitted(true);
+//             setShowNextButton(true);
+//             setTimerActive(false);
+
+//             // FIXED: Open modals for all contestants with a slight delay to ensure state is updated
+//             setTimeout(() => {
+//               const newOpenModals: Record<number, boolean> = {};
+//               if (answersData?.data && Array.isArray(answersData.data)) {
+//                 answersData.data.forEach((c: any) => {
+//                   if (c?.contestant_id) {
+//                     newOpenModals[c.contestant_id] = true;
+//                   }
+//                 });
+//                 setTimeout(() => {
+//                   setIsOpen(newOpenModals);
+//                 }, 7000); // 7 seconds
+//               }
+//             }, 100);
+//           }
+//         }
+//       }
+
+//       // Handle timer start event
+//       if (receivedMessage?.event === "game_s1_timer_start") {
+//         handleStartTimer();
+//       }
+
+//       // Handle results reveal event
+//       if (receivedMessage?.event === "game_s1_results_reveal") {
+//         setAllQuestionsCompleted(true);
+//       }
+//     };
+//     onMessage(handler);
+
+//     return () => {
+//       if (isConnected) {
+//         onMessage(null);
+//       }
+//     };
+//   }, [isConnected, onMessage, user?.contestant_id]);
+
+//   // Handle option selection - now just selects without checking correctness
+//   const handleOptionSelect = (option: OptionKey) => {
+//     // Only allow selection if timer is active and not submitted yet
+//     if (timerActive && !isSubmitted) {
+//       setSelectedOption(option);
+//       // Reset amount selection when option changes
+//       // setSelectedAmount(null);
+//     }
+//   };
+
+//   const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
+
+//   const handleSubmitAnswer = () => {
+//     if (!selectedOption || !currentQuestionId || selectedAmount === null)
+//       return;
+
+//     const answerLetter = convertOptionToLetter(selectedOption);
+//     const formattedTimestamp = new Date().toISOString();
+//     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
+//     setIsSubmitted(true);
+//     setShowNextButton(true); // Enable the Next button after submission
+
+//     // Find the exact string key from the backend that matches the selected amount
+//     const selectedAmountKey = Object.keys(userBidAmounts).find(
+//       (key) => Math.abs(parseFloat(key) - selectedAmount) < 0.01
+//     );
+
+//     // Use the exact key string from the backend (e.g., "15000.00")
+//     const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
+
+//     handleAnswerStageOneQuestion(
+//       {
+//         contestant_id: user?.contestant_id,
+//         question_id: Number(currentQuestionId),
+//         answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
+//         amount_staked: amountToStake, // Send the exact key string from backend
+//         timestamp: formattedTimestamp,
+//         question_start_time: formattedGameStartTime, // Add game start time
+//       },
+//       {
+//         onSuccess: () => {
+//           console.log(
+//             "Successfully submitted answer for question ID:",
+//             currentQuestionId
+//           );
+//           // Add to attempted options
+//           setAttemptedOptions([
+//             ...attemptedOptions,
+//             {
+//               option: selectedOption,
+//             },
+//           ]);
+//         },
+//         onError: (error) => {
+//           console.error("Error submitting answer:", error);
+//           // openErrorModalWithMessage(String(errorMessage));
+//         },
+//       }
+//     );
+//   };
+
+//   // Add this function to reset the timer state for the next question
+//   const resetTimerState = () => {
+//     setTimerActive(false);
+//     setTimeLeft(10);
+//     setShowNextButton(false);
+//     setSelectedAmount(null); // Reset to null
+//   };
+
+//   // Function to check if a question has been attempted
+//   const isQuestionAttempted = (idx: number) => {
+//     return mqttQuestionData?.question?.hustle_reveal?.hustle_number > idx;
+//   };
+
+//   // Handle auto-submission when time elapses
+//   const handleAutoSubmit = () => {
+//     if (!currentQuestionId) return;
+
+//     setIsSubmitted(true);
+//     setShowNextButton(true); // Enable the Next button after auto-submission
+//   };
+
+//   const handleStartTimer = () => {
+//     console.log("handleStartTimer called - activating timer");
+//     setTimerActive(true);
+//     setShowBidPrompt(false)
+//     setGameStartTime(new Date()); // Reset game start time when timer starts
+//     setTimeLeft(10); // Reset timer to 10 seconds
+//   };
+
+//   if (showPrepPage) {
+//     return <GetReadyScreen />;
+//   }
+
+//   if (allQuestionsCompleted) {
+//     return <StageOneTally eliminationCount={0} removeCount={0} />;
+//   }
+
+//   const contestantBalance = mqttAnswerData?.filter(
+//     (contestant: any) => contestant.contestant_id === user?.contestant_id
+//   );
+// // Add this helper function
+// const calculateRemainingCapital = () => {
+//   const baseCapital = Number(contestantBalance?.wallet_balance) ||
+//     Number(
+//       contestantData?.data?.find(
+//         (contestant: any) =>
+//           String(contestant.id) === String(user?.contestant_id)
+//       )?.actual_balance
+//     );
+  
+//   // Subtract selected amount if any
+//   const deduction = selectedAmount || 0;
+//   return Math.max(0, baseCapital - deduction);
+// };
+
+// // Add this useEffect with your other useEffect hooks
+// useEffect(() => {
+//   const targetCapital = calculateRemainingCapital();
+  
+//   // Initialize animatedCapital if it's 0
+//   if (animatedCapital === 0) {
+//     setAnimatedCapital(targetCapital);
+//     return;
+//   }
+  
+//   const startCapital = animatedCapital;
+//   const difference = targetCapital - startCapital;
+  
+//   if (difference === 0) return;
+  
+//   const duration = 800; // Animation duration in ms
+//   const steps = 30; // Number of animation steps
+//   const stepValue = difference / steps;
+//   const stepDuration = duration / steps;
+  
+//   let currentStep = 0;
+//   const interval = setInterval(() => {
+//     currentStep++;
+//     const newValue = startCapital + (stepValue * currentStep);
+    
+//     if (currentStep >= steps) {
+//       setAnimatedCapital(targetCapital);
+//       clearInterval(interval);
+//     } else {
+//       setAnimatedCapital(Math.round(newValue));
+//     }
+//   }, stepDuration);
+  
+//   return () => clearInterval(interval);
+// }, [selectedAmount]);
+
+
+const { isConnected, onMessage } = useMQTT();
+  const router = useRouter();
+  
+  // Get user from storage - this should always be called
+  const user = tokenStorage.getUser();
+  
+  // All hook calls should be at the top level, before any conditional logic
+  const [showEliminationModal, setShowEliminationModal] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number>(10);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
+  const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>([]);
+  const [showBidPrompt, setShowBidPrompt] = useState(false);
+  const [animatedCapital, setAnimatedCapital] = useState(0);
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showNextButton, setShowNextButton] = useState(false);
+  const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
+  const [timerActive, setTimerActive] = useState(false);
+  const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
+  const [showPrepPage, setShowPrepPage] = useState(true);
+  const [isOpen, setIsOpen] = useState<Record<number, boolean>>({});
+  const [questionKey, setQuestionKey] = useState<string>("initial");
+  const [userBidAmounts, setUserBidAmounts] = useState<{[key: string]: number}>({});
+  const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
+  const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
+  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
+  const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
+  const [mqttAnswerBalanceData, setMqttAnsweBalanceData] = useState<any>(null);
+  
+  const currentQuestionIdRef = useRef<string | null>(null);
+
+  // API hooks - ensure these are called consistently
   const { data: questionData, isLoading } = useGetAllHustleQuestions(
     user?.game_episode as number
   );
-  // Get contestants data to check elimination status
+  
   const { data: allContestants, refetch } = useGetGameContestants(
     user?.game_episode as number
   );
+  
+  const { data: contestantData } = useGetGameContestants(
+    user?.game_episode as number
+  );
+  
+  const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
 
-  // Check if current user is eliminated
+  // FIXED: Move all useEffect hooks here, ensuring they're always called
+  
+  // 1. Initialize game start time effect
+  useEffect(() => {
+    if (!gameStartTime) {
+      setGameStartTime(new Date());
+    }
+  }, [gameStartTime]); // Added gameStartTime to dependency array
+
+  // 2. Check elimination status effect
   useEffect(() => {
     if (allContestants?.data && user?.contestant_id) {
       const currentContestant = allContestants.data.find(
@@ -105,78 +590,7 @@ const QuestionScreen = () => {
     }
   }, [allContestants?.data, user?.contestant_id]);
 
-  const { data: contestantData } = useGetGameContestants(
-    user?.game_episode as number
-  );
-  // State declarations
-  const [timeLeft, setTimeLeft] = useState<number>(10);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
-  const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>(
-    []
-  );
-  const [showBidPrompt, setShowBidPrompt] = useState(false);
-
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null); // Changed to null initially
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [showNextButton, setShowNextButton] = useState(false);
-  const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
-  const [timerActive, setTimerActive] = useState(false);
-  const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
-  const [showPrepPage, setShowPrepPage] = useState(true);
-  const [isOpen, setIsOpen] = useState<Record<number, boolean>>({}); // ✅ object where keys are contestant IDs
-
-  const [questionKey, setQuestionKey] = useState<string>("initial");
-  // Add new state variables for user-specific bid amounts
-  const [userBidAmounts, setUserBidAmounts] = useState<{
-    [key: string]: number;
-  }>({});
-  const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
-
-  // Add state to track correct answer
-  const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
-
-  // Add new state variables
-  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(
-    null
-  );
-  const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
-  const [mqttAnswerBalanceData, setMqttAnsweBalanceData] = useState<any>(null);
-
-  useEffect(() => {
-    // Only initialize game start time, but don't start the timer
-    if (!gameStartTime) {
-      setGameStartTime(new Date());
-    }
-  }, []);
-
-  // Function to handle amount selection - FIXED: Allow selection anytime except when time elapsed or submitted
-  const handleAmountSelect = (amount: number) => {
-    // Only prevent selection if time has elapsed or already submitted
-    if (timeLeft > 0 && !isSubmitted) {
-      // Find the exact key that matches the amount
-      const exactKey = Object.keys(userBidAmounts).find(
-        (key) => Math.abs(parseFloat(key) - amount) < 0.01
-      );
-
-      if (exactKey) {
-        setSelectedAmount(parseFloat(exactKey));
-      } else {
-        // Fallback to using the amount directly
-        setSelectedAmount(amount);
-
-        // Try to find a close match
-        const closestKey = Object.keys(userBidAmounts).reduce((prev, curr) => {
-          return Math.abs(parseFloat(curr) - amount) <
-            Math.abs(parseFloat(prev) - amount)
-            ? curr
-            : prev;
-        });
-      }
-      setShowBidPrompt(false)
-    }
-  };
-  // Auto-submit effect when both option and amount are selected
+  // 3. Auto-submit effect
   useEffect(() => {
     if (
       selectedOption &&
@@ -187,30 +601,22 @@ const QuestionScreen = () => {
     ) {
       handleSubmitAnswer();
     }
-  }, [
-    selectedOption,
-    selectedAmount,
-    isSubmitted,
-    timerActive,
-    currentQuestionId,
-  ]);
+  }, [selectedOption, selectedAmount, isSubmitted, timerActive, currentQuestionId]);
 
-  // Timer effect
+  // 4. Timer effect
   useEffect(() => {
-    // This is the critical guard - timer should not run if not active
     if (!timerActive) {
       return;
     }
 
     if (timeLeft <= 0) {
-      setShowNextButton(true); // Enable the Next button
+      setShowNextButton(true);
 
       if (!selectedOption && !isSubmitted) {
         console.log("No option selected, auto-submitting with 'N'");
         setSelectedOption("N" as OptionKey);
         handleAutoSubmit();
       }
-
       return;
     }
 
@@ -221,14 +627,14 @@ const QuestionScreen = () => {
     return () => {
       clearTimeout(timer);
     };
-  }, [timeLeft, selectedOption, isSubmitted, timerActive]);
+  }, [timeLeft, selectedOption, isSubmitted, timerActive]); // Removed functions from deps
 
-  const currentQuestionIdRef = useRef<string | null>(null);
-
+  // 5. Current question ID ref effect
   useEffect(() => {
     currentQuestionIdRef.current = currentQuestionId;
   }, [currentQuestionId]);
 
+  // 6. MQTT message handling effect
   useEffect(() => {
     if (!isConnected) return;
 
@@ -244,23 +650,17 @@ const QuestionScreen = () => {
           payload.spend_breakdown ||
           payload.data?.spend_breakdown;
 
-        // 1. Save full question info
         setMqttQuestionData(questionData);
         setQuestionKey(`question-${questionData.question_index || Date.now()}`);
-// Show prompt toast/modal
-setShowBidPrompt(true);
-// setTimeout(() => setShowBidPrompt(false), 5000);
+        setShowBidPrompt(true);
 
-        // 2. Reset related states
         setSelectedOption(null);
-        setSelectedAmount(null); // Reset to null
+        setSelectedAmount(null);
         setIsSubmitted(false);
         resetTimerState();
-        // setResultMessageSent(false);
         setMqttAnswerData(null);
         setCorrectAnswer(null);
 
-        // 3. Set current index and question ID
         setCurrentQuestionIndex(questionData.question_index || 1);
         const questionId =
           questionData?.question?.questions?.question_id ||
@@ -269,7 +669,6 @@ setShowBidPrompt(true);
           setCurrentQuestionId(questionId.toString());
         }
 
-        // 4. Extract and save user's spend breakdown
         if (spendBreakdown && user?.contestant_id) {
           const userData = Array.isArray(spendBreakdown)
             ? spendBreakdown.find(
@@ -293,18 +692,16 @@ setShowBidPrompt(true);
 
         if (questionId === currentQuestionIdRef?.current) {
           const answersData = payload.answers_data?.data;
-          setMqttAnswerData(answersData); // Store for rendering modals
-          setMqttAnsweBalanceData(answersData); // Store for rendering modals
+          setMqttAnswerData(answersData);
+          setMqttAnsweBalanceData(answersData);
           refetch();
 
-          // Mark submitted and stop timer
           if (answersData?.question?.correct_option) {
             setCorrectAnswer(answersData.question.correct_option);
             setIsSubmitted(true);
             setShowNextButton(true);
             setTimerActive(false);
 
-            // FIXED: Open modals for all contestants with a slight delay to ensure state is updated
             setTimeout(() => {
               const newOpenModals: Record<number, boolean> = {};
               if (answersData?.data && Array.isArray(answersData.data)) {
@@ -315,23 +712,22 @@ setShowBidPrompt(true);
                 });
                 setTimeout(() => {
                   setIsOpen(newOpenModals);
-                }, 7000); // 7 seconds
+                }, 7000);
               }
             }, 100);
           }
         }
       }
 
-      // Handle timer start event
       if (receivedMessage?.event === "game_s1_timer_start") {
         handleStartTimer();
       }
 
-      // Handle results reveal event
       if (receivedMessage?.event === "game_s1_results_reveal") {
         setAllQuestionsCompleted(true);
       }
     };
+
     onMessage(handler);
 
     return () => {
@@ -339,19 +735,87 @@ setShowBidPrompt(true);
         onMessage(null);
       }
     };
-  }, [isConnected, onMessage, user?.contestant_id]);
+  }, [isConnected, onMessage, user?.contestant_id, refetch]); // Added missing dependencies
+  // Calculate contestant balance
+  const contestantBalance = mqttAnswerData?.filter(
+    (contestant: any) => contestant.contestant_id === user?.contestant_id
+  );
+  // 7. Animated capital effect
+  useEffect(() => {
+    const targetCapital = calculateRemainingCapital();
+    
+    if (animatedCapital === 0) {
+      setAnimatedCapital(targetCapital);
+      return;
+    }
+    
+    const startCapital = animatedCapital;
+    const difference = targetCapital - startCapital;
+    
+    if (difference === 0) return;
+    
+    const duration = 800;
+    const steps = 30;
+    const stepValue = difference / steps;
+    const stepDuration = duration / steps;
+    
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      const newValue = startCapital + (stepValue * currentStep);
+      
+      if (currentStep >= steps) {
+        setAnimatedCapital(targetCapital);
+        clearInterval(interval);
+      } else {
+        setAnimatedCapital(Math.round(newValue));
+      }
+    }, stepDuration);
+    
+    return () => clearInterval(interval);
+  }, [selectedAmount, contestantBalance, contestantData, user?.contestant_id]); // Added dependencies
 
-  // Handle option selection - now just selects without checking correctness
-  const handleOptionSelect = (option: OptionKey) => {
-    // Only allow selection if timer is active and not submitted yet
-    if (timerActive && !isSubmitted) {
-      setSelectedOption(option);
-      // Reset amount selection when option changes
-      // setSelectedAmount(null);
+  // Helper functions - moved inside component but after hooks
+  const calculateRemainingCapital = () => {
+    const baseCapital = Number(contestantBalance?.wallet_balance) ||
+      Number(
+        contestantData?.data?.find(
+          (contestant: any) =>
+            String(contestant.id) === String(user?.contestant_id)
+        )?.actual_balance
+      );
+    
+    const deduction = selectedAmount || 0;
+    return Math.max(0, baseCapital - deduction);
+  };
+
+  const handleAmountSelect = (amount: number) => {
+    if (timeLeft > 0 && !isSubmitted) {
+      const exactKey = Object.keys(userBidAmounts).find(
+        (key) => Math.abs(parseFloat(key) - amount) < 0.01
+      );
+
+      if (exactKey) {
+        setSelectedAmount(parseFloat(exactKey));
+      } else {
+        setSelectedAmount(amount);
+
+        const closestKey = Object.keys(userBidAmounts).reduce((prev, curr) => {
+          return Math.abs(parseFloat(curr) - amount) <
+            Math.abs(parseFloat(prev) - amount)
+            ? curr
+            : prev;
+        });
+      }
+      setShowBidPrompt(false);
     }
   };
 
-  const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
+  const handleOptionSelect = (option: OptionKey) => {
+    if (timerActive && !isSubmitted) {
+      setSelectedOption(option);
+    }
+  };
 
   const handleSubmitAnswer = () => {
     if (!selectedOption || !currentQuestionId || selectedAmount === null)
@@ -361,24 +825,22 @@ setShowBidPrompt(true);
     const formattedTimestamp = new Date().toISOString();
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
-    setShowNextButton(true); // Enable the Next button after submission
+    setShowNextButton(true);
 
-    // Find the exact string key from the backend that matches the selected amount
     const selectedAmountKey = Object.keys(userBidAmounts).find(
       (key) => Math.abs(parseFloat(key) - selectedAmount) < 0.01
     );
 
-    // Use the exact key string from the backend (e.g., "15000.00")
     const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
 
     handleAnswerStageOneQuestion(
       {
         contestant_id: user?.contestant_id,
         question_id: Number(currentQuestionId),
-        answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
-        amount_staked: amountToStake, // Send the exact key string from backend
+        answer: answerLetter,
+        amount_staked: amountToStake,
         timestamp: formattedTimestamp,
-        question_start_time: formattedGameStartTime, // Add game start time
+        question_start_time: formattedGameStartTime,
       },
       {
         onSuccess: () => {
@@ -386,7 +848,6 @@ setShowBidPrompt(true);
             "Successfully submitted answer for question ID:",
             currentQuestionId
           );
-          // Add to attempted options
           setAttemptedOptions([
             ...attemptedOptions,
             {
@@ -396,41 +857,39 @@ setShowBidPrompt(true);
         },
         onError: (error) => {
           console.error("Error submitting answer:", error);
-          // openErrorModalWithMessage(String(errorMessage));
         },
       }
     );
   };
 
-  // Add this function to reset the timer state for the next question
   const resetTimerState = () => {
     setTimerActive(false);
     setTimeLeft(10);
     setShowNextButton(false);
-    setSelectedAmount(null); // Reset to null
+    setSelectedAmount(null);
   };
 
-  // Function to check if a question has been attempted
   const isQuestionAttempted = (idx: number) => {
     return mqttQuestionData?.question?.hustle_reveal?.hustle_number > idx;
   };
 
-  // Handle auto-submission when time elapses
   const handleAutoSubmit = () => {
     if (!currentQuestionId) return;
-
     setIsSubmitted(true);
-    setShowNextButton(true); // Enable the Next button after auto-submission
+    setShowNextButton(true);
   };
 
   const handleStartTimer = () => {
     console.log("handleStartTimer called - activating timer");
     setTimerActive(true);
-    setShowBidPrompt(false)
-    setGameStartTime(new Date()); // Reset game start time when timer starts
-    setTimeLeft(10); // Reset timer to 10 seconds
+    setShowBidPrompt(false);
+    setGameStartTime(new Date());
+    setTimeLeft(10);
   };
 
+
+
+  // Early returns should come AFTER all hooks are called
   if (showPrepPage) {
     return <GetReadyScreen />;
   }
@@ -438,14 +897,6 @@ setShowBidPrompt(true);
   if (allQuestionsCompleted) {
     return <StageOneTally eliminationCount={0} removeCount={0} />;
   }
-
-  const contestantBalance = mqttAnswerData?.filter(
-    (contestant: any) => contestant.contestant_id === user?.contestant_id
-  );
-  // const filterOption = (option:string)=>{
-  // const filter = mqttAnswerData?.filter((res)=>res?.)
-  // }
-  //  console.log(mqttQuestionData?.question?.hustle_reveal?.hustle_number);
 
   return (
     <>
@@ -715,7 +1166,7 @@ setShowBidPrompt(true);
                                   </span>
                                 </p>
                               </div>
-                              <div className="bg-[#011B0D] flex items-center justify-center  rounded-[12px] py-2 px-2 w-full">
+                              {/* <div className="bg-[#011B0D] flex items-center justify-center  rounded-[12px] py-2 px-2 w-full">
                                 <p className="text-xs font-outfit  items-center font-normal text-[#04DA6A] ">
                                   Capital:{" "}
                                   <span
@@ -742,7 +1193,22 @@ setShowBidPrompt(true);
                                     )}
                                   </span>
                                 </p>
-                              </div>
+                              </div> */}
+                        <div className="bg-[#011B0D] flex items-center justify-center rounded-[12px] py-2 px-2 w-full">
+  <p className="text-xs font-outfit items-center font-normal text-[#04DA6A]">
+    Capital:{" "}
+    <span
+      className="text-lg font-extrabold font-verdana text-center"
+      style={{
+        WebkitTextStroke: "1px #04DA6A",
+        textShadow: "1px 2px 3px rgba(4, 218, 106, 0.4)",
+      }}
+    >
+      ₦{formatAmount(animatedCapital) || formatAmount(calculateRemainingCapital())} 
+      {/* {addCommasToNumber(animatedCapital || calculateRemainingCapital())} */}
+    </span>
+  </p>
+</div>
                             </motion.div>
                           </motion.div>
 
@@ -785,7 +1251,7 @@ setShowBidPrompt(true);
                                       }}
                                       className="text-2xl mb-2"
                                     >
-                                      💰
+                                     
                                     </motion.div>
                                     <p className="text-black text-lg font-extrabold font-gilroyBold">
                                       PLACE YOUR BID NOW!
@@ -906,14 +1372,14 @@ ${
     : "hover:bg-[#035D2E] hover:text-white"
 }`}
                                               >
-                                                ₦
-                                                {amount.toLocaleString(
+                                                ₦{formatAmount(amount)}
+                                                {/* {amount.toLocaleString(
                                                   undefined,
                                                   {
                                                     minimumFractionDigits: 0,
                                                     maximumFractionDigits: 0,
                                                   }
-                                                )}
+                                                )} */}
                                               </Button>
                                             </motion.div>
 
