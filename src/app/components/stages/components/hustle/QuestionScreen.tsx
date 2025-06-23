@@ -173,6 +173,7 @@ const QuestionScreen = () => {
             : prev;
         });
       }
+      setShowBidPrompt(false)
     }
   };
   // Auto-submit effect when both option and amount are selected
@@ -248,7 +249,7 @@ const QuestionScreen = () => {
         setQuestionKey(`question-${questionData.question_index || Date.now()}`);
 // Show prompt toast/modal
 setShowBidPrompt(true);
-setTimeout(() => setShowBidPrompt(false), 5000);
+// setTimeout(() => setShowBidPrompt(false), 5000);
 
         // 2. Reset related states
         setSelectedOption(null);
@@ -425,6 +426,7 @@ setTimeout(() => setShowBidPrompt(false), 5000);
   const handleStartTimer = () => {
     console.log("handleStartTimer called - activating timer");
     setTimerActive(true);
+    setShowBidPrompt(false)
     setGameStartTime(new Date()); // Reset game start time when timer starts
     setTimeLeft(10); // Reset timer to 10 seconds
   };
@@ -644,197 +646,8 @@ setTimeout(() => setShowBidPrompt(false), 5000);
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                     </div>
                   ) : (
-                    <div className="">
-                      {/* <div className="relative">
-                        <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
-                          <div className="">
-                            <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
-                              Question{" "}
-                              {mqttQuestionData?.question_index || "..."}
-                            </p>
-                          </div>
-                          <div className="">
-                            {mqttQuestionData?.question?.questions?.question ? (
-                              <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                                {mqttQuestionData.question.questions.question}
-                              </h2>
-                            ) : (
-                              <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                                Waiting for question from host...
-                              </h2>
-                            )}
-                          </div>
-                          <div className="flex justify-center items-center w-full gap-4">
-                            <div className="bg-[#011B0D] rounded-[12px] py-1 px-1 w-full">
-                              <p
-                                className="text-[25px] text-white font-extrabold font- text-center"
-                                style={{
-                                  WebkitTextStroke: "2px #04DA6A",
-                                  textShadow:
-                                    "0px 2px 4px rgba(4, 218, 106, 0.5)",
-                                }}
-                              >
-                                {mqttQuestionData?.question?.questions
-                                  ?.question_booster || "..."}{" "}
-                                <span
-                                  className="text-base font-outfit font-normal text-[#04DA6A]"
-                                  style={{
-                                    WebkitTextStroke: "0px",
-                                    textShadow: "none",
-                                  }}
-                                >
-                                  Booster
-                                </span>
-                              </p>
-                            </div>
-                            <div className="bg-[#011B0D] rounded-[12px] py-2 px-4 w-full">
-                              <p className="text-xs font-outfit font-normal text-[#04DA6A] ">
-                                Capital:{" "}
-                                <span
-                                  className="text-lg text-white font-extrabold font-verdana text-center"
-                                  style={{
-                                    WebkitTextStroke: "1px #04DA6A",
-                                    textShadow:
-                                      "1px 2px 3px rgba(4, 218, 106, 0.4)",
-                                  }}
-                                >
-                                  ₦
-                                  {addCommasToNumber(
-                                    Number(contestantBalance?.wallet_balance) ||
-                                      Number(
-                                        contestantData?.data?.find(
-                                          (contestant: any) =>
-                                            String(contestant.id) ===
-                                            String(user?.contestant_id)
-                                        )?.actual_balance
-                                      )
-                                  )}
-                                </span>
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
-                          {(
-                            [
-                              "option_a",
-                              "option_b",
-                              "option_c",
-                              "option_d",
-                            ] as OptionKey[]
-                          ).map((option, index) => {
-                            const optionLetter = String.fromCharCode(
-                              65 + index
-                            ); // A, B, C, D
-                            const currentQuestions =
-                              mqttQuestionData?.question?.questions || {};
-                            const showResult = isSubmitted && correctAnswer;
-                            convertOptionToLetter(option);
-                            const isSelected = selectedOption === option;
-
-                            return (
-                              <button
-                                key={option}
-                                onClick={() => handleOptionSelect(option)}
-                                className={cn(
-                                  "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
-                                  !showResult && isSelected
-                                    ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
-                                    : "",
-                                  isSubmitted ||
-                                    !timerActive ||
-                                    !mqttQuestionData?.question?.questions
-                                    ? "opacity-70 cursor-not-allowed"
-                                    : "",
-                                 
-                                  mqttAnswerData &&
-                                    currentQuestions?.correct_option ===
-                                      convertOptionToLetter(option)
-                                    ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
-                                    : ""
-                                )}
-                              >
-                                {optionLetter}:
-                                <span className="ml-2">
-                                  {currentQuestions[option] || `...`}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <div className="flex flex-col items-start gap-1 mt-4">
-                          <p className="text-white text-xs pb-1 font-gilroyMedium">
-                            Select wager amount
-                          </p>
-                          <div className="flex items-center w-full">
-                            <div className="flex flex-1 items-center">
-                              <div className="flex gap-2">
-                                {userBidAmounts &&
-                                Object.keys(userBidAmounts).length > 0 ? (
-                                  Object.entries(userBidAmounts).map(
-                                    ([amountKey, bidValue], index) => {
-                                      const amount =
-                                        Number.parseFloat(amountKey);
-
-                                      return (
-                                        <div
-                                          key={index}
-                                          className="flex flex-col items-center"
-                                        >
-                                          <Button
-                                            onClick={() =>
-                                              handleAmountSelect(amount)
-                                            }
-                                            disabled={
-                                              timeLeft <= 0 ||
-                                              isSubmitted
-                                            }
-                                            className={`px-4 py-3 rounded-lg text-base font-bold transition-all ${
-                                              selectedAmount === amount
-                                                ? "bg-[#04DA6A] text-black"
-                                                : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
-                                            }
-  ${
-    timeLeft <= 0 || isSubmitted 
-      ? "opacity-50 cursor-not-allowed"
-      : "hover:bg-[#035D2E] hover:text-white"
-  }`}
-                                          >
-                                            ₦
-                                            {amount.toLocaleString(undefined, {
-                                              minimumFractionDigits: 0,
-                                              maximumFractionDigits: 0,
-                                            })}
-                                          </Button>
-
-                                          {selectedAmount === amount && (
-                                            <div className="text-xs text-[#04DA6A] mt-1 font-bold">
-                                              ₦
-                                              {Number(bidValue).toLocaleString(
-                                                undefined,
-                                                {
-                                                  minimumFractionDigits: 0,
-                                                  maximumFractionDigits: 0,
-                                                }
-                                              )}
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    }
-                                  )
-                                ) : (
-                                 
-                                  <div className="text-white text-sm">
-                                    Waiting for bid options from host...
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div> */}
+                  <div className="">
+                    
 
                       <AnimatePresence mode="wait">
                         <motion.div
@@ -933,62 +746,112 @@ setTimeout(() => setShowBidPrompt(false), 5000);
                             </motion.div>
                           </motion.div>
 
-                          {/* Options display with animation */}
+                          {/* Options display with animation and overlay */}
                           <motion.div
                             variants={questionElementVariants}
-                            className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]"
+                            className="relative mt-[.625rem]"
                           >
-                            {(
-                              [
-                                "option_a",
-                                "option_b",
-                                "option_c",
-                                "option_d",
-                              ] as OptionKey[]
-                            ).map((option, index) => {
-                              const optionLetter = String.fromCharCode(
-                                65 + index
-                              ); // A, B, C, D
-                              const currentQuestions =
-                                mqttQuestionData?.question?.questions || {};
-                              const showResult = isSubmitted && correctAnswer;
-                              convertOptionToLetter(option);
-                              const isSelected = selectedOption === option;
-
-                              return (
-                                <motion.button
-                                  key={option}
-                                  custom={index}
-                                  variants={optionVariants}
-                                  initial="initial"
-                                  animate="animate"
-                                  whileHover="hover"
-                                  whileTap="tap"
-                                  onClick={() => handleOptionSelect(option)}
-                                  className={cn(
-                                    "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
-                                    !showResult && isSelected
-                                      ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
-                                      : "",
-                                    isSubmitted ||
-                                      !timerActive ||
-                                      !mqttQuestionData?.question?.questions
-                                      ? "opacity-70 cursor-not-allowed"
-                                      : "",
-                                    mqttAnswerData &&
-                                      currentQuestions?.correct_option ===
-                                        convertOptionToLetter(option)
-                                      ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
-                                      : ""
-                                  )}
+                            {/* Bid Prompt Overlay */}
+                            {showBidPrompt && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-[.75rem]"
+                              >
+                                <motion.div
+                                  animate={{
+                                    scale: [1, 1.05, 1],
+                                    boxShadow: [
+                                      "0 0 20px rgba(255, 193, 37, 0.5)",
+                                      "0 0 40px rgba(255, 193, 37, 0.8)",
+                                      "0 0 20px rgba(255, 193, 37, 0.5)"
+                                    ]
+                                  }}
+                                  transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    ease: "easeInOut"
+                                  }}
+                                  className="bg-gradient-to-r from-[#FFC125] via-[#FFCC11] to-[#C23A00] p-4 rounded-xl border-4 w-full border-[#FFC125] shadow-2xl"
                                 >
-                                  {optionLetter}:
-                                  <span className="ml-2">
-                                    {currentQuestions[option] || `...`}
-                                  </span>
-                                </motion.button>
-                              );
-                            })}
+                                  <div className="text-center">
+                                    <motion.div
+                                      animate={{ rotate: [0, 10, -10, 0] }}
+                                      transition={{
+                                        duration: 0.5,
+                                        repeat: Infinity,
+                                        repeatDelay: 1
+                                      }}
+                                      className="text-2xl mb-2"
+                                    >
+                                      💰
+                                    </motion.div>
+                                    <p className="text-black text-lg font-extrabold font-gilroyBold">
+                                      PLACE YOUR BID NOW!
+                                    </p>
+                                    {/* <p className="text-black/80 text-sm font-medium mt-1">
+                                      Choose your answer & wager amount
+                                    </p> */}
+                                  </div>
+                                </motion.div>
+                              </motion.div>
+                            )}
+
+                            {/* Options Grid */}
+                            <div className="grid grid-cols-2 gap-[.625rem]">
+                              {(
+                                [
+                                  "option_a",
+                                  "option_b",
+                                  "option_c",
+                                  "option_d",
+                                ] as OptionKey[]
+                              ).map((option, index) => {
+                                const optionLetter = String.fromCharCode(
+                                  65 + index
+                                ); // A, B, C, D
+                                const currentQuestions =
+                                  mqttQuestionData?.question?.questions || {};
+                                const showResult = isSubmitted && correctAnswer;
+                                convertOptionToLetter(option);
+                                const isSelected = selectedOption === option;
+
+                                return (
+                                  <motion.button
+                                    key={option}
+                                    custom={index}
+                                    variants={optionVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    whileHover="hover"
+                                    whileTap="tap"
+                                    onClick={() => handleOptionSelect(option)}
+                                    className={cn(
+                                      "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
+                                      !showResult && isSelected
+                                        ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
+                                        : "",
+                                      isSubmitted ||
+                                        !timerActive ||
+                                        !mqttQuestionData?.question?.questions
+                                        ? "opacity-70 cursor-not-allowed"
+                                        : "",
+                                      mqttAnswerData &&
+                                        currentQuestions?.correct_option ===
+                                          convertOptionToLetter(option)
+                                        ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                                        : ""
+                                    )}
+                                  >
+                                    {optionLetter}:
+                                    <span className="ml-2">
+                                      {currentQuestions[option] || `...`}
+                                    </span>
+                                  </motion.button>
+                                );
+                              })}
+                            </div>
                           </motion.div>
 
                           {/* Amount buttons section with animation */}
@@ -996,13 +859,6 @@ setTimeout(() => setShowBidPrompt(false), 5000);
                             variants={questionElementVariants}
                             className="flex flex-col items-start gap-1 mt-4"
                           >
-                            {showBidPrompt && (
- <div className="mb-2 p-2 rounded-lg border-[2px] border-[#FFC125] text-white text-xs font-bold animate-pulse bg-gradient-to-r from-[#FFCC11] to-[#C23A00]">
-  Place your bid now!
-</div>
-
-)}
-
                             <p className="text-white text-xs pb-1 font-gilroyMedium">
                               Select wager amount
                             </p>

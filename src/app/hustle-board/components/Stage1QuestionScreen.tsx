@@ -319,7 +319,7 @@ const Stage1QuestionScreen = () => {
 
   // Function to check if a question has been attempted
   const isQuestionAttempted = (idx: number) => {
-    return mqttQuestionData?.question?.hustle_reveal?.hustle_number < idx;
+    return mqttQuestionData?.question?.hustle_reveal?.hustle_number > idx;
   };
 
   // FIXED: Enhanced handleStartTimer function
@@ -454,28 +454,27 @@ if (allQuestionsCompleted) {
                                 )
                               }
                               textColor={
-                                mqttQuestionData?.question?.hustle_reveal?.hustle_number ===
-                                contestant?.hustle_number
-                                  ? "#FFFFFF"
-                                  : isQuestionAttempted(contestant?.hustle_number)
-                                    ? "#fff"
-                                    : "#F2C94C"
-                              }
-                              backgroundColor={
-                                mqttQuestionData?.question?.hustle_reveal?.hustle_number ===
-                                contestant?.hustle_number
-                                  ? "#FEC124"
-                                  : isQuestionAttempted(contestant?.hustle_number)
-                                    ? "#04DA6A"
-                                    : "black"
-                              }
+                              mqttQuestionData?.question?.hustle_reveal
+                                ?.hustle_number === contestant?.hustle_number
+                                ? "#FFFFFF"
+                                : isQuestionAttempted(contestant?.hustle_number)
+                                  ? "#fff"
+                                  : "#F2C94C"
+                            }
+                            backgroundColor={
+                              mqttQuestionData?.question?.hustle_reveal
+                                ?.hustle_number === contestant?.hustle_number
+                                ? "#FEC124"
+                                : isQuestionAttempted(contestant?.hustle_number)
+                                  ? "#04DA6A"
+                                  : "black"
+                            }
                               width={54}
                               height={64}
                               active={
-                                mqttQuestionData?.question?.hustle_reveal?.hustle_number ===
-                                  contestant?.hustle_number ||
-                                isQuestionAttempted(idx)
-                              }
+                              mqttQuestionData?.question?.hustle_reveal
+                                ?.hustle_number > contestant?.hustle_number
+                            }
                               iconPosition={{ y: 33 }}
                               iconSize={30}
                               className="select-none"

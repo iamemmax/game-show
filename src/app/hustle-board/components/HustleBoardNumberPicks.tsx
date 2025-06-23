@@ -14,6 +14,7 @@ import HustleStages from "@/app/components/stages/components/hustle/HustleStages
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 // import { useEliminationCheck } from "@/hooks/useEliminationCheck";
 import { useGetAllHustleNumbers } from "@/app/components/stages/api/stage1/getAllHustlePicks";
+import { useParams } from "next/navigation";
 
 interface Response {
   contestant_id: number;
@@ -38,10 +39,11 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
 
   // Use the MQTT context
   const { isConnected, onMessage } = useMQTT();
+  const params = useParams()
 
   // Fetch all hustle picks
   const { data: hustlePicksData } = useGetAllHustleNumbers(
-    user?.game_episode as number
+     Number(params?.episodeId)
   );
 
   // Explicitly type the state with number[]
@@ -75,7 +77,6 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
     (receivedMessage: any) => {
       // Handle API response format (like the sample you provided)
       if (receivedMessage?.status === "success" && Array.isArray(receivedMessage.data)) {
-        console.log("Processing hustle picks data from API:", receivedMessage);
 
         // Extract all picks from contestants
         const allPicks: number[] = [];
@@ -106,7 +107,6 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
         receivedMessage?.payload &&
         Array.isArray(receivedMessage.payload)
       ) {
-        console.log("Received receive_hustle_picks data:", receivedMessage);
 
         // Extract all picks from contestants
         const allPicks: number[] = [];
@@ -154,7 +154,6 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
           receivedMessage?.event === "proceed_to_next_stage" ||
           receivedMessage?.event === "stage_complete"
         ) {
-          console.log("Received proceed to next stage event:", receivedMessage);
           onNext();
         }
 
@@ -181,7 +180,6 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
 
         // Handle timer start event
         if (receivedMessage?.event === "start_hustle_timer") {
-          console.log("Timer started:", receivedMessage);
           setTimerStarted(true);
           
           // Set the time from the message or default to 60 seconds
@@ -246,7 +244,7 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
         onMessage(null);
       };
     }
-  }, [isConnected, onMessage, user?.contestant_id, handleAllHustlePicks, onNext]);
+  }, [isConnected, onMessage, handleAllHustlePicks, onNext]);
 
   // Add a connection status indicator
   const ConnectionStatus = () => (

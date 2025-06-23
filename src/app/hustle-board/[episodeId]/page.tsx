@@ -35,7 +35,7 @@ const HomePage = () => {
           setStep(1); // Stage 1 Question Screen (final step of Stage 1)
           break;
         case "STAGE_TWO":
-          setStep(7); // Stage 2 question viewer
+          setStep(3); // Stage 2 question viewer
           break;
         case "STAGE_THREE":
           setStep(6); // Card Selection (most visual/interactive for viewers)
@@ -67,8 +67,8 @@ const HomePage = () => {
 
       {step === 3 && (
         <motion.div key="step3" className="h-full" {...motionProps}>
-          {/* <Stage1QuestionScreen /> */}
-             <Stage4BoardGetReadyPage />
+          <Stage1QuestionScreen />
+             {/* <Stage4BoardGetReadyPage /> */}
         </motion.div>
       )}
 
