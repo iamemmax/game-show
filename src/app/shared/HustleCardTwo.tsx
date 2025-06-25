@@ -61,7 +61,7 @@ const HustleCardTwo = ({
         {/* Title at top */}
         <div
           className={cn(
-            "text-3xl text-white w-full font-bold  flex justify-center items-center text-center  line-clamp-2",
+            " text-white w-full font-bold  flex justify-center items-center text-center  line-clamp-2",
             titleContainer
           )}
         >
@@ -73,7 +73,7 @@ const HustleCardTwo = ({
             glowColor="#13051E"
             glowIntensity="none"
             textclassName={cn(
-              `text-[1.8rem]  font-extrabold font-gilroyHeavy [@media(min-width:2000px)]:text-[3rem]`,
+              ` font-extrabold font-gilroyHeavy`,
               titleClassName
             )}
             fillColor="#fff"
@@ -97,7 +97,7 @@ const HustleCardTwo = ({
             glowColor="#13051E"
             glowIntensity="low"
             textclassName={cn(
-              "text-[1rem] font-extrabold font-verdana [@media(min-width:2000px)]:text-[3rem] [@media(min-width:2100px)]:text-[15rem]",
+              " font-extrabold font-verdana ",
               numberClassName
             )}
             fillColor="#fff"
@@ -112,7 +112,7 @@ const HustleCardTwo = ({
             glowColor="#13051E"
             glowIntensity="low"
             textclassName={cn(
-              "text-[1rem] font-extrabold font-gilroyHeavy [@media(min-width:2000px)]:text-[3rem] [@media(min-width:2100px)]:text-[15rem]",
+              " font-extrabold font-gilroyHeavy ",
               amountClassName
             )}
             fillColor="#fff"

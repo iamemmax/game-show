@@ -24,15 +24,29 @@ export const convertNumberToNaira = (
 
 
 
+// export function formatAmount(value: number): string {
+//   if (value >= 1_000_000_000) {
+//     return (value / 1_000_000_000).toFixed(1)?.replace(/\.0$/, "") + "b";
+//   }
+//   if (value >= 1_000_000) {
+//     return (value / 1_000_000)?.toFixed(1).replace(/\.0$/, "") + "m";
+//   }
+//   if (value >= 1_000) {
+//     return (value / 1_000)?.toFixed(1).replace(/\.0$/, "") + "k";
+//   }
+//   return value?.toString();
+// }
+
+
 export function formatAmount(value: number): string {
   if (value >= 1_000_000_000) {
-    return (value / 1_000_000_000).toFixed(1)?.replace(/\.0$/, "") + "b";
+    return (value / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "b";
   }
   if (value >= 1_000_000) {
-    return (value / 1_000_000)?.toFixed(1).replace(/\.0$/, "") + "m";
+    return (value / 1_000_000).toFixed(1).replace(/\.0$/, "") + "m";
   }
   if (value >= 1_000) {
-    return (value / 1_000)?.toFixed(1).replace(/\.0$/, "") + "k";
+    return Math.ceil(value / 1_000) + "k";
   }
-  return value?.toString();
+  return Math.floor(value).toString();
 }

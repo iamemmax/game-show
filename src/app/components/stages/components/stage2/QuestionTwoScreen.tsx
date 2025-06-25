@@ -312,14 +312,12 @@ if (receivedMessage?.event === "game_s2_question_answer") {
     
     // FIXED: For elimination questions (index > 4), set result data separately
     if (currentQuestionIndex > 4) {
-      console.log("📊 Setting result data for elimination question");
       setMqttAnsweResultData(answersData);
       setMqttAnswerData(answersData);
     }
     
     // FIXED: Always update modal states when shouldShowModal is true
     if (shouldShowModal) {
-      console.log("🔓 Opening modal for question index:", currentQuestionIndex);
       setOpenModals(true);
       setShowModal(true);
       setMqttAnswerData(answersData)

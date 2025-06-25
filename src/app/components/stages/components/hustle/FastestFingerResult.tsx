@@ -105,8 +105,8 @@ const FastestFingerResult = ({
         </div>
       ) : (
         // Show placeholder cards
-        <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center">
-          {Array.from({length: 5}).map((_, index) => (
+        <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-start items-start">
+          {Array.from({length: 6}).map((_, index) => (
             <StagesCard 
               key={index}
               title=""

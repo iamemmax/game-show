@@ -14,6 +14,8 @@ import Image from "next/image";
 import { contestantImages } from "@/app/components/stages/components/mocks/contestantImages";
 import HustleCardTwo from "@/app/shared/HustleCardTwo";
 import { motion } from "framer-motion";
+import { useGetGameContestants } from "@/app/admin/misc/api";
+import { useParams } from "next/navigation";
 interface Prop {
   // setShowQuestionScreen?: React.Dispatch<React.SetStateAction<boolean>>;
   //  onNext: () => void
@@ -21,6 +23,7 @@ interface Prop {
 }
 
 const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
+    const params = useParams();
   const hustlePattern = [
     // { pattern: PATTERN_PURPLE_WHITE },
     { pattern: PATTERN_PURPLE_GREY },
@@ -29,6 +32,18 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
     { pattern: PATTERN_ORANGE_BLACK },
     { pattern: PATTERN_GREEN_BLACK },
   ];
+    const { data: allContestsant } = useGetGameContestants(
+     Number(params?.episodeId)
+    );
+  
+
+   const getContestantInfo = (id: number) => {
+    const allconstestant = allContestsant?.data?.find(
+      (contestant) => contestant.id === id
+    );
+
+    return allconstestant;
+  };
 
   if (!hustleReveal?.data || hustleReveal.data.length === 0) {
     return <div className="text-white text-base">No hustle data available</div>;
@@ -65,19 +80,17 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
         </p>
         <p className="text-white text-lg font-bold leading-tight">
           ₦{addCommasToNumber(
-            contestant.reveals
-              .filter((card) => card.hustle_state !== "DUD")
-              .reduce((sum, card) => sum + card.hustle_amount, 0)
-          )}
+            Number(getContestantInfo(contestant?.contestant_id)?.actual_balance)
+           )}
         </p>
       </div>
     </div>
   </div>
 
   {/* Hustle Cards - Existing code */}
-  <div className="grid grid-cols-5 relative gap-4 flex-grow [@media(min-width:2000px)]:gap-[4rem]">
+  <div className="grid grid-cols-5 relative gap-4 flex-grow ">
     {contestant.reveals?.map((card, cardIdx) => (
-      <div key={card.id} className=" relative">
+      <div key={card.id} className="  mb-2 relative">
         <HustleCardTwo
           id={card.id.toString()}
           title={convertKebabAndSnakeToTitleCase(
@@ -86,14 +99,14 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
           number={card.hustle_number}
           amount={`₦${addCommasToNumber(Number(card.hustle_amount.toFixed(0)))}`}
           pattern={hustlePattern[cardIdx % hustlePattern.length].pattern}
-          titleContainer="w-full flex justify-center items-center absolute left-0 truncate top-[10px] font-bold text-white leading-tight line-clamp-2"
+          titleContainer="w-full flex justify-center items-center absolute left-0 truncate top-[5px] font-bold text-white leading-tight line-clamp-2"
           titleClassName="text-[1.5rem] truncate"
-          numberClassName="text-[3rem] top-6 "
-          amountClassName="2xl:text-[1.2rem] top-5 text-[1.4rem] 3xl:text-[1.8rem] font-bold "
-          className=" w-full 2xl:h-[7rem] 3xl:h-[10rem]"
+          numberClassName="text-[3rem] top-5 "
+          amountClassName="2xl:text-[1.2rem] top-2 text-[1.4rem] 3xl:text-[1.8rem] font-bold "
+          className=" w-full min-h-[8rem] "
         />
 
-        <motion.div 
+        {/* <motion.div 
           className="flex justify-center items-center mt-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -106,7 +119,7 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
           } px-3 py-2 rounded-10 text-white`}>
             {convertKebabAndSnakeToTitleCase(card.hustle_state)}
           </p>
-        </motion.div>
+        </motion.div> */}
       </div>
     ))}
   </div>

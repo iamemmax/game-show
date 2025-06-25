@@ -173,7 +173,7 @@ const Stage1 = ({ onNext }: Props) => {
           );
 
           // Calculate remaining time (60 seconds total - elapsed time)
-          const remainingTime = Math.max(0, 60 - elapsedSeconds);
+          const remainingTime = Math.max(0, 30 - elapsedSeconds);
           console.log(
             "Elapsed seconds:",
             elapsedSeconds,

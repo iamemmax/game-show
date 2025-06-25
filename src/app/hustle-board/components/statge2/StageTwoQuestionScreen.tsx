@@ -46,7 +46,7 @@ const ViewOnlyQuestionTwoScreen = () => {
   const params = useParams();
 
   // Get wallet balances for display
-  const { data: balanceData } = useGetWalletBalance(
+  const { data: balanceData, refetch: refetchBalance } = useGetWalletBalance(
     user?.game_episode as number
   );
 
@@ -72,6 +72,7 @@ const ViewOnlyQuestionTwoScreen = () => {
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
 
   const { refetch } = useGetGameContestants(Number(params?.episodeId));
+  const [mqttAnswerResultData, setMqttAnsweResultData] = useState<any>(mqttAnswerData);
 
   // Timer effect - for display only
   useEffect(() => {
@@ -129,7 +130,7 @@ const ViewOnlyQuestionTwoScreen = () => {
     if (!isConnected) return;
 
     const handler = (receivedMessage: any) => {
-      console.log("📡 Received MQTT message:", receivedMessage);
+      // console.log("📡 Received MQTT message:", receivedMessage);
 
       // Handle prep page event
       if (receivedMessage?.event === "game_s2_question_reveal") {
@@ -157,34 +158,66 @@ const ViewOnlyQuestionTwoScreen = () => {
       }
 
       // Handle question answer event
-      if (receivedMessage?.event === "game_s2_question_answer") {
-        const payload = receivedMessage.payload || {};
-        const questionId = payload.question_id;
+    if (receivedMessage?.event === "game_s2_question_answer") {
+  const payload = receivedMessage.payload || {};
+  const questionId = payload.question_id;
+  const shouldShowModal = payload?.show_modal;
+  
+  console.log("🔄 Answer event received:", {
+    questionId,
+    currentQuestionId: currentQuestionIdRef.current,
+    shouldShowModal,
+    currentQuestionIndex,
+    payload
+  });
 
-        if (questionId === currentQuestionIdRef?.current) {
-          const answersData = payload.answers_data?.data;
-          console.log("📊 Received answer data:", answersData);
-
-          // Store the full answer data
-          setMqttAnswerData(payload.answers_data?.data);
-
-          if (answersData?.question?.correct_option) {
-            // Set the correct answer
-            setCorrectAnswer(answersData.question.correct_option);
-            // Stop the timer
-            setTimerActive(false);
-
-            // Mark current question as completed
-            setCompletedQuestions(
-              (prev) => new Set([...prev, currentQuestionIndex])
-            );
-            // Also mark as attempted
-            setAttemptedQuestions(
-              (prev) => new Set([...prev, currentQuestionIndex])
-            );
-          }
-        }
-      }
+  // FIXED: Compare questionId properly (convert to string if needed)
+  const currentQuestionIdStr = currentQuestionIdRef?.current?.toString();
+  const receivedQuestionIdStr = questionId?.toString();
+  
+  if (receivedQuestionIdStr === currentQuestionIdStr) {
+    const answersData = payload.answers_data?.data;
+    
+    console.log("📊 Processing answer data:", {
+      answersData,
+      currentQuestionIndex,
+      shouldShowModal
+    });
+    
+    // Update answer data for all questions
+    setMqttAnswerData(answersData);
+    
+    // FIXED: For elimination questions (index > 4), set result data separately
+    if (currentQuestionIndex > 4) {
+      setMqttAnsweResultData(answersData);
+      setMqttAnswerData(answersData);
+    }
+    
+    // FIXED: Always update modal states when shouldShowModal is true
+    if (shouldShowModal) {
+   
+      setMqttAnswerData(answersData)
+    }
+    
+    // Refetch balance data
+    refetchBalance();
+    // Mark submitted and stop timer
+    const correctOption = payload.answers_data?.question?.correct_option || 
+                         answersData?.question?.correct_option;
+    
+    if (correctOption) {
+      setCorrectAnswer(correctOption);
+      setTimerActive(false);
+    }
+    
+    console.log("✅ Answer processing completed");
+  } else {
+    console.log("❌ Question ID mismatch:", {
+      expected: currentQuestionIdStr,
+      received: receivedQuestionIdStr
+    });
+  }
+}
 
       // Handle timer start event
       if (receivedMessage?.event === "game_s2_timer_start") {
@@ -402,39 +435,39 @@ const ViewOnlyQuestionTwoScreen = () => {
             {/* Content container */}
             <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
             <div className="relative">
-              <div className="flex justify-between items-center">
-                <div>
+              <div className="flex justify-between w-full items-center">
+                <div className="flex w-full justify-center items-center">
                   <GlowyStrokeText
                     strokeWidth={2}
                     strokeColor="#D91FFF"
                     glowColor="#13051E"
                     glowIntensity="low"
-                    textclassName="text-[2.125rem] font-extrabold font-gilroyBold"
+                    textclassName="text-[2.5rem] font-extrabold font-gilroyBold"
                     fillColor="#000"
                   >
                     Stage 2: Prove your hustle
                   </GlowyStrokeText>
-                  <p className="text-sm font-normal text-[#D5B9FF]">
+                  {/* <p className="text-sm font-normal text-[#D5B9FF]">
                     Spectator Mode - Watch the live game in progress
-                  </p>
+                  </p> */}
                 </div>
 
                 {timerActive && (
                   <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
-                    <span
-                      className="text-[20px] font-extrabold font-verdana text-white"
-                      style={{
-                        WebkitTextStroke: "1.5px #C76000",
-                        textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
-                      }}
-                    >
+                      <span
+                        className="text-[40px] font-extrabold font-verdana text-white"
+                        style={{
+                          WebkitTextStroke: "1.5px #C76000",
+                          textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
+                        }}
+                      >
                       {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
                     </span>
                   </div>
                 )}
               </div>
 
-              <div className="grid mt-5 gap-3 grid-cols-[1fr_3fr_1fr] items-start">
+              <div className="grid mt-5 gap-3 grid-cols-[1fr_6fr_1fr] items-start">
                 {/* Question numbers sidebar - Updated to show attempted questions */}
                 <div className="flex gap-2 flex-col">
                     {Array.from({ length: 8 }, (_, index) => (
@@ -477,8 +510,10 @@ const ViewOnlyQuestionTwoScreen = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                   </div>
                 ) : (
-                  <div className="relative">
-                    {/* Question display section */}
+
+                  <>
+                  {/* <div className="relative">
+                  
                    <motion.div
                                           className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000] ${
                                             currentQuestionIndex > 4
@@ -533,7 +568,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                         </h2>
                       </div>
                       <div className="flex justify-center items-center w-full gap-4">
-                        <div className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-4 w-full">
+                        <div className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-[5rem] ">
                           <p className="text-xl font-outfit font-normal text-[#FFC125]">
                             Win amount
                           </p>
@@ -558,8 +593,8 @@ const ViewOnlyQuestionTwoScreen = () => {
 
                     {mqttQuestionData ? (
                       <>
-                        {/* Answer options - Updated to highlight correct option */}
-                        <div className="grid grid-cols-2 gap-[.625rem] mt-[1.625rem]">
+                        
+                        <div className="grid grid-cols-2 gap-[1.625rem] mt-[1.625rem]">
                           {(
                             [
                               "option_a",
@@ -588,11 +623,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                                     !mqttQuestionData?.question?.questions
                                     ? "opacity-70 cursor-not-allowed"
                                     : "",
-                                  // mqttAnswerData &&
-                                  //   isSelected &&
-                                  //   !isCorrect &&
-                                  //   "bg-[#FF3B30]/20 border-[#FF3B30] text-[#FF3B30] font-bold",
-                                  mqttAnswerData &&
+                                                                    mqttAnswerData &&
                                     mqttQuestionData?.correct_option ===
                                       convertOptionToLetter(option)
                                     ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
@@ -623,7 +654,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                                   {" "}
                                   {mqttQuestionData?.[option] || "..."}
                                 </span>
-                                {/* Correct answer indicator */}
+                               
                                 {isCorrect && showResult && (
                                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                                     <div className="bg-[#04DA6A] rounded-full p-1">
@@ -631,7 +662,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                                     </div>
                                   </div>
                                 )}
-                                {/* Incorrect answer indicator */}
+                              
                                 {!isCorrect && showResult && (
                                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                                     <div className="bg-[#FF3B30] rounded-full p-1">
@@ -653,7 +684,194 @@ const ViewOnlyQuestionTwoScreen = () => {
                         </div>
                       </div>
                     )}
+                  </div> */}
+                  
+
+
+
+
+
+<div className="relative">
+  {/* Question display section */}
+  <motion.div
+    className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000] ${
+      currentQuestionIndex > 4 ? "border-red-500" : "border-[#D71BFA]"
+    }`}
+    animate={
+      currentQuestionIndex > 4
+        ? {
+            borderColor: [
+              "#ff0000",
+              "#ff4444",
+              "#cc0000",
+              "#ff6666",
+              "#990000",
+              "#ff3333",
+              "#ff0000",
+            ],
+            boxShadow: [
+              "0 0 20px #ff0000",
+              "0 0 40px #ff4444",
+              "0 0 25px #cc0000",
+              "0 0 35px #ff6666",
+              "0 0 30px #990000",
+              "0 0 45px #ff3333",
+              "0 0 20px #ff0000",
+            ],
+            scale: [1, 1.02, 1, 1.01, 1],
+          }
+        : {}
+    }
+    transition={
+      currentQuestionIndex > 4
+        ? {
+            duration: 0.5,
+            ease: "easeInOut",
+            repeat: Infinity,
+            repeatType: "loop",
+          }
+        : {}
+    }
+  >
+    <div>
+      <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-2xl text-[#04DA6A] font-outfit">
+        Question {currentQuestionIndex}
+      </p>
+    </div>
+
+    <motion.h2
+      key={mqttQuestionData?.question}
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="text-white 2xl:text-[3rem] text-center font-gilroyMedium font-extrabold"
+    >
+      {mqttQuestionData?.question || "Waiting for question..."}
+    </motion.h2>
+
+    <div className="flex justify-center items-center w-full gap-4">
+      <div className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-[5rem]">
+        <p className="text-xl font-outfit font-normal text-[#FFC125]">
+          Win amount
+        </p>
+        <GlowyStrokeText
+          strokeWidth={1}
+          strokeColor="#FFC125"
+          glowColor="#FFC125"
+          textclassName="text-[40px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
+          fillColor="#fff"
+          glowIntensity={"none"}
+        >
+          ₦
+          {addCommasToNumber(
+            Number(mqttQuestionData?.allocated_winning_amount || 0)
+          )}
+        </GlowyStrokeText>
+      </div>
+    </div>
+  </motion.div>
+
+  {mqttQuestionData ? (
+    <motion.div
+      className="grid grid-cols-2 gap-[1.625rem] mt-[1.625rem]"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        hidden: {},
+        visible: {
+          transition: {
+            staggerChildren: 0.1,
+          },
+        },
+      }}
+    >
+      {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
+        (option, index) => {
+          const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
+          const isCorrect = isCorrectOption(option);
+          const isSelected = selectedOption === option;
+          const showResult = correctAnswer;
+
+          return (
+            <motion.button
+              key={option}
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              className={cn(
+                "bg-[#000000] border-2 rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
+                !showResult && isSelected
+                  ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
+                  : "",
+                !timerActive || !mqttQuestionData?.question?.questions
+                  ? "opacity-70 cursor-not-allowed"
+                  : "",
+                mqttAnswerData &&
+                  mqttQuestionData?.correct_option ===
+                    convertOptionToLetter(option)
+                  ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                  : ""
+              )}
+            >
+              {optionLetter}:
+              <span
+                className={cn(
+                  "ml-2",
+                  selectedOption === option && !showResult
+                    ? "text-white font-bold"
+                    : "",
+                  isCorrect && showResult
+                    ? "text-[#04DA6A] font-bold"
+                    : "",
+                  isSelected && !isCorrect && showResult
+                    ? "text-[#FF3B30] font-bold"
+                    : ""
+                )}
+                style={{
+                  WebkitTextStroke:
+                    selectedOption === option && !showResult
+                      ? "1px #C76000"
+                      : "",
+                }}
+              >
+                {mqttQuestionData?.[option] || "..."}
+              </span>
+
+              {/* Correct answer indicator */}
+              {isCorrect && showResult && (
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  <div className="bg-[#04DA6A] rounded-full p-1">
+                    <CheckIcon size={16} />
                   </div>
+                </div>
+              )}
+              {/* Incorrect answer indicator */}
+              {!isCorrect && showResult && (
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  <div className="bg-[#FF3B30] rounded-full p-1">
+                    <ErrorIcon />
+                  </div>
+                </div>
+              )}
+            </motion.button>
+          );
+        }
+      )}
+    </motion.div>
+  ) : (
+    <div className="flex justify-center items-center h-full mt-4">
+      <div className="text-[#D5B9FF] text-lg">
+        {isConnected
+          ? "Waiting for next question..."
+          : "Connecting..."}
+      </div>
+    </div>
+  )}
+</div>
+
+
+                  </>
                 )}
 
                 {/* Results sidebar */}
@@ -677,6 +895,8 @@ const ViewOnlyQuestionTwoScreen = () => {
           showEmptyCard={false}
           showHustlerCard={true}
           eliminated={2}
+           balanceData={balanceData}
+            mqttAnswerData={currentQuestionIndex > 4 ? mqttAnswerResultData : mqttAnswerData}
         />
       </div>
     </div>
