@@ -1383,21 +1383,17 @@ ${
                                               </Button>
                                             </motion.div>
 
-                                            {selectedAmount === amount && (
-                                              <motion.div
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                className="text-xs text-[#04DA6A] mt-1 font-bold"
-                                              >
-                                                ₦
-                                                {Number(
-                                                  bidValue
-                                                ).toLocaleString(undefined, {
-                                                  minimumFractionDigits: 0,
-                                                  maximumFractionDigits: 0,
-                                                })}
-                                              </motion.div>
-                                            )}
+                                           {selectedAmount === amount && (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="text-xs text-[#04DA6A] mt-1 font-bold"
+  >
+    ₦
+    {(Math.ceil(Number(bidValue) / 100) * 100).toLocaleString()}
+  </motion.div>
+)}
+
                                           </motion.div>
                                         );
                                       }

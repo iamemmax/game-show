@@ -97,7 +97,7 @@ export default function GameResultModal({
           {currentContestantData?.map((item, idx: number) => {
             return (
               <div className="" key={idx}>
-                {item?.is_winner && (
+                {(item?.is_winner || item?.profit_loss?.amount_gained >0) && (
                   <div className="bg-[#032312] border-[0.3px] border-[#04DA6A] gap-3 rounded-10 flex text-white p-3 ">
                     <div className="bg-[#0C2B1B] rounded-10 p-4 flex justify-center items-center">
                      <WinnerIconSvgIcon/>
@@ -183,9 +183,10 @@ export default function GameResultModal({
                       <div className="mt-2 rounded-[1.25rem] px-4 py-2 font-medium text-sm bg-[#3f1216] inline-block">
                         <p className="text-white text-sm">
                           Lost amount:{" "}
-                          <span className="text-[#E9001B] font-bold text-sm">
-                            ₦{formatAmount(item?.profit_loss?.amount_lost)}
-                          </span>
+                         <span className="text-[#E9001B] font-bold text-sm">
+  ₦{formatAmount(Number(item?.profit_loss?.amount_lost) || 0)}
+</span>
+
                         </p>
                       </div>
                     </div>
