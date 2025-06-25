@@ -573,7 +573,7 @@ export default function HostPage() {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={startStage3Picks} variant="yellow">
-                            START DUD/OPPORTUNITY PICK
+                            START DUD/PASS PICK
                         </TrapeziumButton>
                     </div>
                 )
