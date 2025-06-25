@@ -87,9 +87,9 @@ const Stage1QuestionScreen = () => {
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
-  const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>(
-    []
-  );
+  // const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>(
+  //   []
+  // );
   const [selectedAmount, setSelectedAmount] = useState(10000); // Default selected amount
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showNextButton, setShowNextButton] = useState(false);
@@ -104,8 +104,9 @@ const Stage1QuestionScreen = () => {
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(
     null
   );
+  const [mqttResultData, setMqttResultData] = useState<any>(null)
   const [resultMessageSent, setResultMessageSent] = useState(false);
-  const [showEliminationModal, setShowEliminationModal] = useState(false);
+  // const [showEliminationModal, setShowEliminationModal] = useState(false);
 
   // Add new state variables for user-specific bid amounts
   const [userBidAmounts, setUserBidAmounts] = useState<{
@@ -235,6 +236,7 @@ const Stage1QuestionScreen = () => {
 
           // Store the full answer data for use in FastestFingerResult
           setMqttAnswerData(answersData);
+          setMqttResultData(answersData);
 
           if (answersData?.question?.correct_option) {
             // Set the correct answer
@@ -343,7 +345,7 @@ const Stage1QuestionScreen = () => {
   }
 
 if (allQuestionsCompleted) {
-    return <StageOneTally eliminationCount={0} removeCount={0} />;
+    return <StageOneTally eliminationCount={0} removeCount={0}  activeState={1}/>;
   }
 
 
@@ -529,7 +531,7 @@ if (allQuestionsCompleted) {
                         </div>
                         <div className="">
                           {mqttQuestionData?.question?.questions?.question ? (
-                            <p className="text-white text-xl 2xl:text-[3rem] leading-[4rem] text-center font-gilroyMedium font-extrabold">
+                            <p className="text-white text-xl 2xl:text-[2.5rem] leading-[4rem] text-center font-gilroyMedium font-extrabold">
                               {mqttQuestionData.question.questions.question}
                             </p>
                           ) : (
@@ -674,7 +676,7 @@ if (allQuestionsCompleted) {
             showEmptyCard={false}
             showHustlerCard={true}
             eliminated={0}
-            mqttAnswerData={mqttAnswerData}
+            mqttAnswerData={mqttResultData}
           />
         </div>
       </div>

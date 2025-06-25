@@ -38,6 +38,8 @@ const convertOptionToLetter = (option: string | null): string => {
   return optionMap[option] || "";
 };
 
+
+
 const ViewOnlyQuestionTwoScreen = () => {
   const { isConnected, onMessage } = useMQTT();
   const user = tokenStorage.getUser();
@@ -241,6 +243,7 @@ const ViewOnlyQuestionTwoScreen = () => {
         eliminationCount={2}
         removeCount={2}
         title={params?.episodeId ? "Hustle Board" : "Stage 2"}
+        activeState={2}
       />
     );
   }

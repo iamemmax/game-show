@@ -895,7 +895,7 @@ const { isConnected, onMessage } = useMQTT();
   }
 
   if (allQuestionsCompleted) {
-    return <StageOneTally eliminationCount={0} removeCount={0} />;
+    return <StageOneTally eliminationCount={0} removeCount={0} activeState={1}/>;
   }
 
   return (

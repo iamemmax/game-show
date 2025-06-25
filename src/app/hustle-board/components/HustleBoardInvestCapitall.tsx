@@ -15,7 +15,8 @@ import { contestantImages } from "@/app/components/stages/components/mocks/conte
 import HustleCardTwo from "@/app/shared/HustleCardTwo";
 import { motion } from "framer-motion";
 interface Prop {
-  setShowQuestionScreen?: React.Dispatch<React.SetStateAction<boolean>>;
+  // setShowQuestionScreen?: React.Dispatch<React.SetStateAction<boolean>>;
+  //  onNext: () => void
   hustleReveal: hustleRevealProps | null | undefined;
 }
 
