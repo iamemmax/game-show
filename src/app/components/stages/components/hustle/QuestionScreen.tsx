@@ -562,7 +562,7 @@ const { isConnected, onMessage } = useMQTT();
     user?.game_episode as number
   );
   
-  const { data: contestantData } = useGetGameContestants(
+  const { data: contestantData, refetch:refechUser } = useGetGameContestants(
     user?.game_episode as number
   );
   
@@ -695,6 +695,8 @@ const { isConnected, onMessage } = useMQTT();
           setMqttAnswerData(answersData);
           setMqttAnsweBalanceData(answersData);
           refetch();
+          refechUser()
+          calculateRemainingCapital()
 
           if (answersData?.question?.correct_option) {
             setCorrectAnswer(answersData.question.correct_option);
@@ -1372,7 +1374,8 @@ ${
     : "hover:bg-[#035D2E] hover:text-white"
 }`}
                                               >
-                                                ₦{formatAmount(amount)}
+                                                ₦{(Math.ceil(Number(amount) / 100) * 100).toLocaleString()}
+                                                {/* {formatAmount(amount)} */}
                                                 {/* {amount.toLocaleString(
                                                   undefined,
                                                   {
