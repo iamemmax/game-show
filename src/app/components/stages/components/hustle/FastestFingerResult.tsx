@@ -34,8 +34,7 @@ interface FastestFingerResultProps {
 const FastestFingerResult = ({ 
   resultArray,
   timeElapsed,
-  mqttAnswerData,
-  currentQuestionId 
+ 
 }: FastestFingerResultProps) => {
 
 
