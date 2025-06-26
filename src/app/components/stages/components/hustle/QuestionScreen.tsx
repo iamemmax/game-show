@@ -2,36 +2,37 @@ import Logo from "@/app/icons/Logo";
 import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import React, { useEffect, useState, useRef } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import HustleStages from "./HustleStages";
 import HustleSideBar from "./HustleSideBar";
 import NumberCardContainer from "@/app/shared/NumberContainer";
-// import { questionArray } from "../mocks/sampleQuestion";
 import { cn } from "@/utils/classNames";
 import CheckIcon from "@/app/icons/CheckIcon";
-import ErrorIcon from "@/app/icons/ErrorIcon";
 import { tokenStorage } from "@/utils/auth";
-import { Button, ErrorModal, GlowyStrokeText } from "@/components/core";
-import GradientButton from "@/app/shared/GradientButton";
+import { Button, Dialog, GlowyStrokeText } from "@/components/core";
 import Image from "next/image";
 import { useGetAllHustleQuestions } from "../../api/stage1/question/getHustleQuestion";
-import { contestantImages, revealResults } from "../mocks/contestantImages";
-import { addCommasToNumber, formatAxiosErrorMessage } from "@/utils";
+import { contestantImages } from "../mocks/contestantImages";
+import { addCommasToNumber } from "@/utils";
 import FastestFingerResult from "./FastestFingerResult";
 import { useAnswerStageOneQuestion } from "../../api/stage1/question/answerQuestion";
-import { useErrorModalState } from "@/hooks";
 import { AxiosError } from "axios";
-import { useGetQuestionAnswer } from "../../api/stage1/question/getQuestionAnswer";
 import StageOneTally from "./StageOneTally";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
-import { ContestantSpend, QuestionS1SpendEvent } from "./types";
-import { useGetWalletBalance } from "../../api/stage1/getbalance";
-import { set } from "date-fns";
 import GetReadyScreen from "../GetReadyScreen";
-import { useGetGameContestants } from "@/app/admin/misc/api";
+import { useGetGameContestants } from "@/app/admin/misc/api/contestants";
+import { useRouter } from "next/navigation";
+import GameResultModal from "../ResultBalnceModal";
+import {
+  amountButtonVariants,
+  optionVariants,
+  questionElementVariants,
+  questionVariants,
+} from "../animation/animateQuestions";
+import { formatAmount } from "@/utils/currency";
+
 // Add debug log to track component imports
-console.log("GetReadyScreen imported in QuestionScreen");
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -40,8 +41,6 @@ interface AttemptedOption {
 
 // Add type for option keys
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
-
-
 
 /**
  * Converts option format (e.g., "option_a") to letter format (e.g., "A")
@@ -79,122 +78,545 @@ const formatTimestamp = (date: Date): string => {
   return `${year}-${month}-${day}:${hours}:${minutes}:${seconds}`;
 };
 
-interface Contestant {
-  contestant_id: number;
-  contestant_name: string;
-  wallet_balance: number;
-  max_question_spend: number;
-  spend_breakdown: Record<string, number>;
-}
 const QuestionScreen = () => {
-  const {
-    isErrorModalOpen,
-    setErrorModalState,
-    openErrorModalWithMessage,
-    errorModalMessage,
-  } = useErrorModalState();
-  const { isConnected, onMessage } = useMQTT();
-  // Get user from storage
+//   const { isConnected, onMessage } = useMQTT();
+//   const router = useRouter();
+//   // Get user from storage
+//   const user = tokenStorage.getUser();
+//   const [showEliminationModal, setShowEliminationModal] = useState(false);
+
+//   const { data: questionData, isLoading } = useGetAllHustleQuestions(
+//     user?.game_episode as number
+//   );
+//   // Get contestants data to check elimination status
+//   const { data: allContestants, refetch } = useGetGameContestants(
+//     user?.game_episode as number
+//   );
+
+//   // Check if current user is eliminated
+//   useEffect(() => {
+//     if (allContestants?.data && user?.contestant_id) {
+//       const currentContestant = allContestants.data.find(
+//         (contestant) => contestant.id === user.contestant_id
+//       );
+
+//       if (currentContestant?.is_eliminated) {
+//         setShowEliminationModal(true);
+//       }
+//     }
+//   }, [allContestants?.data, user?.contestant_id]);
+
+//   const { data: contestantData } = useGetGameContestants(
+//     user?.game_episode as number
+//   );
+//   // State declarations
+//   const [timeLeft, setTimeLeft] = useState<number>(10);
+//   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+//   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
+//   const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>(
+//     []
+//   );
+//   const [showBidPrompt, setShowBidPrompt] = useState(false);
+// const [animatedCapital, setAnimatedCapital] = useState(0);
+//   const [selectedAmount, setSelectedAmount] = useState<number | null>(null); // Changed to null initially
+//   const [isSubmitted, setIsSubmitted] = useState(false);
+//   const [showNextButton, setShowNextButton] = useState(false);
+//   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
+//   const [timerActive, setTimerActive] = useState(false);
+//   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
+//   const [showPrepPage, setShowPrepPage] = useState(true);
+//   const [isOpen, setIsOpen] = useState<Record<number, boolean>>({}); // ✅ object where keys are contestant IDs
+
+//   const [questionKey, setQuestionKey] = useState<string>("initial");
+//   // Add new state variables for user-specific bid amounts
+//   const [userBidAmounts, setUserBidAmounts] = useState<{
+//     [key: string]: number;
+//   }>({});
+//   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
+
+//   // Add state to track correct answer
+//   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
+
+//   // Add new state variables
+//   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(
+//     null
+//   );
+//   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
+//   const [mqttAnswerBalanceData, setMqttAnsweBalanceData] = useState<any>(null);
+
+//   useEffect(() => {
+//     // Only initialize game start time, but don't start the timer
+//     if (!gameStartTime) {
+//       setGameStartTime(new Date());
+//     }
+//   }, []);
+
+//   // Function to handle amount selection - FIXED: Allow selection anytime except when time elapsed or submitted
+//   // const handleAmountSelect = (amount: number) => {
+//   //   // Only prevent selection if time has elapsed or already submitted
+//   //   if (timeLeft > 0 && !isSubmitted) {
+//   //     // Find the exact key that matches the amount
+//   //     const exactKey = Object.keys(userBidAmounts).find(
+//   //       (key) => Math.abs(parseFloat(key) - amount) < 0.01
+//   //     );
+
+//   //     if (exactKey) {
+//   //       setSelectedAmount(parseFloat(exactKey));
+//   //     } else {
+//   //       // Fallback to using the amount directly
+//   //       setSelectedAmount(amount);
+
+//   //       // Try to find a close match
+//   //       const closestKey = Object.keys(userBidAmounts).reduce((prev, curr) => {
+//   //         return Math.abs(parseFloat(curr) - amount) <
+//   //           Math.abs(parseFloat(prev) - amount)
+//   //           ? curr
+//   //           : prev;
+//   //       });
+//   //     }
+//   //     setShowBidPrompt(false)
+//   //   }
+//   // };
+
+//   const handleAmountSelect = (amount: number) => {
+//   // Only prevent selection if time has elapsed or already submitted
+//   if (timeLeft > 0 && !isSubmitted) {
+//     // Find the exact key that matches the amount
+//     const exactKey = Object.keys(userBidAmounts).find(
+//       (key) => Math.abs(parseFloat(key) - amount) < 0.01
+//     );
+
+//     if (exactKey) {
+//       setSelectedAmount(parseFloat(exactKey));
+//     } else {
+//       // Fallback to using the amount directly
+//       setSelectedAmount(amount);
+
+//       // Try to find a close match
+//       const closestKey = Object.keys(userBidAmounts).reduce((prev, curr) => {
+//         return Math.abs(parseFloat(curr) - amount) <
+//           Math.abs(parseFloat(prev) - amount)
+//           ? curr
+//           : prev;
+//       });
+//     }
+//     setShowBidPrompt(false);
+//   }
+// };
+//   // Auto-submit effect when both option and amount are selected
+//   useEffect(() => {
+//     if (
+//       selectedOption &&
+//       selectedAmount !== null &&
+//       !isSubmitted &&
+//       timerActive &&
+//       currentQuestionId
+//     ) {
+//       handleSubmitAnswer();
+//     }
+//   }, [
+//     selectedOption,
+//     selectedAmount,
+//     isSubmitted,
+//     timerActive,
+//     currentQuestionId,
+//   ]);
+
+//   // Timer effect
+//   useEffect(() => {
+//     // This is the critical guard - timer should not run if not active
+//     if (!timerActive) {
+//       return;
+//     }
+
+//     if (timeLeft <= 0) {
+//       setShowNextButton(true); // Enable the Next button
+
+//       if (!selectedOption && !isSubmitted) {
+//         console.log("No option selected, auto-submitting with 'N'");
+//         setSelectedOption("N" as OptionKey);
+//         handleAutoSubmit();
+//       }
+
+//       return;
+//     }
+
+//     const timer = setTimeout(() => {
+//       setTimeLeft(timeLeft - 1);
+//     }, 1000);
+
+//     return () => {
+//       clearTimeout(timer);
+//     };
+//   }, [timeLeft, selectedOption, isSubmitted, timerActive]);
+
+//   const currentQuestionIdRef = useRef<string | null>(null);
+
+//   useEffect(() => {
+//     currentQuestionIdRef.current = currentQuestionId;
+//   }, [currentQuestionId]);
+
+//   useEffect(() => {
+//     if (!isConnected) return;
+
+//     const handler = (receivedMessage: any) => {
+//       // Handle prep page event
+//       if (receivedMessage?.event === "game_s1_question_reveal") {
+//         setShowPrepPage(false);
+
+//         const payload = receivedMessage.payload || {};
+//         const questionData = payload.data || {};
+//         const spendBreakdown =
+//           questionData.spend_breakdown ||
+//           payload.spend_breakdown ||
+//           payload.data?.spend_breakdown;
+
+//         // 1. Save full question info
+//         setMqttQuestionData(questionData);
+//         setQuestionKey(`question-${questionData.question_index || Date.now()}`);
+// // Show prompt toast/modal
+// setShowBidPrompt(true);
+// // setTimeout(() => setShowBidPrompt(false), 5000);
+
+//         // 2. Reset related states
+//         setSelectedOption(null);
+//         setSelectedAmount(null); // Reset to null
+//         setIsSubmitted(false);
+//         resetTimerState();
+//         // setResultMessageSent(false);
+//         setMqttAnswerData(null);
+//         setCorrectAnswer(null);
+
+//         // 3. Set current index and question ID
+//         setCurrentQuestionIndex(questionData.question_index || 1);
+//         const questionId =
+//           questionData?.question?.questions?.question_id ||
+//           payload?.question_id;
+//         if (questionId) {
+//           setCurrentQuestionId(questionId.toString());
+//         }
+
+//         // 4. Extract and save user's spend breakdown
+//         if (spendBreakdown && user?.contestant_id) {
+//           const userData = Array.isArray(spendBreakdown)
+//             ? spendBreakdown.find(
+//                 (contestant: any) =>
+//                   String(contestant.contestant_id) ===
+//                   String(user.contestant_id)
+//               )
+//             : spendBreakdown;
+
+//           if (userData?.spend_breakdown) {
+//             setUserBidAmounts(userData.spend_breakdown);
+//           } else {
+//             setUserBidAmounts({});
+//           }
+//         }
+//       }
+
+//       if (receivedMessage?.event === "game_s1_question_answer") {
+//         const payload = receivedMessage.payload || {};
+//         const questionId = payload.question_id;
+
+//         if (questionId === currentQuestionIdRef?.current) {
+//           const answersData = payload.answers_data?.data;
+//           setMqttAnswerData(answersData); // Store for rendering modals
+//           setMqttAnsweBalanceData(answersData); // Store for rendering modals
+//           refetch();
+
+//           // Mark submitted and stop timer
+//           if (answersData?.question?.correct_option) {
+//             setCorrectAnswer(answersData.question.correct_option);
+//             setIsSubmitted(true);
+//             setShowNextButton(true);
+//             setTimerActive(false);
+
+//             // FIXED: Open modals for all contestants with a slight delay to ensure state is updated
+//             setTimeout(() => {
+//               const newOpenModals: Record<number, boolean> = {};
+//               if (answersData?.data && Array.isArray(answersData.data)) {
+//                 answersData.data.forEach((c: any) => {
+//                   if (c?.contestant_id) {
+//                     newOpenModals[c.contestant_id] = true;
+//                   }
+//                 });
+//                 setTimeout(() => {
+//                   setIsOpen(newOpenModals);
+//                 }, 7000); // 7 seconds
+//               }
+//             }, 100);
+//           }
+//         }
+//       }
+
+//       // Handle timer start event
+//       if (receivedMessage?.event === "game_s1_timer_start") {
+//         handleStartTimer();
+//       }
+
+//       // Handle results reveal event
+//       if (receivedMessage?.event === "game_s1_results_reveal") {
+//         setAllQuestionsCompleted(true);
+//       }
+//     };
+//     onMessage(handler);
+
+//     return () => {
+//       if (isConnected) {
+//         onMessage(null);
+//       }
+//     };
+//   }, [isConnected, onMessage, user?.contestant_id]);
+
+//   // Handle option selection - now just selects without checking correctness
+//   const handleOptionSelect = (option: OptionKey) => {
+//     // Only allow selection if timer is active and not submitted yet
+//     if (timerActive && !isSubmitted) {
+//       setSelectedOption(option);
+//       // Reset amount selection when option changes
+//       // setSelectedAmount(null);
+//     }
+//   };
+
+//   const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
+
+//   const handleSubmitAnswer = () => {
+//     if (!selectedOption || !currentQuestionId || selectedAmount === null)
+//       return;
+
+//     const answerLetter = convertOptionToLetter(selectedOption);
+//     const formattedTimestamp = new Date().toISOString();
+//     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
+//     setIsSubmitted(true);
+//     setShowNextButton(true); // Enable the Next button after submission
+
+//     // Find the exact string key from the backend that matches the selected amount
+//     const selectedAmountKey = Object.keys(userBidAmounts).find(
+//       (key) => Math.abs(parseFloat(key) - selectedAmount) < 0.01
+//     );
+
+//     // Use the exact key string from the backend (e.g., "15000.00")
+//     const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
+
+//     handleAnswerStageOneQuestion(
+//       {
+//         contestant_id: user?.contestant_id,
+//         question_id: Number(currentQuestionId),
+//         answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
+//         amount_staked: amountToStake, // Send the exact key string from backend
+//         timestamp: formattedTimestamp,
+//         question_start_time: formattedGameStartTime, // Add game start time
+//       },
+//       {
+//         onSuccess: () => {
+//           console.log(
+//             "Successfully submitted answer for question ID:",
+//             currentQuestionId
+//           );
+//           // Add to attempted options
+//           setAttemptedOptions([
+//             ...attemptedOptions,
+//             {
+//               option: selectedOption,
+//             },
+//           ]);
+//         },
+//         onError: (error) => {
+//           console.error("Error submitting answer:", error);
+//           // openErrorModalWithMessage(String(errorMessage));
+//         },
+//       }
+//     );
+//   };
+
+//   // Add this function to reset the timer state for the next question
+//   const resetTimerState = () => {
+//     setTimerActive(false);
+//     setTimeLeft(10);
+//     setShowNextButton(false);
+//     setSelectedAmount(null); // Reset to null
+//   };
+
+//   // Function to check if a question has been attempted
+//   const isQuestionAttempted = (idx: number) => {
+//     return mqttQuestionData?.question?.hustle_reveal?.hustle_number > idx;
+//   };
+
+//   // Handle auto-submission when time elapses
+//   const handleAutoSubmit = () => {
+//     if (!currentQuestionId) return;
+
+//     setIsSubmitted(true);
+//     setShowNextButton(true); // Enable the Next button after auto-submission
+//   };
+
+//   const handleStartTimer = () => {
+//     console.log("handleStartTimer called - activating timer");
+//     setTimerActive(true);
+//     setShowBidPrompt(false)
+//     setGameStartTime(new Date()); // Reset game start time when timer starts
+//     setTimeLeft(10); // Reset timer to 10 seconds
+//   };
+
+//   if (showPrepPage) {
+//     return <GetReadyScreen />;
+//   }
+
+//   if (allQuestionsCompleted) {
+//     return <StageOneTally eliminationCount={0} removeCount={0} />;
+//   }
+
+//   const contestantBalance = mqttAnswerData?.filter(
+//     (contestant: any) => contestant.contestant_id === user?.contestant_id
+//   );
+// // Add this helper function
+// const calculateRemainingCapital = () => {
+//   const baseCapital = Number(contestantBalance?.wallet_balance) ||
+//     Number(
+//       contestantData?.data?.find(
+//         (contestant: any) =>
+//           String(contestant.id) === String(user?.contestant_id)
+//       )?.actual_balance
+//     );
+  
+//   // Subtract selected amount if any
+//   const deduction = selectedAmount || 0;
+//   return Math.max(0, baseCapital - deduction);
+// };
+
+// // Add this useEffect with your other useEffect hooks
+// useEffect(() => {
+//   const targetCapital = calculateRemainingCapital();
+  
+//   // Initialize animatedCapital if it's 0
+//   if (animatedCapital === 0) {
+//     setAnimatedCapital(targetCapital);
+//     return;
+//   }
+  
+//   const startCapital = animatedCapital;
+//   const difference = targetCapital - startCapital;
+  
+//   if (difference === 0) return;
+  
+//   const duration = 800; // Animation duration in ms
+//   const steps = 30; // Number of animation steps
+//   const stepValue = difference / steps;
+//   const stepDuration = duration / steps;
+  
+//   let currentStep = 0;
+//   const interval = setInterval(() => {
+//     currentStep++;
+//     const newValue = startCapital + (stepValue * currentStep);
+    
+//     if (currentStep >= steps) {
+//       setAnimatedCapital(targetCapital);
+//       clearInterval(interval);
+//     } else {
+//       setAnimatedCapital(Math.round(newValue));
+//     }
+//   }, stepDuration);
+  
+//   return () => clearInterval(interval);
+// }, [selectedAmount]);
+
+
+const { isConnected, onMessage } = useMQTT();
+  const router = useRouter();
+  
+  // Get user from storage - this should always be called
   const user = tokenStorage.getUser();
-
-  const { data: questionData, isLoading } = useGetAllHustleQuestions(
-    user?.game_episode as number
-  );
-
-  // Add wallet balance query
-  // const { data: dataBalance } = useGetWalletBalance(
-  //   user?.game_episode as number
-  // );
-
-  const {refetch, data:contestantData} =useGetGameContestants(user?.game_episode as number);
-  // State declarations
+  
+  // All hook calls should be at the top level, before any conditional logic
+  const [showEliminationModal, setShowEliminationModal] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
   const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>([]);
-  const [selectedAmount, setSelectedAmount] = useState(10000); // Default selected amount
+  const [showBidPrompt, setShowBidPrompt] = useState(false);
+  const [animatedCapital, setAnimatedCapital] = useState(0);
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showNextButton, setShowNextButton] = useState(false);
-  const [shouldFetchAnswer, setShouldFetchAnswer] = useState(false);
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const [allQuestionsCompleted, setAllQuestionsCompleted] = useState(false);
-const [showPrepPage, setShowPrepPage] = useState(true);
-
- 
-  // Add new state variables for user-specific bid amounts
-  const [userBidAmounts, setUserBidAmounts] = useState<{
-    [key: string]: number;
-  }>({});
+  const [showPrepPage, setShowPrepPage] = useState(true);
+  const [isOpen, setIsOpen] = useState<Record<number, boolean>>({});
+  const [questionKey, setQuestionKey] = useState<string>("initial");
+  const [userBidAmounts, setUserBidAmounts] = useState<{[key: string]: number}>({});
   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
+  const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
+  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
+  const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
+  const [mqttAnswerBalanceData, setMqttAnsweBalanceData] = useState<any>(null);
+  
+  const currentQuestionIdRef = useRef<string | null>(null);
 
+  // API hooks - ensure these are called consistently
+  const { data: questionData, isLoading } = useGetAllHustleQuestions(
+    user?.game_episode as number
+  );
+  
+  const { data: allContestants, refetch } = useGetGameContestants(
+    user?.game_episode as number
+  );
+  
+  const { data: contestantData, refetch:refechUser } = useGetGameContestants(
+    user?.game_episode as number
+  );
+  
+  const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
 
-
-  // Also update questionIdToSubmit when we receive MQTT question data
-
-
-
+  // FIXED: Move all useEffect hooks here, ensuring they're always called
+  
+  // 1. Initialize game start time effect
   useEffect(() => {
-    // Only initialize game start time, but don't start the timer
     if (!gameStartTime) {
       setGameStartTime(new Date());
     }
-  }, []);
+  }, [gameStartTime]); // Added gameStartTime to dependency array
 
-  // Function to handle amount selection
-  const handleAmountSelect = (amount: number) => {
-    console.log("handleAmountSelect called with amount:", amount);
-
-    // Only allow selection if timer is active and not submitted yet
-    if (timerActive && !isSubmitted && timeLeft > 0) {
-      // Find the exact key that matches the amount
-      const exactKey = Object.keys(userBidAmounts).find(
-        key => Math.abs(parseFloat(key) - amount) < 0.01
+  // 2. Check elimination status effect
+  useEffect(() => {
+    if (allContestants?.data && user?.contestant_id) {
+      const currentContestant = allContestants.data.find(
+        (contestant) => contestant.id === user.contestant_id
       );
 
-      if (exactKey) {
-        console.log("Found exact key:", exactKey, "with value:", userBidAmounts[exactKey]);
-        setSelectedAmount(parseFloat(exactKey));
-        // setSelectedBidValue(userBidAmounts[exactKey]);
-      } else {
-        console.warn("No exact key found for amount:", amount);
-        // Fallback to using the amount directly
-        setSelectedAmount(amount);
-
-        // Try to find a close match
-        const closestKey = Object.keys(userBidAmounts).reduce((prev, curr) => {
-          return Math.abs(parseFloat(curr) - amount) < Math.abs(parseFloat(prev) - amount)
-            ? curr
-            : prev;
-        });
-
-        if (closestKey) {
-          console.log("Using closest key:", closestKey, "with value:", userBidAmounts[closestKey]);
-          // setSelectedBidValue(userBidAmounts[closestKey]);
-        }
+      if (currentContestant?.is_eliminated) {
+        setShowEliminationModal(true);
       }
     }
-  };
+  }, [allContestants?.data, user?.contestant_id]);
 
-  // Timer effect
+  // 3. Auto-submit effect
   useEffect(() => {
-    // This is the critical guard - timer should not run if not active
+    if (
+      selectedOption &&
+      selectedAmount !== null &&
+      !isSubmitted &&
+      timerActive &&
+      currentQuestionId
+    ) {
+      handleSubmitAnswer();
+    }
+  }, [selectedOption, selectedAmount, isSubmitted, timerActive, currentQuestionId]);
+
+  // 4. Timer effect
+  useEffect(() => {
     if (!timerActive) {
       return;
     }
 
-
     if (timeLeft <= 0) {
-      setShowNextButton(true); // Enable the Next button
-      setShouldFetchAnswer(true);
-      refetch()
+      setShowNextButton(true);
 
       if (!selectedOption && !isSubmitted) {
         console.log("No option selected, auto-submitting with 'N'");
         setSelectedOption("N" as OptionKey);
         handleAutoSubmit();
       }
-
       return;
     }
 
@@ -205,311 +627,356 @@ const [showPrepPage, setShowPrepPage] = useState(true);
     return () => {
       clearTimeout(timer);
     };
-  }, [timeLeft, selectedOption, isSubmitted, timerActive]);
+  }, [timeLeft, selectedOption, isSubmitted, timerActive]); // Removed functions from deps
 
+  // 5. Current question ID ref effect
+  useEffect(() => {
+    currentQuestionIdRef.current = currentQuestionId;
+  }, [currentQuestionId]);
 
-
-
-
-
+  // 6. MQTT message handling effect
   useEffect(() => {
     if (!isConnected) return;
 
-
     const handler = (receivedMessage: any) => {
+      // Handle prep page event
+      if (receivedMessage?.event === "game_s1_question_reveal") {
+        setShowPrepPage(false);
 
-      try {
-        // Handle prep page event
-      
+        const payload = receivedMessage.payload || {};
+        const questionData = payload.data || {};
+        const spendBreakdown =
+          questionData.spend_breakdown ||
+          payload.spend_breakdown ||
+          payload.data?.spend_breakdown;
 
-        // Handle question reveal event
-        if (receivedMessage?.event === "game_s1_question_reveal") {
-          setShowPrepPage(false);
+        setMqttQuestionData(questionData);
+        setQuestionKey(`question-${questionData.question_index || Date.now()}`);
+        setShowBidPrompt(true);
 
-          const payload = receivedMessage.payload || {};
-          const questionData = payload.data || {};
-          const spendBreakdown =
-            questionData.spend_breakdown ||
-            payload.spend_breakdown ||
-            payload.data?.spend_breakdown;
+        setSelectedOption(null);
+        setSelectedAmount(null);
+        setIsSubmitted(false);
+        resetTimerState();
+        setMqttAnswerData(null);
+        setCorrectAnswer(null);
 
-          // 1. Save full question info
-          setMqttQuestionData(questionData);
+        setCurrentQuestionIndex(questionData.question_index || 1);
+        const questionId =
+          questionData?.question?.questions?.question_id ||
+          payload?.question_id;
+        if (questionId) {
+          setCurrentQuestionId(questionId.toString());
+        }
 
-          // 2. Reset related states
-          setSelectedOption(null);
-          setIsSubmitted(false);
-          resetTimerState();
+        if (spendBreakdown && user?.contestant_id) {
+          const userData = Array.isArray(spendBreakdown)
+            ? spendBreakdown.find(
+                (contestant: any) =>
+                  String(contestant.contestant_id) ===
+                  String(user.contestant_id)
+              )
+            : spendBreakdown;
 
-          // 3. Set current index and question ID
-          setCurrentQuestionIndex((questionData.question_index || 1) - 1);
-          const questionId =
-            questionData?.question?.questions?.question_id || payload?.question_id;
-          if (questionId) {
-            // setQuestionIdToSubmit(Number(questionId));
+          if (userData?.spend_breakdown) {
+            setUserBidAmounts(userData.spend_breakdown);
+          } else {
+            setUserBidAmounts({});
           }
+        }
+      }
 
-          // 4. Extract and save user's spend breakdown
-          if (spendBreakdown && user?.contestant_id) {
-            const userData = Array.isArray(spendBreakdown)
-              ? spendBreakdown.find(
-                  (contestant: any) =>
-                    String(contestant.contestant_id) === String(user.contestant_id)
-                )
-              : spendBreakdown;
+      if (receivedMessage?.event === "game_s1_question_answer") {
+        const payload = receivedMessage.payload || {};
+        const questionId = payload.question_id;
 
+        if (questionId === currentQuestionIdRef?.current) {
+          const answersData = payload.answers_data?.data;
+          setMqttAnswerData(answersData);
+          setMqttAnsweBalanceData(answersData);
+          refetch();
+          refechUser()
+          calculateRemainingCapital()
 
-            if (userData?.spend_breakdown) {
-              setUserBidAmounts(userData.spend_breakdown);
+          if (answersData?.question?.correct_option) {
+            setCorrectAnswer(answersData.question.correct_option);
+            setIsSubmitted(true);
+            setShowNextButton(true);
+            setTimerActive(false);
 
-              const bidKeys = Object.keys(userData.spend_breakdown);
-              if (bidKeys.length > 0) {
-                const firstAmount = parseFloat(bidKeys[0]);
-                // const firstBidValue = userData.spend_breakdown[bidKeys[0]];
-                setSelectedAmount(firstAmount);
-                // setSelectedBidValue(firstBidValue);
+            setTimeout(() => {
+              const newOpenModals: Record<number, boolean> = {};
+              if (answersData?.data && Array.isArray(answersData.data)) {
+                answersData.data.forEach((c: any) => {
+                  if (c?.contestant_id) {
+                    newOpenModals[c.contestant_id] = true;
+                  }
+                });
+                setTimeout(() => {
+                  setIsOpen(newOpenModals);
+                }, 7000);
               }
-            } else {
-              setUserBidAmounts({});
-              console.warn("⚠️ No spend_breakdown found for user");
-            }
+            }, 100);
           }
         }
+      }
 
-        // Handle other events...
-        if (receivedMessage.event?.startsWith("game_s1_timer_start")) {
-          console.log("⏱️ Timer start event received");
-          handleStartTimer();
-        }
+      if (receivedMessage?.event === "game_s1_timer_start") {
+        handleStartTimer();
+      }
 
-        if (receivedMessage.event === "game_s1_results_reveal") {
-          console.log("📊 Results reveal event received");
-          setAllQuestionsCompleted(true);
-        }
-      } catch (error) {
-        console.error("❌ Error processing MQTT message:", error);
+      if (receivedMessage?.event === "game_s1_results_reveal") {
+        setAllQuestionsCompleted(true);
       }
     };
 
     onMessage(handler);
 
     return () => {
-      console.log("Cleaning up MQTT message handler");
-      onMessage(null);
+      if (isConnected) {
+        onMessage(null);
+      }
     };
-  }, [isConnected, onMessage, user?.contestant_id]);
+  }, [isConnected, onMessage, user?.contestant_id, refetch]); // Added missing dependencies
+  // Calculate contestant balance
+  const contestantBalance = mqttAnswerData?.filter(
+    (contestant: any) => contestant.contestant_id === user?.contestant_id
+  );
+  // 7. Animated capital effect
+  useEffect(() => {
+    const targetCapital = calculateRemainingCapital();
+    
+    if (animatedCapital === 0) {
+      setAnimatedCapital(targetCapital);
+      return;
+    }
+    
+    const startCapital = animatedCapital;
+    const difference = targetCapital - startCapital;
+    
+    if (difference === 0) return;
+    
+    const duration = 800;
+    const steps = 30;
+    const stepValue = difference / steps;
+    const stepDuration = duration / steps;
+    
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      const newValue = startCapital + (stepValue * currentStep);
+      
+      if (currentStep >= steps) {
+        setAnimatedCapital(targetCapital);
+        clearInterval(interval);
+      } else {
+        setAnimatedCapital(Math.round(newValue));
+      }
+    }, stepDuration);
+    
+    return () => clearInterval(interval);
+  }, [selectedAmount, contestantBalance, contestantData, user?.contestant_id]); // Added dependencies
 
+  // Helper functions - moved inside component but after hooks
+  const calculateRemainingCapital = () => {
+    const baseCapital = Number(contestantBalance?.wallet_balance) ||
+      Number(
+        contestantData?.data?.find(
+          (contestant: any) =>
+            String(contestant.id) === String(user?.contestant_id)
+        )?.actual_balance
+      );
+    
+    const deduction = selectedAmount || 0;
+    return Math.max(0, baseCapital - deduction);
+  };
 
-  // Handle option selection - now just selects without checking correctness
+  const handleAmountSelect = (amount: number) => {
+    if (timeLeft > 0 && !isSubmitted) {
+      const exactKey = Object.keys(userBidAmounts).find(
+        (key) => Math.abs(parseFloat(key) - amount) < 0.01
+      );
+
+      if (exactKey) {
+        setSelectedAmount(parseFloat(exactKey));
+      } else {
+        setSelectedAmount(amount);
+
+        const closestKey = Object.keys(userBidAmounts).reduce((prev, curr) => {
+          return Math.abs(parseFloat(curr) - amount) <
+            Math.abs(parseFloat(prev) - amount)
+            ? curr
+            : prev;
+        });
+      }
+      setShowBidPrompt(false);
+    }
+  };
+
   const handleOptionSelect = (option: OptionKey) => {
-    // Only allow selection if timer is active and not submitted yet
     if (timerActive && !isSubmitted) {
       setSelectedOption(option);
     }
   };
 
-  const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
-  // Handle submit answer
-  const { 
-    data: answerData, 
-    refetch: refetchAnswer,
-    revalidate: revalidateAnswer 
-  } = useGetQuestionAnswer(
-    shouldFetchAnswer
-      ? (mqttQuestionData?.question?.questions?.question_id as number)
-      : 0
-  );
   const handleSubmitAnswer = () => {
-    if (!selectedOption) return;
+    if (!selectedOption || !currentQuestionId || selectedAmount === null)
+      return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
-    const formattedTimestamp = new Date().toISOString()
+    const formattedTimestamp = new Date().toISOString();
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
-    setShowNextButton(true); // Enable the Next button after submission
-    setShouldFetchAnswer(true); // Set this to true to fetch the answer
+    setShowNextButton(true);
 
-    // Find the exact string key from the backend that matches the selected amount
     const selectedAmountKey = Object.keys(userBidAmounts).find(
-      key => Math.abs(parseFloat(key) - selectedAmount) < 0.01
+      (key) => Math.abs(parseFloat(key) - selectedAmount) < 0.01
     );
 
-    // Use the exact key string from the backend (e.g., "15000.00")
     const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
-
-    // Get the question ID to submit - prioritize MQTT data, then fall back to selected questions
-    const questionId = mqttQuestionData?.question?.questions?.question_id;
 
     handleAnswerStageOneQuestion(
       {
         contestant_id: user?.contestant_id,
-        question_id: questionId,
-        answer: answerLetter, // Use letter (A, B, C, D) instead of option_x
-        amount_staked: amountToStake, // Send the exact key string from backend
+        question_id: Number(currentQuestionId),
+        answer: answerLetter,
+        amount_staked: amountToStake,
         timestamp: formattedTimestamp,
-        question_start_time: formattedGameStartTime, // Add game start time
+        question_start_time: formattedGameStartTime,
       },
       {
         onSuccess: () => {
-          console.log("Successfully submitted answer for question ID:", questionId);
-          // Add to attempted options
+          console.log(
+            "Successfully submitted answer for question ID:",
+            currentQuestionId
+          );
           setAttemptedOptions([
             ...attemptedOptions,
             {
               option: selectedOption,
             },
           ]);
-          
-          // Revalidate and refetch the answer data
-          revalidateAnswer();
-          refetchAnswer();
         },
         onError: (error) => {
           console.error("Error submitting answer:", error);
-          const errorMessage = formatAxiosErrorMessage(error as AxiosError);
-          openErrorModalWithMessage(String(errorMessage));
         },
       }
     );
   };
 
-  // Add this function to reset the timer state for the next question
   const resetTimerState = () => {
     setTimerActive(false);
     setTimeLeft(10);
     setShowNextButton(false);
-    setShouldFetchAnswer(false);
-    setSelectedAmount(10000); // Reset to default amount
+    setSelectedAmount(null);
   };
 
-  // Function to check if a question has been attempted
   const isQuestionAttempted = (idx: number) => {
-    return idx < currentQuestionIndex;
+    return mqttQuestionData?.question?.hustle_reveal?.hustle_number > idx;
   };
 
-  // Handle auto-submission when time elapses
   const handleAutoSubmit = () => {
-    const formattedTimestamp = formatTimestamp(new Date());
-    const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
+    if (!currentQuestionId) return;
     setIsSubmitted(true);
-    setShowNextButton(true); // Enable the Next button after auto-submission
-    setShouldFetchAnswer(true); // Set this to true to fetch the answer
-
-    // Find the exact string key from the backend that matches the selected amount
-    const selectedAmountKey = Object.keys(userBidAmounts).find(
-      key => Math.abs(parseFloat(key) - selectedAmount) < 0.01
-    );
-
-    // Use the exact key string from the backend (e.g., "15000.00")
-    const amountToStake = selectedAmountKey || selectedAmount.toFixed(2);
-
-    // Get the question ID to submit - prioritize MQTT data, then fall back to selected questions
-    const questionId = mqttQuestionData?.question?.questions?.question_id
-    console.log("Auto-submitting answer for question ID:", questionId);
-
-    // Create submission data with "N" as the answer
-    handleAnswerStageOneQuestion(
-      {
-        contestant_id: Number(user?.contestant_id),
-        question_id: questionId,
-        answer: "N", // "N" for No Answer
-        amount_staked: amountToStake, // Send the exact key string from backend
-        timestamp: formattedTimestamp,
-        question_start_time: formattedGameStartTime, // Add game start time
-      },
-      {
-        onSuccess: () => {
-          // Add to attempted options with "N" option
-          setAttemptedOptions([
-            ...attemptedOptions,
-            {
-              option: "N" as OptionKey,
-            },
-          ]);
-          
-          // Revalidate and refetch the answer data
-          revalidateAnswer();
-          refetchAnswer();
-        },
-        onError: (error) => {
-          const errorMessage = formatAxiosErrorMessage(error as AxiosError);
-          openErrorModalWithMessage(String(errorMessage));
-        },
-      }
-    );
+    setShowNextButton(true);
   };
 
   const handleStartTimer = () => {
     console.log("handleStartTimer called - activating timer");
     setTimerActive(true);
-    setGameStartTime(new Date()); // Reset game start time when timer starts
-    setTimeLeft(10); // Reset timer to 10 seconds
+    setShowBidPrompt(false);
+    setGameStartTime(new Date());
+    setTimeLeft(10);
   };
 
 
-  // Add debug log before rendering
-  console.log("Rendering QuestionScreen component with states:", {
-    showPrepPage,
-    allQuestionsCompleted,
-    isConnected
-  });
 
-  if(showPrepPage){
-    console.log("Rendering GetReadyScreen");
+  // Early returns should come AFTER all hooks are called
+  if (showPrepPage) {
     return <GetReadyScreen />;
   }
 
   if (allQuestionsCompleted) {
-    console.log("Rendering StageOneTally");
-    return <StageOneTally eliminationCount={0} removeCount={0} />;
+    return <StageOneTally eliminationCount={0} removeCount={0} activeState={1}/>;
   }
 
-  console.log(contestantData?.data?.find((contestant:any) => contestant.contestant_id === user?.contestant_id));
-
-    return (
-      <>
-
-          <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full ">
-            {/* Left Sidebar */}
-            <div className="flex flex-col justify-between">
-              <div className="flex justify-center items-center h-3.5 w-full mt-8">
-                <Logo />
-              </div>
-              <div>
-                <HustleStages />
-              </div>
-              <div className="pb-4 ">
-                <Salary4LifeTrophy className="max-xl:h-[13.25rem]" />
+  return (
+    <>
+      {/* Elimination Modal */}
+      {showEliminationModal && (
+        <Dialog
+          open={showEliminationModal}
+          onOpenChange={setShowEliminationModal}
+        >
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+            <div className="bg-gradient-to-b from-[#980306] to-[#FE8E8E] p-1 rounded-xl max-w-md w-full">
+              <div className="bg-[#13051E] rounded-lg p-6 flex flex-col items-center">
+                <h2 className="text-2xl font-bold text-white mb-4">
+                  You've Been Eliminated!
+                </h2>
+                <div className="mb-4">
+                  <Trophy height={80} width={80} />
+                </div>
+                <p className="text-white text-center mb-6">
+                  Unfortunately, your journey ends here. Thank you for
+                  participating!
+                </p>
+                <Button
+                  onClick={() => {
+                    router.push("/login");
+                    setShowEliminationModal(false);
+                  }}
+                  className="bg-[#D91FFF] hover:bg-[#b01ad3] text-white"
+                >
+                  Return to Login
+                </Button>
               </div>
             </div>
+          </div>
+        </Dialog>
+      )}
 
-            {/* Center Content */}
-            <div className="flex flex-col justify-between items-center min-h-full">
-              {/* Top section */}
-              <div className="flex flex-col w-full items-center">
-                <div className="w-full h-[100px] flex items-center justify-center">
-                  <HeaderTitleContainer
-                    backgroundColor="#791192"
-                    color="#ed99ff"
-                    text="Pick-Pad"
-                    textGradientEnd="#8E17AA"
-                    textGradientStart="#8E17AA"
-                    borderGradientStart="#f712fc"
-                    borderGradientEnd="#e151fe"
-                    fontSize={45}
-                    fontFamily="Verdana"
-                    textStrokeColor="#a219c1"
-                    textStrokeWidth={4.4}
-                  />
-                </div>
+      <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full ">
+        {/* Left Sidebar */}
+        <div className="flex flex-col justify-between">
+          <div className="flex justify-center items-center h-3.5 w-full mt-8">
+            <Logo />
+          </div>
+          <div>
+            <HustleStages />
+          </div>
+          <div className="pb-4 ">
+            <Salary4LifeTrophy className="max-xl:h-[13.25rem]" />
+          </div>
+        </div>
 
-                <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
-                  {/* Animated border */}
-                  <div className="absolute inset-0">
-                    <motion.div
-                      className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
-                      style={{
-                        background: `conic-gradient(from 0deg at 50% 50%,
+        {/* Center Content */}
+        <div className="flex flex-col justify-between items-center min-h-full">
+          {/* Top section */}
+          <div className="flex flex-col w-full items-center">
+            <div className="w-full h-[100px] flex items-center justify-center">
+              <HeaderTitleContainer
+                backgroundColor="#791192"
+                color="#ed99ff"
+                text="Pick-Pad"
+                textGradientEnd="#8E17AA"
+                textGradientStart="#8E17AA"
+                borderGradientStart="#f712fc"
+                borderGradientEnd="#e151fe"
+                fontSize={45}
+                fontFamily="Verdana"
+                textStrokeColor="#a219c1"
+                textStrokeWidth={4.4}
+              />
+            </div>
+
+            <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
+              {/* Animated border */}
+              <div className="absolute inset-0">
+                <motion.div
+                  className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+                  style={{
+                    background: `conic-gradient(from 0deg at 50% 50%,
                         #d91fff 0deg,
                         #d91fff 120deg,
                         #00ffff 100deg,
@@ -518,133 +985,154 @@ const [showPrepPage, setShowPrepPage] = useState(true);
                         #FFD700 360deg,
                         #d91fff 340deg
                       )`,
-                      }}
-                      animate={{
-                        rotate: [0, 360],
-                      }}
-                      transition={{
-                        duration: 4,
-                        ease: "linear",
-                        repeat: Infinity,
-                      }}
-                    />
+                  }}
+                  animate={{
+                    rotate: [0, 360],
+                  }}
+                  transition={{
+                    duration: 4,
+                    ease: "linear",
+                    repeat: Infinity,
+                  }}
+                />
+              </div>
+
+              {/* Content container - increased border width from 5px to 8px for bolder appearance */}
+              <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
+              <div className="relative">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-[2.75rem] font-extrabold outline-text text-black">
+                      Stage 1: Prove your hustle
+                    </h2>
+                    <p className="text-sm font-normal text-[#D5B9FF]">
+                      Select minimum of 2 number to determine the trivia
+                      questions for this round
+                    </p>
                   </div>
 
-                  {/* Content container - increased border width from 5px to 8px for bolder appearance */}
-                  <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
-                  <div className="relative">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h2 className="text-[2.75rem] font-extrabold outline-text text-black">
-                          Stage 1: Prove your hustle
-                        </h2>
-                        <p className="text-sm font-normal text-[#D5B9FF]">
-                          Select minimum of 2 number to determine the trivia
-                          questions for this round
-                        </p>
-                      </div>
-
-                      {timerActive && (
-                        <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
-                          <span
-                            className="text-[20px] font-extrabold font-verdana text-white"
-                            style={{
-                              WebkitTextStroke: "1.5px #C76000",
-                              textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
-                            }}
-                          >
-                            {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
-                          </span>
-                        </div>
-                      )}
+                  {timerActive && (
+                    <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+                      <span
+                        className="text-[20px] font-extrabold font-verdana text-white"
+                        style={{
+                          WebkitTextStroke: "1.5px #C76000",
+                          textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
+                        }}
+                      >
+                        {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
+                      </span>
                     </div>
+                  )}
+                </div>
 
-                    <div className="grid mt-5 gap-2 grid-cols-[1fr_3fr_1fr]">
-                      <div className="flex flex-col">
-                        {questionData?.data?.hustle_questions?.map((contestant, idx: number) => (
-                          <div className="flex gap-2 items-center" key={idx}>
-                            <div className="">
-                              <NumberCardContainer
-                                text={
-                                  isQuestionAttempted(idx) ? (
-                                    <CheckIcon size={160} />
-                                  ) : (
-                                    contestant?.hustle_reveal?.hustle_number
-                                  )
+                <div className="grid mt-5 gap-3 grid-cols-[1fr_3fr_1fr]">
+                  <div className="flex flex-col">
+                    {questionData?.map((contestant, idx: number) => (
+                      <div className="flex gap-2 items-center" key={idx}>
+                        <div className="">
+                          <NumberCardContainer
+                            text={
+                              isQuestionAttempted(contestant?.hustle_number) ? (
+                                <CheckIcon size={160} />
+                              ) : (
+                                contestant?.hustle_number
+                              )
+                            }
+                            textColor={
+                              mqttQuestionData?.question?.hustle_reveal
+                                ?.hustle_number === contestant?.hustle_number
+                                ? "#FFFFFF"
+                                : isQuestionAttempted(contestant?.hustle_number)
+                                  ? "#fff"
+                                  : "#F2C94C"
+                            }
+                            backgroundColor={
+                              mqttQuestionData?.question?.hustle_reveal
+                                ?.hustle_number === contestant?.hustle_number
+                                ? "#FEC124"
+                                : isQuestionAttempted(contestant?.hustle_number)
+                                  ? "#04DA6A"
+                                  : "black"
+                            }
+                            width={30}
+                            height={35}
+                            active={
+                              mqttQuestionData?.question?.hustle_reveal
+                                ?.hustle_number > contestant?.hustle_number
+                            }
+                            iconPosition={{ y: 33 }}
+                            iconSize={30}
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="h-[1.2rem] w-[1.2rem]  relative">
+                              <Image
+                                alt="User avatar"
+                                src={
+                                  contestantImages[idx] ||
+                                  "/images/userImage.png"
                                 }
-                                textColor={
-                                  mqttQuestionData?.question_index === idx
-                                    ? "#FFFFFF"
-                                    : isQuestionAttempted(idx)
-                                      ? "#fff"
-                                      : "#F2C94C"
-                                }
-                                backgroundColor={
-                                  mqttQuestionData?.question_index === idx
-                                    ? "#FEC124"
-                                    : isQuestionAttempted(idx)
-                                      ? "#04DA6A"
-                                      : "black"
-                                }
-                                width={30}
-                                height={35}
-                                active={
-                                  mqttQuestionData?.question_index === idx ||
-                                  isQuestionAttempted(idx)
-                                }
-                                iconPosition={{ y: 33 }}
-                                iconSize={30}
+                                fill
+                                className="object-cover rounded-full"
                               />
                             </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-2">
-                                <div className="h-[1.2rem] w-[1.2rem]  relative">
-                                  <Image
-                                    alt="User avatar"
-                                    src={
-                                      contestantImages[idx] ||
-                                      "/images/userImage.png"
-                                    }
-                                    fill
-                                    className="object-cover rounded-full"
-                                  />
-                                </div>
 
-                                <GlowyStrokeText
-                                  strokeWidth={3}
-                                  strokeColor="#7E3CE0"
-                                  glowColor="#04DA6A"
-                                  textclassName="text-xs  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
-                                  fillColor="#fff"
-                                  glowIntensity={"none"}
-                                >
-                                  {
-                                    contestant?.contestant?.contestant_name?.split(
-                                      " "
-                                    )[0]
-                                  }
-                                </GlowyStrokeText>
-                              </div>
-                            </div>
+                            <GlowyStrokeText
+                              strokeWidth={3}
+                              strokeColor="#7E3CE0"
+                              glowColor="#04DA6A"
+                              textclassName="text-xs  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
+                              fillColor="#fff"
+                              glowIntensity={"none"}
+                            >
+                              {contestant?.contestant_name?.split(" ")[0]}
+                            </GlowyStrokeText>
                           </div>
-                        ))}
-                      </div>
-                      {isLoading ? (
-                        <div className="flex justify-center items-center h-full ">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                         </div>
-                      ) : (
-                        <div className="relative">
+                      </div>
+                    ))}
+                  </div>
+                  {isLoading ? (
+                    <div className="flex justify-center items-center h-full ">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+                    </div>
+                  ) : (
+                  <div className="">
+                    
+
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={questionKey} // This triggers re-animation when question changes
+                          variants={questionVariants}
+                          initial="initial"
+                          animate="animate"
+                          exit="exit"
+                          className="relative"
+                        >
                           {/* Question display section */}
-                          <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]">
-                            <div className="">
+                          <motion.div
+                            variants={questionElementVariants}
+                            className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]"
+                          >
+                            <motion.div
+                              variants={questionElementVariants}
+                              className=""
+                            >
                               <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
-                                Question {mqttQuestionData?.question_index || "..."}
+                                Question{" "}
+                                {mqttQuestionData?.question_index || "..."}
                               </p>
-                            </div>
-                            <div className="">
-                              {mqttQuestionData?.question?.questions?.question ? (
-                                <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
+                            </motion.div>
+
+                            <motion.div
+                              variants={questionElementVariants}
+                              className=""
+                            >
+                              {mqttQuestionData?.question?.questions
+                                ?.question ? (
+                                <h2 className="text-white text-lg 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
                                   {mqttQuestionData.question.questions.question}
                                 </h2>
                               ) : (
@@ -652,17 +1140,23 @@ const [showPrepPage, setShowPrepPage] = useState(true);
                                   Waiting for question from host...
                                 </h2>
                               )}
-                            </div>
-                            <div className="flex justify-center items-center w-full gap-4">
-                              <div className="bg-[#011B0D] rounded-[12px] py-1 px-4 max-xl:max-w-[130px] w-full">
+                            </motion.div>
+
+                            <motion.div
+                              variants={questionElementVariants}
+                              className="flex justify-center items-center w-full gap-2"
+                            >
+                              <div className="bg-[#011B0D] rounded-[12px] py-1  w-full">
                                 <p
                                   className="text-[25px] text-white font-extrabold font- text-center"
                                   style={{
                                     WebkitTextStroke: "2px #04DA6A",
-                                    textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
+                                    textShadow:
+                                      "0px 2px 4px rgba(4, 218, 106, 0.5)",
                                   }}
                                 >
-                                  {mqttQuestionData?.question?.questions?.question_booster || "..."}{" "}
+                                  {mqttQuestionData?.question?.questions
+                                    ?.question_booster || "..."}{" "}
                                   <span
                                     className="text-base font-outfit font-normal text-[#04DA6A]"
                                     style={{
@@ -674,202 +1168,294 @@ const [showPrepPage, setShowPrepPage] = useState(true);
                                   </span>
                                 </p>
                               </div>
-                              <div className="bg-[#011B0D] rounded-[12px] py-2 px-4 w-full">
-                                <p className="text-xs font-outfit font-normal text-[#04DA6A] ">
+                              {/* <div className="bg-[#011B0D] flex items-center justify-center  rounded-[12px] py-2 px-2 w-full">
+                                <p className="text-xs font-outfit  items-center font-normal text-[#04DA6A] ">
                                   Capital:{" "}
                                   <span
                                     className="text-lg text-white font-extrabold font-verdana text-center"
                                     style={{
                                       WebkitTextStroke: "1px #04DA6A",
-                                      textShadow: "1px 2px 3px rgba(4, 218, 106, 0.4)",
+                                      textShadow:
+                                        "1px 2px 3px rgba(4, 218, 106, 0.4)",
                                     }}
                                   >
                                     ₦
                                     {addCommasToNumber(
                                       Number(
-                                        // Use wallet balance from MQTT data if available
-                                        contestantData?.data?.find(
-                                          (contestant: any) => String(contestant.id) === String(user?.contestant_id)
-                                        )?.actual_balance  
-                                      )
+                                        contestantBalance?.wallet_balance
+                                      ) ||
+                                        Number(
+                                          // Use wallet balance from MQTT data if available
+                                          contestantData?.data?.find(
+                                            (contestant: any) =>
+                                              String(contestant.id) ===
+                                              String(user?.contestant_id)
+                                          )?.actual_balance
+                                        )
                                     )}
                                   </span>
                                 </p>
-                              </div>
-                            </div>
-                          </div>
+                              </div> */}
+                        <div className="bg-[#011B0D] flex items-center justify-center rounded-[12px] py-2 px-2 w-full">
+  <p className="text-xs font-outfit items-center font-normal text-[#04DA6A]">
+    Capital:{" "}
+    <span
+      className="text-lg font-extrabold font-verdana text-center"
+      style={{
+        WebkitTextStroke: "1px #04DA6A",
+        textShadow: "1px 2px 3px rgba(4, 218, 106, 0.4)",
+      }}
+    >
+      ₦{formatAmount(animatedCapital) || formatAmount(calculateRemainingCapital())} 
+      {/* {addCommasToNumber(animatedCapital || calculateRemainingCapital())} */}
+    </span>
+  </p>
+</div>
+                            </motion.div>
+                          </motion.div>
 
-                          {/* Options display */}
-                          <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
-                            {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
-                              (option, index) => {
-                                const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-                                const currentQuestions = mqttQuestionData?.question?.questions || {};
+                          {/* Options display with animation and overlay */}
+                          <motion.div
+                            variants={questionElementVariants}
+                            className="relative mt-[.625rem]"
+                          >
+                            {/* Bid Prompt Overlay */}
+                            {showBidPrompt && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-[.75rem]"
+                              >
+                                <motion.div
+                                  animate={{
+                                    scale: [1, 1.05, 1],
+                                    boxShadow: [
+                                      "0 0 20px rgba(255, 193, 37, 0.5)",
+                                      "0 0 40px rgba(255, 193, 37, 0.8)",
+                                      "0 0 20px rgba(255, 193, 37, 0.5)"
+                                    ]
+                                  }}
+                                  transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    ease: "easeInOut"
+                                  }}
+                                  className="bg-gradient-to-r from-[#FFC125] via-[#FFCC11] to-[#C23A00] p-4 rounded-xl border-4 w-full border-[#FFC125] shadow-2xl"
+                                >
+                                  <div className="text-center">
+                                    <motion.div
+                                      animate={{ rotate: [0, 10, -10, 0] }}
+                                      transition={{
+                                        duration: 0.5,
+                                        repeat: Infinity,
+                                        repeatDelay: 1
+                                      }}
+                                      className="text-2xl mb-2"
+                                    >
+                                     
+                                    </motion.div>
+                                    <p className="text-black text-lg font-extrabold font-gilroyBold">
+                                      PLACE YOUR BID NOW!
+                                    </p>
+                                    {/* <p className="text-black/80 text-sm font-medium mt-1">
+                                      Choose your answer & wager amount
+                                    </p> */}
+                                  </div>
+                                </motion.div>
+                              </motion.div>
+                            )}
+
+                            {/* Options Grid */}
+                            <div className="grid grid-cols-2 gap-[.625rem]">
+                              {(
+                                [
+                                  "option_a",
+                                  "option_b",
+                                  "option_c",
+                                  "option_d",
+                                ] as OptionKey[]
+                              ).map((option, index) => {
+                                const optionLetter = String.fromCharCode(
+                                  65 + index
+                                ); // A, B, C, D
+                                const currentQuestions =
+                                  mqttQuestionData?.question?.questions || {};
+                                const showResult = isSubmitted && correctAnswer;
+                                convertOptionToLetter(option);
+                                const isSelected = selectedOption === option;
 
                                 return (
-                                  <button
+                                  <motion.button
                                     key={option}
+                                    custom={index}
+                                    variants={optionVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    whileHover="hover"
+                                    whileTap="tap"
                                     onClick={() => handleOptionSelect(option)}
-                                    disabled={!timerActive || isSubmitted || !mqttQuestionData?.question?.questions}
                                     className={cn(
-                                      "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left",
-                                      selectedOption === option &&
-                                        "bg-[#FCCE19] border-none text-[#745300]",
-                                      (isSubmitted || !timerActive || !mqttQuestionData?.question?.questions) &&
-                                        "opacity-70 cursor-not-allowed"
+                                      "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
+                                      !showResult && isSelected
+                                        ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
+                                        : "",
+                                      isSubmitted ||
+                                        !timerActive ||
+                                        !mqttQuestionData?.question?.questions
+                                        ? "opacity-70 cursor-not-allowed"
+                                        : "",
+                                      mqttAnswerData &&
+                                        currentQuestions?.correct_option ===
+                                          convertOptionToLetter(option)
+                                        ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                                        : ""
                                     )}
                                   >
                                     {optionLetter}:
-                                    <span
-                                      className={`${selectedOption === option ? "text-white font-bold" : ""}`}
-                                      style={{
-                                        marginLeft: "9px",
-                                        WebkitTextStroke:
-                                          selectedOption === option
-                                            ? "1px #C76000"
-                                            : "",
-                                      }}
-                                    >
-                                      {" "}
+                                    <span className="ml-2">
                                       {currentQuestions[option] || `...`}
                                     </span>
-                                  </button>
+                                  </motion.button>
                                 );
-                              }
-                            )}
-                          </div>
+                              })}
+                            </div>
+                          </motion.div>
 
-                          {/* Amount buttons section */}
-                          <div className="flex flex-col items-start gap-1 mt-7">
+                          {/* Amount buttons section with animation */}
+                          <motion.div
+                            variants={questionElementVariants}
+                            className="flex flex-col items-start gap-1 mt-4"
+                          >
+                            <p className="text-white text-xs pb-1 font-gilroyMedium">
+                              Select wager amount
+                            </p>
                             <div className="flex items-center w-full">
                               <div className="flex flex-1 items-center">
                                 <div className="flex gap-2">
-                                  {userBidAmounts && Object.keys(userBidAmounts).length > 0 ? (
+                                  {userBidAmounts &&
+                                  Object.keys(userBidAmounts).length > 0 ? (
                                     // Map through the bid amounts
-                                    Object.entries(userBidAmounts).map(([amountKey, bidValue], index) => {
-                                      const amount = parseFloat(amountKey);
+                                    Object.entries(userBidAmounts).map(
+                                      ([amountKey, bidValue], index) => {
+                                        const amount =
+                                          Number.parseFloat(amountKey);
 
-                                      return (
-                                        <div
-                                          key={index}
-                                          className="flex flex-col items-center"
-                                        >
-                                          <Button
-                                            onClick={() => handleAmountSelect(amount)}
-                                            disabled={
-                                              !timerActive ||
-                                              isSubmitted ||
-                                              timeLeft <= 0 ||
-                                              !mqttQuestionData?.question?.questions
-                                            }
-                                            className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                              selectedAmount === amount
-                                                ? "bg-[#04DA6A] text-black"
-                                                : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
-                                            }
-                                         ${
-                                           !timerActive ||
-                                           isSubmitted ||
-                                           timeLeft <= 0 ||
-                                           !mqttQuestionData?.question?.questions
-                                             ? "opacity-50 cursor-not-allowed"
-                                             : "hover:bg-[#035D2E] hover:text-white"
-                                         }
-                                        `}
+                                        return (
+                                          <motion.div
+                                            key={index}
+                                            custom={index}
+                                            variants={amountButtonVariants}
+                                            initial="initial"
+                                            animate="animate"
+                                            className="flex flex-col items-center"
+                                          >
+                                            <motion.div
+                                              whileHover="hover"
+                                              whileTap="tap"
+                                              variants={amountButtonVariants}
                                             >
-                                              ₦
-                                              {amount.toLocaleString(
-                                                undefined,
-                                                {
-                                                  minimumFractionDigits:0,
-                                                  maximumFractionDigits:0,
+                                              <Button
+                                                onClick={() =>
+                                                  handleAmountSelect(amount)
                                                 }
-                                              )}
-                                            </Button>
-
-                                            {selectedAmount === amount && (
-                                              <div className="text-xs text-[#04DA6A] mt-1 font-bold">
-                                                ₦
-                                                {Number(bidValue).toLocaleString(
+                                                disabled={
+                                                  timeLeft <= 0 || // Disable when time has elapsed
+                                                  isSubmitted // Disable when already submitted
+                                                }
+                                                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                                                  selectedAmount === amount
+                                                    ? "bg-[#04DA6A] text-black"
+                                                    : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
+                                                }
+${
+  timeLeft <= 0 || isSubmitted // Only disable styling when time elapsed or submitted
+    ? "opacity-50 cursor-not-allowed"
+    : "hover:bg-[#035D2E] hover:text-white"
+}`}
+                                              >
+                                                ₦{(Math.ceil(Number(amount) / 100) * 100).toLocaleString()}
+                                                {/* {formatAmount(amount)} */}
+                                                {/* {amount.toLocaleString(
                                                   undefined,
                                                   {
-                                                    minimumFractionDigits:0,
-                                                    maximumFractionDigits:0,
+                                                    minimumFractionDigits: 0,
+                                                    maximumFractionDigits: 0,
                                                   }
-                                                )}
-                                              </div>
-                                            )}
-                                          </div>
-                                        );
-                                      })
-                                    ) : (
-                                      // Show waiting message if no bid amounts are available yet
-                                      <div className="text-white text-sm">
-                                        Waiting for bid options from host...
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
+                                                )} */}
+                                              </Button>
+                                            </motion.div>
 
-                                <div className="items-end justify-end">
-                                  {/* Submit button - only show if not submitted yet AND time hasn't elapsed AND we have question data */}
-                                  {!isSubmitted && mqttQuestionData?.question?.questions && (
-                                    <Button
-                                      className="p-0 bg-transparent"
-                                      onClick={handleSubmitAnswer}
-                                      disabled={
-                                        !timerActive ||
-                                        !selectedOption ||
-                                        isSubmitted ||
-                                        !userBidAmounts ||
-                                        Object.keys(userBidAmounts).length === 0 ||
-                                        !mqttQuestionData?.question?.questions
+                                           {selectedAmount === amount && (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="text-xs text-[#04DA6A] mt-1 font-bold"
+  >
+    ₦
+    {(Math.ceil(Number(bidValue) / 100) * 100).toLocaleString()}
+  </motion.div>
+)}
+
+                                          </motion.div>
+                                        );
                                       }
-                                    >
-                                      <GradientButton
-                                        text="Submit"
-                                        className={`uppercase ${!timerActive || !selectedOption || !userBidAmounts || Object.keys(userBidAmounts).length === 0 || !mqttQuestionData?.question?.questions ? "opacity-50" : ""}`}
-                                        width={130}
-                                      />
-                                    </Button>
+                                    )
+                                  ) : (
+                                    // Show waiting message if no bid amounts are available yet
+                                    <div className="text-white text-sm">
+                                      Waiting for bid options from host...
+                                    </div>
                                   )}
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        )}
-                        <div className="h-full w-full">
-                          <FastestFingerResult
-                            resultArray={answerData}
-                            timeElapsed={timeLeft <= 0 || showNextButton}
-                          />
-                        </div>
-                      </div>
+                          </motion.div>
+                        </motion.div>
+                      </AnimatePresence>
+
+                      {/* {mqttAnswerData?.map((contestant: any) => ( */}
+                      {mqttAnswerData && (
+                        <GameResultModal
+                          key={user?.contestant_id}
+                          isOpen={!!mqttAnswerData}
+                          data={mqttAnswerData}
+                          questions={mqttQuestionData?.question?.questions}
+                          // setIsOpen={setIsOpen}
+                        />
+                      )}
+                      {/* ))} */}
                     </div>
+                  )}
+                  {/* Pass mqttAnswerData and currentQuestionId to FastestFingerResult */}
+                  <div className="h-full w-full">
+                    <FastestFingerResult
+                      resultArray={mqttAnswerData}
+                      mqttAnswerData={mqttAnswerData}
+                      timeElapsed={timeLeft <= 0 || showNextButton}
+                      currentQuestionId={currentQuestionId}
+                    />
                   </div>
                 </div>
               </div>
-
-              {/* Right Sidebar */}
-              <div>
-                <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={0} />
-              </div>
             </div>
+          </div>
+        </div>
 
-          <ErrorModal
-            isErrorModalOpen={isErrorModalOpen}
-            setErrorModalState={() => {
-              setErrorModalState(false);
-            }}
-            subheading={
-              errorModalMessage || "Please check your inputs and try again."
-            }
-          ></ErrorModal>
-        </>
-      );
-
-    }
-
-
+        {/* Right Sidebar */}
+        <div>
+          <HustleSideBar
+            showEmptyCard={false}
+            showHustlerCard={true}
+            eliminated={0}
+            mqttAnswerData={mqttAnswerBalanceData}
+            balanceData={null}
+            // mqttAnswerBalanceData={mqttAnswerBalanceData}
+          />
+        </div>
+      </div>
+    </>
+  );
+};
 
 export default QuestionScreen;

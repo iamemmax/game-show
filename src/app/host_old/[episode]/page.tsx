@@ -171,28 +171,28 @@ export default function HostPage() {
     // Game control functions
     const startGame = () => sendGameMessage("game_start")
     const endGame = () => sendGameMessage("game_end")
-    console.log(allStage1Questions?.data?.hustle_questions)
+    // console.log(allStage1Questions?.data?.hustle_questions)
 
     // Stage 1 functions
     const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
     const endTimerHustlePick = () => sendGameMessage("game_s1_hustle_pick_time_elapse")
     const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
-    const prepStage1Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage1Questions?.data?.hustle_questions[num - 1]?.questions.question_id })
+    // const prepStage1Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage1Questions?.data?.hustle_questions[num - 1]?.questions.question_id })
     const prepStage2Questions = (num: number) => sendGameMessage("game_s1_questions_prep", { question_id: allStage2Questions?.data.proof_questions[num - 1]?.questions.question_id })
     const revealStage1Question = (n: number) => {
-        sendGameMessage(`game_s1_question_reveal_${n}`, {question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",});
+        // sendGameMessage(`game_s1_question_reveal`, {question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",});
         if (n == 1) {
-            prepStage1Questions(1)
+            // prepStage1Questions(1)
         }
     }
-    const startStage1Timer = (n: number) => {
-        sendGameMessage(`game_s1_timer_start_${n}`);
-        notifyBackendStartTimer({
-            question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",
-            start_time: new Date().toISOString(),
-            question_type: "stage_1",
-        })
-    }
+    // const startStage1Timer = (n: number) => {
+    //     sendGameMessage(`game_s1_timer_start_${n}`);
+    //     notifyBackendStartTimer({
+    //         question_id: allStage1Questions?.data?.hustle_questions[n - 1]?.questions.question_id?.toString() || "",
+    //         start_time: new Date().toISOString(),
+    //         question_type: "stage_1",
+    //     })
+    // }
 
     const endStage1Timer = () => sendGameMessage(`question_s1_time_elapsed`)
     const showStage1Results = () => sendGameMessage("game_s1_results_reveal")
@@ -200,7 +200,7 @@ export default function HostPage() {
     // Stage 2 functions
     const initStage2 = () => sendGameMessage("game_s2_init")
     const prepStage2 = () => sendGameMessage("game_s2_prep")
-    const revealStage2Question = (n: number) => sendGameMessage(`game_s2_question_reveal_${n}`)
+    const revealStage2Question = (n: number) => sendGameMessage(`game_s2_question_reveal`)
     const startStage2Timer = (n: number) => sendGameMessage(`game_s2_timer_start_${n}`)
     const showStage2Results = () => sendGameMessage("game_s2_results_reveal")
 
@@ -230,7 +230,7 @@ export default function HostPage() {
                     </Button>
                     <Button
                         variant="outlined"
-                        onClick={() => (stage === "S1" ? startStage1Timer(num) : startStage2Timer(num))}
+                        // onClick={() => (stage === "S1" ? startStage1Timer(num) : startStage2Timer(num))}
                         className="border-[#ff00ff]/30 text-white hover:bg-[#3a2a45] hover:text-white"
                     >
                         <Clock className="h-3 w-3 mr-1" />
@@ -243,14 +243,14 @@ export default function HostPage() {
 
                                 endStage1Timer()
                                 setTimeout(() => {
-                                    prepStage1Questions(num)
+                                    // prepStage1Questions(num)
                                 }, 500);
                             }
                             else {
 
                                 endStage1Timer()
                                 setTimeout(() => {
-                                    prepStage1Questions(num)
+                                    // prepStage1Questions(num)
                                 }, 500);
                                 prepStage2Questions(num)
                             }
@@ -450,7 +450,7 @@ export default function HostPage() {
                                                     Reveal Hustles
                                                 </Button>
                                                 <Button
-                                                    onClick={() => prepStage1Questions(1)}
+                                                    // onClick={() => prepStage1Questions(1)}
                                                     disabled={isSending}
                                                     className="bg-[#3a2a45] hover:bg-[#4a3a55] border border-[#ff00ff]/20"
                                                 >

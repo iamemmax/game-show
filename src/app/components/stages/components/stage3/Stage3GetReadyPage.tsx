@@ -9,7 +9,6 @@ import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
 import HustleStages from "../hustle/HustleStages";
 import HustleSideBar from "../hustle/HustleSideBar";
-import QuestionTwoScreen from "../stage2/QuestionTwoScreen";
 import Stage3CardSelection from "./Stage3CardSelection";
 
 const Stage3GetReadyPage = () => {
@@ -43,22 +42,14 @@ const Stage3GetReadyPage = () => {
     }
   };
   
-  const listItemVariants = {
-    hidden: { x: -10, opacity: 0 },
-    visible: { 
-      x: 0, 
-      opacity: 1,
-      transition: { duration: 0.3, ease: "easeOut" }
-    }
-  };
-
+  
   useEffect(() => {
     if (isConnected) {
       const handler = (receivedMessage: any) => {
         console.log("Main page received message:", receivedMessage);
         
         // Handle stage transition events
-        if (receivedMessage?.event === "game_s2_question_reveal_1") {
+        if (receivedMessage?.event === "game_s3_start") {
           // Proceed to the next stage
           setShowCardRevealScreen(true);
         }
@@ -101,7 +92,7 @@ if(showCardRevealScreen){
             <Logo />
           </div>
           <div>
-            <HustleStages />
+            <HustleStages activeStage={3} />
           </div>
           <div className="pb-4">
             <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>

@@ -89,6 +89,7 @@ const config: Config = {
       },
       screens: {
         '3xl': '1920px', // Adjust the value based on the screen size you want
+        '4xl': '2000px', // Add custom screen size for 350px
         'xxscren': '370px', // Add custom screen size for 350px
       },
 

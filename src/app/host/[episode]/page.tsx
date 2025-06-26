@@ -6,11 +6,12 @@ import Link from "next/link"
 import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMQTT } from "@/hooks/useMqttService"
-import { useGetGameContestants } from "@/app/admin/misc/api"
-import { useNotifyBackendStartQuestionTimer } from "../misc/api"
+import { useGetGameContestants, useHandleHustlePickTimeElapse } from "@/app/admin/misc/api"
+import { useEndStageThree, useInitStage2, useNotifyBackendStartQuestionTimer, useStartGame } from "../misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import Stage1Questions from "./Stage1"
 import Stage2Questions from "./Stage2"
+import Stage4 from "./Stage4"
 
 export default function HostPage() {
     const params = useParams()
@@ -217,7 +218,7 @@ export default function HostPage() {
                         lastAction: "game_s2_init",
                         currentStageStep: "prep_questions",
                     }))
-                } else if (eventCode === "game_s2_questions_prep") {
+                } else if (eventCode === "game_s2_prep") {
                     setGameState((prev) => ({
                         ...prev,
                         lastAction: "game_s2_questions_prep",
@@ -252,6 +253,28 @@ export default function HostPage() {
                         currentStage: "STAGE_TWO_COMPLETE",
                     }))
                 }
+                else if (eventCode === "game_s3_init") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: "game_s3_init",
+                        currentStageStep: "prep_dud_opportunity_pick",
+                    }))
+                } else if (eventCode === "game_s3_prep") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: "game_s3_dud_opportunity_prep",
+                        currentStageStep: "start_dud_opportunity_pick",
+                        showQuestions: true,
+                    }))
+
+                } else if (eventCode === "game_s3_start") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: "start_dud_opportunity_pick",
+                        currentStageStep: "game_s3_end",
+                        showQuestions: true,
+                    }))
+                }
                 // Add other stage handlers here...
                 else {
                     setGameState((prev) => ({ ...prev, lastAction: eventCode }))
@@ -267,7 +290,18 @@ export default function HostPage() {
     )
 
     // Game control functions
-    const startGame = () => sendGameMessage("game_start")
+    const { mutate: gameStartMutation, isLoading: isStartingGame } = useStartGame()
+    const startGame = () => {
+        gameStartMutation({ game_episode: gameId }, {
+            onSuccess() {
+                sendGameMessage("game_start", { start_time: new Date().toISOString() })
+            },
+            onError(error) {
+                console.error("Error starting game:", error)
+                toast.error("Failed to start game")
+            },
+        })
+    }
     const endGame = () => sendGameMessage("game_end")
 
     //////////////////////////////
@@ -276,7 +310,15 @@ export default function HostPage() {
     //////////////////////////////
     //////////////////////////////
     const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
-    const endTimerHustlePick = () => sendGameMessage("game_s1_hustle_pick_time_elapse")
+    const { mutate: handleTimeElapse } = useHandleHustlePickTimeElapse()
+    const endTimerHustlePick = () => {
+        handleTimeElapse({ game_episode: gameId }, {
+            onSuccess() {
+                sendGameMessage("game_s1_hustle_pick_time_elapse")
+            }
+        },)
+    }
+
     const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
     const prepStage1Questions = () => sendGameMessage("game_s1_questions_prep")
 
@@ -297,8 +339,19 @@ export default function HostPage() {
     ////////    Stage 2 functions
     //////////////////////////////
     //////////////////////////////
-    const initStage2 = () => sendGameMessage("game_s2_init", { start_time: new Date().toISOString() })
-    const prepStage2Questions = () => sendGameMessage("game_s2_questions_prep")
+    const { mutate: handleInitStage2 } = useInitStage2()
+    const initStage2 = () => {
+        handleInitStage2({ game_episode: gameId }, {
+            onSuccess() {
+                sendGameMessage("game_s2_init", { start_time: new Date().toISOString() })
+            },
+            onError(error) {
+                console.error("Error initializing stage 2:", error)
+                toast.error("Failed to initialize stage 2")
+            },
+        })
+    }
+    const prepStage2Questions = () => sendGameMessage("game_s2_prep")
 
     // Handle timer start
     const handleTimerStart = (questionId: string, startTime: string, questionType: string) => {
@@ -308,6 +361,34 @@ export default function HostPage() {
             question_type: questionType,
         })
     }
+
+    //////////////////////////////
+    //////////////////////////////
+    ////////    Stage 3 functions
+    //////////////////////////////
+    //////////////////////////////
+    const initStage3 = () => sendGameMessage("game_s3_init", { start_time: new Date().toISOString() })
+    const prepStage3Picks = () => sendGameMessage("game_s3_prep")
+    const startStage3Picks = () => sendGameMessage("game_s3_start")
+    const { mutate: endStageThree, isLoading: isEndingStage3 } = useEndStageThree()
+    const handleEndStageThree = () => {
+        endStageThree({ episode: gameId }, {
+            onSuccess() {
+                sendGameMessage("game_s3_end")
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStage: "STAGE_FOUR",
+                    currentStageStep: "init",
+                }))
+
+            },
+            onError(error) {
+                console.error("Error ending stage 3:", error)
+                toast.error("Failed to end stage 3")
+            },
+        })
+    }
+
 
     const getStageInfo = () => {
         if (gameState.currentStage.includes("STAGE_ONE")) {
@@ -337,6 +418,11 @@ export default function HostPage() {
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={startGame} color="green">
                             START GAME
+                            {
+                                isStartingGame && (
+                                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                                )
+                            }
                         </TrapeziumButton>
                     </div>
                 )
@@ -435,6 +521,72 @@ export default function HostPage() {
                         </TrapeziumButton>
                     </div>
                 )
+            } else if (currentStageStep === "results") {
+                return (
+                    <div className="flex flex-col items-center mt-8">
+                        <div className="flex justify-center mb-4">
+                            <img src="/images/trophy.png" alt="Trophy" className="w-20 h-20" />
+                        </div>
+                        <p className="text-white mb-4">Proceed to stage 3</p>
+                        <TrapeziumButton onClick={initStage3} color="orange">
+                            INITIALIZE STAGE 3
+                        </TrapeziumButton>
+                    </div>
+                )
+            }
+            return null
+
+        }
+
+
+
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////                      STAGE THREE                    /////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        else if (currentStage.includes("STAGE_THREE")) {
+            if (currentStageStep === "init") {
+                return (
+                    <div className="flex justify-center mt-8">
+                        <div className="text-center">
+                            <div className="flex justify-center items-center">
+                                <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
+                            </div>
+                            <p className="text-white mb-4">Prep Stage 3 Questions</p>
+                            <TrapeziumButton onClick={initStage3} variant="orange">
+                                INITIALIZE STAGE 3
+                            </TrapeziumButton>
+                        </div>
+                    </div>
+                )
+            }
+            else if (currentStageStep === "prep_dud_opportunity_pick") {
+                return (
+                    <div className="flex justify-center">
+                        <TrapeziumButton onClick={prepStage3Picks} variant="green">
+                            PREP STAGE 3
+                        </TrapeziumButton>
+                    </div>
+                )
+            } else if (currentStageStep === "start_dud_opportunity_pick") {
+                return (
+                    <div className="flex justify-center">
+                        <TrapeziumButton onClick={startStage3Picks} variant="yellow">
+                            START DUD/PASS PICK
+                        </TrapeziumButton>
+                    </div>
+                )
+
+            } else if (currentStageStep === "game_s3_end") {
+                return (
+                    <div className="flex justify-center">
+                        <TrapeziumButton onClick={handleEndStageThree} variant="yellow">
+                            END STAGE 3
+                            {isEndingStage3 && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+                        </TrapeziumButton>
+                    </div>
+                )
             }
             return null
 
@@ -451,9 +603,7 @@ export default function HostPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#1a0b25] text-white bg-[url('/images/host-bg.png')] bg-no-repeat bg-contain bg-bottom">
-
-
+        <div className="min-h-screen bg-[#1a0b25] text-white bg-[url('/images/host-bg.png')] bg-no-repeat bg-contain bg-center">
 
             {isLoadingContestants ? (
                 <div className="flex flex-col items-center justify-center h-dvh">
@@ -542,6 +692,15 @@ export default function HostPage() {
                                     currentStageStep={gameState.currentStageStep}
                                 />
                             )
+                        }
+
+                        {/* Stage 2 Questions Component */}
+                        {
+                            gameState.currentStage.includes("STAGE_FOUR") &&
+
+                            <Stage4
+                            />
+
                         }
 
 

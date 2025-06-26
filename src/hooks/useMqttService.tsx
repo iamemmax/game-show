@@ -25,12 +25,16 @@ interface MQTTProviderProps {
   children: ReactNode;
 }
 
+
+
 export function MQTTProvider({ children }: MQTTProviderProps) {
   const broker = process.env.NEXT_PUBLIC_MQTT_BROKER;
   const port = process.env.NEXT_PUBLIC_MQTT_PORT;
   const username = process.env.NEXT_PUBLIC_MQTT_USERNAME;
   const password = process.env.NEXT_PUBLIC_MQTT_PASSWORD;
-  const connectUrl = `wss://${broker}:${port}/mqtt`;
+  const connectUrl = `ws://${broker}:${port}`;
+  // const connectUrl = `wss://${broker}:${port}/mqtt`;
+  // const connectUrl = `ws://192.168.0.186:8090`;
 
   const [isConnected, setIsConnected] = useState(false);
   const clientRef = useRef<MqttClient | null>(null);
@@ -52,8 +56,8 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
    
 
       topicsRef.current = {
-        publisher: `test/topic`,
-        subscriber: `test/topic`,
+        publisher: `test/topic/local`,
+        subscriber: `test/topic/local`,
       }; 
 
       mqttClient = mqtt.connect(connectUrl, {
@@ -61,10 +65,10 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
         clean: true,
         connectTimeout: 300000,
         reconnectPeriod: 5000,
-        username,
-        password,
+        // username,
+        // password,
         keepalive: 60,
-        protocol: 'wss',
+        protocol: 'ws',
         rejectUnauthorized: false,
       });
 
@@ -167,6 +171,7 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
       if (callback !== null) {
         clientRef.current.on('message', (topic, payload) => {
           console.log(`Received message on topic: ${topic}`);
+          console.log(`Received payload: ${payload.toString()}`);
           try {
             const message = JSON.parse(payload.toString());
             callback(message);

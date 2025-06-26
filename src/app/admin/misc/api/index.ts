@@ -1,2 +1,3 @@
 export * from './contestants'
-export * from './games'
+export * from './episodes'
+export * from './seasons'

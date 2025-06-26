@@ -11,10 +11,12 @@ interface GlowyStrokeTextProps {
   className?: string
   glowIntensity?: "none" | "low" | "medium" | "high"
   truncate?: boolean
+  lineThrough?: boolean
+  lineThroughColor?: string
 }
 
 export function GlowyStrokeText({
-  children, 
+  children,
   glowColor = "#D91FFF",
   fillColor = "#FFFFFFB0",
   strokeColor = "#D91FFF",
@@ -22,21 +24,20 @@ export function GlowyStrokeText({
   glowIntensity = "medium",
   className,
   textclassName,
-  truncate
+  truncate,
+  lineThrough = false,
+  lineThroughColor = fillColor,
 }: GlowyStrokeTextProps) {
-
+  // Convert hex to rgba for better glow effect
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = Number.parseInt(hex.slice(1, 3), 16)
+    const g = Number.parseInt(hex.slice(3, 5), 16)
+    const b = Number.parseInt(hex.slice(5, 7), 16)
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
 
   // Calculate glow shadow values based on intensity
   const getGlowShadows = () => {
-    // Convert hex to rgba for better glow effect
-    const hexToRgba = (hex: string, alpha: number) => {
-      const r = Number.parseInt(hex.slice(1, 3), 16)
-      const g = Number.parseInt(hex.slice(3, 5), 16)
-      const b = Number.parseInt(hex.slice(5, 7), 16)
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`
-    }
-
-    // Create multiple text-shadow layers with decreasing opacity
     const intensityMap = {
       none: [0, 0, 0],
       low: [0.8, 0.4, 0.1],
@@ -45,9 +46,8 @@ export function GlowyStrokeText({
     }
 
     const intensities = intensityMap[glowIntensity]
-    const shadows = []
+    const shadows: string[] = []
 
-    // Create layered shadows with different blur and opacity values
     for (let i = 0; i < intensities.length; i++) {
       const blurRadius = (i + 1) * 3
       const opacity = intensities[i]
@@ -59,13 +59,11 @@ export function GlowyStrokeText({
 
   // Create text stroke effect using multiple text shadows
   const getTextStroke = () => {
-    const shadows = []
-    const offset = 0.5 // Small offset for each shadow direction
+    const shadows: string[] = []
+    const offset = 0.5
 
-    // Create a shadow in each direction to simulate stroke
     for (let x = -strokeWidth; x <= strokeWidth; x += offset) {
       for (let y = -strokeWidth; y <= strokeWidth; y += offset) {
-        // Only add shadows at the edges (not in the middle)
         if (Math.abs(x) >= strokeWidth - offset || Math.abs(y) >= strokeWidth - offset) {
           shadows.push(`${x}px ${y}px 0 ${strokeColor}`)
         }
@@ -89,19 +87,21 @@ export function GlowyStrokeText({
         {children}
       </div>
 
-      {/* Main text with stroke */}
+      {/* Main text with stroke and optional line-through */}
       <div
-        className={cn("relative font-black tracking-wider", textclassName, truncate && "!truncate" )}
+        className={cn("relative font-black tracking-wider", textclassName, truncate && "!truncate")}
         style={{
           color: fillColor,
           textShadow: `${getTextStroke()}, ${getGlowShadows()}`,
+          textDecoration: lineThrough ? "line-through" : undefined,
+          textDecorationColor: lineThrough ? lineThroughColor : undefined,
         }}
         aria-hidden="true"
       >
         {children}
       </div>
 
-      {/* Hidden text for screen readers */}
+      {/* Screen reader text */}
       <span className="sr-only">{children}</span>
     </div>
   )

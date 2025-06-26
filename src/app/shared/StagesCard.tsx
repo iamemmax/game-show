@@ -12,9 +12,10 @@ interface StagesCardProps extends SVGProps<SVGSVGElement> {
   subTitle?: string;
   backgroundFill?: string;
   customDefs?: React.ReactNode;
-  isActive?: boolean; // new!
-  finalStage?:boolean;
-  showIcon?:boolean;
+  isActive?: boolean;
+  finalStage?: boolean;
+  showIcon?: boolean;
+  className?: string; // new className prop
 }
 
 const StagesCard = ({
@@ -24,11 +25,12 @@ const StagesCard = ({
   iconText = "1",
   title = "Stage 1",
   subTitle = "Grind & Grow",
-  finalStage=false,
+  finalStage = false,
   backgroundFill,
   customDefs,
   isActive = false,
   showIcon = true,
+  className, // destructure className
   ...props
 }: StagesCardProps) => {
   const width = 157;
@@ -50,6 +52,7 @@ const StagesCard = ({
       viewBox={`0 0 ${width} ${height}`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      className={className} // apply className to svg element
       {...props}
     >
       {customDefs}
@@ -80,15 +83,15 @@ const StagesCard = ({
       />
 
       {/* Medal */}
-      {showIcon&&<g transform="translate(10, 10)">
-        {
-            finalStage?
-            <Trophy height={32} width={32} />:
+      {showIcon && (
+        <g transform="translate(10, 10)">
+          {finalStage ? (
+            <Trophy height={32} width={32} />
+          ) : (
             <MedalIcon width={32} height={32} text={iconText} />
-
-        }
-      
-      </g>}
+          )}
+        </g>
+      )}
 
       {/* Text */}
       <text
@@ -114,17 +117,11 @@ const StagesCard = ({
       </text>
 
       {/* Accent sparkle */}
-
-      {
-
-      }
-      { (
-        <path
-          d="M132.732 10.9824L135.649 9.35335L138.945 13.2003L137.992 16.8729L132.732 10.9824Z"
-          fill="white"
-          fillOpacity={0.5}
-        />
-      )}
+      <path
+        d="M132.732 10.9824L135.649 9.35335L138.945 13.2003L137.992 16.8729L132.732 10.9824Z"
+        fill="white"
+        fillOpacity={0.5}
+      />
     </svg>
   );
 };
