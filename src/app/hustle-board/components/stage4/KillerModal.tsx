@@ -1,9 +1,42 @@
 import KillerIcon from "@/app/icons/KillerIcon";
 import { GlowyStrokeText } from "@/components/core";
+import { addCommasToNumber } from "@/utils";
+
+type ExtraBallDetails = {
+  name: "KILLER_BALL" | "CRYSTAL_BALL" | "LIBERTY_LIFE_BALL" | "EXTRA_PICK_BALL" | string;
+  type: string;
+  effect_action: string;
+  effect_desc: string;
+};
+
+type BalanceDetails = {
+  is_gain: boolean;
+  previous_balance: string;
+  amount_gained: number;
+  amount_lost: number;
+  current_balance: number;
+};
+
+type ContestantPick = {
+  contestant_id: number;
+  number_pick: number;
+  is_match: boolean;
+  is_extra_ball: boolean;
+  extra_ball_details?: ExtraBallDetails;
+  balance_details: BalanceDetails;
+};
+
+type MyData = {
+  name: ContestantPick;
+  number_revealed: (number | null)[];
+};
+
 interface prop{
     isOpen:boolean
+    data:MyData
+    
 }
-const KillerHustlePulledModal = ({isOpen}:prop) => {
+const KillerHustlePulledModal = ({isOpen,data}:prop) => {
   return (
 
     <>
@@ -38,10 +71,10 @@ const KillerHustlePulledModal = ({isOpen}:prop) => {
                                lineThrough={true}
                                lineThroughColor="#04DA6A"
                              >
-                               ₦1,000,000.00
+                               ₦{addCommasToNumber(Number(data?.name?.balance_details?.previous_balance))}
                              </GlowyStrokeText>
         <p className="  text-[3.125rem] -mt-2 font-black font-gilroyBold text-[#EB001B]">
-        ₦500,000.00
+       ₦{addCommasToNumber(Number(data?.name?.balance_details?.current_balance))}
         </p>
         </div>
   

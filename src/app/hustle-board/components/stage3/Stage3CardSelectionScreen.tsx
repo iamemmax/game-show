@@ -15,13 +15,15 @@ import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideB
 import { useParams } from "next/navigation";
 import StageThreeWinnerModal from "@/app/components/stages/components/StageThreeWinnerModal";
 
-
+interface prop{
+  onNext: () => void
+}
 const Stage3CardSelectionScreens = () => {
   const user = tokenStorage.getUser();
   const { isConnected, onMessage } = useMQTT();
   const [remainingContestants, setRemainingContestants] = useState<Array<{id: number, name: string}>>([]);
 
-  const MIN_CARDS_BEFORE_PASS = 15;
+  const MIN_CARDS_BEFORE_PASS = 10;
 
   const CARD_TYPES = {
     DUD: "DUD",

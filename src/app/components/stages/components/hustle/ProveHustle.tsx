@@ -28,7 +28,7 @@ const ProveHustle = () => {
 
 
   if (showQuestionScreen) {
-    return <QuestionScreen />;
+    // return <QuestionScreen onNext={()=>void}/>;
   }
 
   return (

@@ -1,7 +1,9 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useMemo,useEffect,useState } from "react";
+import { useMotionValue, useSpring, useTransform, animate ,motion} from "framer-motion";
+// import { useEffect, useState } from "react";
+
 import { useParams } from "next/navigation";
 
 import Logo from "@/app/icons/Logo";
@@ -21,17 +23,100 @@ import CheckIcon from "@/app/icons/CheckIcon";
 import KillerHustlePulledModal from "./KillerModal";
 import CrystalModal from "./CrystalModal";
 import WinnerBallModal from "./WinnerModal";
+import { useGetLastContestantPick } from "@/app/components/stages/api/stage4/getLastContestantPick";
+import { useGetGameContestants } from "@/app/admin/misc/api";
 
 const RevealBallNumber = () => {
   const { isConnected, onMessage } = useMQTT();
-  const user = tokenStorage.getUser();
   const params = useParams();
+const episodeId = Number(params?.episodeId);
 
-  const { data: hustlePicksData } = useGetAllHustleNumbers(
-    Number(params?.episodeId)
+// 1. Fetch all contestants for the episode
+const {
+  data: contestantsData,
+  isLoading: isLoadingContestants,
+} = useGetGameContestants(episodeId);
+
+// 2. Get the last non-eliminated contestant (memoized for stability)
+const lastContestantId = useMemo(() => {
+  const data = contestantsData?.data?.find(
+    (contestant) => contestant?.is_eliminated !== true
   );
-  const pickNumbers = [3, 10, 41, null, null];
-  
+  return data?.id;
+}, [contestantsData]);
+
+// 3. Only fetch pick if lastContestantId is available
+const { data: lastPickData } = useGetLastContestantPick({
+  contestant_id: Number(lastContestantId),
+  episode_id: episodeId,
+});
+console.log(contestantsData);
+
+// 4. Fetch all hustle numbers for the episode
+const { data: hustlePicksData } = useGetAllHustleNumbers(episodeId);
+
+// 5. Pick numbers (placeholder)
+const myData ={
+    "name": {
+        "contestant_id": 12,
+        "number_pick": 55,
+        "is_match": true,
+        "is_extra_ball": true,
+        "extra_ball_details": {
+            "name": "CRYSTAL_BALL",
+            "type": "weak_killer",
+            "effect_action": "minus_100K",
+            "effect_desc": "Subtracts a #100K from balance"
+            // "effect_action": -100
+
+        },
+        "balance_details": {
+            "is_gain":true,
+            "previous_balance":"2000000",
+            "amount_gained": 10,
+            "amount_lost": 0,
+            "current_balance": 1000000
+        }
+        
+
+  },
+"number_revealed":[55, 7, null, null, null]
+}
+
+const mynumbers = [12, 15, 7, 8, 3];
+const revealedNumbers = myData?.number_revealed?.filter((x) => x !== null) ?? [];
+
+// Check how many numbers match
+const matchedCount = revealedNumbers.filter((num) =>
+  mynumbers.includes(num)
+).length;
+
+// If all numbers matched
+const isWinner = matchedCount === mynumbers.length;
+
+// Highlight matched numbers
+const getNumberMatchStatus = (num: number | null, allRevealed: boolean) => {
+  if (num === null) return { matched: false, showRed: false };
+
+  const matched = revealedNumbers.includes(num);
+  const showRed = allRevealed && !matched;
+
+  return { matched, showRed };
+};
+
+const [displayCount, setDisplayCount] = useState(0);
+
+useEffect(() => {
+  const controls = animate(displayCount, matchedCount, {
+    duration: 0.5,
+    onUpdate: (latest) => {
+      setDisplayCount(Math.round(latest));
+    },
+  });
+
+  return controls.stop; // cleanup on unmount or value change
+}, [matchedCount]);
+
 
   return (
     <div className="min-h-screen grid grid-cols-[1fr_5fr_1fr] h-full">
@@ -128,79 +213,106 @@ const RevealBallNumber = () => {
                 </p>
               </div>
 
-              {/* Top: Hustle Picks */}
-              <div className="flex justify-center mt-8">
-                <div className="flex border-[4px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[10.35px] px-3 border-[#CE64FF]">
-                  {hustlePicksData?.data[0]?.picks?.map((num) => (
-                    <div key={num} className="px-4">
-                      <NumberCardContainer
-                        text={String(num)}
-                        textColor="#F2C94C"
-                        width={80}
-                        height={85}
-                        className="cursor-pointer transition-transform hover:scale-105"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+          
+             {/* Top: Hustle Picks */} 
+<div className="flex justify-center mt-8">
+  <div className="flex border-[4px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[10.35px] px-3 border-[#CE64FF]">
+    {mynumbers?.map((num) => {
+      const { matched, showRed } = getNumberMatchStatus(num, revealedNumbers.length === 5);
+      return (
+        <div key={num} className="px-4">
+          <NumberCardContainer
+            text={String(num)}
+            textColor={matched ? "#fff" : showRed ? "#fff" : "#F2C94C"}
+            backgroundColor={matched ? "#04DA6A" : showRed ? "#EB001B" : ""}
+            active={matched || showRed}
+            width={80}
+            height={85}
+            className="cursor-pointer transition-transform hover:scale-105"
+          />
+        </div>
+      );
+    })}
+  </div>
+</div>
 
-              <div className="flex-1 mt-6">
-                {/* <KillerHustlePulledModal isOpen={true} /> */}
-                {/* <CrystalModal isOpen={true} /> */}
-                <WinnerBallModal isOpen={true} />
-              </div>
+
+
+             <div className="flex-1 mt-6">
+  {!isWinner &&myData?.name?.extra_ball_details?.name === "KILLER_BALL" && (
+    <KillerHustlePulledModal
+      isOpen={myData?.name?.extra_ball_details?.name === "KILLER_BALL"}
+      data={myData}
+    />
+  )}
+
+  {myData?.name?.extra_ball_details?.name === "CRYSTAL_BALL" && (
+    <CrystalModal
+      isOpen={myData?.name?.extra_ball_details?.name === "CRYSTAL_BALL"}
+    />
+  )}
+
+  {isWinner && <WinnerBallModal isOpen={true} />}
+</div>
+
 
               {/* Bottom: Picked Numbers */}
-              <div className="flex justify-center items-center mt-10 mb-6">
-                <div className="flex items-center justify-center">
-                  {pickNumbers.map((x, idx) => {
-                    const isMatched =
-                      x !== null && hustlePicksData?.data[0]?.picks.includes(x);
-                    const status =
-                      x === null ? "default" : isMatched ? "correct" : "error";
+<div className="flex justify-center items-center mt-10 mb-6">
+  <div className="flex items-center justify-center">
+    {myData?.number_revealed?.map((x, idx) => {
+      const isRevealed = x !== null;
+      const isMatched = isRevealed && mynumbers.includes(x);
+      const status = !isRevealed
+        ? "default"
+        : isMatched
+        ? "correct"
+        : "error";
 
-                    return (
-                      <div
-                        key={idx}
-                        className="px-4 flex items-center flex-col justify-center"
-                      >
-                        <NumberCardContainer
-                          text={x !== null ? String(x) : ""}
-                          textColor="#F2C94C"
-                          width={x !== null ? 80 : 140}
-                          height={x !== null ? 85 : 145}
-                          className="cursor-pointer transition-transform hover:scale-105"
-                          status={status}
-                        />
+      return (
+        <div
+          key={idx}
+          className="px-4 flex items-center flex-col justify-center"
+        >
+          <NumberCardContainer
+            text={isRevealed ? String(x) : ""}
+            textColor="#F2C94C"
+            width={isRevealed ? 80 : 140}
+            height={isRevealed ? 85 : 145}
+            className="cursor-pointer transition-transform hover:scale-105"
+            status={status}
+          />
 
-                        {x !== null &&
-                          (isMatched ? (
-                            <div className="w-[2.6519rem] h-[2.212rem] flex justify-center items-center rounded-[.4006rem] bg-[#10A151] mt-2">
-                              <CheckIcon size={20} />
-                            </div>
-                          ) : (
-                            <div className="w-[2.6519rem] h-[2.52512rem] flex justify-center items-center rounded-[.4006rem] bg-[#eb001b] mt-2">
-                              <ErrorIcon
-                                height={17}
-                                width={17}
-                                color="#bc061b"
-                              />
-                            </div>
-                          ))}
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="w-[6.8563rem] h-[6.8563rem] bg-white rounded-full flex justify-center flex-col items-center">
-                  <p className="font-display block text-black font-black text-[2rem]">
-                    2/5
-                  </p>
-                  <p className="block -mt-2 text-base font-display font-bold uppercase">
-                    match
-                  </p>
-                </div>
+          {isRevealed &&
+            (isMatched ? (
+              <div className="w-[2.6519rem] h-[2.212rem] flex justify-center items-center rounded-[.4006rem] bg-[#10A151] mt-2">
+                <CheckIcon size={20} />
               </div>
+            ) : (
+              <div className="w-[2.6519rem] h-[2.52512rem] flex justify-center items-center rounded-[.4006rem] bg-[#eb001b] mt-2">
+                <ErrorIcon
+                  height={17}
+                  width={17}
+                  color="#bc061b"
+                />
+              </div>
+            ))}
+        </div>
+      );
+    })}
+  </div>
+
+  {/* Match Counter */}
+<div className="w-[6.8563rem] h-[6.8563rem] bg-white rounded-full flex justify-center flex-col items-center ml-4">
+  <p className="font-display text-black font-black text-[2rem]">
+    {displayCount}/{mynumbers.length}
+  </p>
+  <p className="block text-base font-display font-bold uppercase -mt-2">
+    match
+  </p>
+</div>
+
+</div>
+
             </div>
           </div>
         </div>

@@ -13,7 +13,7 @@ import { formatAmount } from "@/utils/currency";
 import WinnerIconSvgIcon from "@/icons/cards/WinnerIconSvg";
 import CorrectCheckIcon from "@/icons/cards/CorrectCheckIcon";
 import NotCorrectIcon from "@/icons/cards/NotCorrectIcon";
-interface Datum {
+export interface mqttDatum {
   contestant_id: number;
   answered_in: number;
   is_correct: boolean;
@@ -46,7 +46,7 @@ interface Questions {
 interface GameResultModalProps {
   isOpen: boolean;
   //   onOpenChange: (open: boolean) => void
-  data: Datum[];
+  data: mqttDatum[];
   questions: Questions;
 }
 

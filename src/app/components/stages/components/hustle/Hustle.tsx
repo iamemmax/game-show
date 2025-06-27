@@ -20,7 +20,10 @@ import Trophy from "@/app/icons/Trophy";
 import { useRouter } from "next/navigation";
 import { useGetGameContestants } from "@/app/admin/misc/api/contestants";
 
-const Hustle = () => {
+interface Prop{
+  onNext: () => void
+}
+const Hustle = ({onNext}:Prop) => {
   const { isConnected, onMessage } = useMQTT();
   const [ShowQuestionScreen, setShowQuestionScreen] = useState(false);
   const router = useRouter();
@@ -68,9 +71,15 @@ const Hustle = () => {
 
 
   const  contestant = data?.data?.find((contestant) => contestant.contestant_id === user?.contestant_id);
+
+
+ // FIXED CODE for HustleReveal page:
+useEffect(() => {
   if (ShowQuestionScreen) {
-    return <QuestionScreen />;
+    onNext();
   }
+}, [ShowQuestionScreen, onNext]);
+
   return (
     <>
       {/* Elimination Modal */}

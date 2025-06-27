@@ -27,14 +27,16 @@ interface StageOneTallyProps {
   eliminationCount?: number;
   removeCount?: number;
   title?: string;
-  activeState:number
+  activeState:number;
+  onNext?:()=>void
 }
 
 const StageOneTally = ({
   eliminationCount = 2,
   removeCount = 0,
   title = "Stage 1",
-  activeState
+  activeState,
+  onNext
 }: StageOneTallyProps) => {
   const borderArray = [
     "#7E3CE0",
@@ -127,7 +129,7 @@ const StageOneTally = ({
   }, [isConnected, onMessage]);
 
   if (goToStage2) {
-    return <QuestionTwoScreen />;
+    return <QuestionTwoScreen onNext={()=>onNext} />;
   }
   if (goToStage3) {
     console.log("Navigating to Stage 3", {
@@ -140,7 +142,7 @@ const StageOneTally = ({
       return <Stage3HustleBoardGetReadyPage   key="stage3-board-ready" />;
     } else {
       console.log("Rendering Stage3GetReadyPage");
-      return <Stage3GetReadyPage key="stage3-ready" />;
+      return <Stage3GetReadyPage key="stage3-ready" onNext={()=>onNext} />;
     }
   }
 
