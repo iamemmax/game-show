@@ -102,6 +102,8 @@ const QuestionTwoScreen = () => {
   const [resultMessageSent, setResultMessageSent] = useState(false);
   // Add new state variables
   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
+  const [mqttAnswerResultData, setMqttAnsweResultData] =
+    useState<any>(mqttAnswerData);
   // Add state to track attempted questions
   const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(
     new Set()
@@ -109,7 +111,7 @@ const QuestionTwoScreen = () => {
   // Add state to track if answer has been received
   const [answerReceived, setAnswerReceived] = useState(false);
   const [openModals, setOpenModals] = useState(false);
-  const [showModal, setshowModal] = useState(false)
+  const [showModal, setShowModal] = useState(false);
   useEffect(() => {
     // Only initialize game start time, but don't start the timer
     if (!gameStartTime) {
@@ -268,6 +270,7 @@ const QuestionTwoScreen = () => {
         setMqttAnswerData(null); // Clear previous answer data
         setCorrectAnswer(null);
         setOpenModals(false);
+        setShowModal(false);
 
         // 3. Set current index and question ID
         setCurrentQuestionIndex(questionData?.index);
@@ -277,40 +280,74 @@ const QuestionTwoScreen = () => {
         }
       }
 
+      // Fix 3: Update the MQTT message handler for game_s2_question_answer
+      // Fix 3: Update the MQTT message handler for game_s2_question_answer
       if (receivedMessage?.event === "game_s2_question_answer") {
         const payload = receivedMessage.payload || {};
         const questionId = payload.question_id;
-        setOpenModals(payload?.show_modal);
-        setshowModal(payload?.show_modal)
-        if (questionId === currentQuestionIdRef?.current) {
+        const shouldShowModal = payload?.show_modal;
+
+        console.log("🔄 Answer event received:", {
+          questionId,
+          currentQuestionId: currentQuestionIdRef.current,
+          shouldShowModal,
+          currentQuestionIndex,
+          payload,
+        });
+
+        // FIXED: Compare questionId properly (convert to string if needed)
+        const currentQuestionIdStr = currentQuestionIdRef?.current?.toString();
+        const receivedQuestionIdStr = questionId?.toString();
+
+        if (receivedQuestionIdStr === currentQuestionIdStr) {
           const answersData = payload.answers_data?.data;
-          setMqttAnswerData(answersData); // Store for rendering modals
+
+          console.log("📊 Processing answer data:", {
+            answersData,
+            currentQuestionIndex,
+            shouldShowModal,
+          });
+
+          // Update answer data for all questions
+          setMqttAnswerData(answersData);
+
+          // FIXED: For elimination questions (index > 4), set result data separately
+          if (currentQuestionIndex > 4) {
+            setMqttAnsweResultData(answersData);
+            setMqttAnswerData(answersData);
+          }
+
+          // FIXED: Always update modal states when shouldShowModal is true
+          if (shouldShowModal) {
+            setOpenModals(true);
+            setShowModal(true);
+            setMqttAnswerData(answersData);
+          }
+
+          // Refetch balance data
           refetchBalance();
           // Mark submitted and stop timer
-          if (answersData?.question?.correct_option) {
-            setCorrectAnswer(answersData.question.correct_option);
-            setIsSubmitted(true);
-          //  setshowModal(payload?.show_modal)
-            setTimerActive(false);
+          const correctOption =
+            payload.answers_data?.question?.correct_option ||
+            answersData?.question?.correct_option;
 
-            // FIXED: Open modals for all contestants with a slight delay to ensure state is updated
-            setTimeout(() => {
-              const newOpenModals: Record<number, boolean> = {};
-              if (answersData?.data && Array.isArray(answersData.data)) {
-                answersData.data.forEach((c: any) => {
-                  if (c?.contestant_id) {
-                    newOpenModals[c.contestant_id] = true;
-                  }
-                });
-              }
-            }, 100);
+          if (correctOption) {
+            setCorrectAnswer(correctOption);
+            setIsSubmitted(true);
+            setTimerActive(false);
           }
+
+          console.log("✅ Answer processing completed");
+        } else {
+          console.log("❌ Question ID mismatch:", {
+            expected: currentQuestionIdStr,
+            received: receivedQuestionIdStr,
+          });
         }
       }
-
       // Handle timer start event
       if (receivedMessage?.event === "game_s2_timer_start") {
-        console.log("✅ Processing game_s2_timer_start");
+        // console.log("✅ Processing game_s2_timer_start");
         handleStartTimer();
       }
 
@@ -344,7 +381,12 @@ const QuestionTwoScreen = () => {
   }
   if (allQuestionsCompleted) {
     return (
-      <StageOneTally eliminationCount={2} removeCount={2} title="stage 2" />
+      <StageOneTally
+        eliminationCount={2}
+        removeCount={2}
+        title="stage 2"
+        activeState={2}
+      />
     );
   }
 
@@ -579,8 +621,6 @@ const QuestionTwoScreen = () => {
                     </div>
                   ) : (
                     <>
-                    
-
                       <div className="relative">
                         <AnimatePresence mode="wait">
                           <motion.div
@@ -811,11 +851,15 @@ const QuestionTwoScreen = () => {
                         </AnimatePresence>
                       </div>
 
-                      {mqttAnswerData && openModals&& (
+                      {mqttAnswerData && (openModals || showModal) && (
                         <GameResultModal
-                          key={user?.contestant_id}
-                          isOpen={!!mqttAnswerData && !!openModals}
-                          data={mqttAnswerData}
+                          key={`${user?.contestant_id}-${currentQuestionIndex}-${currentQuestionId}`}
+                          isOpen={true} // Force to true since we're conditionally rendering
+                          data={
+                            currentQuestionIndex > 4
+                              ? mqttAnswerResultData || mqttAnswerData
+                              : mqttAnswerData
+                          }
                           questions={mqttQuestionData}
                         />
                       )}
@@ -823,7 +867,12 @@ const QuestionTwoScreen = () => {
                   )}
                   <div className="">
                     <FastestFingerResult
-                      resultArray={mqttAnswerData}
+                      key={`${user?.contestant_id}-${currentQuestionIndex}-${currentQuestionId}`}
+                      resultArray={
+                        currentQuestionIndex > 4
+                          ? mqttAnswerResultData || mqttAnswerData
+                          : mqttAnswerData
+                      }
                       mqttAnswerData={mqttAnswerData}
                       timeElapsed={timeLeft <= 0 || !timerActive}
                       currentQuestionId={currentQuestionId}
@@ -842,7 +891,9 @@ const QuestionTwoScreen = () => {
             showHustlerCard={true}
             eliminated={2}
             balanceData={balanceData}
-              mqttAnswerData={mqttAnswerData}
+            mqttAnswerData={
+              currentQuestionIndex > 4 ? mqttAnswerResultData : mqttAnswerData
+            }
           />
         </div>
       </div>

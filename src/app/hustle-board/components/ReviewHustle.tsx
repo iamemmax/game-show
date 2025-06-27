@@ -20,14 +20,15 @@ import HustleBottomCard from "@/app/components/stages/components/hustle/HustleBo
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import Stage1QuestionScreen from "./Stage1QuestionScreen";
-
-const ReviewHustle = () => {
+interface Props {
+  onNext: () => void;
+}
+const ReviewHustle = ({onNext}:Props) => {
   const params = useParams();
   const { isConnected, onMessage } = useMQTT();
-  const [ShowQuestionScreen, setShowQuestionScreen] = useState(false);
+  // const [ShowQuestionScreen, setShowQuestionScreen] = useState(false);
   const router = useRouter();
   const user = tokenStorage.getUser();
-  const [showEliminationModal, setShowEliminationModal] = useState(false);
 
   const { data, isLoading } = useGetHustleReveal(Number(params?.episodeId));
 
@@ -40,7 +41,8 @@ const ReviewHustle = () => {
 
         if (receivedMessage?.event === "game_s1_questions_prep") {
           // Proceed to the next stage
-          setShowQuestionScreen(true);
+          // setShowQuestionScreen(true);
+          onNext()
         }
       };
 
@@ -51,9 +53,9 @@ const ReviewHustle = () => {
   const contestant = data?.data?.find(
     (contestant) => contestant.contestant_id === user?.contestant_id
   );
-    if (ShowQuestionScreen) {
-      return <Stage1QuestionScreen />;
-    }
+    // if (ShowQuestionScreen) {
+    //   return <Stage1QuestionScreen />;
+    // }
   return (
     <>
       {/* Elimination Modal */}
@@ -140,7 +142,7 @@ const ReviewHustle = () => {
                       {/* Tabs */}
                       <div className="mt-6 relative w-full flex justify-center items-center">
                         <HustleBoardInvestCapitall
-                          setShowQuestionScreen={setShowQuestionScreen}
+                          // onNext={onNext}
                           hustleReveal={data}
                         />
                       </div>

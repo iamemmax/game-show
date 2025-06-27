@@ -21,17 +21,20 @@ import { useParams, useRouter } from "next/navigation";
 import Stage3GetReadyPage from "../stage3/Stage3GetReadyPage";
 import Stage3BoardGetReadyPage from "@/app/hustle-board/components/stage3/Stage3GetReadyScreen";
 import { formatAmount } from "@/utils/currency";
+import Stage3HustleBoardGetReadyPage from "@/app/hustle-board/components/stage3/Stage3GetReadyScreen";
 
 interface StageOneTallyProps {
   eliminationCount?: number;
   removeCount?: number;
   title?: string;
+  activeState:number
 }
 
 const StageOneTally = ({
   eliminationCount = 2,
   removeCount = 0,
   title = "Stage 1",
+  activeState
 }: StageOneTallyProps) => {
   const borderArray = [
     "#7E3CE0",
@@ -134,7 +137,7 @@ const StageOneTally = ({
 
     if (params?.episodeId) {
       // Ensure the component is properly rendered with key for React reconciliation
-      return <Stage3BoardGetReadyPage key="stage3-board-ready" />;
+      return <Stage3HustleBoardGetReadyPage   key="stage3-board-ready" />;
     } else {
       console.log("Rendering Stage3GetReadyPage");
       return <Stage3GetReadyPage key="stage3-ready" />;
@@ -186,7 +189,7 @@ const StageOneTally = ({
             <Logo />
           </div>
           <div>
-            <HustleStages />
+            <HustleStages   activeStage={activeState}/>
           </div>
           <div className="w-full p-[1.4375rem] flex-col rounded-t-[1.75rem] flex justify-center items-center bg-[linear-gradient(to_right,_#2D0304,_#EE24B8,_#1E0227)] text-white">
             <Trophy height={50} width={50} />

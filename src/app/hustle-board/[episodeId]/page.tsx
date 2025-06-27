@@ -7,9 +7,10 @@ import HustleBoardNumberPicks from "../components/HustleBoardNumberPicks";
 import ReviewHustle from "../components/ReviewHustle";
 import Stage1QuestionScreen from "../components/Stage1QuestionScreen";
 import ViewOnlyQuestionTwoScreen from "../components/statge2/StageTwoQuestionScreen";
-import Stage3GetReadyPage from "@/app/components/stages/components/stage3/Stage3GetReadyPage";
-import Stage3CardSelectionScreens from "../components/stage3/Stage3CardSelectionScreen";
+// import Stage3GetReadyPage from "@/app/components/stages/components/stage3/Stage3GetReadyPage";
+// import Stage3CardSelectionScreens from "../components/stage3/Stage3CardSelectionScreen";
 import Stage4BoardGetReadyPage from "../components/stage4/ShowStage4Prep";
+import Stage3HustleBoardGetReadyPage from "../components/stage3/Stage3GetReadyScreen";
 
 const pageVariants = {
   initial: { opacity: 0, x: 50 },
@@ -27,25 +28,23 @@ const HomePage = () => {
 
   const gameStage = allContestants?.game?.stage;
 
-  // Set latest visible stage based on game.stage
+  // Set initial step based on game.stage
   useEffect(() => {
     if (!isLoading && gameStage) {
+       setStep((prevStep) => {
+      if (prevStep !== null) return prevStep; // don't override if already set
+
       switch (gameStage) {
         case "STAGE_ONE":
-          setStep(1); // Stage 1 Question Screen (final step of Stage 1)
-          break;
+          return 1;
         case "STAGE_TWO":
-          setStep(3); // Stage 2 question viewer
-          break;
+          return 4;
         case "STAGE_THREE":
-          setStep(6); // Card Selection (most visual/interactive for viewers)
-          break;
-        case "STAGE_FOUR":
-          setStep(7); // Card Selection (most visual/interactive for viewers)
-          break;
+          return 5;
         default:
-          setStep(1);
+          return 1;
       }
+    });
     }
   }, [isLoading, gameStage]);
 
@@ -61,35 +60,31 @@ const HomePage = () => {
 
       {step === 2 && (
         <motion.div key="step2" className="h-full" {...motionProps}>
-          <ReviewHustle />
+          <ReviewHustle onNext={() => setStep(3)} />
         </motion.div>
       )}
 
       {step === 3 && (
         <motion.div key="step3" className="h-full" {...motionProps}>
           <Stage1QuestionScreen />
-             {/* <Stage4BoardGetReadyPage /> */}
         </motion.div>
       )}
 
       {step === 4 && (
         <motion.div key="step4" className="h-full" {...motionProps}>
-          <ViewOnlyQuestionTwoScreen />
+          <ViewOnlyQuestionTwoScreen  />
         </motion.div>
       )}
 
+     
+
       {step === 5 && (
         <motion.div key="step5" className="h-full" {...motionProps}>
-          <Stage3GetReadyPage />
+          <Stage3HustleBoardGetReadyPage />
         </motion.div>
       )}
 
       {step === 6 && (
-        <motion.div key="step6" className="h-full" {...motionProps}>
-          <Stage3CardSelectionScreens />
-        </motion.div>
-      )}
-      {step === 7 && (
         <motion.div key="step6" className="h-full" {...motionProps}>
           <Stage4BoardGetReadyPage />
         </motion.div>

@@ -15,6 +15,7 @@ import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideB
 import { useParams } from "next/navigation";
 import StageThreeWinnerModal from "@/app/components/stages/components/StageThreeWinnerModal";
 
+
 const Stage3CardSelectionScreens = () => {
   const user = tokenStorage.getUser();
   const { isConnected, onMessage } = useMQTT();
@@ -406,7 +407,7 @@ const params = useParams()
                               {/* Contestant name overlay */}
                               {card.revealed && (
                                 <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20">
-                                  <span className="font-bold text-white text-xs bg-[#D91FFF] px-4 py-1 rounded">
+                                  <span className="font-bold text-white text-base bg-[#D91FFF] px-4 py-1 rounded">
                                     {displayName?.split(" ")[0]}
                                   </span>
                                 </div>

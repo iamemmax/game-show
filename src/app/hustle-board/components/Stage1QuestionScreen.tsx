@@ -87,9 +87,9 @@ const Stage1QuestionScreen = () => {
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
-  const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>(
-    []
-  );
+  // const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>(
+  //   []
+  // );
   const [selectedAmount, setSelectedAmount] = useState(10000); // Default selected amount
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showNextButton, setShowNextButton] = useState(false);
@@ -104,8 +104,9 @@ const Stage1QuestionScreen = () => {
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(
     null
   );
+  const [mqttResultData, setMqttResultData] = useState<any>(null)
   const [resultMessageSent, setResultMessageSent] = useState(false);
-  const [showEliminationModal, setShowEliminationModal] = useState(false);
+  // const [showEliminationModal, setShowEliminationModal] = useState(false);
 
   // Add new state variables for user-specific bid amounts
   const [userBidAmounts, setUserBidAmounts] = useState<{
@@ -235,6 +236,7 @@ const Stage1QuestionScreen = () => {
 
           // Store the full answer data for use in FastestFingerResult
           setMqttAnswerData(answersData);
+          setMqttResultData(answersData);
 
           if (answersData?.question?.correct_option) {
             // Set the correct answer
@@ -343,7 +345,7 @@ const Stage1QuestionScreen = () => {
   }
 
 if (allQuestionsCompleted) {
-    return <StageOneTally eliminationCount={0} removeCount={0} />;
+    return <StageOneTally eliminationCount={0} removeCount={0}  activeState={1}/>;
   }
 
 
@@ -363,9 +365,9 @@ if (allQuestionsCompleted) {
           </div>
         </div>
 
-        {/* Center Content */}
+   
         <div className="flex flex-col justify-between items-center min-h-full">
-          {/* Top section */}
+        
           <div className="flex flex-col w-full items-center">
             <div className="w-full h-[100px] flex items-center justify-center">
               <HeaderTitleContainer
@@ -384,7 +386,7 @@ if (allQuestionsCompleted) {
             </div>
 
             <div className="relative w-full py-[2rem] 2xl:py-[2.5rem]  px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
-              {/* Animated border */}
+              
               <div className="absolute inset-0">
                 <motion.div
                   className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
@@ -409,25 +411,20 @@ if (allQuestionsCompleted) {
                   }}
                 />
               </div>
-
-              {/* Content container - increased border width from 5px to 8px for bolder appearance */}
-              <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
+             <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
               <div className="relative">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className="text-[3.75rem] font-extrabold outline-text text-black">
+                <div className="flex justify-between w-full items-center">
+                  <div className="text-center flex justify-center items-center w-full">
+                    <h2 className="text-[3.75rem] text-center font-extrabold outline-text text-black">
                       Stage 1: Prove your hustle
                     </h2>
-                    <p className="text-xl font-normal text-[#D5B9FF]">
-                      Select minimum of 2 number to determine the trivia
-                      questions for this round
-                    </p>
+                   
                   </div>
 
                   {timerActive && (
                     <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
                       <span
-                        className="text-[20px] font-extrabold font-verdana text-white"
+                        className="text-[40px] font-extrabold font-verdana text-white"
                         style={{
                           WebkitTextStroke: "1.5px #C76000",
                           textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
@@ -436,10 +433,10 @@ if (allQuestionsCompleted) {
                         {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
                       </span>
                     </div>
-                  )}
+)} 
                 </div>
 
-                <div className="grid mt-8 gap-2 grid-cols-[1fr_3fr_1fr]">
+                <div className="grid mt-8 gap-2 items-start grid-cols-[1fr_3fr_1fr]">
                   <div className="flex flex-col">
                     {questionData?.map(
                       (contestant, idx: number) => (
@@ -519,17 +516,18 @@ if (allQuestionsCompleted) {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                     </div>
                   ) : (
-                    <div className="relative">
-                      {/* Question display section */}
+                    <>
+                    {/* <div className="relative">
+                    
                       <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000]">
                         <div className="">
-                          <p className="bg-[#011B0D] rounded-10 px-3 py-2  text-[#04DA6A] font-outfit">
+                          <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-3xl  text-[#04DA6A] font-outfit">
                             Question {mqttQuestionData?.question_index || "..."}
                           </p>
                         </div>
                         <div className="">
                           {mqttQuestionData?.question?.questions?.question ? (
-                            <p className="text-white text-xl 2xl:text-[3rem] leading-[4rem] text-center font-gilroyMedium font-extrabold">
+                            <p className="text-white text-xl 2xl:text-[2.5rem] leading-[4rem] text-center font-gilroyMedium font-extrabold">
                               {mqttQuestionData.question.questions.question}
                             </p>
                           ) : (
@@ -539,9 +537,9 @@ if (allQuestionsCompleted) {
                           )}
                         </div>
                         <div className="flex justify-center items-center w-full gap-4">
-                          <div className="bg-[#011B0D] rounded-[12px] py-1 px-4 max-xl:max-w-[130px] w-full">
+                          <div className="bg-[#011B0D] rounded-[12px] py-3 px-4 max-xl:max-w-[130px] w-full">
                             <p
-                              className="text-[25px] text-white font-extrabold font- text-center"
+                              className="text-4xl text-white font-extrabold font- text-center"
                               style={{
                                 WebkitTextStroke: "2px #04DA6A",
                                 textShadow:
@@ -551,7 +549,7 @@ if (allQuestionsCompleted) {
                               {mqttQuestionData?.question?.questions
                                 ?.question_booster || "..."}{" "}
                               <span
-                                className="text-base font-outfit font-normal text-[#04DA6A]"
+                                className="text-4xl font-outfit font-normal text-[#04DA6A]"
                                 style={{
                                   WebkitTextStroke: "0px",
                                   textShadow: "none",
@@ -564,7 +562,7 @@ if (allQuestionsCompleted) {
                         </div>
                       </div>
 
-                      {/* Options display */}
+                   
                       <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
                         {(
                           [
@@ -591,7 +589,7 @@ if (allQuestionsCompleted) {
                                 !mqttQuestionData?.question?.questions
                               }
                               className={cn(
-                                "bg-[#000000] border-2 border-[#D71BFA] cursor-none rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
+                                "bg-[#000000] border-2 border-[#D71BFA] cursor-none rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
                                 selectedOption === option &&
                                   !showResult &&
                                   "bg-[#FCCE19] border-none text-[#745300]",
@@ -632,7 +630,7 @@ if (allQuestionsCompleted) {
                                 {" "}
                                 {currentQuestions[option] || `...`}
                               </span>
-                              {/* Correct answer indicator */}
+                          
                               {isCorrect && showResult && (
                                 <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                                   <div className="bg-[#04DA6A] rounded-full p-1">
@@ -640,7 +638,7 @@ if (allQuestionsCompleted) {
                                   </div>
                                 </div>
                               )}
-                              {/* Incorrect answer indicator */}
+                             
                               {isSelected && !isCorrect && showResult && (
                                 <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                                   <div className="bg-[#FF3B30] rounded-full p-1">
@@ -652,7 +650,174 @@ if (allQuestionsCompleted) {
                           );
                         })}
                       </div>
-                    </div>
+                    </div> */}
+
+
+
+
+<div className="relative">
+  {/* Animated container */}
+  <motion.div
+    initial={{ opacity: 0, scale: 0.95 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.6 }}
+    className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000]"
+  >
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-3xl text-[#04DA6A] font-outfit">
+        Question {mqttQuestionData?.question_index || "..."}
+      </p>
+    </motion.div>
+
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      {mqttQuestionData?.question?.questions?.question ? (
+        <p className="text-white text-xl 2xl:text-[2.5rem] leading-[4rem] text-center font-gilroyMedium font-extrabold">
+          {mqttQuestionData.question.questions.question}
+        </p>
+      ) : (
+        <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
+          Waiting for question from host...
+        </h2>
+      )}
+    </motion.div>
+
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6 }}
+      className="flex justify-center items-center w-full gap-4"
+    >
+      <div className="bg-[#011B0D] rounded-[12px] py-3 px-4 max-xl:max-w-[130px] w-full">
+        <p
+          className="text-4xl text-white font-extrabold text-center"
+          style={{
+            WebkitTextStroke: "2px #04DA6A",
+            textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
+          }}
+        >
+          {mqttQuestionData?.question?.questions?.question_booster || "..."}{" "}
+          <span
+            className="text-4xl font-outfit font-normal text-[#04DA6A]"
+            style={{ WebkitTextStroke: "0px", textShadow: "none" }}
+          >
+            Booster
+          </span>
+        </p>
+      </div>
+    </motion.div>
+  </motion.div>
+
+  {/* Animated answer buttons */}
+  <motion.div
+    className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]"
+    initial="hidden"
+    animate="visible"
+    variants={{
+      hidden: {},
+      visible: {
+        transition: {
+          staggerChildren: 0.12,
+        },
+      },
+    }}
+  >
+    {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
+      (option, index) => {
+        const optionLetter = String.fromCharCode(65 + index);
+        const currentQuestions = mqttQuestionData?.question?.questions || {};
+        const isCorrect = isCorrectOption(option);
+        const isSelected = selectedOption === option;
+        const showResult = isSubmitted && correctAnswer;
+
+        return (
+          <motion.button
+            key={option}
+            onClick={() => handleOptionSelect(option)}
+            disabled={
+              !timerActive || isSubmitted || !currentQuestions?.question
+            }
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0 },
+            }}
+            className={cn(
+              "bg-[#000000] border-2 border-[#D71BFA] cursor-none rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
+              selectedOption === option &&
+                !showResult &&
+                "bg-[#FCCE19] border-none text-[#745300]",
+
+              mqttAnswerData &&
+                currentQuestions?.correct_option ===
+                  convertOptionToLetter(option)
+                ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                : "",
+
+              (isSubmitted ||
+                !timerActive ||
+                !mqttQuestionData?.question?.questions) &&
+                "opacity-70 cursor-not-allowed"
+            )}
+          >
+            {optionLetter}:
+            <span
+              className={cn(
+                "ml-2",
+                selectedOption === option && !showResult
+                  ? "text-white font-bold"
+                  : "",
+                isCorrect && showResult
+                  ? "text-[#04DA6A] font-bold"
+                  : "",
+                isSelected && !isCorrect && showResult
+                  ? "text-[#FF3B30] font-bold"
+                  : ""
+              )}
+              style={{
+                WebkitTextStroke:
+                  selectedOption === option && !showResult
+                    ? "1px #C76000"
+                    : "",
+              }}
+            >
+              {" "}
+              {currentQuestions[option] || `...`}
+            </span>
+
+            {isCorrect && showResult && (
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                <div className="bg-[#04DA6A] rounded-full p-1">
+                  <CheckIcon size={16} />
+                </div>
+              </div>
+            )}
+            {isSelected && !isCorrect && showResult && (
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                <div className="bg-[#FF3B30] rounded-full p-1">
+                  <ErrorIcon />
+                </div>
+              </div>
+            )}
+          </motion.button>
+        );
+      }
+    )}
+  </motion.div>
+</div>
+
+
+
+
+
+                    
+                    </>
                   )}
                   <div className="h-full w-full">
                     <FastestFingerResult
@@ -674,7 +839,7 @@ if (allQuestionsCompleted) {
             showEmptyCard={false}
             showHustlerCard={true}
             eliminated={0}
-            mqttAnswerData={mqttAnswerData}
+            mqttAnswerData={mqttResultData}
           />
         </div>
       </div>
