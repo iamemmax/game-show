@@ -9,6 +9,7 @@ export const loginSchema = z.object({
       /^[a-zA-Z0-9]+$/,
       "Contestant ID must contain only letters and numbers"
     ).trim(),
+    game_episode:z.string().min(1)
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;

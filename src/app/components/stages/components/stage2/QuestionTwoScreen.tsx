@@ -55,8 +55,10 @@ const convertOptionToLetter = (option: string | null): string => {
 
   return optionMap[option] || "";
 };
-
-const QuestionTwoScreen = () => {
+interface prop{
+  onNext:()=>void
+}
+const QuestionTwoScreen = ({onNext}:prop) => {
   const {
     isErrorModalOpen,
     setErrorModalState,
@@ -386,6 +388,7 @@ const QuestionTwoScreen = () => {
         removeCount={2}
         title="stage 2"
         activeState={2}
+        onNext={()=>onNext}
       />
     );
   }

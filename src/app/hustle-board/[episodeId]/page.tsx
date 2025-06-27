@@ -11,6 +11,7 @@ import ViewOnlyQuestionTwoScreen from "../components/statge2/StageTwoQuestionScr
 // import Stage3CardSelectionScreens from "../components/stage3/Stage3CardSelectionScreen";
 import Stage4BoardGetReadyPage from "../components/stage4/ShowStage4Prep";
 import Stage3HustleBoardGetReadyPage from "../components/stage3/Stage3GetReadyScreen";
+import RevealBallNumber from "../components/stage4/RevealBallNumber";
 
 const pageVariants = {
   initial: { opacity: 0, x: 50 },
@@ -19,7 +20,7 @@ const pageVariants = {
 };
 
 const HomePage = () => {
-  const [step, setStep] = useState<number | null>(null);
+  const [step, setStep] = useState<number | null>(1);
   const params = useParams();
 
   const { data: allContestants, isLoading } = useGetGameContestants(
@@ -29,30 +30,30 @@ const HomePage = () => {
   const gameStage = allContestants?.game?.stage;
 
   // Set initial step based on game.stage
-  useEffect(() => {
-    if (!isLoading && gameStage) {
-       setStep((prevStep) => {
-      if (prevStep !== null) return prevStep; // don't override if already set
+  // useEffect(() => {
+  //   if (!isLoading && gameStage) {
+  //      setStep((prevStep) => {
+  //     if (prevStep !== null) return prevStep; // don't override if already set
 
-      switch (gameStage) {
-        case "STAGE_ONE":
-          return 1;
-        case "STAGE_TWO":
-          return 4;
-        case "STAGE_THREE":
-          return 5;
-        default:
-          return 1;
-      }
-    });
-    }
-  }, [isLoading, gameStage]);
+  //     switch (gameStage) {
+  //       case "STAGE_ONE":
+  //         return 1;
+  //       case "STAGE_TWO":
+  //         return 4;
+  //       case "STAGE_THREE":
+  //         return 5;
+  //       default:
+  //         return 1;
+  //     }
+  //   });
+  //   }
+  // }, [isLoading, gameStage]);
 
-  if (step === null || isLoading) return null; // or loader
+  // if (step === null || isLoading) return null; // or loader
 
   return (
     <AnimatePresence mode="wait">
-      {step === 1 && (
+      {/* {step === 1 && (
         <motion.div key="step1" className="h-full" {...motionProps}>
           <HustleBoardNumberPicks onNext={() => setStep(2)} />
         </motion.div>
@@ -88,7 +89,9 @@ const HomePage = () => {
         <motion.div key="step6" className="h-full" {...motionProps}>
           <Stage4BoardGetReadyPage />
         </motion.div>
-      )}
+      )} */}
+
+     {step===1&& <RevealBallNumber/>}
     </AnimatePresence>
   );
 };

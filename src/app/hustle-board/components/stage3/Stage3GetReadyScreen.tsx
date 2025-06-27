@@ -232,6 +232,9 @@ import Stage3CardSelectionScreens from "./Stage3CardSelectionScreen";
 // import { useMQTT } from "@/hooks/useMqttService"; // Commented out as it's not currently used
 
 
+interface prop{
+  onNext:()=>void
+}
 const Stage3BoardGetReadyPage = () => {
     const { isConnected, onMessage } = useMQTT();
   

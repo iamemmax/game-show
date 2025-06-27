@@ -77,7 +77,7 @@ const Stage2GetReadyPage = () => {
  
 
 if(showQuestionScreen){
-    return <QuestionTwoScreen/>
+    return <QuestionTwoScreen onNext={()=>null}/>
 
 }
   

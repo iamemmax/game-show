@@ -250,7 +250,7 @@ export default function HostPage() {
                         ...prev,
                         lastAction: "game_s2_results_reveal",
                         currentStageStep: "results",
-                        currentStage: "STAGE_TWO_COMPLETE",
+                        currentStage: "STAGE_THREE",
                     }))
                 }
                 else if (eventCode === "game_s3_init") {

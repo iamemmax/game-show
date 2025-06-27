@@ -47,7 +47,7 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
   );
 
   // Explicitly type the state with number[]
-  const [timeLeft, setTimeLeft] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(30);
 
   // State to track current user's picks and other contestants' picks separately
   const [otherContestantsPicks, setOtherContestantsPicks] = useState<number[]>([]);
@@ -170,11 +170,11 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
             );
             
             // Calculate remaining time (60 seconds total - elapsed time)
-            const remainingTime = Math.max(0, 60 - elapsedSeconds);
+            const remainingTime = Math.max(0, 30 - elapsedSeconds);
             setTimeLeft(remainingTime);
           } else {
             // Default to 60 seconds if no start_time provided
-            setTimeLeft(60);
+            setTimeLeft(36);
           }
         }
 

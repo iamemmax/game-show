@@ -26,9 +26,9 @@ interface Datum {
 }
 
 interface FastestFingerResultProps {
-  resultArray?: Datum[];
+  resultArray?: Datum[] | null;
   timeElapsed?: boolean;
-  mqttAnswerData?: any;
+  mqttAnswerData?: Datum[] | null;
   currentQuestionId?: string | null;
 }
 const FastestFingerResult = ({ 
