@@ -80,15 +80,15 @@ const myData ={
         
 
   },
-"number_revealed":[55, 7, null, null, null]
+"number_revealed":[55, 7, 3, 23, 13]
 }
 
 const mynumbers = [12, 15, 7, 8, 3];
 const revealedNumbers = myData?.number_revealed?.filter((x) => x !== null) ?? [];
 
 // Check how many numbers match
-const matchedCount = revealedNumbers.filter((num) =>
-  mynumbers.includes(num)
+const matchedCount = revealedNumbers?.filter((num) =>
+  mynumbers?.includes(num)
 ).length;
 
 // If all numbers matched
@@ -98,7 +98,7 @@ const isWinner = matchedCount === mynumbers.length;
 const getNumberMatchStatus = (num: number | null, allRevealed: boolean) => {
   if (num === null) return { matched: false, showRed: false };
 
-  const matched = revealedNumbers.includes(num);
+  const matched = revealedNumbers?.includes(Number(num));
   const showRed = allRevealed && !matched;
 
   return { matched, showRed };
