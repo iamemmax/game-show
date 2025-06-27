@@ -635,162 +635,329 @@ const { isConnected, onMessage } = useMQTT();
   }, [currentQuestionId]);
 
   // 6. MQTT message handling effect
-  useEffect(() => {
-    if (!isConnected) return;
+  // useEffect(() => {
+  //   if (!isConnected) return;
 
-    const handler = (receivedMessage: any) => {
-      // Handle prep page event
-      if (receivedMessage?.event === "game_s1_question_reveal") {
-        setShowPrepPage(false);
+  //   const handler = (receivedMessage: any) => {
+  //     // Handle prep page event
+  //     if (receivedMessage?.event === "game_s1_question_reveal") {
+  //       setShowPrepPage(false);
 
-        const payload = receivedMessage.payload || {};
-        const questionData = payload.data || {};
-        const spendBreakdown =
-          questionData.spend_breakdown ||
-          payload.spend_breakdown ||
-          payload.data?.spend_breakdown;
+  //       const payload = receivedMessage.payload || {};
+  //       const questionData = payload.data || {};
+  //       const spendBreakdown =
+  //         questionData.spend_breakdown ||
+  //         payload.spend_breakdown ||
+  //         payload.data?.spend_breakdown;
 
-        setMqttQuestionData(questionData);
-        setQuestionKey(`question-${questionData.question_index || Date.now()}`);
-        setShowBidPrompt(true);
+  //       setMqttQuestionData(questionData);
+  //       setQuestionKey(`question-${questionData.question_index || Date.now()}`);
+  //       setShowBidPrompt(true);
 
-        setSelectedOption(null);
-        setSelectedAmount(null);
-        setIsSubmitted(false);
-        resetTimerState();
-        setMqttAnswerData(null);
-        setCorrectAnswer(null);
+  //       setSelectedOption(null);
+  //       setSelectedAmount(null);
+  //       setIsSubmitted(false);
+  //       resetTimerState();
+  //       setMqttAnswerData(null);
+  //       setCorrectAnswer(null);
 
-        setCurrentQuestionIndex(questionData.question_index || 1);
-        const questionId =
-          questionData?.question?.questions?.question_id ||
-          payload?.question_id;
-        if (questionId) {
-          setCurrentQuestionId(questionId.toString());
-        }
+  //       setCurrentQuestionIndex(questionData.question_index || 1);
+  //       const questionId =
+  //         questionData?.question?.questions?.question_id ||
+  //         payload?.question_id;
+  //       if (questionId) {
+  //         setCurrentQuestionId(questionId.toString());
+  //       }
 
-        if (spendBreakdown && user?.contestant_id) {
-          const userData = Array.isArray(spendBreakdown)
-            ? spendBreakdown.find(
-                (contestant: any) =>
-                  String(contestant.contestant_id) ===
-                  String(user.contestant_id)
-              )
-            : spendBreakdown;
+  //       if (spendBreakdown && user?.contestant_id) {
+  //         const userData = Array.isArray(spendBreakdown)
+  //           ? spendBreakdown.find(
+  //               (contestant: any) =>
+  //                 String(contestant.contestant_id) ===
+  //                 String(user.contestant_id)
+  //             )
+  //           : spendBreakdown;
 
-          if (userData?.spend_breakdown) {
-            setUserBidAmounts(userData.spend_breakdown);
-          } else {
-            setUserBidAmounts({});
-          }
-        }
-      }
+  //         if (userData?.spend_breakdown) {
+  //           setUserBidAmounts(userData.spend_breakdown);
+  //         } else {
+  //           setUserBidAmounts({});
+  //         }
+  //       }
+  //     }
 
-      if (receivedMessage?.event === "game_s1_question_answer") {
-        const payload = receivedMessage.payload || {};
-        const questionId = payload.question_id;
+  //     if (receivedMessage?.event === "game_s1_question_answer") {
+  //       const payload = receivedMessage.payload || {};
+  //       const questionId = payload.question_id;
 
-        if (questionId === currentQuestionIdRef?.current) {
-          const answersData = payload.answers_data?.data;
-          setMqttAnswerData(answersData);
-          setMqttAnsweBalanceData(answersData);
-          refetch();
-          refechUser()
-          calculateRemainingCapital()
+  //       if (questionId === currentQuestionIdRef?.current) {
+  //         const answersData = payload.answers_data?.data;
+  //         setMqttAnswerData(answersData);
+  //         setMqttAnsweBalanceData(answersData);
+  //         refetch();
+  //         refechUser()
+  //         calculateRemainingCapital()
 
-          if (answersData?.question?.correct_option) {
-            setCorrectAnswer(answersData.question.correct_option);
-            setIsSubmitted(true);
-            setShowNextButton(true);
-            setTimerActive(false);
+  //         if (answersData?.question?.correct_option) {
+  //           setCorrectAnswer(answersData.question.correct_option);
+  //           setIsSubmitted(true);
+  //           setShowNextButton(true);
+  //           setTimerActive(false);
 
-            setTimeout(() => {
-              const newOpenModals: Record<number, boolean> = {};
-              if (answersData?.data && Array.isArray(answersData.data)) {
-                answersData.data.forEach((c: any) => {
-                  if (c?.contestant_id) {
-                    newOpenModals[c.contestant_id] = true;
-                  }
-                });
-                setTimeout(() => {
-                  setIsOpen(newOpenModals);
-                }, 7000);
-              }
-            }, 100);
-          }
-        }
-      }
+  //           setTimeout(() => {
+  //             const newOpenModals: Record<number, boolean> = {};
+  //             if (answersData?.data && Array.isArray(answersData.data)) {
+  //               answersData.data.forEach((c: any) => {
+  //                 if (c?.contestant_id) {
+  //                   newOpenModals[c.contestant_id] = true;
+  //                 }
+  //               });
+  //               setTimeout(() => {
+  //                 setIsOpen(newOpenModals);
+  //               }, 7000);
+  //             }
+  //           }, 100);
+  //         }
+  //       }
+  //     }
 
-      if (receivedMessage?.event === "game_s1_timer_start") {
-        handleStartTimer();
-      }
+  //     if (receivedMessage?.event === "game_s1_timer_start") {
+  //       handleStartTimer();
+  //     }
 
-      if (receivedMessage?.event === "game_s1_results_reveal") {
-        setAllQuestionsCompleted(true);
-      }
-    };
+  //     if (receivedMessage?.event === "game_s1_results_reveal") {
+  //       setAllQuestionsCompleted(true);
+  //     }
+  //   };
 
-    onMessage(handler);
+  //   onMessage(handler);
 
-    return () => {
-      if (isConnected) {
-        onMessage(null);
-      }
-    };
-  }, [isConnected, onMessage, user?.contestant_id, refetch]); // Added missing dependencies
+  //   return () => {
+  //     if (isConnected) {
+  //       onMessage(null);
+  //     }
+  //   };
+  // }, [isConnected, onMessage, user?.contestant_id, refetch]); // Added missing dependencies
+  
+  
   // Calculate contestant balance
   const contestantBalance = mqttAnswerData?.filter(
     (contestant: any) => contestant.contestant_id === user?.contestant_id
   );
   // 7. Animated capital effect
-  useEffect(() => {
-    const targetCapital = calculateRemainingCapital();
+  // useEffect(() => {
+  //   const targetCapital = calculateRemainingCapital();
     
-    if (animatedCapital === 0) {
-      setAnimatedCapital(targetCapital);
-      return;
-    }
+  //   if (animatedCapital === 0) {
+  //     setAnimatedCapital(targetCapital);
+  //     return;
+  //   }
     
-    const startCapital = animatedCapital;
-    const difference = targetCapital - startCapital;
+  //   const startCapital = animatedCapital;
+  //   const difference = targetCapital - startCapital;
     
-    if (difference === 0) return;
+  //   if (difference === 0) return;
     
-    const duration = 800;
-    const steps = 30;
-    const stepValue = difference / steps;
-    const stepDuration = duration / steps;
+  //   const duration = 800;
+  //   const steps = 30;
+  //   const stepValue = difference / steps;
+  //   const stepDuration = duration / steps;
     
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      currentStep++;
-      const newValue = startCapital + (stepValue * currentStep);
+  //   let currentStep = 0;
+  //   const interval = setInterval(() => {
+  //     currentStep++;
+  //     const newValue = startCapital + (stepValue * currentStep);
       
-      if (currentStep >= steps) {
-        setAnimatedCapital(targetCapital);
-        clearInterval(interval);
-      } else {
-        setAnimatedCapital(Math.round(newValue));
-      }
-    }, stepDuration);
+  //     if (currentStep >= steps) {
+  //       setAnimatedCapital(targetCapital);
+  //       clearInterval(interval);
+  //     } else {
+  //       setAnimatedCapital(Math.round(newValue));
+  //     }
+  //   }, stepDuration);
     
-    return () => clearInterval(interval);
-  }, [selectedAmount, contestantBalance, contestantData, user?.contestant_id]); // Added dependencies
+  //   return () => clearInterval(interval);
+  // }, [selectedAmount, contestantBalance, contestantData, user?.contestant_id]); // Added dependencies
 
-  // Helper functions - moved inside component but after hooks
-  const calculateRemainingCapital = () => {
-    const baseCapital = Number(contestantBalance?.wallet_balance) ||
-      Number(
-        contestantData?.data?.find(
-          (contestant: any) =>
-            String(contestant.id) === String(user?.contestant_id)
-        )?.actual_balance
-      );
+  // // Helper functions - moved inside component but after hooks
+  // const calculateRemainingCapital = () => {
+  //   const baseCapital = Number(contestantBalance?.wallet_balance) ||
+  //     Number(
+  //       contestantData?.data?.find(
+  //         (contestant: any) =>
+  //           String(contestant.id) === String(user?.contestant_id)
+  //       )?.actual_balance
+  //     );
     
-    const deduction = selectedAmount || 0;
-    return Math.max(0, baseCapital - deduction);
+  //   const deduction = selectedAmount || 0;
+  //   return Math.max(0, baseCapital - deduction);
+  // };
+
+
+
+const calculateRemainingCapital = () => {
+  // First try to get the latest wallet balance from MQTT answer data
+  const latestBalance = contestantBalance?.[0]?.wallet_balance;
+  
+  // If we have a latest balance from MQTT, use it, otherwise fall back to contestant data
+  const baseCapital = latestBalance ? 
+    Number(latestBalance) : 
+    Number(
+      contestantData?.data?.find(
+        (contestant: any) =>
+          String(contestant.id) === String(user?.contestant_id)
+      )?.actual_balance
+    );
+  
+  const deduction = selectedAmount || 0;
+  return Math.max(0, baseCapital - deduction);
+};
+
+// 2. Update the MQTT message handling effect to trigger balance update
+useEffect(() => {
+  if (!isConnected) return;
+
+  const handler = (receivedMessage: any) => {
+    // Handle prep page event
+    if (receivedMessage?.event === "game_s1_question_reveal") {
+      setShowPrepPage(false);
+
+      const payload = receivedMessage.payload || {};
+      const questionData = payload.data || {};
+      const spendBreakdown =
+        questionData.spend_breakdown ||
+        payload.spend_breakdown ||
+        payload.data?.spend_breakdown;
+
+      setMqttQuestionData(questionData);
+      setQuestionKey(`question-${questionData.question_index || Date.now()}`);
+      setShowBidPrompt(true);
+
+      setSelectedOption(null);
+      setSelectedAmount(null);
+      setIsSubmitted(false);
+      resetTimerState();
+      setMqttAnswerData(null);
+      setCorrectAnswer(null);
+
+      setCurrentQuestionIndex(questionData.question_index || 1);
+      const questionId =
+        questionData?.question?.questions?.question_id ||
+        payload?.question_id;
+      if (questionId) {
+        setCurrentQuestionId(questionId.toString());
+      }
+
+      if (spendBreakdown && user?.contestant_id) {
+        const userData = Array.isArray(spendBreakdown)
+          ? spendBreakdown.find(
+              (contestant: any) =>
+                String(contestant.contestant_id) ===
+                String(user.contestant_id)
+            )
+          : spendBreakdown;
+
+        if (userData?.spend_breakdown) {
+          setUserBidAmounts(userData.spend_breakdown);
+        } else {
+          setUserBidAmounts({});
+        }
+      }
+    }
+
+    if (receivedMessage?.event === "game_s1_question_answer") {
+      const payload = receivedMessage.payload || {};
+      const questionId = payload.question_id;
+
+      if (questionId === currentQuestionIdRef?.current) {
+        const answersData = payload.answers_data?.data;
+        setMqttAnswerData(answersData);
+        setMqttAnsweBalanceData(answersData);
+        refetch();
+        refechUser();
+        
+        // Force recalculation of animated capital when new answer data comes in
+        const newCapital = calculateRemainingCapital();
+        setAnimatedCapital(newCapital);
+
+        if (answersData?.question?.correct_option) {
+          setCorrectAnswer(answersData.question.correct_option);
+          setIsSubmitted(true);
+          setShowNextButton(true);
+          setTimerActive(false);
+
+          setTimeout(() => {
+            const newOpenModals: Record<number, boolean> = {};
+            if (answersData?.data && Array.isArray(answersData.data)) {
+              answersData.data.forEach((c: any) => {
+                if (c?.contestant_id) {
+                  newOpenModals[c.contestant_id] = true;
+                }
+              });
+              setTimeout(() => {
+                setIsOpen(newOpenModals);
+              }, 7000);
+            }
+          }, 100);
+        }
+      }
+    }
+
+    if (receivedMessage?.event === "game_s1_timer_start") {
+      handleStartTimer();
+    }
+
+    if (receivedMessage?.event === "game_s1_results_reveal") {
+      setAllQuestionsCompleted(true);
+    }
   };
 
+  onMessage(handler);
+
+  return () => {
+    if (isConnected) {
+      onMessage(null);
+    }
+  };
+}, [isConnected, onMessage, user?.contestant_id, refetch, contestantBalance, contestantData]);
+
+// 3. Update the animated capital effect to depend on wallet balance changes
+useEffect(() => {
+  const targetCapital = calculateRemainingCapital();
+  
+  if (animatedCapital === 0) {
+    setAnimatedCapital(targetCapital);
+    return;
+  }
+  
+  const startCapital = animatedCapital;
+  const difference = targetCapital - startCapital;
+  
+  if (difference === 0) return;
+  
+  const duration = 800;
+  const steps = 30;
+  const stepValue = difference / steps;
+  const stepDuration = duration / steps;
+  
+  let currentStep = 0;
+  const interval = setInterval(() => {
+    currentStep++;
+    const newValue = startCapital + (stepValue * currentStep);
+    
+    if (currentStep >= steps) {
+      setAnimatedCapital(targetCapital);
+      clearInterval(interval);
+    } else {
+      setAnimatedCapital(Math.round(newValue));
+    }
+  }, stepDuration);
+  
+  return () => clearInterval(interval);
+}, [selectedAmount, contestantBalance, contestantData, user?.contestant_id, mqttAnswerData]); //
+
+
+  
   const handleAmountSelect = (amount: number) => {
     if (timeLeft > 0 && !isSubmitted) {
       const exactKey = Object.keys(userBidAmounts).find(
@@ -1168,34 +1335,7 @@ const { isConnected, onMessage } = useMQTT();
                                   </span>
                                 </p>
                               </div>
-                              {/* <div className="bg-[#011B0D] flex items-center justify-center  rounded-[12px] py-2 px-2 w-full">
-                                <p className="text-xs font-outfit  items-center font-normal text-[#04DA6A] ">
-                                  Capital:{" "}
-                                  <span
-                                    className="text-lg text-white font-extrabold font-verdana text-center"
-                                    style={{
-                                      WebkitTextStroke: "1px #04DA6A",
-                                      textShadow:
-                                        "1px 2px 3px rgba(4, 218, 106, 0.4)",
-                                    }}
-                                  >
-                                    ₦
-                                    {addCommasToNumber(
-                                      Number(
-                                        contestantBalance?.wallet_balance
-                                      ) ||
-                                        Number(
-                                          // Use wallet balance from MQTT data if available
-                                          contestantData?.data?.find(
-                                            (contestant: any) =>
-                                              String(contestant.id) ===
-                                              String(user?.contestant_id)
-                                          )?.actual_balance
-                                        )
-                                    )}
-                                  </span>
-                                </p>
-                              </div> */}
+                              
                         <div className="bg-[#011B0D] flex items-center justify-center rounded-[12px] py-2 px-2 w-full">
   <p className="text-xs font-outfit items-center font-normal text-[#04DA6A]">
     Capital:{" "}

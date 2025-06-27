@@ -42,12 +42,11 @@ const convertOptionToLetter = (option: string | null): string => {
 
 const ViewOnlyQuestionTwoScreen = () => {
   const { isConnected, onMessage } = useMQTT();
-  const user = tokenStorage.getUser();
   const params = useParams();
 
   // Get wallet balances for display
   const { data: balanceData, refetch: refetchBalance } = useGetWalletBalance(
-    user?.game_episode as number
+   Number(params?.episodeId)
   );
 
   // State for display purposes only - no user interaction
