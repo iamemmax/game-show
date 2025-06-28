@@ -25,6 +25,7 @@ import GetHustleBoardReadyScreen from "./GettHustleBoardReadyScreen";
 import { useGetAllHustleQuestions } from "@/app/components/stages/api/stage1/question/getHustleQuestion";
 // import { useGetQuestionAnswer } from "@/app/components/stages/api/stage1/question/getQuestionAnswer";
 import FastestFingerResult from "@/app/components/stages/components/hustle/FastestFingerResult";
+import HustleBoardStageTallyPage from "./HustleBoardStageTally";
 
 // Add debug log to track component imports
 
@@ -56,15 +57,13 @@ const convertOptionToLetter = (option: string | null): string => {
   return optionMap[option] || "";
 };
 
-interface Contestant {
-  contestant_id: number;
-  contestant_name: string;
-  wallet_balance: number;
-  max_question_spend: number;
-  spend_breakdown: Record<string, number>;
+
+
+interface Prop{
+  onNext: () => void
 }
 
-const Stage1QuestionScreen = () => {
+const Stage1QuestionScreen = ({onNext}:Prop) => {
 
   const { isConnected, onMessage } = useMQTT();
   const router = useRouter();
@@ -339,19 +338,47 @@ const Stage1QuestionScreen = () => {
     setIsSubmitted(false); // Ensure we can make selections
   };
 
+
+
+  const [fontSize, setFontSize] = useState('text-4xl 2xl:text-5xl');
+    const textRef = useRef(null);
+  const getFontSizeClass = (textLength: number) => {
+  if (textLength <= 35) {
+    return 'text-4xl 2xl:text-[3.75rem]'; // Very short: Big and bold
+  } else if (textLength <= 70) {
+    return 'text-3xl 2xl:text-[3.4375rem]'; // Medium: Still large
+  } else if (textLength <= 100) {
+    return 'text-2xl 2xl:text-[3.125rem]'; // Longer, fit within 2 lines
+  } else {
+    return 'text-xl 2xl:text-[3rem]'; // Fallback: Smaller but readable
+  }
+};
+
+  
+    useEffect(() => {
+      const questionText = mqttQuestionData?.question || "Waiting for question...";
+      const newFontSize = getFontSizeClass(questionText.length);
+      setFontSize(newFontSize);
+    }, [mqttQuestionData?.question]);
+  
   // FIXED: Now all conditional returns come AFTER all hooks have been called
   if (showPrepPage) {
     return <GetHustleBoardReadyScreen />;
   }
 
 if (allQuestionsCompleted) {
-    return <StageOneTally eliminationCount={0} removeCount={0}  activeState={1}/>;
+    return <HustleBoardStageTallyPage
+     eliminationCount={0} 
+     removeCount={0} 
+     activeState={1}
+     onNext={() => onNext}
+    />;
   }
 
 
   return (
     <>
-      <div className="grid grid-cols-[1fr_5fr_1fr] h-full ">
+      <div className="grid grid-cols-[1fr_5fr_1fr] h-full  ">
         {/* Left Sidebar */}
         <div className="flex flex-col justify-between">
           <div className="flex justify-center items-center h-3.5 w-full mt-8">
@@ -517,140 +544,7 @@ if (allQuestionsCompleted) {
                     </div>
                   ) : (
                     <>
-                    {/* <div className="relative">
-                    
-                      <div className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000]">
-                        <div className="">
-                          <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-3xl  text-[#04DA6A] font-outfit">
-                            Question {mqttQuestionData?.question_index || "..."}
-                          </p>
-                        </div>
-                        <div className="">
-                          {mqttQuestionData?.question?.questions?.question ? (
-                            <p className="text-white text-xl 2xl:text-[2.5rem] leading-[4rem] text-center font-gilroyMedium font-extrabold">
-                              {mqttQuestionData.question.questions.question}
-                            </p>
-                          ) : (
-                            <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                              Waiting for question from host...
-                            </h2>
-                          )}
-                        </div>
-                        <div className="flex justify-center items-center w-full gap-4">
-                          <div className="bg-[#011B0D] rounded-[12px] py-3 px-4 max-xl:max-w-[130px] w-full">
-                            <p
-                              className="text-4xl text-white font-extrabold font- text-center"
-                              style={{
-                                WebkitTextStroke: "2px #04DA6A",
-                                textShadow:
-                                  "0px 2px 4px rgba(4, 218, 106, 0.5)",
-                              }}
-                            >
-                              {mqttQuestionData?.question?.questions
-                                ?.question_booster || "..."}{" "}
-                              <span
-                                className="text-4xl font-outfit font-normal text-[#04DA6A]"
-                                style={{
-                                  WebkitTextStroke: "0px",
-                                  textShadow: "none",
-                                }}
-                              >
-                                Booster
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
                    
-                      <div className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]">
-                        {(
-                          [
-                            "option_a",
-                            "option_b",
-                            "option_c",
-                            "option_d",
-                          ] as OptionKey[]
-                        ).map((option, index) => {
-                          const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-                          const currentQuestions =
-                            mqttQuestionData?.question?.questions || {};
-                          const isCorrect = isCorrectOption(option);
-                          const isSelected = selectedOption === option;
-                          const showResult = isSubmitted && correctAnswer;
-
-                          return (
-                            <button
-                              key={option}
-                              onClick={() => handleOptionSelect(option)}
-                              disabled={
-                                !timerActive ||
-                                isSubmitted ||
-                                !mqttQuestionData?.question?.questions
-                              }
-                              className={cn(
-                                "bg-[#000000] border-2 border-[#D71BFA] cursor-none rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
-                                selectedOption === option &&
-                                  !showResult &&
-                                  "bg-[#FCCE19] border-none text-[#745300]",
-
-                                mqttAnswerData &&
-                                  currentQuestions?.correct_option ===
-                                    convertOptionToLetter(option)
-                                  ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
-                                  : "",
-
-                                (isSubmitted ||
-                                  !timerActive ||
-                                  !mqttQuestionData?.question?.questions) &&
-                                  "opacity-70 cursor-not-allowed"
-                              )}
-                            >
-                              {optionLetter}:
-                              <span
-                                className={cn(
-                                  "ml-2",
-                                  selectedOption === option && !showResult
-                                    ? "text-white font-bold"
-                                    : "",
-                                  isCorrect && showResult
-                                    ? "text-[#04DA6A] font-bold"
-                                    : "",
-                                  isSelected && !isCorrect && showResult
-                                    ? "text-[#FF3B30] font-bold"
-                                    : ""
-                                )}
-                                style={{
-                                  WebkitTextStroke:
-                                    selectedOption === option && !showResult
-                                      ? "1px #C76000"
-                                      : "",
-                                }}
-                              >
-                                {" "}
-                                {currentQuestions[option] || `...`}
-                              </span>
-                          
-                              {isCorrect && showResult && (
-                                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                                  <div className="bg-[#04DA6A] rounded-full p-1">
-                                    <CheckIcon size={16} />
-                                  </div>
-                                </div>
-                              )}
-                             
-                              {isSelected && !isCorrect && showResult && (
-                                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                                  <div className="bg-[#FF3B30] rounded-full p-1">
-                                    <ErrorIcon />
-                                  </div>
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div> */}
 
 
 
@@ -677,9 +571,10 @@ if (allQuestionsCompleted) {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      ref={textRef}
     >
       {mqttQuestionData?.question?.questions?.question ? (
-        <p className="text-white text-xl 2xl:text-[2.5rem] leading-[4rem] text-center font-gilroyMedium font-extrabold">
+        <p className={`${cn(`${fontSize} text-white  leading-[4rem] text-center font-gilroyMedium font-extrabold`)} `}>
           {mqttQuestionData.question.questions.question}
         </p>
       ) : (
@@ -693,9 +588,9 @@ if (allQuestionsCompleted) {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6 }}
-      className="flex justify-center items-center w-full gap-4"
+      className="flex justify-center  absolute  -bottom-9 items-center w-full gap-4"
     >
-      <div className="bg-[#011B0D] rounded-[12px] py-3 px-4 max-xl:max-w-[130px] w-full">
+      <div className="bg-[#011B0D] rounded-[12px] py-3 px-8 max-xl:max-w-[170px]">
         <p
           className="text-4xl text-white font-extrabold text-center"
           style={{
@@ -717,7 +612,7 @@ if (allQuestionsCompleted) {
 
   {/* Animated answer buttons */}
   <motion.div
-    className="grid grid-cols-2 gap-[.625rem] mt-[.625rem]"
+    className="grid grid-cols-2 gap-[.625rem] mt-[3.625rem]"
     initial="hidden"
     animate="visible"
     variants={{

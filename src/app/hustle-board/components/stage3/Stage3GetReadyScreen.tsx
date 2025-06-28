@@ -235,7 +235,7 @@ import Stage3CardSelectionScreens from "./Stage3CardSelectionScreen";
 interface prop{
   onNext:()=>void
 }
-const Stage3BoardGetReadyPage = () => {
+const Stage3BoardGetReadyPage = ({onNext}:prop) => {
     const { isConnected, onMessage } = useMQTT();
   
     const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
@@ -300,7 +300,7 @@ const Stage3BoardGetReadyPage = () => {
     }, [isConnected, onMessage]);
   
   if(showCardRevealScreen){
-    return <Stage3CardSelectionScreens/>
+    return <Stage3CardSelectionScreens onNext={()=>onNext?.()}/>
 
 }
  

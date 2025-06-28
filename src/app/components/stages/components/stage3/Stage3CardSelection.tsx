@@ -294,7 +294,7 @@ useEffect(() => {
     return (
       <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
         {/* Ribbons falling from top */}
-        <div className="absolute inset-0 !z-[999999999999999999]">
+        <div className="absolute inset-0 !z-[999999999999999999]" key={""}>
           {Array.from({ length: 40 }).map((_, i) => {
             const width = Math.random() * 8 + 4;
             const height = Math.random() * 200 + 100;
@@ -306,33 +306,7 @@ useEffect(() => {
             const waveSpeed = Math.random() * 2 + 1;
             
             return (
-              <motion.div
-                key={i}
-                className="absolute rounded-sm"
-                style={{
-                  width: `${width}px`,
-                  height: `${height}px`,
-                  backgroundColor: color,
-                  top: `-${height}px`,
-                  left: `${startX}%`,
-                  transformOrigin: "top center",
-                }}
-                initial={{ y: -height, rotate: 0, scaleY: 1 }}
-                animate={{
-                  y: `${window.innerHeight + height}px`,
-                  rotate: Math.random() * 360 * (Math.random() > 0.5 ? 1 : -1),
-                  x: [0, waveAmplitude, -waveAmplitude, waveAmplitude / 2, -waveAmplitude / 2, 0],
-                  scaleY: [1, 0.9, 1.1, 0.95, 1.05, 1]
-                }}
-                transition={{
-                  duration: Math.random() * 5 + 5,
-                  ease: "linear",
-                  repeat: Infinity,
-                  delay: Math.random() * 5,
-                  x: { duration: waveSpeed * 5, repeat: Infinity, ease: "easeInOut", repeatType: "reverse" },
-                  scaleY: { duration: 2, repeat: Infinity, ease: "easeInOut", repeatType: "reverse" }
-                }}
-              />
+             <EliminationModal/>
             );
           })}
         </div>

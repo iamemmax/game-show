@@ -2,7 +2,7 @@ import Logo from "@/app/icons/Logo";
 import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import React, { useEffect, useState, useRef } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import NumberCardContainer from "@/app/shared/NumberContainer";
 import { cn } from "@/utils/classNames";
 import CheckIcon from "@/app/icons/CheckIcon";
@@ -20,6 +20,8 @@ import StageTwoGetReadyStage from "./StageTwoGetReadyStage";
 import { useParams } from "next/navigation";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import ErrorIcon from "@/app/icons/ErrorIcon";
+import { formatAmount } from "@/utils/currency";
+import HustleBoardStageTallyPage from "../HustleBoardStageTally";
 
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
 
@@ -39,8 +41,10 @@ const convertOptionToLetter = (option: string | null): string => {
 };
 
 
-
-const ViewOnlyQuestionTwoScreen = () => {
+interface prop{
+  onNext:()=>void
+}
+const ViewOnlyQuestionTwoScreen = ({onNext}:prop) => {
   const { isConnected, onMessage } = useMQTT();
   const params = useParams();
 
@@ -265,17 +269,44 @@ const ViewOnlyQuestionTwoScreen = () => {
     }
   }, [timeLeft, timerActive, currentQuestionIndex]);
 
+
+
+
+
+ const [fontSize, setFontSize] = useState('text-4xl 2xl:text-5xl');
+  const textRef = useRef(null);
+
+  const getFontSizeClass = (textLength:number) => {
+    if (textLength <= 30) {
+      return 'text-4xl 2xl:text-5xl'; // Large font for short questions
+    } else if (textLength <= 60) {
+      return 'text-3xl 2xl:text-4xl'; // Medium font for medium questions
+    } else if (textLength <= 100) {
+      return 'text-2xl 2xl:text-3xl'; // Smaller font for longer questions
+    } else {
+      return 'text-xl 2xl:text-2xl'; // Smallest font for very long questions
+    }
+  };
+
+  useEffect(() => {
+    const questionText = mqttQuestionData?.question || "Waiting for question...";
+    const newFontSize = getFontSizeClass(questionText.length);
+    setFontSize(newFontSize);
+  }, [mqttQuestionData?.question]);
+
+
   if (showStage2Prep) {
     return <StageTwoGetReadyStage />;
   }
 
   if (allQuestionsCompleted) {
     return (
-      <StageOneTally
+      <HustleBoardStageTallyPage
         eliminationCount={2}
         removeCount={2}
-        title={params?.episodeId ? "Hustle Board" : "Stage 2"}
+        title={ "Hustle Board"  }
         activeState={2}
+        onNext={()=>onNext}
       />
     );
   }
@@ -511,181 +542,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                 ) : (
 
                   <>
-                  {/* <div className="relative">
-                  
-                   <motion.div
-                                          className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000] ${
-                                            currentQuestionIndex > 4
-                                              ? "border-red-500"
-                                              : "border-[#D71BFA]"
-                                          }`}
-                                          animate={
-                                            currentQuestionIndex > 4
-                                              ? {
-                                                  borderColor: [
-                                                    "#ff0000", // bright red
-                                                    "#ff4444", // light red
-                                                    "#cc0000", // dark red
-                                                    "#ff6666", // pink red
-                                                    "#990000", // deep red
-                                                    "#ff3333", // medium red
-                                                    "#ff0000", // back to bright red
-                                                  ],
-                                                  boxShadow: [
-                                                    "0 0 20px #ff0000",
-                                                    "0 0 40px #ff4444",
-                                                    "0 0 25px #cc0000",
-                                                    "0 0 35px #ff6666",
-                                                    "0 0 30px #990000",
-                                                    "0 0 45px #ff3333",
-                                                    "0 0 20px #ff0000",
-                                                  ],
-                                                  scale: [1, 1.02, 1, 1.01, 1],
-                                                }
-                                              : {}
-                                          }
-                                          transition={
-                                            currentQuestionIndex > 4
-                                              ? {
-                                                  duration: 0.5,
-                                                  ease: "easeInOut",
-                                                  repeat: Infinity,
-                                                  repeatType: "loop",
-                                                }
-                                              : {}
-                                          }
-                                        >
-                      <div className="">
-                        <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-2xl text-[#04DA6A] font-outfit">
-                          Question {currentQuestionIndex}
-                        </p>
-                      </div>
-                      <div className="">
-                        <h2 className="text-white  2xl:text-[3rem] text-center font-gilroyMedium font-extrabold">
-                          {mqttQuestionData?.question ||
-                            "Waiting for question..."}
-                        </h2>
-                      </div>
-                      <div className="flex justify-center items-center w-full gap-4">
-                        <div className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-[5rem] ">
-                          <p className="text-xl font-outfit font-normal text-[#FFC125]">
-                            Win amount
-                          </p>
-                          <GlowyStrokeText
-                            strokeWidth={1}
-                            strokeColor="#FFC125"
-                            glowColor="#FFC125"
-                            textclassName="text-[40px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
-                            fillColor="#fff"
-                            glowIntensity={"none"}
-                          >
-                            ₦
-                            {addCommasToNumber(
-                              Number(
-                                mqttQuestionData?.allocated_winning_amount || 0
-                              )
-                            )}
-                          </GlowyStrokeText>
-                        </div>
-                      </div>
-                    </motion.div>
-
-                    {mqttQuestionData ? (
-                      <>
-                        
-                        <div className="grid grid-cols-2 gap-[1.625rem] mt-[1.625rem]">
-                          {(
-                            [
-                              "option_a",
-                              "option_b",
-                              "option_c",
-                              "option_d",
-                            ] as OptionKey[]
-                          ).map((option, index) => {
-                            const optionLetter = String.fromCharCode(
-                              65 + index
-                            ); // A, B, C, D
-                            
-                            const isCorrect = isCorrectOption(option);
-                            const isSelected = selectedOption === option;
-                            const showResult = correctAnswer;
-
-                            return (
-                              <button
-                                key={option}
-                                className={cn(
-                                  "bg-[#000000] border-2 rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
-                                  !showResult && isSelected
-                                    ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
-                                    : "",
-                                  !timerActive ||
-                                    !mqttQuestionData?.question?.questions
-                                    ? "opacity-70 cursor-not-allowed"
-                                    : "",
-                                                                    mqttAnswerData &&
-                                    mqttQuestionData?.correct_option ===
-                                      convertOptionToLetter(option)
-                                    ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
-                                    : ""
-                                )}
-                              >
-                                {optionLetter}:
-                                <span
-                                  className={cn(
-                                    "ml-2",
-                                    selectedOption === option && !showResult
-                                      ? "text-white font-bold"
-                                      : "",
-                                    isCorrect && showResult
-                                      ? "text-[#04DA6A] font-bold"
-                                      : "",
-                                    isSelected && !isCorrect && showResult
-                                      ? "text-[#FF3B30] font-bold"
-                                      : ""
-                                  )}
-                                  style={{
-                                    WebkitTextStroke:
-                                      selectedOption === option && !showResult
-                                        ? "1px #C76000"
-                                        : "",
-                                  }}
-                                >
-                                  {" "}
-                                  {mqttQuestionData?.[option] || "..."}
-                                </span>
-                               
-                                {isCorrect && showResult && (
-                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                                    <div className="bg-[#04DA6A] rounded-full p-1">
-                                      <CheckIcon size={16} />
-                                    </div>
-                                  </div>
-                                )}
-                              
-                                {!isCorrect && showResult && (
-                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                                    <div className="bg-[#FF3B30] rounded-full p-1">
-                                      <ErrorIcon />
-                                    </div>
-                                  </div>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex justify-center items-center h-full mt-4">
-                        <div className="text-[#D5B9FF] text-lg">
-                          {isConnected
-                            ? "Waiting for next question..."
-                            : "Connecting..."}
-                        </div>
-                      </div>
-                    )}
-                  </div> */}
-                  
-
+                
 
 
 
@@ -738,31 +595,35 @@ const ViewOnlyQuestionTwoScreen = () => {
       </p>
     </div>
 
-    <motion.h2
-      key={mqttQuestionData?.question}
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="text-white 2xl:text-[3rem] text-center font-gilroyMedium font-extrabold"
-    >
-      {mqttQuestionData?.question || "Waiting for question..."}
-    </motion.h2>
+    <AnimatePresence mode="wait">
+      <motion.h2
+        key={mqttQuestionData?.question}
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -30 }}
+        transition={{ duration: 0.6 }}
+        className={cn(`text-white ${fontSize} text-center mb-10 font-gilroyMedium font-extrabold`)}
+        ref={textRef}
+      >
+        {mqttQuestionData?.question || "Waiting for question..."}
+      </motion.h2>
+    </AnimatePresence>
 
-    <div className="flex justify-center items-center w-full gap-4">
-      <div className="bg-[#2A2000] flex justify-center items-center flex-col rounded-[12px] py-2 px-[5rem]">
-        <p className="text-xl font-outfit font-normal text-[#FFC125]">
+    <div className="flex absolute -bottom-11 justify-center items-center w-full gap-4">
+      <div className="bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] flex justify-center gap-y-0 space-y-0 items-center flex-col rounded-[12px] py-2 px-[5rem]">
+        <p className="text-xl block font-outfit font-normal text-[#1E1E1E]">
           Win amount
         </p>
         <GlowyStrokeText
-          strokeWidth={1}
-          strokeColor="#FFC125"
-          glowColor="#FFC125"
-          textclassName="text-[40px] text-white font-extrabold font-gilroyMedium text-center font-extrabold font-gilroyHeavy"
-          fillColor="#fff"
+          strokeWidth={2}
+          strokeColor="#C76000"
+          glowColor="#C76000"
+          textclassName="text-[40px] block -my-2 text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
+          fillColor="#1E1E1E"
           glowIntensity={"none"}
         >
           ₦
-          {addCommasToNumber(
+          {formatAmount(
             Number(mqttQuestionData?.allocated_winning_amount || 0)
           )}
         </GlowyStrokeText>
@@ -770,103 +631,213 @@ const ViewOnlyQuestionTwoScreen = () => {
     </div>
   </motion.div>
 
-  {mqttQuestionData ? (
-    <motion.div
-      className="grid grid-cols-2 gap-[1.625rem] mt-[1.625rem]"
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: {},
-        visible: {
-          transition: {
-            staggerChildren: 0.1,
-          },
-        },
-      }}
-    >
-      {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
-        (option, index) => {
-          const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-          const isCorrect = isCorrectOption(option);
-          const isSelected = selectedOption === option;
-          const showResult = correctAnswer;
+  <AnimatePresence mode="wait">
+    {mqttQuestionData ? (
+      <motion.div
+        key={`options-${currentQuestionIndex}-${mqttQuestionData?.question_id}`}
+                              className="grid grid-cols-2 gap-[1.625rem] mt-[5.625rem]"
+                              initial={{ opacity: 0, y: 30 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -30 }}
+                              transition={{ delay: 0.5, duration: 0.5 }}
+      >
+        {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
+          (option, index) => {
+            const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
+            const isCorrect = isCorrectOption(option);
+            const isSelected = selectedOption === option;
+            const showResult = correctAnswer;
 
-          return (
-            <motion.button
-              key={option}
-              variants={{
-                hidden: { opacity: 0, y: 30 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              className={cn(
-                "bg-[#000000] border-2 rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
-                !showResult && isSelected
-                  ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
-                  : "",
-                !timerActive || !mqttQuestionData?.question?.questions
-                  ? "opacity-70 cursor-not-allowed"
-                  : "",
-                mqttAnswerData &&
-                  mqttQuestionData?.correct_option ===
-                    convertOptionToLetter(option)
-                  ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
-                  : ""
-              )}
-            >
-              {optionLetter}:
-              <span
+            return (
+              <motion.button
+                key={option}
+                variants={{
+                  hidden: { 
+                    opacity: 0, 
+                    y: 50, 
+                    scale: 0.8,
+                    rotateX: -15
+                  },
+                  visible: { 
+                    opacity: 1, 
+                    y: 0, 
+                    scale: 1,
+                    rotateX: 0,
+                    transition: {
+                      type: "spring",
+                      stiffness: 100,
+                      damping: 15,
+                      duration: 0.6
+                    }
+                  },
+                }}
+                whileHover={
+                  timerActive && mqttQuestionData?.question?.questions
+                    ? {
+                        scale: 1.03,
+                        y: -3,
+                        transition: { duration: 0.2 }
+                      }
+                    : {}
+                }
+                whileTap={
+                  timerActive && mqttQuestionData?.question?.questions
+                    ? { scale: 0.98 }
+                    : {}
+                }
+                animate={
+                  isSelected && !showResult
+                    ? {
+                        scale: [1, 1.05, 1],
+                        transition: {
+                          duration: 0.3,
+                          ease: "easeInOut"
+                        }
+                      }
+                    : showResult && isCorrect
+                    ? {
+                        scale: [1, 1.08, 1.02],
+                        backgroundColor: ["#04DA6A20", "#04DA6A40", "#04DA6A20"],
+                        transition: {
+                          duration: 0.8,
+                          ease: "easeInOut"
+                        }
+                      }
+                    : showResult && isSelected && !isCorrect
+                    ? {
+                        x: [-2, 2, -2, 2, 0],
+                        transition: {
+                          duration: 0.5,
+                          ease: "easeInOut"
+                        }
+                      }
+                    : {}
+                }
                 className={cn(
-                  "ml-2",
-                  selectedOption === option && !showResult
-                    ? "text-white font-bold"
+                  "bg-[#000000] border-2 rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative transition-all duration-300 transform-gpu",
+                  !showResult && isSelected
+                    ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
                     : "",
-                  isCorrect && showResult
-                    ? "text-[#04DA6A] font-bold"
-                    : "",
-                  isSelected && !isCorrect && showResult
-                    ? "text-[#FF3B30] font-bold"
+                  !timerActive || !mqttQuestionData?.question?.questions
+                    ? "opacity-70 cursor-not-allowed"
+                    : "hover:shadow-lg",
+                  mqttAnswerData &&
+                    mqttQuestionData?.correct_option ===
+                      convertOptionToLetter(option)
+                    ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
                     : ""
                 )}
-                style={{
-                  WebkitTextStroke:
-                    selectedOption === option && !showResult
-                      ? "1px #C76000"
-                      : "",
-                }}
               >
-                {mqttQuestionData?.[option] || "..."}
-              </span>
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 + index * 0.1, duration: 0.4 }}
+                  className="text-current"
+                >
+                  {optionLetter}:
+                </motion.span>
+                
+                <motion.span
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ 
+                    delay: 0.3 + index * 0.1, 
+                    duration: 0.5,
+                    type: "spring",
+                    stiffness: 80
+                  }}
+                  className={cn(
+                    "ml-2",
+                    selectedOption === option && !showResult
+                      ? "text-white font-bold"
+                      : "",
+                    isCorrect && showResult
+                      ? "text-[#04DA6A] font-bold"
+                      : "",
+                    isSelected && !isCorrect && showResult
+                      ? "text-[#FF3B30] font-bold"
+                      : ""
+                  )}
+                  style={{
+                    WebkitTextStroke:
+                      selectedOption === option && !showResult
+                        ? "1px #C76000"
+                        : "",
+                  }}
+                >
+                  {mqttQuestionData?.[option] || "..."}
+                </motion.span>
 
-              {/* Correct answer indicator */}
-              {isCorrect && showResult && (
-                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                  <div className="bg-[#04DA6A] rounded-full p-1">
-                    <CheckIcon size={16} />
-                  </div>
-                </div>
-              )}
-              {/* Incorrect answer indicator */}
-              {!isCorrect && showResult && (
-                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                  <div className="bg-[#FF3B30] rounded-full p-1">
-                    <ErrorIcon />
-                  </div>
-                </div>
-              )}
-            </motion.button>
-          );
-        }
-      )}
-    </motion.div>
-  ) : (
-    <div className="flex justify-center items-center h-full mt-4">
-      <div className="text-[#D5B9FF] text-lg">
-        {isConnected
-          ? "Waiting for next question..."
-          : "Connecting..."}
-      </div>
-    </div>
-  )}
+                {/* Correct answer indicator */}
+                <AnimatePresence>
+                  {isCorrect && showResult && (
+                    <motion.div 
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ 
+                        scale: 1, 
+                        rotate: 0,
+                        transition: {
+                          type: "spring",
+                          stiffness: 200,
+                          damping: 10,
+                          delay: 0.2
+                        }
+                      }}
+                      exit={{ scale: 0, opacity: 0 }}
+                    >
+                      <div className="bg-[#04DA6A] rounded-full p-1">
+                        <CheckIcon size={16} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                {/* Incorrect answer indicator */}
+                <AnimatePresence>
+                  {!isCorrect && showResult && (
+                    <motion.div 
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                      initial={{ scale: 0, rotate: 180 }}
+                      animate={{ 
+                        scale: 1, 
+                        rotate: 0,
+                        transition: {
+                          type: "spring",
+                          stiffness: 200,
+                          damping: 10,
+                          delay: 0.2
+                        }
+                      }}
+                      exit={{ scale: 0, opacity: 0 }}
+                    >
+                      <div className="bg-[#FF3B30] rounded-full p-1">
+                        <ErrorIcon />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            );
+          }
+        )}
+      </motion.div>
+    ) : (
+      <motion.div 
+        key="loading"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="flex justify-center items-center h-full mt-4"
+      >
+        <div className="text-[#D5B9FF] text-lg">
+          {isConnected
+            ? "Waiting for next question..."
+            : "Connecting..."}
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
 </div>
 
 
