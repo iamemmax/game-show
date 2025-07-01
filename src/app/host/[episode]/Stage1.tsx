@@ -51,9 +51,11 @@ export default function Stage1Questions({
 
     React.useEffect(() => {
         if (questionResultData && !isLoadingQuestionResultData) {
-            sendGameMessage("game_s1_question_result_reveal", {
+            sendGameMessage("game_s1_question_answer", {
                 question_id: currentQuestionData?.data.question.questions.question_id.toString(),
                 data: questionResultData?.data,
+                question_index: currentQuestionData?.data.question_index,
+                show_modal: true,
             })
         }
     }, [refetchQuestionResultData, questionResultData, isLoadingQuestionResultData])
@@ -139,7 +141,7 @@ export default function Stage1Questions({
                         question_id: questionId,
                     })
 
-                    sendGameMessage(`game_s1_question_answer`, {
+                    sendGameMessage(`game_s1_question_bids_reveal`, {
                         question_id: questionId,
                         answers_data: data,
                         question_index: currentQuestionData.data.question_index,
@@ -303,7 +305,7 @@ export default function Stage1Questions({
                 {!loading && currentQuestionData && currentStageStep === "questions" && !questionsExhausted && (
                     <>
                         {
-                            lastAction === "question_s1_time_elapsed" ? (
+                            lastAction === "game_s1_question_bids_reveal" ? (
                                 <TrapeziumButton onClick={() => refetchQuestionResultData()} variant="purple">
                                     REVEAL QUESTION RESULT
                                 </TrapeziumButton>
