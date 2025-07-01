@@ -205,6 +205,12 @@ export default function HostPage() {
                         lastAction: "question_s1_time_elapsed",
                         currentStageStep: "questions",
                     }))
+                } else if (eventCode === "game_s1_question_result_reveal") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: eventCode,
+                        currentStageStep: "questions",
+                    }))
                 } else if (eventCode === "game_s1_results_reveal") {
                     setGameState((prev) => ({
                         ...prev,
@@ -636,15 +642,9 @@ export default function HostPage() {
                                 <div className="flex justify-center gap-4 mb-8">
                                     {gameState.contestants.map((contestant, index) => (
                                         <div key={contestant.id} className="relative">
-                                            {/* <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#ff00ff] mb-2">
-                                                <img
-                                                    src={`/placeholder.svg?height=64&width=64&text=${index + 1}`}
-                                                    alt={contestant.name || "Contestant"}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div> */}
+
                                             <div className="w-24 h-32 bg-gradient-to-b from-[#9c4dcc] to-[#6a2a8c] clip-path-contestant">
-                                                {/* Contestant bar */}
+
                                             </div>
                                         </div>
                                     ))}
@@ -659,6 +659,7 @@ export default function HostPage() {
                             gameState.currentStage.includes("STAGE_ONE") &&
                             (gameState.currentStageStep === "questions" ||
                                 gameState.currentStageStep === "question_reveal" ||
+                                gameState.currentStageStep === "bids_reveal" ||
                                 gameState.currentStageStep === "timer_running") && (
                                 <Stage1Questions
                                     gameId={gameId}
@@ -666,6 +667,7 @@ export default function HostPage() {
                                     onTimerStart={handleTimerStart}
                                     sendGameMessage={sendGameMessage}
                                     currentStageStep={gameState.currentStageStep}
+                                    lastAction={gameState.lastAction}
                                 />
                             )
                         }

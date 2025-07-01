@@ -8,6 +8,7 @@ import {
     type IGetHustleQuestionAPIResponse,
     useEndStageOne,
     useGetHustleQuestion,
+    useGetHustleQuestionResult,
     useNotifyBackendEndQuestionTimer,
 } from "../misc/api"
 import { GlowyStrokeText } from "@/components/core/GlowyText"
@@ -19,6 +20,7 @@ interface Stage1QuestionsProps {
     onTimerStart: (questionId: string, startTime: string, questionType: string) => void
     sendGameMessage: (eventCode: string, data?: any) => Promise<void>
     currentStageStep: string
+    lastAction?: string
 }
 
 export default function Stage1Questions({
@@ -27,6 +29,7 @@ export default function Stage1Questions({
     onTimerStart,
     sendGameMessage,
     currentStageStep,
+    lastAction
 }: Stage1QuestionsProps) {
     const [loading, setLoading] = useState(false)
     const [currentQuestionData, setCurrentQuestionData] = useState<IGetHustleQuestionAPIResponse | null>(null)
@@ -36,6 +39,7 @@ export default function Stage1Questions({
     const [sentAnswers, setSentAnswers] = useState<Set<string>>(new Set())
 
     const { mutate: fetchNextQuestion, data: hustleQuestionsData, isLoading } = useGetHustleQuestion()
+    const { data: questionResultData, isLoading: isLoadingQuestionResultData, refetch: refetchQuestionResultData } = useGetHustleQuestionResult()
     const { mutate: endStageOne } = useEndStageOne()
 
     React.useEffect(() => {
@@ -44,6 +48,15 @@ export default function Stage1Questions({
             setLoading(false)
         }
     }, [hustleQuestionsData, isLoading])
+
+    React.useEffect(() => {
+        if (questionResultData && !isLoadingQuestionResultData) {
+            sendGameMessage("game_s1_question_result_reveal", {
+                question_id: currentQuestionData?.data.question.questions.question_id.toString(),
+                data: questionResultData?.data,
+            })
+        }
+    }, [refetchQuestionResultData, questionResultData, isLoadingQuestionResultData])
 
     const handleFetchNextQuestion = async () => {
         setLoading(true)
@@ -78,6 +91,7 @@ export default function Stage1Questions({
         )
     }
 
+
     const handleRevealStage1Result = () => {
         endStageOne(
             { episode: gameId },
@@ -97,7 +111,6 @@ export default function Stage1Questions({
         )
     }
 
-    // Start the timer for the current question
     // Start the timer for the current question
     const startQuestionTimer = () => {
         if (!currentQuestionData) return
@@ -151,7 +164,7 @@ export default function Stage1Questions({
 
     return (
         <div className="w-full max-w-3xl mx-auto font-montserrat">
-            {loading ? (
+            {(loading || isLoadingQuestionResultData) ? (
                 <div className="flex items-center justify-center h-40">
                     <Loader2 className="h-8 w-8 text-[#ff00ff] animate-spin" />
                     <span className="ml-2 text-white">Loading question...</span>
@@ -287,9 +300,19 @@ export default function Stage1Questions({
 
             <div className="flex justify-center mt-6">
                 {!loading && currentQuestionData && currentStageStep === "questions" && !questionsExhausted && (
-                    <TrapeziumButton onClick={handleFetchNextQuestion} variant="orange">
-                        FETCH NEXT QUESTION
-                    </TrapeziumButton>
+                    <>
+                        {
+                            lastAction === "question_s1_time_elapsed" ? (
+                                <TrapeziumButton onClick={() => refetchQuestionResultData()} variant="purple">
+                                    REVEAL QUESTION RESULT
+                                </TrapeziumButton>
+                            ) : (
+                                <TrapeziumButton onClick={handleFetchNextQuestion} variant="orange">
+                                    FETCH NEXT QUESTION
+                                </TrapeziumButton>
+                            )
+                        }
+                    </>
                 )}
             </div>
         </div>
