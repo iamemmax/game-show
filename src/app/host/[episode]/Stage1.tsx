@@ -56,7 +56,7 @@ export default function Stage1Questions({
                 data: questionResultData?.data,
             })
         }
-    }, [refetchQuestionResultData, isLoadingQuestionResultData])
+    }, [refetchQuestionResultData, questionResultData, isLoadingQuestionResultData])
 
     const handleFetchNextQuestion = async () => {
         setLoading(true)
