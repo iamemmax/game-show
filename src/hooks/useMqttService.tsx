@@ -32,7 +32,7 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
   const port = process.env.NEXT_PUBLIC_MQTT_PORT;
   const username = process.env.NEXT_PUBLIC_MQTT_USERNAME;
   const password = process.env.NEXT_PUBLIC_MQTT_PASSWORD;
-  const connectUrl = `wss://${broker}:${port}/mqqt`;
+  const connectUrl = `ws://${broker}:${port}`;
   // const connectUrl = `wss://${broker}:${port}/mqtt`;
   // const connectUrl = `ws://192.168.0.186:8090`;
 
@@ -65,8 +65,8 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
         clean: true,
         connectTimeout: 300000,
         reconnectPeriod: 5000,
-        username,
-        password,
+        // username,
+        // password,
         keepalive: 60,
         protocol: 'ws',
         rejectUnauthorized: false,

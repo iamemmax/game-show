@@ -1,5 +1,7 @@
 import { tokenlessAxios, } from "@/lib/axios";
-import { useMutation } from "react-query";
+import { useMutation, useQuery } from "react-query";
+import { Contestant, HustleReveal, SpendBreakdown, Stage1QuestionData, Stage2Question } from "../types";
+
 
 interface RootObject {
     question_id: number | string;
@@ -111,6 +113,20 @@ export const useGetHustleQuestion = () => {
     });
 }
 
+const getHustleQuestionResult = async ({ question_id }: { question_id: string | number }) => {
+    const res = await tokenlessAxios.get<IGetHustleQuestionAPIResponse>(`/api/admin-controller/hustle_question_tally/${question_id}`);
+    return res.data;
+}
+
+export const useGetHustleQuestionResult = (question_id?: string | number) => {
+    return useQuery({
+        queryKey: ["get-hustle-question-result", question_id],
+        queryFn: () => getHustleQuestionResult({ question_id: question_id! }),
+        enabled: !!question_id, // Only run if question_id is provided
+        refetchOnWindowFocus: false,
+    });
+}
+
 const postStartGame = async ({ game_episode }: { game_episode: string | number }) => {
     const res = await tokenlessAxios.post(`/api/admin-controller/start_game_episode/${game_episode}`);
     return res.data;
@@ -177,8 +193,6 @@ export const useEndStageTwo = () => {
 
 
 
-import { useQuery } from 'react-query';
-import { Contestant, HustleReveal, SpendBreakdown, Stage1QuestionData, Stage2Question } from "../types";
 
 interface hustleQuestionPicksProps {
     status: string;

@@ -197,29 +197,23 @@ export const TrapeziumButton = React.forwardRef<HTMLButtonElement, TrapeziumButt
               y2={34.5}
               gradientUnits="userSpaceOnUse"
             >
-              {/* These gradient stop colors are hardcoded from your Figma SVG.
-                  If they need to change per variant, you'll need to make them dynamic.
-                  Example:
-                  <stop stopColor={variant === 'red' ? '#ff4d4d' : '#8EFE9B'} />
-                  <stop offset={1} stopColor={variant === 'red' ? '#c82333' : '#03984A'} />
-                  Or define them within your `colorMap` if more complex.
-                  */}
-                  <stop stopColor={
-                    variant === 'red' ? '#ff4d4d' :
-                    variant === 'green' ? '#8EFE9B' :
+
+              <stop stopColor={
+                variant === 'red' ? '#ff4d4d' :
+                  variant === 'green' ? '#8EFE9B' :
                     variant === 'yellow' ? '#fff6b7' :
-                    variant === 'blue' ? '#66b3ff' :
-                    variant === 'purple' ? '#b388ff' :
-                    colors.glow
-                  } />
-                  <stop offset={1} stopColor={
-                    variant === 'red' ? '#c82333' :
-                    variant === 'green' ? '#03984A' :
+                      variant === 'blue' ? '#66b3ff' :
+                        variant === 'purple' ? '#b388ff' :
+                          colors.glow
+              } />
+              <stop offset={1} stopColor={
+                variant === 'red' ? '#c82333' :
+                  variant === 'green' ? '#03984A' :
                     variant === 'yellow' ? '#ffc107' :
-                    variant === 'blue' ? '#007bff' :
-                    variant === 'purple' ? '#6f42c1' :
-                    colors.bg
-                  } />
+                      variant === 'blue' ? '#007bff' :
+                        variant === 'purple' ? '#6f42c1' :
+                          colors.bg
+              } />
               {/* <stop stopColor={variant === 'red' ? '#ff4d4d' : '#8EFE9B'} /> */}
               {/* <stop offset={1} stopColor={variant === 'red' ? '#c82333' : '#03984A'} /> */}
             </linearGradient>
