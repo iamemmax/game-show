@@ -123,15 +123,22 @@ import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-const HustleBoardModal = () => {
-  const resultBoard = [
-    { name: "emmax", option: "B", correct_answer: "Onisah", bid_amount: "20000" },
-    { name: "Azu", option: "C", correct_answer: "Onisah", bid_amount: "20000" },
-    { name: "Edmud", option: "B", correct_answer: "Onisah", bid_amount: "20000" },
-    { name: "Daniel", option: "B", correct_answer: "Onisah", bid_amount: "20000" },
-    { name: "Temiloluwa", option: "B", correct_answer: "Onisah", bid_amount: "20000" },
-    { name: "Stephen", option: "B", correct_answer: "Onisah", bid_amount: "20000" },
-  ];
+
+
+interface Data {
+  contestant_id: number;
+  contestant_name: string;
+  answer: string;
+  amount_staked: number;
+}
+interface Prop{
+    currentQuestionAnswerData: Data[]
+    currentQuestion:any
+}
+
+const HustleBoardModal = ({currentQuestionAnswerData,currentQuestion}:Prop) => {
+console.log(currentQuestionAnswerData, currentQuestion);
+
 
   const [visibleItems, setVisibleItems] = useState<number>(0);
   const soundRef = useRef<HTMLAudioElement | null>(null);
@@ -143,7 +150,7 @@ const HustleBoardModal = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setVisibleItems((prev) => {
-        if (prev < resultBoard.length) {
+        if (prev < currentQuestionAnswerData?.length) {
           soundRef.current?.play().catch((err) => console.warn("Sound blocked:", err));
           return prev + 1;
         } else {
@@ -172,7 +179,7 @@ const HustleBoardModal = () => {
         </div>
 
         {/* Animated Result Board */}
-        {resultBoard.slice(0, visibleItems).map((data, idx) => (
+        {currentQuestionAnswerData?.slice(0, visibleItems).map((data, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, y: 30 }}
@@ -192,19 +199,19 @@ const HustleBoardModal = () => {
 
               <div>
                 <p className="text-xs capitalize font-gilroyMedium text-white">
-                  {capitalizeFirstLetter(data?.name)}
+                  {capitalizeFirstLetter(data?.contestant_name)}
                 </p>
                 <p className="font-sans opacity-75 text-xs text-white">
                   Answer:
                   <span className="font-bold opacity-100 text-sm">
                     {" "}
-                    {data?.option}. {data?.correct_answer}
+                    {data?.answer}
                   </span>
                 </p>
                 <div className="bg-[#200541] mt-1 leading-3 flex justify-center items-center flex-col rounded-[1.5rem] py-2 px-3">
                   <p className="font-gilroyMedium text-xs text-white">Bid amount:</p>
                   <h2 className="text-[#B380FF] font-gilroyHeavy font-extrabold text-xl">
-                    ₦{Number(data?.bid_amount).toLocaleString()}
+                    ₦{Number(data?.amount_staked).toLocaleString()}
                   </h2>
                 </div>
               </div>

@@ -125,7 +125,7 @@
 
 
 
-
+"use client";
 
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -178,10 +178,11 @@ interface FastestFingerResultProps {
 interface AnimatedAmountProps {
   from: number;
   to: number;
-  onPlaySound?: () => void;
+  onStart?: () => void;
+  onComplete?: () => void;
 }
 
-const AnimatedAmount = ({ from, to, onPlaySound }: AnimatedAmountProps) => {
+const AnimatedAmount = ({ from, to, onStart, onComplete }: AnimatedAmountProps) => {
   const count = useMotionValue(from);
   const rounded = useTransform(count, (latest) =>
     `₦${Math.floor(latest).toLocaleString()}`
@@ -191,7 +192,8 @@ const AnimatedAmount = ({ from, to, onPlaySound }: AnimatedAmountProps) => {
     const controls = animate(count, to, {
       duration: 0.8,
       ease: "easeInOut",
-      onPlay: onPlaySound,
+      onPlay: onStart,
+      onComplete,
     });
     return controls.stop;
   }, [to]);
@@ -204,18 +206,20 @@ const FastestFingerResult = ({
   timeElapsed,
   contestantBids,
 }: FastestFingerResultProps) => {
-  const [bidSlots, setBidSlots] = useState<(ContestantBid | null)[]>(
-    Array(6).fill(null)
-  );
+  const [bidSlots, setBidSlots] = useState<(ContestantBid | null)[]>(Array(6).fill(null));
   const [animatingSlot, setAnimatingSlot] = useState<number | null>(null);
   const [processedBids, setProcessedBids] = useState(new Set<string>());
   const pathname = usePathname();
   const isBoardRoute = pathname?.includes("/hustle-board/");
   const soundRef = useRef<HTMLAudioElement | null>(null);
   const prevAmountsRef = useRef<{ [id: string]: number }>({});
+  const activeAnimations = useRef(0);
 
   useEffect(() => {
     soundRef.current = new Audio("/sounds/select-bid.mp3");
+    if (soundRef.current) {
+      soundRef.current.loop = true;
+    }
   }, []);
 
   useEffect(() => {
@@ -227,7 +231,7 @@ const FastestFingerResult = ({
 
     const currentBids = Object.values(contestantBids);
 
-    currentBids.forEach((bid: ContestantBid) => {
+    currentBids?.forEach((bid: ContestantBid) => {
       const bidKey = `${bid.contestant_id}_${bid.timestamp}`;
       if (processedBids.has(bidKey)) return;
 
@@ -241,7 +245,6 @@ const FastestFingerResult = ({
           newSlots[existingSlotIndex] = { ...bid, is_update: true };
           return newSlots;
         });
-
         setAnimatingSlot(existingSlotIndex);
         setTimeout(() => setAnimatingSlot(null), 800);
       } else {
@@ -254,7 +257,10 @@ const FastestFingerResult = ({
               return newSlots;
             });
 
-            soundRef.current?.play();
+            if (soundRef.current) {
+              soundRef.current.play().catch(console.warn);
+            }
+
             setAnimatingSlot(nextEmptySlot);
             setTimeout(() => setAnimatingSlot(null), 1000);
           }, 300);
@@ -264,6 +270,21 @@ const FastestFingerResult = ({
       setProcessedBids((prev) => new Set([...prev, bidKey]));
     });
   }, [contestantBids, bidSlots, processedBids]);
+
+  const handleAmountStart = () => {
+    activeAnimations.current += 1;
+    if (soundRef.current && soundRef.current.paused) {
+      soundRef.current.play().catch(console.warn);
+    }
+  };
+
+  const handleAmountComplete = () => {
+    activeAnimations.current -= 1;
+    if (activeAnimations.current <= 0 && soundRef.current) {
+      soundRef.current.pause();
+      soundRef.current.currentTime = 0;
+    }
+  };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -280,7 +301,7 @@ const FastestFingerResult = ({
       {timeElapsed && resultArray && resultArray?.length > 0 ? (
         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center overflow-y-auto max-h-[600px]">
           <AnimatePresence>
-            {resultArray?.map((result, index) => {
+            {resultArray.map((result, index) => {
               const answerTime = result.answered_in;
               const contestantName =
                 result.contestant_name || `Player ${index + 1}`;
@@ -348,8 +369,7 @@ const FastestFingerResult = ({
             }
 
             const contestantId = bid.contestant_id;
-            const amount =
-              Math.ceil(Number(bid?.bid_amount) / 100) * 100;
+            const amount = Math.ceil(Number(bid?.bid_amount) / 100) * 100;
             const prevAmount = prevAmountsRef.current[contestantId] ?? 0;
             prevAmountsRef.current[contestantId] = amount;
 
@@ -374,7 +394,8 @@ const FastestFingerResult = ({
                     <AnimatedAmount
                       from={prevAmount}
                       to={amount}
-                      onPlaySound={() => soundRef.current?.play()}
+                      onStart={handleAmountStart}
+                      onComplete={handleAmountComplete}
                     />
                   }
                   amountClassName="font-gilroyBold text-4xl text-white font-bold"

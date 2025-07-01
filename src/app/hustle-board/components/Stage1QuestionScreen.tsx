@@ -29,12 +29,6 @@ import HustleBoardStageTallyPage from "./HustleBoardStageTally";
 import HustleBoardModal from "./modals/HustleBoardModal";
 import HustleRevealResult from "./modals/HustleRevealResult";
 
-// Add debug log to track component imports
-
-// Add new interface for attempted options
-interface AttemptedOption {
-  option: string;
-}
 
 // Add type for option keys
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
@@ -59,14 +53,11 @@ const convertOptionToLetter = (option: string | null): string => {
   return optionMap[option] || "";
 };
 
-
-
-interface Prop{
-  onNext: () => void
+interface Prop {
+  onNext: () => void;
 }
 
-const Stage1QuestionScreen = ({onNext}:Prop) => {
-
+const Stage1QuestionScreen = ({ onNext }: Prop) => {
   const { isConnected, onMessage } = useMQTT();
   const router = useRouter();
   const params = useParams();
@@ -105,31 +96,21 @@ const Stage1QuestionScreen = ({onNext}:Prop) => {
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(
     null
   );
-  const [showResultModal, setShowResultModal] = useState(false)
-//   const [bidHistory, setBidHistory] = useState<{
-//   [questionId: string]: {
-//     [contestantId: string]: {
-//       contestant_id: string;
-//       contestant_name: string;
-//       bid_amount: number;
-//       timestamp: string;
-//     }
-//   }
-// }>({});
-const [contestantBids, setContestantBids] = useState<{
-  [contestantId: string]: {
-    contestant_id: string;
-    contestant_name: string;
-    bid_amount: number;
-    timestamp: string;
-    question_id?: string;
-    remaining_capital?: number;
-    bid_percentage?: string;
-  }
-}>({});
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [currentQuestionAnswerData, setCurrentQuestionAnswerData] = useState<any | null>(null)
+  const [contestantBids, setContestantBids] = useState<{
+    [contestantId: string]: {
+      contestant_id: string;
+      contestant_name: string;
+      bid_amount: number;
+      timestamp: string;
+      question_id?: string;
+      remaining_capital?: number;
+      bid_percentage?: string;
+    };
+  }>({});
 
-  const [mqttResultData, setMqttResultData] = useState<any>(null)
-  const [resultMessageSent, setResultMessageSent] = useState(false);
+  const [mqttResultData, setMqttResultData] = useState<any>(null);
   // const [showEliminationModal, setShowEliminationModal] = useState(false);
 
   // Add new state variables for user-specific bid amounts
@@ -188,344 +169,185 @@ const [contestantBids, setContestantBids] = useState<{
     currentQuestionIdRef.current = currentQuestionId;
   }, [currentQuestionId]);
 
-  // MQTT message handling effect
-//   useEffect(() => {
-//     if (!isConnected) return;
-
-//     const handler = (receivedMessage: any) => {
-//       console.log("Main page received message:", receivedMessage?.event);
-//       // Handle question reveal event
-//       if (receivedMessage?.event === "game_s1_question_reveal") {
-//         console.log("📝 Processing question reveal event");
-//         setShowPrepPage(false);
-
-//         const payload = receivedMessage.payload || {};
-//         const questionData = payload.data || {};
-//         const spendBreakdown =
-//           questionData.spend_breakdown ||
-//           payload.spend_breakdown ||
-//           payload.data?.spend_breakdown;
-
-//         // 1. Save full question info
-//         setMqttQuestionData(questionData);
-
-//         // 2. Reset related states
-//         setSelectedOption(null);
-//         setIsSubmitted(false);
-//         resetTimerState();
-//         setResultMessageSent(false);
-//         setMqttAnswerData(null);
-//         setContestantBids({})
-        
-
-//         // 3. Set current index and question ID
-//         setCurrentQuestionIndex(questionData.question_index || 1);
-//         const questionId =
-//           questionData?.question?.questions?.question_id ||
-//           payload?.question_id;
-//         if (questionId) {
-//           setCurrentQuestionId(questionId.toString());
-//         }
-
-//         // 4. Extract and save user's spend breakdown
-//         if (spendBreakdown && user?.contestant_id) {
-//           const userData = Array.isArray(spendBreakdown)
-//             ? spendBreakdown.find(
-//                 (contestant: any) =>
-//                   String(contestant.contestant_id) ===
-//                   String(user.contestant_id)
-//               )
-//             : spendBreakdown;
-
-//           if (userData?.spend_breakdown) {
-//             setUserBidAmounts(userData.spend_breakdown);
-
-//             const bidKeys = Object.keys(userData.spend_breakdown);
-//             if (bidKeys.length > 0) {
-//               const firstAmount = parseFloat(bidKeys[0]);
-//               setSelectedAmount(firstAmount);
-//             }
-//           } else {
-//             setUserBidAmounts({});
-//             console.warn("⚠️ No spend_breakdown found for user");
-//           }
-//         }
-//       }
-
-
-
-// if (receivedMessage?.event === "contestant_bid_selected") {
-//   const payload = receivedMessage.payload || {};
-//   const { 
-//     contestant_id, 
-//     contestant_name, 
-//     bid_amount, 
-//     timestamp, 
-//     question_id,
-//     remaining_capital,
-//     bid_percentage 
-//   } = payload;
   
-//   if (contestant_id && contestant_name && bid_amount !== undefined) {
-//     console.log("Leaderboard received bid update:", contestant_name, bid_amount);
-    
-//     // Update contestant bids with explicit replacement logic
-//     setContestantBids(prevBids => {
-//       // Check if contestant already has a bid
-//       const existingBid = prevBids[contestant_id];
-      
-//       if (existingBid) {
-//         console.log(`Replacing existing bid for ${contestant_name}: ${existingBid.bid_amount} -> ${bid_amount}`);
-//       } else {
-//         console.log(`New bid from ${contestant_name}: ${bid_amount}`);
-//       }
-      
-//       // Create updated bids object (this automatically replaces existing entries)
-//       const updatedBids = {
-//         ...prevBids,
-//         [contestant_id]: {
-//           contestant_id,
-//           contestant_name,
-//           bid_amount,
-//           timestamp,
-//           question_id,
-//           remaining_capital,
-//           bid_percentage,
-//           // Optional: track if this was an update
-//           is_update: !!existingBid
-//         }
-//       };
-      
-//       return updatedBids;
-//     });
-    
-   
-//   }
-// }
+  useEffect(() => {
+    if (!isConnected) return;
 
+    const handler = (receivedMessage: any) => {
+      console.log("Main page received message:", receivedMessage?.event);
 
+      // Handle question reveal event
+      if (receivedMessage?.event === "game_s1_question_reveal") {
+        console.log("📝 Processing question reveal event");
+        setShowPrepPage(false);
 
-//       if (receivedMessage?.event === "game_s1_question_answer") {
-//         const payload = receivedMessage.payload || {};
-//         const questionId = payload.question_id;
+        const payload = receivedMessage.payload || {};
+        const questionData = payload.data || {};
+        const spendBreakdown =
+          questionData.spend_breakdown ||
+          payload.spend_breakdown ||
+          payload.data?.spend_breakdown;
 
-//         // Use ref instead of state
-//         if (questionId === currentQuestionIdRef?.current) {
-//           const answersData = payload.answers_data?.data;
+        // 1. Save full question info
+        setMqttQuestionData(questionData);
 
-//           // Store the full answer data for use in FastestFingerResult
-//           setMqttAnswerData(answersData);
-//           setMqttResultData(answersData);
+        // 2. Reset related states
+        setSelectedOption(null);
+        setIsSubmitted(false);
+        resetTimerState();
+        // setResultMessageSent(false);
+        setMqttAnswerData(null);
+        setShowResultModal(false);
+        setCurrentQuestionAnswerData(null)
+        // FIXED: Clear contestant bids completely for new question
+        setContestantBids({});
 
-//           if (answersData?.question?.correct_option) {
-//             // Set the correct answer
-//             setCorrectAnswer(answersData.question.correct_option);
-
-//             // Mark the question as submitted to show results
-//             setIsSubmitted(true);
-//             setShowNextButton(true);
-//             setTimerActive(false); // Stop the timer
-
-//             // Refetch contestant data to update balances
-//             // refetch();
-//           }
-//         }
-//       }
-
-//       // Handle timer start event
-//       if (receivedMessage.event === "game_s1_timer_start") {
-//         handleStartTimer();
-//       }
-
-//       // Handle results reveal event
-//       if (receivedMessage.event === "game_s1_results_reveal") {
-//         console.log("📊 Results reveal event received");
-//         setAllQuestionsCompleted(true);
-//       }
-
-
-      
-//     };
-
-//     onMessage(handler);
-
-//     return () => {
-//       console.log("Cleaning up MQTT message handler");
-//       onMessage(null);
-//     };
-//   }, [isConnected, onMessage, user?.contestant_id]);
-
-
-
-
-
-// Updated MQTT message handling effect - only the affected parts
-useEffect(() => {
-  if (!isConnected) return;
-
-  const handler = (receivedMessage: any) => {
-    console.log("Main page received message:", receivedMessage?.event);
-    
-    // Handle question reveal event
-    if (receivedMessage?.event === "game_s1_question_reveal") {
-      console.log("📝 Processing question reveal event");
-      setShowPrepPage(false);
-
-      const payload = receivedMessage.payload || {};
-      const questionData = payload.data || {};
-      const spendBreakdown =
-        questionData.spend_breakdown ||
-        payload.spend_breakdown ||
-        payload.data?.spend_breakdown;
-
-      // 1. Save full question info
-      setMqttQuestionData(questionData);
-
-      // 2. Reset related states
-      setSelectedOption(null);
-      setIsSubmitted(false);
-      resetTimerState();
-      setResultMessageSent(false);
-      setMqttAnswerData(null);
-      setShowResultModal(false)
-      // FIXED: Clear contestant bids completely for new question
-      setContestantBids({});
-      console.log("🧹 Cleared all contestant bids for new question");
-
-      // 3. Set current index and question ID
-      setCurrentQuestionIndex(questionData.question_index || 1);
-      const questionId =
-        questionData?.question?.questions?.question_id ||
-        payload?.question_id;
-      if (questionId) {
-        setCurrentQuestionId(questionId.toString());
-      }
-
-      // 4. Extract and save user's spend breakdown
-      if (spendBreakdown && user?.contestant_id) {
-        const userData = Array.isArray(spendBreakdown)
-          ? spendBreakdown.find(
-              (contestant: any) =>
-                String(contestant.contestant_id) ===
-                String(user.contestant_id)
-            )
-          : spendBreakdown;
-
-        if (userData?.spend_breakdown) {
-          setUserBidAmounts(userData.spend_breakdown);
-
-          const bidKeys = Object.keys(userData.spend_breakdown);
-          if (bidKeys.length > 0) {
-            const firstAmount = parseFloat(bidKeys[0]);
-            setSelectedAmount(firstAmount);
-          }
-        } else {
-          setUserBidAmounts({});
-          console.warn("⚠️ No spend_breakdown found for user");
+        // 3. Set current index and question ID
+        setCurrentQuestionIndex(questionData.question_index || 1);
+        const questionId =
+          questionData?.question?.questions?.question_id ||
+          payload?.question_id;
+        if (questionId) {
+          setCurrentQuestionId(questionId.toString());
         }
-      }
-    }
 
-    // Handle contestant bid updates
-    if (receivedMessage?.event === "contestant_bid_selected") {
-      const payload = receivedMessage.payload || {};
-      const { 
-        contestant_id, 
-        contestant_name, 
-        bid_amount, 
-        timestamp, 
-        question_id,
-        remaining_capital,
-        bid_percentage 
-      } = payload;
-      
-      if (contestant_id && contestant_name && bid_amount !== undefined) {
-        console.log("💰 New bid received:", contestant_name, bid_amount);
-        
-        // Only update bids for the current question
-        if (question_id === currentQuestionId) {
-          setContestantBids(prevBids => {
-            const existingBid = prevBids[contestant_id];
-            
-            if (existingBid) {
-              console.log(`🔄 Updating bid for ${contestant_name}: ${existingBid.bid_amount} -> ${bid_amount}`);
-            } else {
-              console.log(`✨ New bid from ${contestant_name}: ${bid_amount}`);
+        // 4. Extract and save user's spend breakdown
+        if (spendBreakdown && user?.contestant_id) {
+          const userData = Array.isArray(spendBreakdown)
+            ? spendBreakdown.find(
+                (contestant: any) =>
+                  String(contestant.contestant_id) ===
+                  String(user.contestant_id)
+              )
+            : spendBreakdown;
+
+          if (userData?.spend_breakdown) {
+            setUserBidAmounts(userData.spend_breakdown);
+
+            const bidKeys = Object.keys(userData.spend_breakdown);
+            if (bidKeys.length > 0) {
+              const firstAmount = parseFloat(bidKeys[0]);
+              setSelectedAmount(firstAmount);
             }
-            
-            const updatedBids = {
-              ...prevBids,
-              [contestant_id]: {
-                contestant_id,
-                contestant_name,
-                bid_amount,
-                timestamp,
-                question_id,
-                remaining_capital,
-                bid_percentage
+          } else {
+            setUserBidAmounts({});
+            console.warn("⚠️ No spend_breakdown found for user");
+          }
+        }
+      }
+
+      // Handle contestant bid updates
+      if (receivedMessage?.event === "contestant_bid_selected") {
+        const payload = receivedMessage.payload || {};
+        const {
+          contestant_id,
+          contestant_name,
+          bid_amount,
+          timestamp,
+          question_id,
+          remaining_capital,
+          bid_percentage,
+        } = payload;
+
+        if (contestant_id && contestant_name && bid_amount !== undefined) {
+          console.log("💰 New bid received:", contestant_name, bid_amount);
+
+          // Only update bids for the current question
+          if (question_id === currentQuestionId) {
+            setContestantBids((prevBids) => {
+              const existingBid = prevBids[contestant_id];
+
+              if (existingBid) {
+                console.log(
+                  `🔄 Updating bid for ${contestant_name}: ${existingBid.bid_amount} -> ${bid_amount}`
+                );
+              } else {
+                console.log(
+                  `✨ New bid from ${contestant_name}: ${bid_amount}`
+                );
               }
-            };
-            
-            return updatedBids;
-          });
-        } else {
-          console.log(`⚠️ Ignoring bid for different question. Current: ${currentQuestionId}, Received: ${question_id}`);
+
+              const updatedBids = {
+                ...prevBids,
+                [contestant_id]: {
+                  contestant_id,
+                  contestant_name,
+                  bid_amount,
+                  timestamp,
+                  question_id,
+                  remaining_capital,
+                  bid_percentage,
+                },
+              };
+
+              return updatedBids;
+            });
+          } else {
+            console.log(
+              `⚠️ Ignoring bid for different question. Current: ${currentQuestionId}, Received: ${question_id}`
+            );
+          }
         }
       }
-    }
-    if (receivedMessage?.event === "clear_all_bids") {
-      setContestantBids({})
-     
-    }
+      if (receivedMessage?.event === "clear_all_bids") {
+        setContestantBids({});
+      }
 
-    // ... rest of your message handlers remain the same
-    if (receivedMessage?.event === "game_s1_question_answer") {
+if(receivedMessage?.event === "game_s1_question_bids_reveal"){
+   const payload = receivedMessage.payload || {};
+    const questionId = payload.question_id;
+     if (questionId === currentQuestionIdRef?.current) {
+       const answersData =payload.answers_data?.data
+      setCurrentQuestionAnswerData(answersData)
+      setShowResultModal(true);
+     }
+}
 
-      const payload = receivedMessage.payload || {};
-      const questionId = payload.question_id;
+      // ... rest of your message handlers remain the same
+      if (receivedMessage?.event === "game_s1_question_answer") {
+        const payload = receivedMessage.payload || {};
+        const questionId = payload.question_id;
 
-      if (questionId === currentQuestionIdRef?.current) {
-        const answersData = payload.answers_data?.data;
+        if (questionId === currentQuestionIdRef?.current) {
+          const answersData = payload.answers_data?.data;
 
-        setMqttAnswerData(answersData);
-        setMqttResultData(answersData);
-
-setShowResultModal(true)
-        if (answersData?.question?.correct_option) {
-          setCorrectAnswer(answersData.question.correct_option);
-          setIsSubmitted(true);
-          setShowNextButton(true);
-          setTimerActive(false);
+          setMqttAnswerData(answersData);
+          setMqttResultData(answersData);
+setShowResultModal(false);
+          setShowResultModal(true);
+          if (answersData?.question?.correct_option) {
+            setCorrectAnswer(answersData.question.correct_option);
+            setIsSubmitted(true);
+            setShowNextButton(true);
+            setTimerActive(false);
+          }
         }
       }
-    }
 
-    if (receivedMessage.event === "game_s1_timer_start") {
-      handleStartTimer();
-    }
+      if (receivedMessage.event === "game_s1_timer_start") {
+        handleStartTimer();
+      }
 
-    if (receivedMessage.event === "game_s1_results_reveal") {
-      console.log("📊 Results reveal event received");
-      setAllQuestionsCompleted(true);
-    }
-  };
+      if (receivedMessage.event === "game_s1_results_reveal") {
+        console.log("📊 Results reveal event received");
+        setAllQuestionsCompleted(true);
+      }
+    };
 
-  onMessage(handler);
+    onMessage(handler);
 
-  return () => {
-    console.log("Cleaning up MQTT message handler");
-    onMessage(null);
-  };
-}, [isConnected, onMessage, user?.contestant_id, currentQuestionId]);
-
-
+    return () => {
+      console.log("Cleaning up MQTT message handler");
+      onMessage(null);
+    };
+  }, [isConnected, onMessage, user?.contestant_id, currentQuestionId]);
 
   // Reset the result message sent flag when a new question is received
-  useEffect(() => {
-    if (mqttQuestionData) {
-      setResultMessageSent(false);
-    }
-  }, [mqttQuestionData?.question?.questions?.question_id]);
+  // useEffect(() => {
+  //   if (mqttQuestionData) {
+  //     setResultMessageSent(false);
+  //   }
+  // }, [mqttQuestionData?.question?.questions?.question_id]);
 
   // Cleanup timer on component unmount
   useEffect(() => {
@@ -558,7 +380,7 @@ setShowResultModal(true)
     setTimeLeft(10);
     setShowNextButton(false);
     setShouldFetchAnswer(false);
-
+setShowResultModal(false);
     // Clear any existing timer
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -586,45 +408,42 @@ setShowResultModal(true)
     setIsSubmitted(false); // Ensure we can make selections
   };
 
-
-
-  const [fontSize, setFontSize] = useState('text-4xl 2xl:text-5xl');
-    const textRef = useRef(null);
+  const [fontSize, setFontSize] = useState("text-4xl 2xl:text-5xl");
+  const textRef = useRef(null);
   const getFontSizeClass = (textLength: number) => {
-  if (textLength <= 35) {
-    return 'text-4xl 2xl:text-[3.75rem]'; // Very short: Big and bold
-  } else if (textLength <= 70) {
-    return 'text-3xl 2xl:text-[3.4375rem]'; // Medium: Still large
-  } else if (textLength <= 100) {
-    return 'text-2xl 2xl:text-[3.125rem]'; // Longer, fit within 2 lines
-  } else {
-    return 'text-xl 2xl:text-[3rem]'; // Fallback: Smaller but readable
-  }
-};
+    if (textLength <= 35) {
+      return "text-4xl 2xl:text-[3.75rem]"; // Very short: Big and bold
+    } else if (textLength <= 70) {
+      return "text-3xl 2xl:text-[3.4375rem]"; // Medium: Still large
+    } else if (textLength <= 100) {
+      return "text-2xl 2xl:text-[3.125rem]"; // Longer, fit within 2 lines
+    } else {
+      return "text-xl 2xl:text-[3rem]"; // Fallback: Smaller but readable
+    }
+  };
 
-  
-    useEffect(() => {
-      const questionText = mqttQuestionData?.question || "Waiting for question...";
-      const newFontSize = getFontSizeClass(questionText.length);
-      setFontSize(newFontSize);
-    }, [mqttQuestionData?.question]);
-  
+  useEffect(() => {
+    const questionText =
+      mqttQuestionData?.question || "Waiting for question...";
+    const newFontSize = getFontSizeClass(questionText.length);
+    setFontSize(newFontSize);
+  }, [mqttQuestionData?.question]);
+
   // FIXED: Now all conditional returns come AFTER all hooks have been called
   if (showPrepPage) {
     return <GetHustleBoardReadyScreen />;
   }
 
-if (allQuestionsCompleted) {
-    return <HustleBoardStageTallyPage
-     eliminationCount={0} 
-     removeCount={0} 
-     activeState={1}
-     onNext={() => onNext}
-    />;
+  if (allQuestionsCompleted) {
+    return (
+      <HustleBoardStageTallyPage
+        eliminationCount={0}
+        removeCount={0}
+        activeState={1}
+        onNext={() => onNext}
+      />
+    );
   }
-
-
- 
 
   return (
     <>
@@ -642,9 +461,7 @@ if (allQuestionsCompleted) {
           </div>
         </div>
 
-   
         <div className="flex flex-col justify-between items-center min-h-full">
-        
           <div className="flex flex-col w-full items-center">
             <div className="w-full h-[100px] flex items-center justify-center">
               <HeaderTitleContainer
@@ -663,7 +480,6 @@ if (allQuestionsCompleted) {
             </div>
 
             <div className="relative w-full py-[2rem] 2xl:py-[2.5rem]  px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
-              
               <div className="absolute inset-0">
                 <motion.div
                   className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
@@ -688,14 +504,13 @@ if (allQuestionsCompleted) {
                   }}
                 />
               </div>
-             <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
+              <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
               <div className="relative">
                 <div className="flex justify-between w-full items-center">
                   <div className="text-center flex justify-center items-center w-full">
                     <h2 className="text-[3.75rem] text-center font-extrabold outline-text text-black">
                       Stage 1: Prove your hustle
                     </h2>
-                   
                   </div>
 
                   {timerActive && (
@@ -710,24 +525,23 @@ if (allQuestionsCompleted) {
                         {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
                       </span>
                     </div>
-)} 
+                  )}
                 </div>
 
                 <div className="grid mt-8 gap-2 items-start grid-cols-[1fr_3fr_1fr]">
                   <div className="flex flex-col">
-                    {questionData?.map(
-                      (contestant, idx: number) => (
-                        <div className="flex gap-2 items-center" key={idx}>
-                          <div className="select-none">
-                            <NumberCardContainer
-                              text={
-                                isQuestionAttempted(contestant?.hustle_number) ? (
-                                  <CheckIcon size={160} />
-                                ) : (
-                                  contestant?.hustle_number
-                                )
-                              }
-                              textColor={
+                    {questionData?.map((contestant, idx: number) => (
+                      <div className="flex gap-2 items-center" key={idx}>
+                        <div className="select-none">
+                          <NumberCardContainer
+                            text={
+                              isQuestionAttempted(contestant?.hustle_number) ? (
+                                <CheckIcon size={160} />
+                              ) : (
+                                contestant?.hustle_number
+                              )
+                            }
+                            textColor={
                               mqttQuestionData?.question?.hustle_reveal
                                 ?.hustle_number === contestant?.hustle_number
                                 ? "#FFFFFF"
@@ -743,50 +557,45 @@ if (allQuestionsCompleted) {
                                   ? "#04DA6A"
                                   : "black"
                             }
-                              width={54}
-                              height={64}
-                              active={
+                            width={54}
+                            height={64}
+                            active={
                               mqttQuestionData?.question?.hustle_reveal
                                 ?.hustle_number > contestant?.hustle_number
                             }
-                              iconPosition={{ y: 33 }}
-                              iconSize={30}
-                              className="select-none"
-                            />
-                          </div>
+                            iconPosition={{ y: 33 }}
+                            iconSize={30}
+                            className="select-none"
+                          />
+                        </div>
+                        <div className="flex items-center gap-4">
                           <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-4">
-                              <div className="h-[2rem] w-[2rem]  relative">
-                                <Image
-                                  alt="User avatar"
-                                  src={
-                                    contestantImages[idx] ||
-                                    "/images/userImage.png"
-                                  }
-                                  fill
-                                  className="object-cover rounded-full"
-                                />
-                              </div>
-
-                              <GlowyStrokeText
-                                strokeWidth={2}
-                                strokeColor="#7E3CE0"
-                                glowColor="#13051e"
-                                textclassName="text-base  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
-                                fillColor="#fff"
-                                glowIntensity={"none"}
-                              >
-                                {
-                                  contestant?.contestant_name?.split(
-                                    " "
-                                  )[0]
+                            <div className="h-[2rem] w-[2rem]  relative">
+                              <Image
+                                alt="User avatar"
+                                src={
+                                  contestantImages[idx] ||
+                                  "/images/userImage.png"
                                 }
-                              </GlowyStrokeText>
+                                fill
+                                className="object-cover rounded-full"
+                              />
                             </div>
+
+                            <GlowyStrokeText
+                              strokeWidth={2}
+                              strokeColor="#7E3CE0"
+                              glowColor="#13051e"
+                              textclassName="text-base  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
+                              fillColor="#fff"
+                              glowIntensity={"none"}
+                            >
+                              {contestant?.contestant_name?.split(" ")[0]}
+                            </GlowyStrokeText>
                           </div>
                         </div>
-                      )
-                    )}
+                      </div>
+                    ))}
                   </div>
                   {isLoading ? (
                     <div className="flex justify-center items-center h-full ">
@@ -794,176 +603,187 @@ if (allQuestionsCompleted) {
                     </div>
                   ) : (
                     <>
-                   
+                      <div className="relative">
+                        {/* Animated container */}
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.6 }}
+                          className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000]"
+                        >
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                          >
+                            <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-3xl text-[#04DA6A] font-outfit">
+                              Question{" "}
+                              {mqttQuestionData?.question_index || "..."}
+                            </p>
+                          </motion.div>
 
+                          <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                            ref={textRef}
+                          >
+                            {mqttQuestionData?.question?.questions?.question ? (
+                              <p
+                                className={`${cn(`${fontSize} text-white  leading-[4rem] text-center font-gilroyMedium font-extrabold`)} `}
+                              >
+                                {mqttQuestionData.question.questions.question}
+                              </p>
+                            ) : (
+                              <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
+                                Waiting for question from host...
+                              </h2>
+                            )}
+                          </motion.div>
 
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.6 }}
+                            className="flex justify-center  absolute  -bottom-9 items-center w-full gap-4"
+                          >
+                            <div className="bg-[#011B0D] rounded-[12px] py-3 px-8 max-xl:max-w-[170px]">
+                              <p
+                                className="text-4xl text-white font-extrabold text-center"
+                                style={{
+                                  WebkitTextStroke: "2px #04DA6A",
+                                  textShadow:
+                                    "0px 2px 4px rgba(4, 218, 106, 0.5)",
+                                }}
+                              >
+                                {mqttQuestionData?.question?.questions
+                                  ?.question_booster || "..."}{" "}
+                                <span
+                                  className="text-4xl font-outfit font-normal text-[#04DA6A]"
+                                  style={{
+                                    WebkitTextStroke: "0px",
+                                    textShadow: "none",
+                                  }}
+                                >
+                                  Booster
+                                </span>
+                              </p>
+                            </div>
+                          </motion.div>
+                        </motion.div>
 
+                        {/* Animated answer buttons */}
+                        <motion.div
+                          className="grid grid-cols-2 gap-[.625rem] mt-[3.625rem]"
+                          initial="hidden"
+                          animate="visible"
+                          variants={{
+                            hidden: {},
+                            visible: {
+                              transition: {
+                                staggerChildren: 0.12,
+                              },
+                            },
+                          }}
+                        >
+                          {(
+                            [
+                              "option_a",
+                              "option_b",
+                              "option_c",
+                              "option_d",
+                            ] as OptionKey[]
+                          ).map((option, index) => {
+                            const optionLetter = String.fromCharCode(
+                              65 + index
+                            );
+                            const currentQuestions =
+                              mqttQuestionData?.question?.questions || {};
+                            const isCorrect = isCorrectOption(option);
+                            const isSelected = selectedOption === option;
+                            const showResult = isSubmitted && correctAnswer;
 
-<div className="relative">
-  {/* Animated container */}
-  <motion.div
-    initial={{ opacity: 0, scale: 0.95 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.6 }}
-    className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000]"
-  >
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
-      <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-3xl text-[#04DA6A] font-outfit">
-        Question {mqttQuestionData?.question_index || "..."}
-      </p>
-    </motion.div>
+                            return (
+                              <motion.button
+                                key={option}
+                                onClick={() => handleOptionSelect(option)}
+                                disabled={
+                                  !timerActive ||
+                                  isSubmitted ||
+                                  !currentQuestions?.question
+                                }
+                                variants={{
+                                  hidden: { opacity: 0, y: 20 },
+                                  visible: { opacity: 1, y: 0 },
+                                }}
+                                className={cn(
+                                  "bg-[#000000] border-2 border-[#D71BFA] cursor-none rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
+                                  selectedOption === option &&
+                                    !showResult &&
+                                    "bg-[#FCCE19] border-none text-[#745300]",
 
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      ref={textRef}
-    >
-      {mqttQuestionData?.question?.questions?.question ? (
-        <p className={`${cn(`${fontSize} text-white  leading-[4rem] text-center font-gilroyMedium font-extrabold`)} `}>
-          {mqttQuestionData.question.questions.question}
-        </p>
-      ) : (
-        <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-          Waiting for question from host...
-        </h2>
-      )}
-    </motion.div>
+                                  mqttAnswerData &&
+                                    currentQuestions?.correct_option ===
+                                      convertOptionToLetter(option)
+                                    ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                                    : "",
 
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6 }}
-      className="flex justify-center  absolute  -bottom-9 items-center w-full gap-4"
-    >
-      <div className="bg-[#011B0D] rounded-[12px] py-3 px-8 max-xl:max-w-[170px]">
-        <p
-          className="text-4xl text-white font-extrabold text-center"
-          style={{
-            WebkitTextStroke: "2px #04DA6A",
-            textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
-          }}
-        >
-          {mqttQuestionData?.question?.questions?.question_booster || "..."}{" "}
-          <span
-            className="text-4xl font-outfit font-normal text-[#04DA6A]"
-            style={{ WebkitTextStroke: "0px", textShadow: "none" }}
-          >
-            Booster
-          </span>
-        </p>
-      </div>
-    </motion.div>
-  </motion.div>
-
-  {/* Animated answer buttons */}
-  <motion.div
-    className="grid grid-cols-2 gap-[.625rem] mt-[3.625rem]"
-    initial="hidden"
-    animate="visible"
-    variants={{
-      hidden: {},
-      visible: {
-        transition: {
-          staggerChildren: 0.12,
-        },
-      },
-    }}
-  >
-    {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
-      (option, index) => {
-        const optionLetter = String.fromCharCode(65 + index);
-        const currentQuestions = mqttQuestionData?.question?.questions || {};
-        const isCorrect = isCorrectOption(option);
-        const isSelected = selectedOption === option;
-        const showResult = isSubmitted && correctAnswer;
-
-        return (
-          <motion.button
-            key={option}
-            onClick={() => handleOptionSelect(option)}
-            disabled={
-              !timerActive || isSubmitted || !currentQuestions?.question
-            }
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            className={cn(
-              "bg-[#000000] border-2 border-[#D71BFA] cursor-none rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative",
-              selectedOption === option &&
-                !showResult &&
-                "bg-[#FCCE19] border-none text-[#745300]",
-
-              mqttAnswerData &&
-                currentQuestions?.correct_option ===
-                  convertOptionToLetter(option)
-                ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
-                : "",
-
-              (isSubmitted ||
-                !timerActive ||
-                !mqttQuestionData?.question?.questions) &&
-                "opacity-70 cursor-not-allowed"
-            )}
-          >
-            {optionLetter}:
-            <span
-              className={cn(
-                "ml-2",
-                selectedOption === option && !showResult
-                  ? "text-white font-bold"
-                  : "",
-                isCorrect && showResult
-                  ? "text-[#04DA6A] font-bold"
-                  : "",
-                isSelected && !isCorrect && showResult
-                  ? "text-[#FF3B30] font-bold"
-                  : ""
-              )}
-              style={{
-                WebkitTextStroke:
-                  selectedOption === option && !showResult
-                    ? "1px #C76000"
-                    : "",
-              }}
-            >
-              {" "}
-              {currentQuestions[option] || `...`}
-            </span>
-
-            {isCorrect && showResult && (
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                <div className="bg-[#04DA6A] rounded-full p-1">
-                  <CheckIcon size={16} />
-                </div>
-              </div>
-            )}
-            {isSelected && !isCorrect && showResult && (
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                <div className="bg-[#FF3B30] rounded-full p-1">
-                  <ErrorIcon />
-                </div>
-              </div>
-            )}
-          </motion.button>
-        );
-      }
-    )}
-  </motion.div>
-</div>
-                    
+                                  (isSubmitted ||
+                                    !timerActive ||
+                                    !mqttQuestionData?.question?.questions) &&
+                                    "opacity-70 cursor-not-allowed"
+                                )}
+                              >
+                                {optionLetter}:
+                                <span
+                                  className={cn(
+                                    "ml-2",
+                                    selectedOption === option && !showResult
+                                      ? "text-white font-bold"
+                                      : "",
+                                    isCorrect && showResult
+                                      ? "text-[#04DA6A] font-bold"
+                                      : "",
+                                    isSelected && !isCorrect && showResult
+                                      ? "text-[#FF3B30] font-bold"
+                                      : ""
+                                  )}
+                                  style={{
+                                    WebkitTextStroke:
+                                      selectedOption === option && !showResult
+                                        ? "1px #C76000"
+                                        : "",
+                                  }}
+                                >
+                                  {" "}
+                                  {currentQuestions[option] || `...`}
+                                </span>
+                                {isCorrect && showResult && (
+                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                    <div className="bg-[#04DA6A] rounded-full p-1">
+                                      <CheckIcon size={16} />
+                                    </div>
+                                  </div>
+                                )}
+                                {isSelected && !isCorrect && showResult && (
+                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                    <div className="bg-[#FF3B30] rounded-full p-1">
+                                      <ErrorIcon />
+                                    </div>
+                                  </div>
+                                )}
+                              </motion.button>
+                            );
+                          })}
+                        </motion.div>
+                      </div>
                     </>
                   )}
 
-                  {
-                    showResultModal && <HustleBoardModal/>
-                  }
-                  {mqttAnswerData && <HustleRevealResult/>}
+                  {showResultModal && <HustleBoardModal currentQuestionAnswerData={currentQuestionAnswerData}
+                  currentQuestion={mqttQuestionData}
+                  />}
+                  {mqttAnswerData && <HustleRevealResult />}
                   <div className="h-full w-full">
                     {/* <FastestFingerResult
                       resultArray={mqttAnswerData}
@@ -973,12 +793,12 @@ if (allQuestionsCompleted) {
                       contestantBids={contestantBids}
                     /> */}
                     <FastestFingerResult
-  resultArray={mqttAnswerData}
-  mqttAnswerData={mqttAnswerData}
-  timeElapsed={timeLeft <= 0 || showNextButton}
-  currentQuestionId={currentQuestionId}
-  contestantBids={contestantBids} // This will be empty until new bids come in
-/>
+                      resultArray={mqttAnswerData}
+                      mqttAnswerData={mqttAnswerData}
+                      timeElapsed={timeLeft <= 0 || showNextButton}
+                      currentQuestionId={currentQuestionId}
+                      contestantBids={contestantBids} // This will be empty until new bids come in
+                    />
                   </div>
                 </div>
               </div>
