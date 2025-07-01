@@ -175,7 +175,7 @@ export default function GameResultModal({
                             {winnerData?.contestant_name?.split(" ")[0]} buzzed in the correct
                             answer first{" "}
                             <span className="text-sm">
-                              {winnerData?.answered_in}s
+                              {winnerData?.answered_in}
                             </span>
                           </p>
                         )}

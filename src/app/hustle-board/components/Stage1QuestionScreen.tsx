@@ -26,6 +26,8 @@ import { useGetAllHustleQuestions } from "@/app/components/stages/api/stage1/que
 // import { useGetQuestionAnswer } from "@/app/components/stages/api/stage1/question/getQuestionAnswer";
 import FastestFingerResult from "@/app/components/stages/components/hustle/FastestFingerResult";
 import HustleBoardStageTallyPage from "./HustleBoardStageTally";
+import HustleBoardModal from "./modals/HustleBoardModal";
+import HustleRevealResult from "./modals/HustleRevealResult";
 
 // Add debug log to track component imports
 
@@ -103,6 +105,29 @@ const Stage1QuestionScreen = ({onNext}:Prop) => {
   const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(
     null
   );
+  const [showResultModal, setShowResultModal] = useState(false)
+//   const [bidHistory, setBidHistory] = useState<{
+//   [questionId: string]: {
+//     [contestantId: string]: {
+//       contestant_id: string;
+//       contestant_name: string;
+//       bid_amount: number;
+//       timestamp: string;
+//     }
+//   }
+// }>({});
+const [contestantBids, setContestantBids] = useState<{
+  [contestantId: string]: {
+    contestant_id: string;
+    contestant_name: string;
+    bid_amount: number;
+    timestamp: string;
+    question_id?: string;
+    remaining_capital?: number;
+    bid_percentage?: string;
+  }
+}>({});
+
   const [mqttResultData, setMqttResultData] = useState<any>(null)
   const [resultMessageSent, setResultMessageSent] = useState(false);
   // const [showEliminationModal, setShowEliminationModal] = useState(false);
@@ -164,113 +189,336 @@ const Stage1QuestionScreen = ({onNext}:Prop) => {
   }, [currentQuestionId]);
 
   // MQTT message handling effect
-  useEffect(() => {
-    if (!isConnected) return;
+//   useEffect(() => {
+//     if (!isConnected) return;
 
-    const handler = (receivedMessage: any) => {
-      console.log("Main page received message:", receivedMessage?.event);
-      // Handle question reveal event
-      if (receivedMessage?.event === "game_s1_question_reveal") {
-        console.log("📝 Processing question reveal event");
-        setShowPrepPage(false);
+//     const handler = (receivedMessage: any) => {
+//       console.log("Main page received message:", receivedMessage?.event);
+//       // Handle question reveal event
+//       if (receivedMessage?.event === "game_s1_question_reveal") {
+//         console.log("📝 Processing question reveal event");
+//         setShowPrepPage(false);
 
-        const payload = receivedMessage.payload || {};
-        const questionData = payload.data || {};
-        const spendBreakdown =
-          questionData.spend_breakdown ||
-          payload.spend_breakdown ||
-          payload.data?.spend_breakdown;
+//         const payload = receivedMessage.payload || {};
+//         const questionData = payload.data || {};
+//         const spendBreakdown =
+//           questionData.spend_breakdown ||
+//           payload.spend_breakdown ||
+//           payload.data?.spend_breakdown;
 
-        // 1. Save full question info
-        setMqttQuestionData(questionData);
+//         // 1. Save full question info
+//         setMqttQuestionData(questionData);
 
-        // 2. Reset related states
-        setSelectedOption(null);
-        setIsSubmitted(false);
-        resetTimerState();
-        setResultMessageSent(false);
-        setMqttAnswerData(null);
+//         // 2. Reset related states
+//         setSelectedOption(null);
+//         setIsSubmitted(false);
+//         resetTimerState();
+//         setResultMessageSent(false);
+//         setMqttAnswerData(null);
+//         setContestantBids({})
+        
 
-        // 3. Set current index and question ID
-        setCurrentQuestionIndex(questionData.question_index || 1);
-        const questionId =
-          questionData?.question?.questions?.question_id ||
-          payload?.question_id;
-        if (questionId) {
-          setCurrentQuestionId(questionId.toString());
+//         // 3. Set current index and question ID
+//         setCurrentQuestionIndex(questionData.question_index || 1);
+//         const questionId =
+//           questionData?.question?.questions?.question_id ||
+//           payload?.question_id;
+//         if (questionId) {
+//           setCurrentQuestionId(questionId.toString());
+//         }
+
+//         // 4. Extract and save user's spend breakdown
+//         if (spendBreakdown && user?.contestant_id) {
+//           const userData = Array.isArray(spendBreakdown)
+//             ? spendBreakdown.find(
+//                 (contestant: any) =>
+//                   String(contestant.contestant_id) ===
+//                   String(user.contestant_id)
+//               )
+//             : spendBreakdown;
+
+//           if (userData?.spend_breakdown) {
+//             setUserBidAmounts(userData.spend_breakdown);
+
+//             const bidKeys = Object.keys(userData.spend_breakdown);
+//             if (bidKeys.length > 0) {
+//               const firstAmount = parseFloat(bidKeys[0]);
+//               setSelectedAmount(firstAmount);
+//             }
+//           } else {
+//             setUserBidAmounts({});
+//             console.warn("⚠️ No spend_breakdown found for user");
+//           }
+//         }
+//       }
+
+
+
+// if (receivedMessage?.event === "contestant_bid_selected") {
+//   const payload = receivedMessage.payload || {};
+//   const { 
+//     contestant_id, 
+//     contestant_name, 
+//     bid_amount, 
+//     timestamp, 
+//     question_id,
+//     remaining_capital,
+//     bid_percentage 
+//   } = payload;
+  
+//   if (contestant_id && contestant_name && bid_amount !== undefined) {
+//     console.log("Leaderboard received bid update:", contestant_name, bid_amount);
+    
+//     // Update contestant bids with explicit replacement logic
+//     setContestantBids(prevBids => {
+//       // Check if contestant already has a bid
+//       const existingBid = prevBids[contestant_id];
+      
+//       if (existingBid) {
+//         console.log(`Replacing existing bid for ${contestant_name}: ${existingBid.bid_amount} -> ${bid_amount}`);
+//       } else {
+//         console.log(`New bid from ${contestant_name}: ${bid_amount}`);
+//       }
+      
+//       // Create updated bids object (this automatically replaces existing entries)
+//       const updatedBids = {
+//         ...prevBids,
+//         [contestant_id]: {
+//           contestant_id,
+//           contestant_name,
+//           bid_amount,
+//           timestamp,
+//           question_id,
+//           remaining_capital,
+//           bid_percentage,
+//           // Optional: track if this was an update
+//           is_update: !!existingBid
+//         }
+//       };
+      
+//       return updatedBids;
+//     });
+    
+   
+//   }
+// }
+
+
+
+//       if (receivedMessage?.event === "game_s1_question_answer") {
+//         const payload = receivedMessage.payload || {};
+//         const questionId = payload.question_id;
+
+//         // Use ref instead of state
+//         if (questionId === currentQuestionIdRef?.current) {
+//           const answersData = payload.answers_data?.data;
+
+//           // Store the full answer data for use in FastestFingerResult
+//           setMqttAnswerData(answersData);
+//           setMqttResultData(answersData);
+
+//           if (answersData?.question?.correct_option) {
+//             // Set the correct answer
+//             setCorrectAnswer(answersData.question.correct_option);
+
+//             // Mark the question as submitted to show results
+//             setIsSubmitted(true);
+//             setShowNextButton(true);
+//             setTimerActive(false); // Stop the timer
+
+//             // Refetch contestant data to update balances
+//             // refetch();
+//           }
+//         }
+//       }
+
+//       // Handle timer start event
+//       if (receivedMessage.event === "game_s1_timer_start") {
+//         handleStartTimer();
+//       }
+
+//       // Handle results reveal event
+//       if (receivedMessage.event === "game_s1_results_reveal") {
+//         console.log("📊 Results reveal event received");
+//         setAllQuestionsCompleted(true);
+//       }
+
+
+      
+//     };
+
+//     onMessage(handler);
+
+//     return () => {
+//       console.log("Cleaning up MQTT message handler");
+//       onMessage(null);
+//     };
+//   }, [isConnected, onMessage, user?.contestant_id]);
+
+
+
+
+
+// Updated MQTT message handling effect - only the affected parts
+useEffect(() => {
+  if (!isConnected) return;
+
+  const handler = (receivedMessage: any) => {
+    console.log("Main page received message:", receivedMessage?.event);
+    
+    // Handle question reveal event
+    if (receivedMessage?.event === "game_s1_question_reveal") {
+      console.log("📝 Processing question reveal event");
+      setShowPrepPage(false);
+
+      const payload = receivedMessage.payload || {};
+      const questionData = payload.data || {};
+      const spendBreakdown =
+        questionData.spend_breakdown ||
+        payload.spend_breakdown ||
+        payload.data?.spend_breakdown;
+
+      // 1. Save full question info
+      setMqttQuestionData(questionData);
+
+      // 2. Reset related states
+      setSelectedOption(null);
+      setIsSubmitted(false);
+      resetTimerState();
+      setResultMessageSent(false);
+      setMqttAnswerData(null);
+      setShowResultModal(false)
+      // FIXED: Clear contestant bids completely for new question
+      setContestantBids({});
+      console.log("🧹 Cleared all contestant bids for new question");
+
+      // 3. Set current index and question ID
+      setCurrentQuestionIndex(questionData.question_index || 1);
+      const questionId =
+        questionData?.question?.questions?.question_id ||
+        payload?.question_id;
+      if (questionId) {
+        setCurrentQuestionId(questionId.toString());
+      }
+
+      // 4. Extract and save user's spend breakdown
+      if (spendBreakdown && user?.contestant_id) {
+        const userData = Array.isArray(spendBreakdown)
+          ? spendBreakdown.find(
+              (contestant: any) =>
+                String(contestant.contestant_id) ===
+                String(user.contestant_id)
+            )
+          : spendBreakdown;
+
+        if (userData?.spend_breakdown) {
+          setUserBidAmounts(userData.spend_breakdown);
+
+          const bidKeys = Object.keys(userData.spend_breakdown);
+          if (bidKeys.length > 0) {
+            const firstAmount = parseFloat(bidKeys[0]);
+            setSelectedAmount(firstAmount);
+          }
+        } else {
+          setUserBidAmounts({});
+          console.warn("⚠️ No spend_breakdown found for user");
         }
+      }
+    }
 
-        // 4. Extract and save user's spend breakdown
-        if (spendBreakdown && user?.contestant_id) {
-          const userData = Array.isArray(spendBreakdown)
-            ? spendBreakdown.find(
-                (contestant: any) =>
-                  String(contestant.contestant_id) ===
-                  String(user.contestant_id)
-              )
-            : spendBreakdown;
-
-          if (userData?.spend_breakdown) {
-            setUserBidAmounts(userData.spend_breakdown);
-
-            const bidKeys = Object.keys(userData.spend_breakdown);
-            if (bidKeys.length > 0) {
-              const firstAmount = parseFloat(bidKeys[0]);
-              setSelectedAmount(firstAmount);
+    // Handle contestant bid updates
+    if (receivedMessage?.event === "contestant_bid_selected") {
+      const payload = receivedMessage.payload || {};
+      const { 
+        contestant_id, 
+        contestant_name, 
+        bid_amount, 
+        timestamp, 
+        question_id,
+        remaining_capital,
+        bid_percentage 
+      } = payload;
+      
+      if (contestant_id && contestant_name && bid_amount !== undefined) {
+        console.log("💰 New bid received:", contestant_name, bid_amount);
+        
+        // Only update bids for the current question
+        if (question_id === currentQuestionId) {
+          setContestantBids(prevBids => {
+            const existingBid = prevBids[contestant_id];
+            
+            if (existingBid) {
+              console.log(`🔄 Updating bid for ${contestant_name}: ${existingBid.bid_amount} -> ${bid_amount}`);
+            } else {
+              console.log(`✨ New bid from ${contestant_name}: ${bid_amount}`);
             }
-          } else {
-            setUserBidAmounts({});
-            console.warn("⚠️ No spend_breakdown found for user");
-          }
+            
+            const updatedBids = {
+              ...prevBids,
+              [contestant_id]: {
+                contestant_id,
+                contestant_name,
+                bid_amount,
+                timestamp,
+                question_id,
+                remaining_capital,
+                bid_percentage
+              }
+            };
+            
+            return updatedBids;
+          });
+        } else {
+          console.log(`⚠️ Ignoring bid for different question. Current: ${currentQuestionId}, Received: ${question_id}`);
         }
       }
+    }
+    if (receivedMessage?.event === "clear_all_bids") {
+      setContestantBids({})
+     
+    }
 
-      if (receivedMessage?.event === "game_s1_question_answer") {
-        const payload = receivedMessage.payload || {};
-        const questionId = payload.question_id;
+    // ... rest of your message handlers remain the same
+    if (receivedMessage?.event === "game_s1_question_answer") {
 
-        // Use ref instead of state
-        if (questionId === currentQuestionIdRef?.current) {
-          const answersData = payload.answers_data?.data;
+      const payload = receivedMessage.payload || {};
+      const questionId = payload.question_id;
 
-          // Store the full answer data for use in FastestFingerResult
-          setMqttAnswerData(answersData);
-          setMqttResultData(answersData);
+      if (questionId === currentQuestionIdRef?.current) {
+        const answersData = payload.answers_data?.data;
 
-          if (answersData?.question?.correct_option) {
-            // Set the correct answer
-            setCorrectAnswer(answersData.question.correct_option);
+        setMqttAnswerData(answersData);
+        setMqttResultData(answersData);
 
-            // Mark the question as submitted to show results
-            setIsSubmitted(true);
-            setShowNextButton(true);
-            setTimerActive(false); // Stop the timer
-
-            // Refetch contestant data to update balances
-            // refetch();
-          }
+setShowResultModal(true)
+        if (answersData?.question?.correct_option) {
+          setCorrectAnswer(answersData.question.correct_option);
+          setIsSubmitted(true);
+          setShowNextButton(true);
+          setTimerActive(false);
         }
       }
+    }
 
-      // Handle timer start event
-      if (receivedMessage.event === "game_s1_timer_start") {
-        handleStartTimer();
-      }
+    if (receivedMessage.event === "game_s1_timer_start") {
+      handleStartTimer();
+    }
 
-      // Handle results reveal event
-      if (receivedMessage.event === "game_s1_results_reveal") {
-        console.log("📊 Results reveal event received");
-        setAllQuestionsCompleted(true);
-      }
-    };
+    if (receivedMessage.event === "game_s1_results_reveal") {
+      console.log("📊 Results reveal event received");
+      setAllQuestionsCompleted(true);
+    }
+  };
 
-    onMessage(handler);
+  onMessage(handler);
 
-    return () => {
-      console.log("Cleaning up MQTT message handler");
-      onMessage(null);
-    };
-  }, [isConnected, onMessage, user?.contestant_id]);
+  return () => {
+    console.log("Cleaning up MQTT message handler");
+    onMessage(null);
+  };
+}, [isConnected, onMessage, user?.contestant_id, currentQuestionId]);
+
+
 
   // Reset the result message sent flag when a new question is received
   useEffect(() => {
@@ -375,6 +623,8 @@ if (allQuestionsCompleted) {
     />;
   }
 
+
+ 
 
   return (
     <>
@@ -706,21 +956,29 @@ if (allQuestionsCompleted) {
     )}
   </motion.div>
 </div>
-
-
-
-
-
                     
                     </>
                   )}
+
+                  {
+                    showResultModal && <HustleBoardModal/>
+                  }
+                  {mqttAnswerData && <HustleRevealResult/>}
                   <div className="h-full w-full">
-                    <FastestFingerResult
+                    {/* <FastestFingerResult
                       resultArray={mqttAnswerData}
                       mqttAnswerData={mqttAnswerData}
                       timeElapsed={timeLeft <= 0 || showNextButton}
                       currentQuestionId={currentQuestionId}
-                    />
+                      contestantBids={contestantBids}
+                    /> */}
+                    <FastestFingerResult
+  resultArray={mqttAnswerData}
+  mqttAnswerData={mqttAnswerData}
+  timeElapsed={timeLeft <= 0 || showNextButton}
+  currentQuestionId={currentQuestionId}
+  contestantBids={contestantBids} // This will be empty until new bids come in
+/>
                   </div>
                 </div>
               </div>

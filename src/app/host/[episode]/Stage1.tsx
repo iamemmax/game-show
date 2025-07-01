@@ -139,7 +139,6 @@ export default function Stage1Questions({
                 },
                 onError: (error: any) => {
                     toast.error("Failed to end timer")
-                    console.error("Error ending timer:", error)
 
                     if (error?.response?.message == "Question Already Ended") {
                         setTimerActive(false)

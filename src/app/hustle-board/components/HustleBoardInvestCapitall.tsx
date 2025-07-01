@@ -78,7 +78,7 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
         <p className="text-white text-sm font-medium leading-tight mb-1">
           {contestant.contestant_details?.name}
         </p>
-        <p className="text-white text-lg font-bold leading-tight">
+        <p className="text-white text-2xl font-bold leading-tight">
           ₦{addCommasToNumber(
             Number(getContestantInfo(contestant?.contestant_id)?.actual_balance)
            )}

@@ -249,7 +249,7 @@ export default function HostPage() {
                     setGameState((prev) => ({
                         ...prev,
                         lastAction: "game_s2_results_reveal",
-                        currentStageStep: "results",
+                        currentStageStep: "init",
                         currentStage: "STAGE_THREE",
                     }))
                 }
@@ -513,15 +513,7 @@ export default function HostPage() {
                         </TrapeziumButton>
                     </div>
                 )
-            } else if (currentStageStep === "hustle_pick") {
-                return (
-                    <div className="flex justify-center">
-                        <TrapeziumButton onClick={endTimerHustlePick} variant="yellow">
-                            END HUSTLE PICK TIMER
-                        </TrapeziumButton>
-                    </div>
-                )
-            } else if (currentStageStep === "results") {
+            }  else if (currentStageStep === "results") {
                 return (
                     <div className="flex flex-col items-center mt-8">
                         <div className="flex justify-center mb-4">
