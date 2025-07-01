@@ -205,7 +205,7 @@ export default function HostPage() {
                         lastAction: "question_s1_time_elapsed",
                         currentStageStep: "questions",
                     }))
-                } else if (eventCode === "game_s1_question_result_reveal") {
+                } else if (eventCode === "game_s1_question_bids_reveal") {
                     setGameState((prev) => ({
                         ...prev,
                         lastAction: eventCode,
