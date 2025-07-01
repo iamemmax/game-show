@@ -131,13 +131,44 @@ interface Data {
   answer: string;
   amount_staked: number;
 }
+
+
+
 interface Prop{
     currentQuestionAnswerData: Data[]
     currentQuestion:any
 }
+type OptionKey = "A" | "B" | "C" | "D";
+
+function isOptionKey(key: string | null | undefined): key is OptionKey {
+  return ["A", "B", "C", "D"].includes(key ?? "");
+}
+
+function getSelectedOptionText(
+  question: {
+    option_a: string;
+    option_b: string;
+    option_c: string;
+    option_d: string;
+  },
+  selected: string | null | undefined
+): string {
+  if (!isOptionKey(selected)) return "No answer";
+
+  const map: Record<OptionKey, string> = {
+    A: question.option_a,
+    B: question.option_b,
+    C: question.option_c,
+    D: question.option_d,
+  };
+
+  const value = map[selected];
+  return value ? `${selected}: ${value}` : "No answer";
+}
+
 
 const HustleBoardModal = ({currentQuestionAnswerData,currentQuestion}:Prop) => {
-console.log(currentQuestionAnswerData, currentQuestion);
+// console.log(currentQuestionAnswerData, currentQuestion);
 
 
   const [visibleItems, setVisibleItems] = useState<number>(0);
@@ -163,17 +194,19 @@ console.log(currentQuestionAnswerData, currentQuestion);
     return () => clearInterval(interval);
   }, []);
 
+  console.log(currentQuestion);
+  
   return (
     <div className="fixed inset-0 z-50 w-full flex items-center justify-center bg-black/80">
       <div className="bg-[#15052B] rounded-[30px] text-white w-[658px] border border-[#7E3CE0] p-[1.875rem]">
         {/* Question Header */}
         <div className="bg-[#1F0541] rounded-10 p-4 flex justify-center items-center flex-col">
           <div className="bg-[#29005E] rounded-[20px] px-[22px] py-2">
-            <p className="text-[#9E5CFF] text-sm font-sans font-semibold">Question 4</p>
+            <p className="text-[#9E5CFF] text-sm font-sans font-semibold">Question {currentQuestion?.question_index}</p>
           </div>
           <div className="mt-[.625rem]">
             <p className="text-white text-lg font-gilroyBold font-semibold">
-              What is the Biggest market in West Africa?
+            {currentQuestion?.question.questions.question}
             </p>
           </div>
         </div>
@@ -199,19 +232,19 @@ console.log(currentQuestionAnswerData, currentQuestion);
 
               <div>
                 <p className="text-xs capitalize font-gilroyMedium text-white">
-                  {capitalizeFirstLetter(data?.contestant_name)}
+                  {/* {capitalizeFirstLetter(data?.contestant_name)} */}
                 </p>
                 <p className="font-sans opacity-75 text-xs text-white">
                   Answer:
                   <span className="font-bold opacity-100 text-sm">
                     {" "}
-                    {data?.answer}
+                    {data?.answer === "N" ? "_ ": data?.answer} : {getSelectedOptionText(currentQuestion?.question.questions.question,  String(data?.answer))}
                   </span>
                 </p>
                 <div className="bg-[#200541] mt-1 leading-3 flex justify-center items-center flex-col rounded-[1.5rem] py-2 px-3">
                   <p className="font-gilroyMedium text-xs text-white">Bid amount:</p>
                   <h2 className="text-[#B380FF] font-gilroyHeavy font-extrabold text-xl">
-                    ₦{Number(data?.amount_staked).toLocaleString()}
+                    ₦{Number(data?.amount_staked)?.toLocaleString()}
                   </h2>
                 </div>
               </div>

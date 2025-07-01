@@ -77,7 +77,7 @@ export const insertSpacesBeforeCapitalLetters = (string: string) => {
  */
 export const capitalizeFirstLetter = (string: string) => {
   const stringWithSpaces = insertSpacesBeforeCapitalLetters(
-    string.toLowerCase()
+    string?.toLowerCase()
   );
 
   return (
