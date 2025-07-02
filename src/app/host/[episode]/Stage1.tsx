@@ -142,8 +142,7 @@ export default function Stage1Questions({
                     })
 
                     sendGameMessage(`game_s1_question_bids_reveal`, {
-                        question_id: questionId,
-                        answers_data: data,
+                        answers_data: data.data,
                         question_index: currentQuestionData.data.question_index,
                         show_modal: true,
                     })

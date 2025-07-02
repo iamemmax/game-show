@@ -295,9 +295,11 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
 
       if (receivedMessage?.event === "game_s1_question_bids_reveal") {
         const payload = receivedMessage.payload || {};
-        const questionId = payload?.data?.question?.question_id;
-        if (questionId === currentQuestionIdRef?.current) {
-          const answersData = payload?.data?.answers;
+        const questionId = payload?.answers_data?.question?.question_id;
+        
+        
+        if (questionId?.toString() === currentQuestionIdRef?.current?.toString()) {
+          const answersData = payload?.answers_data?.answers;
           setCurrentQuestionAnswerData(answersData);
           setShowResultModal(true);
         }
@@ -310,15 +312,16 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
 
         const questionId = payload?.data?.question?.question_id;
 
-        if (questionId === currentQuestionIdRef?.current) {
+        if (questionId?.toString() === currentQuestionIdRef?.current?.toString()) {
           const answersData = payload?.data?.answers;
 
           setMqttAnswerData(answersData);
           setMqttResultData(answersData);
           setShowResultModal(false);
-          setShowResultModal(true);
+          setShowResultModal(false);
+          
           if (payload?.question?.correct_option) {
-            setCorrectAnswer(answersData?.question?.correct_option);
+            setCorrectAnswer(payload?.data?.question?.correct_option);
             setIsSubmitted(true);
             setShowNextButton(true);
             setTimerActive(false);
