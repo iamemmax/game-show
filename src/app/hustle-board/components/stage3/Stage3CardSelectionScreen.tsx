@@ -14,11 +14,12 @@ import HustleStages from "@/app/components/stages/components/hustle/HustleStages
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import { useParams } from "next/navigation";
 import StageThreeWinnerModal from "@/app/components/stages/components/StageThreeWinnerModal";
+import HustleBoardStageTallyPage from "../HustleBoardStageTally";
 
 interface prop{
   onNext: () => void
 }
-const Stage3CardSelectionScreens = () => {
+const Stage3CardSelectionScreens = ({onNext}:prop) => {
   const user = tokenStorage.getUser();
   const { isConnected, onMessage } = useMQTT();
   const [remainingContestants, setRemainingContestants] = useState<Array<{id: number, name: string}>>([]);
@@ -63,7 +64,7 @@ const params = useParams()
   const [passCardIndex, setPassCardIndex] = useState<number>(-1);
   const [currentTurn, setCurrentTurn] = useState<number | null>(null);
   const [currentTurnName, setCurrentTurnName] = useState<string>("");
-
+ const [showStageResult, setShowStageResult] = useState(false);
   const { data: contestantsData, isLoading: isLoadingContestants } = useGetGameContestants(Number(params?.episodeId));
 
   // Helper function to get contestant name by ID
@@ -267,6 +268,10 @@ const params = useParams()
           setTimeout(() => setRecentlyUpdated([]), 1000);
         }, 600);
       }
+       if (receivedMessage?.event === "game_s3_results_reveal") {
+        console.log("✅ Processing game_s3_results_reveal");
+        setShowStageResult(true);
+      }
     };
     
     onMessage(handler);
@@ -281,6 +286,19 @@ const params = useParams()
     }
   }, [remainingContestants, passFound]);
    
+
+ if (showStageResult) {
+    return (
+      <HustleBoardStageTallyPage
+        eliminationCount={5}
+        removeCount={2}
+        title="stage 3"
+        activeState={3}
+        onNext={()=>onNext}
+      />
+    );
+  }
+
   return (
     <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full relative">
       {/* Left Sidebar */}
@@ -368,7 +386,7 @@ const params = useParams()
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                 </div>
               ) : (
-                <div className="mt-1 flex flex-wrap justify-center gap-y-1">
+                <div className=" flex flex-wrap justify-center ">
                   {cards.map((card, index) => {
                     const isFlipping = flippingCards.includes(index);
                     const cardText = card.revealed ? card.type : "?";

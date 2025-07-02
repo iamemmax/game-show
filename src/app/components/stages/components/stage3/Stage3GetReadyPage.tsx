@@ -73,9 +73,8 @@ const Stage3GetReadyPage = ({onNext}:prop) => {
  
 
 if(showCardRevealScreen){
-  onNext()
-    return null
-    // return <Stage3CardSelection/>
+ 
+    return <Stage3CardSelection/>
 
 }
   

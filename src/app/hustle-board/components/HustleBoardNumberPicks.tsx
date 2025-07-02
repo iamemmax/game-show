@@ -376,7 +376,7 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
                   <div>
                     {
                       timerStarted && (
-                        <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+                        <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 ">
                           <span
                             className="text-[20px] font-extrabold font-verdana text-white"
                             style={{

@@ -53,7 +53,7 @@ const { data: lastPickData } = useGetLastContestantPick({
 console.log(contestantsData);
 
 // 4. Fetch all hustle numbers for the episode
-const { data: hustlePicksData } = useGetAllHustleNumbers(episodeId);
+// const { data: hustlePicksData } = useGetAllHustleNumbers(episodeId);
 
 // 5. Pick numbers (placeholder)
 const myData ={
@@ -83,7 +83,7 @@ const myData ={
 "number_revealed":[55, 7, 3, 23, 13]
 }
 
-const mynumbers = [12, 15, 7, 8, 3];
+const mynumbers = lastPickData&&lastPickData[0]?.picks;
 const revealedNumbers = myData?.number_revealed?.filter((x) => x !== null) ?? [];
 
 // Check how many numbers match
@@ -92,7 +92,7 @@ const matchedCount = revealedNumbers?.filter((num) =>
 ).length;
 
 // If all numbers matched
-const isWinner = matchedCount === mynumbers.length;
+const isWinner = matchedCount === mynumbers?.length;
 
 // Highlight matched numbers
 const getNumberMatchStatus = (num: number | null, allRevealed: boolean) => {
@@ -261,7 +261,7 @@ useEffect(() => {
   <div className="flex items-center justify-center">
     {myData?.number_revealed?.map((x, idx) => {
       const isRevealed = x !== null;
-      const isMatched = isRevealed && mynumbers.includes(x);
+      const isMatched = isRevealed && mynumbers?.includes(x);
       const status = !isRevealed
         ? "default"
         : isMatched
@@ -304,7 +304,7 @@ useEffect(() => {
   {/* Match Counter */}
 <div className="w-[6.8563rem] h-[6.8563rem] bg-white rounded-full flex justify-center flex-col items-center ml-4">
   <p className="font-display text-black font-black text-[2rem]">
-    {displayCount}/{mynumbers.length}
+    {displayCount}/{mynumbers?.length}
   </p>
   <p className="block text-base font-display font-bold uppercase -mt-2">
     match

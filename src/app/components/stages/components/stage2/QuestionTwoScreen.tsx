@@ -114,12 +114,11 @@ const QuestionTwoScreen = ({onNext}:prop) => {
   const [answerReceived, setAnswerReceived] = useState(false);
   const [openModals, setOpenModals] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  useEffect(() => {
-    // Only initialize game start time, but don't start the timer
-    if (!gameStartTime) {
-      setGameStartTime(new Date());
-    }
-  }, []);
+
+  const [fontSize, setFontSize] = useState('text-xl 2xl:text-2xl');
+  const textRef = useRef(null);
+
+
 
   // Timer effect
   useEffect(() => {
@@ -377,6 +376,33 @@ const QuestionTwoScreen = ({onNext}:prop) => {
   // Watch for answer data and publish event when available
 
   // Automatically refetch answer data when shouldFetchAnswer is true
+
+
+  const getFontSizeClass = (textLength:number) => {
+    if (textLength <= 30) {
+      return 'text-xl 2xl:text-2xl'; // Large font for short questions
+    } else if (textLength <= 60) {
+      return 'text-lg 2xl:text-xl'; // Medium font for medium questions
+    } else if (textLength <= 100) {
+      return 'text-base 2xl:text-lg'; // Smaller font for longer questions
+    } else {
+      return 'text-sm 2xl:text-base'; // Smallest font for very long questions
+    }
+  };
+useEffect(() => {
+    const questionText = mqttQuestionData?.question || "Waiting for question...";
+    const newFontSize = getFontSizeClass(questionText.length);
+    setFontSize(newFontSize);
+  }, [mqttQuestionData?.question]);
+
+  useEffect(() => {
+    // Only initialize game start time, but don't start the timer
+    if (!gameStartTime) {
+      setGameStartTime(new Date());
+    }
+  }, []);
+
+
 
   if (showStage2Prep) {
     return <Stage2GetReadyPage />;
@@ -695,7 +721,7 @@ const QuestionTwoScreen = ({onNext}:prop) => {
                               </p>
                             </motion.div>
 
-                            <motion.div
+                            {/* <motion.div
                               initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.3, duration: 0.5 }}
@@ -704,7 +730,20 @@ const QuestionTwoScreen = ({onNext}:prop) => {
                                 {mqttQuestionData?.question ||
                                   "Waiting for question..."}
                               </h2>
-                            </motion.div>
+                            </motion.div> */}
+
+                            <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3, duration: 0.5 }}
+    >
+      <h2 
+        ref={textRef}
+        className={`text-white ${fontSize} text-center font-gilroyMedium font-extrabold line-clamp-2`}
+      >
+        {mqttQuestionData?.question || "Waiting for question..."}
+      </h2>
+    </motion.div>
 
                             <motion.div
                               className="flex justify-center items-center w-full gap-4"

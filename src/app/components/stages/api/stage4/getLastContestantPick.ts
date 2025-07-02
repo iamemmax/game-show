@@ -6,11 +6,16 @@ interface PickNumberProp {
   episode_id: number;
 }
 
+
+export interface finalePicksProp {
+  contestant_id: number;
+  picks: number[];
+}
 export const getLastContestantPick = async ({ contestant_id, episode_id }: PickNumberProp) => {
   const response = await salaryAxios.get(
     `api/admin-controller/get_hustle_picks?game_episode=${episode_id}&contestant_id=${contestant_id}`
   );
-  return response?.data;
+  return response?.data as finalePicksProp[];
 };
 
 export const useGetLastContestantPick = ({ contestant_id, episode_id }: PickNumberProp) =>
