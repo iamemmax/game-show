@@ -1,124 +1,9 @@
-// import { contestantImages } from "@/app/components/stages/components/mocks/contestantImages";
-// import StagesCard from "@/app/shared/StagesCard";
-// import { capitalizeFirstLetter } from "@/utils";
-// import Image from "next/image";
-// import React from "react";
-
-// const HustleBoardModal = () => {
-//   const resultBoard = [
-//     {
-//       name: "emmax",
-//       option: "B",
-//       correct_answer: "Onisah",
-//       bid_amount: "20000",
-//     },
-//     {
-//       name: "Azu",
-//       option: "C",
-//       correct_answer: "Onisah",
-//       bid_amount: "20000",
-//     },
-//     {
-//       name: "Edmud",
-//       option: "B",
-//       correct_answer: "Onisah",
-//       bid_amount: "20000",
-//     },
-//     {
-//       name: "Daniel",
-//       option: "B",
-//       correct_answer: "Onisah",
-//       bid_amount: "20000",
-//     },
-//     {
-//       name: "Temiloluwa",
-//       option: "B",
-//       correct_answer: "Onisah",
-//       bid_amount: "20000",
-//     },
-//     {
-//       name: "Stephen",
-//       option: "B",
-//       correct_answer: "Onisah",
-//       bid_amount: "20000",
-//     },
-//   ];
-//   return (
-//     <div className="fixed inset-0 z-50 w-full  flex items-center justify-center bg-black/80">
-//       <div className="bg-[#15052B] rounded-[30px] text-white w-[658px] border border-[#7E3CE0]  p-[1.875rem] ">
-//         <div className="bg-[#1F0541] rounded-10 p-4 flex justify-center items-center flex-col">
-//           <div className="bg-[#29005E] rounded-[20px] px-[22px] py-2">
-//             <p className="text-[#9E5CFF] text-sm font-sans font-semibold">
-//               Question 4
-//             </p>
-//           </div>
-//           <div className="mt-[.625rem]">
-//             <p className="text-white text-lg  font-gilroyBold font-semibold">
-//               What is the Biggest market in West Africa?
-//             </p>
-//           </div>
-//         </div>
-
-//         {resultBoard?.map((data, idx: number) => (
-//           <div className="grid grid-cols-[1.5fr_1fr] mt-3">
-//             <div className="bg-[#29104A] flex items-start gap-3 border-[0.3px] border-[#7E3CE0] w-full p-3 rounded-10">
-//               <div className="relative w-[5.125rem] h-full  rounded-[10px] overflow-hidden">
-//                 <Image
-//                   alt="contestant"
-//                   src={contestantImages[idx]}
-//                   fill
-//                   className="object-cover rounded-10"
-//                 />
-//               </div>
-
-//               <div className="">
-//                 <p className="text-xs capitalize font-gilroyMedium text-white">
-//                   {capitalizeFirstLetter(data?.name)}
-//                 </p>
-//                 <p className="font-sans opacity-75 text-xs text-white">
-//                   Answer:{" "}
-//                   <span className="font-bold opacity-100 text-sm">
-//                     {" "}
-//                     {data?.option}. {data?.correct_answer}
-//                   </span>{" "}
-//                 </p>
-//                 <div className="bg-[#200541] mt-1 leading-3  flex justify-center items-center flex-col rounded-[1.5rem] py-2 px-3">
-//                   <p className="font-gilroyMedium text-xs text-white">
-//                     Bid amount:
-//                   </p>
-//                   <h2 className="text-[#B380FF] font-gilroyHeavy font-extrabold text-xl">
-//                     ₦{data?.bid_amount}
-//                   </h2>
-//                 </div>
-//               </div>
-//             </div>
-//             <div className="">
-//               <StagesCard
-//                 key={`slot-${idx}`}
-//                 title=""
-//                 subTitle=""
-//                 borderColor="#FFC125"
-//                 iconText=""
-//                 showIcon={false}
-//                 width={230}
-//                 height={80}
-//                 className="2xl:w-[260px] opacity-50"
-//               />
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default HustleBoardModal;
 
 "use client";
 
 import { contestantImages } from "@/app/components/stages/components/mocks/contestantImages";
 import StagesCard from "@/app/shared/StagesCard";
-import { capitalizeFirstLetter } from "@/utils";
+import { addCommasToNumber, capitalizeFirstLetter } from "@/utils";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -138,34 +23,30 @@ interface Prop{
     currentQuestionAnswerData: Data[]
     currentQuestion:any
 }
-type OptionKey = "A" | "B" | "C" | "D";
 
-function isOptionKey(key: string | null | undefined): key is OptionKey {
-  return ["A", "B", "C", "D"].includes(key ?? "");
-}
 
-function getSelectedOptionText(
-  question: {
+function getOptionValue(
+  questions: {
     option_a: string;
     option_b: string;
     option_c: string;
     option_d: string;
   },
-  selected: string | null | undefined
-): string {
-  if (!isOptionKey(selected)) return "No answer";
+  option: string | null | undefined
+): string | null {
+  if (!option) return null;
 
-  const map: Record<OptionKey, string> = {
-    A: question.option_a,
-    B: question.option_b,
-    C: question.option_c,
-    D: question.option_d,
+  const key = option.toLowerCase() as "a" | "b" | "c" | "d";
+
+  const map = {
+    a: questions.option_a,
+    b: questions.option_b,
+    c: questions.option_c,
+    d: questions.option_d,
   };
 
-  const value = map[selected];
-  return value ? `${selected}: ${value}` : "No answer";
+  return map[key] || null;
 }
-
 
 const HustleBoardModal = ({currentQuestionAnswerData,currentQuestion}:Prop) => {
 // console.log(currentQuestionAnswerData, currentQuestion);
@@ -194,7 +75,7 @@ const HustleBoardModal = ({currentQuestionAnswerData,currentQuestion}:Prop) => {
     return () => clearInterval(interval);
   }, []);
 
-  console.log(currentQuestion);
+//   console.log(getOptionValue(currentQuestion?.question.questions.question,  String("A")));
   
   return (
     <div className="fixed inset-0 z-50 w-full flex items-center justify-center bg-black/80">
@@ -232,19 +113,18 @@ const HustleBoardModal = ({currentQuestionAnswerData,currentQuestion}:Prop) => {
 
               <div>
                 <p className="text-xs capitalize font-gilroyMedium text-white">
-                  {/* {capitalizeFirstLetter(data?.contestant_name)} */}
+                  {capitalizeFirstLetter(data?.contestant_name??"")}
                 </p>
                 <p className="font-sans opacity-75 text-xs text-white">
                   Answer:
                   <span className="font-bold opacity-100 text-sm">
                     {" "}
-                    {data?.answer === "N" ? "_ ": data?.answer} : {getSelectedOptionText(currentQuestion?.question.questions.question,  String(data?.answer))}
-                  </span>
+{data?.answer === "N" ? " -.-- ": data?.answer} : {getOptionValue(currentQuestion?.question.questions, String(data?.answer?.toLowerCase()))}                  </span>
                 </p>
                 <div className="bg-[#200541] mt-1 leading-3 flex justify-center items-center flex-col rounded-[1.5rem] py-2 px-3">
                   <p className="font-gilroyMedium text-xs text-white">Bid amount:</p>
                   <h2 className="text-[#B380FF] font-gilroyHeavy font-extrabold text-xl">
-                    ₦{Number(data?.amount_staked)?.toLocaleString()}
+                    ₦{addCommasToNumber(Math.ceil(Number(data?.amount_staked) / 100) * 100)}
                   </h2>
                 </div>
               </div>

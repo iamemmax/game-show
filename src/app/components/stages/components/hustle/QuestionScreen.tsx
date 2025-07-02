@@ -352,10 +352,11 @@ if (receivedMessage?.event === "game_s1_question_reveal") {
     // FIXED: Enhanced answer handling section
     if (receivedMessage?.event === "game_s1_question_answer") {
       const payload = receivedMessage.payload || {};
-      const questionId = payload.question_id;
+       const questionId = payload?.data?.question?.question_id;
 
       if (questionId === currentQuestionIdRef?.current) {
-        const answersData = payload.answers_data?.data;
+        const answersData = payload?.data?.answers;
+
         
         // Set the answer data first
         setMqttAnswerData(answersData);
@@ -367,8 +368,8 @@ if (receivedMessage?.event === "game_s1_question_reveal") {
 
         // CRITICAL FIX: Update animated capital immediately with new balance
         if (answersData && user?.contestant_id) {
-          const updatedContestant = answersData.find(
-            (contestant: any) => contestant.contestant_id === user.contestant_id
+          const updatedContestant = answersData?.find(
+            (contestant: any) => contestant.contestant_id === user?.contestant_id
           );
           
           if (updatedContestant?.wallet_balance !== undefined) {

@@ -39,7 +39,7 @@ export default function Stage1Questions({
     const [sentAnswers, setSentAnswers] = useState<Set<string>>(new Set())
 
     const { mutate: fetchNextQuestion, data: hustleQuestionsData, isLoading } = useGetHustleQuestion()
-    const { data: questionResultData, isLoading: isLoadingQuestionResultData, refetch: refetchQuestionResultData } = useGetHustleQuestionResult()
+    const { data: questionResultData, isLoading: isLoadingQuestionResultData, refetch: refetchQuestionResultData } = useGetHustleQuestionResult(currentQuestionData?.data.question.questions.question_id)
     const { mutate: endStageOne } = useEndStageOne()
 
     React.useEffect(() => {

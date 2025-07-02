@@ -209,18 +209,76 @@ const FastestFingerResult = ({
   const [bidSlots, setBidSlots] = useState<(ContestantBid | null)[]>(Array(6).fill(null));
   const [animatingSlot, setAnimatingSlot] = useState<number | null>(null);
   const [processedBids, setProcessedBids] = useState(new Set<string>());
+  const [userInteracted, setUserInteracted] = useState(false);
   const pathname = usePathname();
   const isBoardRoute = pathname?.includes("/hustle-board/");
   const soundRef = useRef<HTMLAudioElement | null>(null);
   const prevAmountsRef = useRef<{ [id: string]: number }>({});
   const activeAnimations = useRef(0);
 
+  // Add this effect to detect first user interaction
   useEffect(() => {
-    soundRef.current = new Audio("/sounds/select-bid.mp3");
-    if (soundRef.current) {
-      soundRef.current.loop = true;
-    }
+    const handleFirstInteraction = () => {
+      setUserInteracted(true);
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+    };
+
+    document.addEventListener('click', handleFirstInteraction);
+    document.addEventListener('touchstart', handleFirstInteraction);
+    document.addEventListener('keydown', handleFirstInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+    };
   }, []);
+
+  // Modify your audio initialization with format fallback
+  useEffect(() => {
+    soundRef.current = new Audio();
+    if (soundRef.current) {
+      // Try different formats for browser compatibility
+      if (soundRef.current.canPlayType("audio/mpeg")) {
+        soundRef.current.src = "/sounds/select-bid.mp3";
+      } else if (soundRef.current.canPlayType("audio/wav")) {
+        soundRef.current.src = "/sounds/select-bid.wav";
+      } else if (soundRef.current.canPlayType("audio/ogg")) {
+        soundRef.current.src = "/sounds/select-bid.ogg";
+      }
+      
+      soundRef.current.loop = true;
+      soundRef.current.volume = 0.5;
+      soundRef.current.preload = "auto";
+      
+      // Add error handling
+      soundRef.current.onerror = (e) => {
+        console.error("Audio loading error:", e);
+      };
+
+      // Add load event listener
+      soundRef.current.onloadeddata = () => {
+        console.log("Audio loaded successfully");
+      };
+    }
+
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.pause();
+        soundRef.current = null;
+      }
+    };
+  }, []);
+
+ 
+  const stopSound = () => {
+    if (soundRef.current && !soundRef.current.paused) {
+      soundRef.current.pause();
+      soundRef.current.currentTime = 0;
+    }
+  };
 
   useEffect(() => {
     if (!contestantBids || Object.keys(contestantBids).length === 0) {
@@ -235,54 +293,49 @@ const FastestFingerResult = ({
       const bidKey = `${bid.contestant_id}_${bid.timestamp}`;
       if (processedBids.has(bidKey)) return;
 
-      const existingSlotIndex = bidSlots.findIndex(
-        (slot) => slot && slot.contestant_id === bid.contestant_id
-      );
+      setBidSlots((prevSlots) => {
+        const existingSlotIndex = prevSlots.findIndex(
+          (slot) => slot && slot.contestant_id === bid.contestant_id
+        );
 
-      if (existingSlotIndex !== -1) {
-        setBidSlots((prev) => {
-          const newSlots = [...prev];
+        if (existingSlotIndex !== -1) {
+          const newSlots = [...prevSlots];
           newSlots[existingSlotIndex] = { ...bid, is_update: true };
+          setAnimatingSlot(existingSlotIndex);
+          setTimeout(() => setAnimatingSlot(null), 800);
           return newSlots;
-        });
-        setAnimatingSlot(existingSlotIndex);
-        setTimeout(() => setAnimatingSlot(null), 800);
-      } else {
-        const nextEmptySlot = bidSlots.findIndex((slot) => slot === null);
-        if (nextEmptySlot !== -1) {
-          setTimeout(() => {
-            setBidSlots((prev) => {
-              const newSlots = [...prev];
-              newSlots[nextEmptySlot] = { ...bid, is_new: true };
-              return newSlots;
-            });
-
-            if (soundRef.current) {
-              soundRef.current.play().catch(console.warn);
-            }
-
-            setAnimatingSlot(nextEmptySlot);
-            setTimeout(() => setAnimatingSlot(null), 1000);
-          }, 300);
+        } else {
+          const nextEmptySlot = prevSlots.findIndex((slot) => slot === null);
+          if (nextEmptySlot !== -1) {
+            setTimeout(() => {
+              
+              setAnimatingSlot(nextEmptySlot);
+              setTimeout(() => setAnimatingSlot(null), 1000);
+            }, 300);
+            
+            const newSlots = [...prevSlots];
+            newSlots[nextEmptySlot] = { ...bid, is_new: true };
+            return newSlots;
+          }
         }
-      }
+        return prevSlots;
+      });
 
       setProcessedBids((prev) => new Set([...prev, bidKey]));
     });
-  }, [contestantBids, bidSlots, processedBids]);
+  }, [contestantBids]);
 
   const handleAmountStart = () => {
     activeAnimations.current += 1;
-    if (soundRef.current && soundRef.current.paused) {
-      soundRef.current.play().catch(console.warn);
+    if (userInteracted && soundRef.current && soundRef.current.paused) {
+      
     }
   };
 
   const handleAmountComplete = () => {
     activeAnimations.current -= 1;
-    if (activeAnimations.current <= 0 && soundRef.current) {
-      soundRef.current.pause();
-      soundRef.current.currentTime = 0;
+    if (activeAnimations.current <= 0) {
+      stopSound();
     }
   };
 
