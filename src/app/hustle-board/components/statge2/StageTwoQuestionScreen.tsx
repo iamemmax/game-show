@@ -22,6 +22,8 @@ import { useGetGameContestants } from "@/app/admin/misc/api";
 import ErrorIcon from "@/app/icons/ErrorIcon";
 import { formatAmount } from "@/utils/currency";
 import HustleBoardStageTallyPage from "../HustleBoardStageTally";
+import HustleBoardModal from "../modals/HustleBoardModal";
+import HustleRevealResult from "../modals/HustleRevealResult";
 
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
 
@@ -73,7 +75,10 @@ const ViewOnlyQuestionTwoScreen = ({onNext}:prop) => {
     new Set()
   );
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
-
+const [showResultModal, setShowResultModal] = useState(false);
+  const [currentQuestionAnswerData, setCurrentQuestionAnswerData] = useState<
+    any | null
+  >(null);
   const { refetch } = useGetGameContestants(Number(params?.episodeId));
   const [mqttAnswerResultData, setMqttAnsweResultData] = useState<any>(mqttAnswerData);
 
@@ -92,15 +97,8 @@ const ViewOnlyQuestionTwoScreen = ({onNext}:prop) => {
     return () => clearTimeout(timer);
   }, [timeLeft, timerActive]);
 
-  // Function to check if a question has been completed
-  const isQuestionCompleted = (questionIndex: number) => {
-    return completedQuestions.has(questionIndex);
-  };
-
-  // Function to check if a question is currently active
-  const isQuestionActive = (questionIndex: number) => {
-    return mqttQuestionData?.question_index === questionIndex + 1; // Adding 1 because question_index is 1-based
-  };
+ 
+  
 
   // Function to check if a question has been attempted
  const isQuestionAttempted = (idx: number) => {
@@ -150,13 +148,27 @@ const ViewOnlyQuestionTwoScreen = ({onNext}:prop) => {
         resetTimerState();
         setCorrectAnswer(null);
         setMqttAnswerData(null);
-
+     setShowResultModal(false);
+        setCurrentQuestionAnswerData(null);
         // Set current index and question ID
      setCurrentQuestionIndex(questionData?.index);
 
        const questionId = questionData?.question?.question_id;
         if (questionId) {
           setCurrentQuestionId(questionId.toString());
+        }
+      }
+
+
+ if (receivedMessage?.event === "game_s2_question_options_select_reveal") {
+        const payload = receivedMessage.payload || {};
+        const questionId = payload?.answers_data?.question?.question_id;
+        
+        
+        if (questionId?.toString() === currentQuestionIdRef?.current?.toString()) {
+          const answersData = payload?.answers_data?.answers;
+          setCurrentQuestionAnswerData(answersData);
+          setShowResultModal(true);
         }
       }
 
@@ -189,11 +201,12 @@ const ViewOnlyQuestionTwoScreen = ({onNext}:prop) => {
     
     // Update answer data for all questions
     setMqttAnswerData(answersData);
-    
+         setShowResultModal(false);
     // FIXED: For elimination questions (index > 4), set result data separately
     if (currentQuestionIndex > 4) {
       setMqttAnsweResultData(answersData);
       setMqttAnswerData(answersData);
+      
     }
     
     // FIXED: Always update modal states when shouldShowModal is true
@@ -843,7 +856,16 @@ const ViewOnlyQuestionTwoScreen = ({onNext}:prop) => {
 
                   </>
                 )}
-
+{showResultModal && (
+                    <HustleBoardModal
+                      currentQuestionAnswerData={currentQuestionAnswerData}
+                      currentQuestion={mqttQuestionData}
+                    />
+                  )}
+                  { mqttAnswerData && <HustleRevealResult 
+                  mqttAnswerData={mqttAnswerData}
+                      currentQuestion={mqttQuestionData}
+                  />}
                 {/* Results sidebar */}
                 <div className="">
                   <FastestFingerResult
