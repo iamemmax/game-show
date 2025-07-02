@@ -120,9 +120,22 @@ const getHustleQuestionResult = async ({ question_id }: { question_id: string | 
 
 export const useGetHustleQuestionResult = (question_id?: string | number) => {
     return useQuery({
-        queryKey: ["get-hustle-question-result", question_id],
+        queryKey: ["get-hustle-stage-1-question-result", question_id],
         queryFn: () => getHustleQuestionResult({ question_id: question_id! }),
-        enabled: !!question_id, // Only run if question_id is provided
+        enabled: !!question_id,
+        refetchOnWindowFocus: false,
+    });
+}
+const getProofQuestionResult = async ({ question_id }: { question_id: string | number }) => {
+    const res = await tokenlessAxios.get<IGetHustleQuestionAPIResponse>(`/api/admin-controller/proof_hustle_question_tally/${question_id}`);
+    return res.data;
+}
+
+export const useGetProofQuestionResult = (question_id?: string | number) => {
+    return useQuery({
+        queryKey: ["get-hustle-stage-2-question-result", question_id],
+        queryFn: () => getProofQuestionResult({ question_id: question_id! }),
+        enabled: !!question_id, 
         refetchOnWindowFocus: false,
     });
 }

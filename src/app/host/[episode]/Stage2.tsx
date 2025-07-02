@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { CircleCheck, Loader2 } from "lucide-react"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import { toast } from "react-hot-toast"
-import { useGetAllStage2Questions, useEndStageTwo, useNotifyBackendEndQuestionTimer, useGetProofQuestion, IGetProofQuestionAPIResponse } from "../misc/api"
+import { useGetAllStage2Questions, useEndStageTwo, useNotifyBackendEndQuestionTimer, useGetProofQuestion, IGetProofQuestionAPIResponse, useGetProofQuestionResult } from "../misc/api"
 import { GlowyStrokeText } from "@/components/core/GlowyText"
 import { FlipCountdown } from "@/components/core"
 import { Stage2Question } from "../misc/types"
@@ -18,6 +18,7 @@ interface Stage2QuestionsProps {
     onTimerStart: (questionId: string, startTime: string, questionType: string) => void
     sendGameMessage: (eventCode: string, data?: any) => Promise<void>
     currentStageStep: string
+    lastAction?: string
 }
 
 export default function Stage2Questions({
@@ -26,6 +27,7 @@ export default function Stage2Questions({
     onTimerStart,
     sendGameMessage,
     currentStageStep,
+    lastAction
 }: Stage2QuestionsProps) {
 
     const { mutate: endStageTwo } = useEndStageTwo()
@@ -41,6 +43,7 @@ export default function Stage2Questions({
 
     const [loading, setLoading] = useState(false)
     const [currentQuestionData, setCurrentQuestionData] = useState<IGetProofQuestionAPIResponse | null>(null)
+    const { data: questionResultData, isLoading: isLoadingQuestionResultData, refetch: refetchQuestionResultData } = useGetProofQuestionResult(currentQuestionData?.data.question.question_id)
 
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
     const [timerActive, setTimerActive] = useState(false)
@@ -79,6 +82,17 @@ export default function Stage2Questions({
         )
     }
 
+
+    React.useEffect(() => {
+        if (questionResultData && !isLoadingQuestionResultData) {
+            sendGameMessage("game_s2_question_answer", {
+                question_id: currentQuestionData?.data.question.question_id.toString(),
+                data: questionResultData?.data,
+                question_index: currentQuestionData?.data.index,
+                show_modal: true,
+            })
+        }
+    }, [refetchQuestionResultData, questionResultData, isLoadingQuestionResultData])
 
 
 
@@ -127,18 +141,24 @@ export default function Stage2Questions({
 
         const questionId = currentQuestionData.data.question.question_id.toString()
         endTimer(
-            { question_id: questionId, timestamp: new Date().toISOString(), stage:'2'  },
+            { question_id: questionId, timestamp: new Date().toISOString(), stage: '2' },
             {
                 onSuccess: (data) => {
                     sendGameMessage(`game_s2_timer_end_${currentQuestionData.data.index}`, {
                         question_id: questionId,
                     })
 
-                    sendGameMessage(`game_s2_question_answer`, {
-                        question_id: questionId,
-                        answers_data: data,
+                    // sendGameMessage(`game_s2_question_answer`, {
+                    //     question_id: questionId,
+                    //     answers_data: data,
+                    //     question_index: currentQuestionData.data.index,
+                    //     show_modal: currentQuestionData.data.index  > 4 ? false : true,
+                    // })
+
+                    sendGameMessage(`game_s2_question_options_select_reveal`, {
+                        answers_data: data.data,
                         question_index: currentQuestionData.data.index,
-                        show_modal: currentQuestionData.data.index  > 4 ? false : true,
+                        show_modal: true,
                     })
 
                     setTimerActive(false)
@@ -318,12 +338,23 @@ export default function Stage2Questions({
 
             <div className="flex justify-center mt-6">
                 {!loading && currentQuestionData && currentStageStep === "questions" && !questionsExhausted && (
-                    <TrapeziumButton onClick={handleFetchNextQuestion} variant="orange">
-                        FETCH NEXT QUESTION
-                    </TrapeziumButton>
+                    <>
+                        {
+                            lastAction === "game_s1_question_bids_reveal" ? (
+                                <TrapeziumButton onClick={() => refetchQuestionResultData()} variant="purple">
+                                    REVEAL QUESTION RESULT
+                                </TrapeziumButton>
+                            ) : (
+                                <TrapeziumButton onClick={handleFetchNextQuestion} variant="orange">
+                                    FETCH NEXT QUESTION
+                                </TrapeziumButton>
+                            )
+                        }
+                    </>
                 )}
-            </div>
 
+            </div>
+            )
         </div>
     )
 }
