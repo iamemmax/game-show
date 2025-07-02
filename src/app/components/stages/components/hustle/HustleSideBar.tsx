@@ -947,7 +947,7 @@ const HustleSideBar = ({
       : mqttAnswerData;
 
   // Add a comment to document that we're preserving backend order
-  console.log('Rendering contestants in backend order:', dataToRender);
+  // console.log('Rendering contestants in backend order:', dataToRender);
 
   const getContestantInfo = (id: number) => {
     const allconstestant = allContestsant?.data?.find(

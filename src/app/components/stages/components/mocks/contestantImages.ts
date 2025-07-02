@@ -1,16 +1,11 @@
 export const contestantImages = [
  "/images/userImage.png",
-  "/images/userImage2.png",
+  "/images/userImage1.png",
   "/images/userImage2.png",
   "/images/userImage3.png",
-  "/images/userImage5.png",
   "/images/userImage4.png",
-  "/images/userImage.png",
-  "/images/userImage3.png",
   "/images/userImage5.png",
-  "/images/userImage4.png",
-  "/images/userImage2.png",
-  "/images/userImage.png"
+
 ]
 
 

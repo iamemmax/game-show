@@ -18,10 +18,11 @@ interface StagesCardProps extends SVGProps<SVGSVGElement> {
   className?: string; // new className prop
 }
 
-const StagesCard = ({
+const 
+StagesCard = ({
   color,
   borderColor,
-  borderWidth = 0.7,
+  borderWidth = 1.3,
   iconText = "1",
   title = "Stage 1",
   subTitle = "Grind & Grow",

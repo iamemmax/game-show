@@ -85,7 +85,7 @@ interface Prop {
 const QuestionScreen = ({ onNext }: Prop) => {
  
 
-  const { isConnected, onMessage } = useMQTT();
+  const { isConnected, onMessage, sendMessage} = useMQTT();
   const router = useRouter();
 
   // Get user from storage - this should always be called
@@ -124,6 +124,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
   const [mqttAnswerBalanceData, setMqttAnsweBalanceData] = useState<any>(null);
 
   const currentQuestionIdRef = useRef<string | null>(null);
+  
 
   // API hooks - ensure these are called consistently
   const { data: questionData, isLoading } = useGetAllHustleQuestions(
@@ -244,59 +245,118 @@ useEffect(() => {
 
   const handler = (receivedMessage: any) => {
     // Handle prep page event
-    if (receivedMessage?.event === "game_s1_question_reveal") {
-      setShowPrepPage(false);
+    // if (receivedMessage?.event === "game_s1_question_reveal") {
+    //   setShowPrepPage(false);
 
-      const payload = receivedMessage.payload || {};
-      const questionData = payload.data || {};
-      const spendBreakdown =
-        questionData.spend_breakdown ||
-        payload.spend_breakdown ||
-        payload.data?.spend_breakdown;
+    //   const payload = receivedMessage.payload || {};
+    //   const questionData = payload.data || {};
+    //   const spendBreakdown =
+    //     questionData.spend_breakdown ||
+    //     payload.spend_breakdown ||
+    //     payload.data?.spend_breakdown;
 
-      setMqttQuestionData(questionData);
-      setQuestionKey(`question-${questionData.question_index || Date.now()}`);
-      setShowBidPrompt(true);
+    //   setMqttQuestionData(questionData);
+    //   setQuestionKey(`question-${questionData.question_index || Date.now()}`);
+    //   setShowBidPrompt(true);
 
-      setSelectedOption(null);
-      setSelectedAmount(null);
-      setIsSubmitted(false);
-      resetTimerState();
-      setMqttAnswerData(null);
-      setCorrectAnswer(null);
+    //   setSelectedOption(null);
+    //   setSelectedAmount(null);
+    //   setIsSubmitted(false);
+    //   resetTimerState();
+    //   setMqttAnswerData(null);
+    //   setCorrectAnswer(null);
+      
 
-      setCurrentQuestionIndex(questionData.question_index || 1);
-      const questionId =
-        questionData?.question?.questions?.question_id ||
-        payload?.question_id;
-      if (questionId) {
-        setCurrentQuestionId(questionId.toString());
-      }
+    //   setCurrentQuestionIndex(questionData.question_index || 1);
+    //   const questionId =
+    //     questionData?.question?.questions?.question_id ||
+    //     payload?.question_id;
+    //   if (questionId) {
+    //     setCurrentQuestionId(questionId.toString());
+    //   }
 
-      if (spendBreakdown && user?.contestant_id) {
-        const userData = Array.isArray(spendBreakdown)
-          ? spendBreakdown.find(
-              (contestant: any) =>
-                String(contestant.contestant_id) ===
-                String(user.contestant_id)
-            )
-          : spendBreakdown;
+    //   if (spendBreakdown && user?.contestant_id) {
+    //     const userData = Array.isArray(spendBreakdown)
+    //       ? spendBreakdown.find(
+    //           (contestant: any) =>
+    //             String(contestant.contestant_id) ===
+    //             String(user.contestant_id)
+    //         )
+    //       : spendBreakdown;
 
-        if (userData?.spend_breakdown) {
-          setUserBidAmounts(userData.spend_breakdown);
-        } else {
-          setUserBidAmounts({});
-        }
-      }
+    //     if (userData?.spend_breakdown) {
+    //       setUserBidAmounts(userData.spend_breakdown);
+    //     } else {
+    //       setUserBidAmounts({});
+    //     }
+    //   }
+    // }
+// In the MQTT message handling useEffect, modify the game_s1_question_reveal handler:
+
+// Handle prep page event
+if (receivedMessage?.event === "game_s1_question_reveal") {
+  setShowPrepPage(false);
+
+  const payload = receivedMessage.payload || {};
+  const questionData = payload.data || {};
+  const spendBreakdown =
+    questionData.spend_breakdown ||
+    payload.spend_breakdown ||
+    payload.data?.spend_breakdown;
+
+  setMqttQuestionData(questionData);
+  setQuestionKey(`question-${questionData.question_index || Date.now()}`);
+  setShowBidPrompt(true);
+
+  // Reset all question-related state
+  setSelectedOption(null);
+  setSelectedAmount(null);
+  setIsSubmitted(false);
+  resetTimerState();
+  setMqttAnswerData(null);
+  setCorrectAnswer(null);
+
+  setCurrentQuestionIndex(questionData.question_index || 1);
+  const questionId =
+    questionData?.question?.questions?.question_id ||
+    payload?.question_id;
+  if (questionId) {
+    setCurrentQuestionId(questionId.toString());
+  }
+
+  if (spendBreakdown && user?.contestant_id) {
+    const userData = Array.isArray(spendBreakdown)
+      ? spendBreakdown.find(
+          (contestant: any) =>
+            String(contestant.contestant_id) ===
+            String(user.contestant_id)
+        )
+      : spendBreakdown;
+
+    if (userData?.spend_breakdown) {
+      setUserBidAmounts(userData.spend_breakdown);
+    } else {
+      setUserBidAmounts({});
     }
+  }
 
+  // MODIFIED: Send empty bid data to completely clear all bids for new question
+  const clearAllBidsData = {
+    event: "clear_all_bids",
+    payload: {}
+  };
+  
+  console.log("Clearing all bid data for new question:", clearAllBidsData);
+  sendMessage(clearAllBidsData);
+}
     // FIXED: Enhanced answer handling section
     if (receivedMessage?.event === "game_s1_question_answer") {
       const payload = receivedMessage.payload || {};
-      const questionId = payload.question_id;
+       const questionId = payload?.data?.question?.question_id;
 
       if (questionId === currentQuestionIdRef?.current) {
-        const answersData = payload.answers_data?.data;
+        const answersData = payload?.data?.answers;
+
         
         // Set the answer data first
         setMqttAnswerData(answersData);
@@ -308,8 +368,8 @@ useEffect(() => {
 
         // CRITICAL FIX: Update animated capital immediately with new balance
         if (answersData && user?.contestant_id) {
-          const updatedContestant = answersData.find(
-            (contestant: any) => contestant.contestant_id === user.contestant_id
+          const updatedContestant = answersData?.find(
+            (contestant: any) => contestant.contestant_id === user?.contestant_id
           );
           
           if (updatedContestant?.wallet_balance !== undefined) {
@@ -447,27 +507,76 @@ useEffect(() => {
     mqttAnswerData,
   ]); //
 
+  // const handleAmountSelect = (amount: number) => {
+  //   if (timeLeft > 0 && !isSubmitted) {
+  //     const exactKey = Object.keys(userBidAmounts).find(
+  //       (key) => Math.abs(parseFloat(key) - amount) < 0.01
+  //     );
+
+  //     if (exactKey) {
+  //       setSelectedAmount(parseFloat(exactKey));
+  //     } else {
+  //       setSelectedAmount(amount);
+
+  //       const closestKey = Object.keys(userBidAmounts).reduce((prev, curr) => {
+  //         return Math.abs(parseFloat(curr) - amount) <
+  //           Math.abs(parseFloat(prev) - amount)
+  //           ? curr
+  //           : prev;
+  //       });
+  //     }
+  //     setShowBidPrompt(false);
+  //   }
+  // };
+
+
   const handleAmountSelect = (amount: number) => {
-    if (timeLeft > 0 && !isSubmitted) {
-      const exactKey = Object.keys(userBidAmounts).find(
-        (key) => Math.abs(parseFloat(key) - amount) < 0.01
-      );
+  if (timeLeft > 0 && !isSubmitted) {
+    const exactKey = Object.keys(userBidAmounts).find(
+      (key) => Math.abs(parseFloat(key) - amount) < 0.01
+    );
 
-      if (exactKey) {
-        setSelectedAmount(parseFloat(exactKey));
-      } else {
-        setSelectedAmount(amount);
+    if (exactKey) {
+      setSelectedAmount(parseFloat(exactKey));
+    } else {
+      setSelectedAmount(amount);
+    }
+    
+    setShowBidPrompt(false);
+    
+    // Publish bid amount to leaderboard screen
+    publishBidAmount(amount);
+  }
+};
 
-        const closestKey = Object.keys(userBidAmounts).reduce((prev, curr) => {
-          return Math.abs(parseFloat(curr) - amount) <
-            Math.abs(parseFloat(prev) - amount)
-            ? curr
-            : prev;
-        });
-      }
-      setShowBidPrompt(false);
+
+
+  
+
+// 1. CONTESTANT SCREEN - Enhanced publishBidAmount function (around line 150)
+const publishBidAmount = async (amount: number) => {
+  if (!user?.contestant_id || !user?.name) return;
+  
+  const bidData = {
+    event: "contestant_bid_selected",
+    payload: {
+      contestant_id: user.contestant_id,
+      contestant_name: user.name,
+      bid_amount: amount,
+      timestamp: new Date().toISOString(),
+      question_id: currentQuestionId,
+      game_episode: user.game_episode,
+      remaining_capital: calculateRemainingCapital() - amount,
+      bid_percentage: ((amount / calculateRemainingCapital()) * 100).toFixed(1)
     }
   };
+  
+  console.log("Publishing bid amount:", bidData);
+  
+  // Publish to MQTT for leaderboard screen to listen
+  await sendMessage(bidData)
+};
+
 
   const handleOptionSelect = (option: OptionKey) => {
     if (timerActive && !isSubmitted) {
