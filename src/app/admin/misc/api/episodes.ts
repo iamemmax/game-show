@@ -32,19 +32,44 @@ interface createEpisode {
 
 
 // Get all games
-export const getAllGames = async ({ season_id }: { season_id: string | number }) => {
-  const response = await tokenlessAxios.get(`api/game/fetch_all_games/?season_id=${season_id}`)
+// export const getAllGames = async ({ season_id , game_status}: { season_id: string | number, game_status?:string }) => {
+//   const response = await tokenlessAxios.get(`api/game/fetch_all_games/?season_id=${season_id}&game_status=${game_status}`)
+//   return response?.data as IEpisode[]
+// }
+export const getAllGames = async ({
+  season_id,
+  game_status,
+}: { season_id: string | number; game_status?: string }) => {
+  const query = new URLSearchParams({ season_id: String(season_id) })
+
+  if (game_status) {
+    query.append("game_status", game_status)
+  }
+
+  const response = await tokenlessAxios.get(`api/game/fetch_all_games/?${query.toString()}`)
   return response?.data as IEpisode[]
 }
-
-export const useGetAllSeasonEpisodes = ({ season_id }: { season_id?: string | number }) =>
+export const useGetAllSeasonEpisodes = ({
+  season_id,
+  game_status,
+}: { season_id?: string | number; game_status?: string }) =>
   useQuery({
-    queryKey: ["all-season-episodes", season_id],
-    queryFn: () => getAllGames({ season_id: season_id! }),
+    queryKey: ["all-season-episodes", season_id, game_status],
+    queryFn: () => getAllGames({ season_id: season_id!, game_status }),
     staleTime: 0,
     cacheTime: 0,
     enabled: !!season_id,
   })
+
+
+// export const useGetAllSeasonEpisodes = ({ season_id, game_status }: { season_id?: string | number, game_status?:string }) =>
+//   useQuery({
+//     queryKey: ["all-season-episodes", season_id, game_status],
+//     queryFn: () => getAllGames({ season_id: season_id! ,}),
+//     staleTime: 0,
+//     cacheTime: 0,
+//     enabled: !!season_id,
+//   })
 
 // Start a new game
 export const createEpisode = async (data: createEpisode) => {

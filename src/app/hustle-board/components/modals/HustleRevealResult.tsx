@@ -118,45 +118,11 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData }: Props) => {
   };
 
   // Early return if no data
-  if (!mqttAnswerData || mqttAnswerData.length === 0) {
-    return (
-      <div className="fixed inset-0 z-50 w-full flex items-center justify-center bg-black/80">
-        <div className="bg-[#15052B] rounded-[30px] text-white w-[758px] border border-[#7E3CE0] p-[1.875rem]">
-          <div className="bg-[#1F0541] rounded-10 p-4 flex justify-center items-center flex-col">
-            <div className="bg-[#29005E] rounded-[20px] px-[22px] py-2">
-              <p className="text-[#9E5CFF] text-sm font-sans font-semibold">Question 4</p>
-            </div>
-            <div className="mt-[.625rem]">
-              <p className="text-white text-lg font-gilroyBold font-semibold">
-                {currentQuestion?.question?.questions?.question_text || "Loading question..."}
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 text-center text-white opacity-50">
-            No results to display
-          </div>
-        </div>
-      </div>
-    );
-  }
+ 
 
   return (
-    <div className="fixed inset-0 z-50 w-full flex items-center justify-center bg-black/80">
-      <div className="bg-[#15052B] rounded-[30px] text-white w-[758px] border border-[#7E3CE0] p-[1.875rem]">
-        {/* Question Header */}
-        <div className="bg-[#1F0541] rounded-10 p-4 flex justify-center items-center flex-col">
-          <div className="bg-[#29005E] rounded-[20px] px-[22px] py-2">
-            <p className="text-[#9E5CFF] text-sm font-sans font-semibold">Question 4</p>
-          </div>
-          <div className="mt-[.625rem]">
-            <p className="text-white text-lg font-gilroyBold font-semibold">
-              {currentQuestion?.question?.questions?.question_text || "What is the Biggest market in West Africa?"}
-            </p>
-          </div>
-        </div>
-
-        {/* Animated Result Board */}
-        {mqttAnswerData.slice(0, visibleItems).map((data, idx) => {
+    <div className="">
+         {mqttAnswerData.slice(0, visibleItems).map((data, idx) => {
           const styles = getCardStyle(data);
 
           return (
@@ -165,7 +131,7 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData }: Props) => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="grid grid-cols-[5fr_1fr] items-center gap-3 mt-3"
+              className="grid grid-cols-[5fr_1fr] items-center gap-3 mb-3"
             >
               <div 
                 className="flex items-start gap-3 border-[0.3px] w-full p-3 rounded-10" 
@@ -186,37 +152,37 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData }: Props) => {
                   </p>
                   <p className="font-sans opacity-75 text-xs text-white">
                     Answer:
-                    <span className="font-bold opacity-100 text-sm">
+                    <span className="font-bold opacity-100 text-xs">
                       {" "}{data?.answer}. {getOptionValue(currentQuestion?.question?.questions, String(data?.answer?.toLowerCase()))}  
                     </span>
                   </p>
 
                   <div className="flex items-center gap-x-[10px]">
                     <div 
-                      className="mt-1 flex justify-center items-center flex-col rounded-[1.5rem] py-2 px-6" 
+                      className="mt-1 flex justify-center items-center flex-col rounded-[1.5rem] py-2 px-3" 
                       style={{ backgroundColor: `${styles.text}22` }}
                     >
                       <p className="font-gilroyMedium text-xs text-white">Bid amount:</p>
-                      <h2 className="font-gilroyHeavy font-extrabold text-xl" style={{ color: styles.text }}>
+                      <h2 className="font-gilroyHeavy font-extrabold text-base" style={{ color: styles.text }}>
                         ₦{(Math.ceil(Number(data?.profit_loss?.bid_amount || 0) / 100) * 100).toLocaleString()}
                       </h2>
                     </div>
                     
                     <div 
-                      className="mt-1 flex justify-center leading-none items-center flex-col rounded-[1.5rem] py-2 px-6" 
+                      className="mt-1 flex justify-center leading-none items-center flex-col rounded-[1.5rem] py-2 px-3" 
                       style={{ backgroundColor: `${styles.text}22` }}
                     >
                       {data?.is_winner && <p className="font-gilroyMedium text-xs text-white">Won amount:</p>}
-                      {data?.profit_loss?.amount_lost > 0 && <p className="font-gilroyMedium text-xs text-white">Lost amount:</p>}
+                      {data?.profit_loss?.amount_lost > 0 && <p className="font-gilroyMedium text-[.625rem] text-white">Lost amount:</p>}
                       
                       {data?.is_correct && (
-                        <h2 className="font-gilroyHeavy block font-extrabold text-xl" style={{ color: styles.text }}>
+                        <h2 className="font-gilroyHeavy block font-extrabold text-base" style={{ color: styles.text }}>
                           ₦{formatAmount(Number(data?.profit_loss?.amount_gained) || 0)}
                         </h2>
                       )}
                       
                       {!data?.is_correct && (
-                        <h2 className="font-gilroyHeavy block font-extrabold text-xl" style={{ color: styles.text }}>
+                        <h2 className="font-gilroyHeavy block font-extrabold text-base" style={{ color: styles.text }}>
                           ₦{formatAmount(Number(data?.profit_loss?.amount_lost) || 0)}
                         </h2>
                       )}
@@ -266,8 +232,8 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData }: Props) => {
             </motion.div>
           );
         })}
-      </div>
     </div>
+
   );
 };
 

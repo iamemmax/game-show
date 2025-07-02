@@ -346,15 +346,14 @@ if (receivedMessage?.event === "game_s1_question_reveal") {
     payload: {}
   };
   
-  console.log("Clearing all bid data for new question:", clearAllBidsData);
   sendMessage(clearAllBidsData);
 }
     // FIXED: Enhanced answer handling section
     if (receivedMessage?.event === "game_s1_question_answer") {
       const payload = receivedMessage.payload || {};
-       const questionId = payload?.data?.question?.question_id;
+        const questionId = payload?.data?.question?.question_id;
 
-      if (questionId === currentQuestionIdRef?.current) {
+      if (questionId?.toString() === currentQuestionIdRef?.current?.toString()) {
         const answersData = payload?.data?.answers;
 
         
@@ -369,7 +368,7 @@ if (receivedMessage?.event === "game_s1_question_reveal") {
         // CRITICAL FIX: Update animated capital immediately with new balance
         if (answersData && user?.contestant_id) {
           const updatedContestant = answersData?.find(
-            (contestant: any) => contestant.contestant_id === user?.contestant_id
+            (contestant: any) => contestant.contestant_id?.toString() === user?.contestant_id?.toString()
           );
           
           if (updatedContestant?.wallet_balance !== undefined) {
@@ -378,7 +377,7 @@ if (receivedMessage?.event === "game_s1_question_reveal") {
           }
         }
 
-        if (answersData?.question?.correct_option) {
+        if (payload?.question?.correct_option) {
           setCorrectAnswer(answersData.question.correct_option);
           setIsSubmitted(true);
           setShowNextButton(true);
@@ -386,8 +385,8 @@ if (receivedMessage?.event === "game_s1_question_reveal") {
 
           setTimeout(() => {
             const newOpenModals: Record<number, boolean> = {};
-            if (answersData?.data && Array.isArray(answersData.data)) {
-              answersData.data.forEach((c: any) => {
+            if (answersData?.data && Array.isArray(answersData)) {
+              answersData?.forEach((c: any) => {
                 if (c?.contestant_id) {
                   newOpenModals[c.contestant_id] = true;
                 }

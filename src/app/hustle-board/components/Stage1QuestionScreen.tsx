@@ -28,6 +28,7 @@ import FastestFingerResult from "@/app/components/stages/components/hustle/Faste
 import HustleBoardStageTallyPage from "./HustleBoardStageTally";
 import HustleBoardModal from "./modals/HustleBoardModal";
 import HustleRevealResult from "./modals/HustleRevealResult";
+import HustleQuestionAnswerModal from "./modals/HustleQuestionAnswer";
 
 // Add type for option keys
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
@@ -296,9 +297,10 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
       if (receivedMessage?.event === "game_s1_question_bids_reveal") {
         const payload = receivedMessage.payload || {};
         const questionId = payload?.answers_data?.question?.question_id;
-        
-        
-        if (questionId?.toString() === currentQuestionIdRef?.current?.toString()) {
+
+        if (
+          questionId?.toString() === currentQuestionIdRef?.current?.toString()
+        ) {
           const answersData = payload?.answers_data?.answers;
           setCurrentQuestionAnswerData(answersData);
           setShowResultModal(true);
@@ -312,14 +314,15 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
 
         const questionId = payload?.data?.question?.question_id;
 
-        if (questionId?.toString() === currentQuestionIdRef?.current?.toString()) {
+        if (
+          questionId?.toString() === currentQuestionIdRef?.current?.toString()
+        ) {
           const answersData = payload?.data?.answers;
 
           setMqttAnswerData(answersData);
           setMqttResultData(answersData);
-          setShowResultModal(false);
-          setShowResultModal(false);
-          
+         
+
           if (payload?.question?.correct_option) {
             setCorrectAnswer(payload?.data?.question?.correct_option);
             setIsSubmitted(true);
@@ -385,7 +388,7 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
     setTimeLeft(10);
     setShowNextButton(false);
     setShouldFetchAnswer(false);
-    setShowResultModal(false);
+    // setShowResultModal(false);
     // Clear any existing timer
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -786,15 +789,45 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
                   )}
 
                   {showResultModal && (
+                    <HustleQuestionAnswerModal
+                      booster={
+                        mqttQuestionData?.question?.questions?.question_booster
+                      }
+                      showBooster={true}
+                      currentQuestionOptions={{
+                        option_a:
+                          mqttQuestionData?.question?.questions?.option_a,
+                        option_b:
+                          mqttQuestionData?.question?.questions?.option_b,
+                        option_c:
+                          mqttQuestionData?.question?.questions?.option_c,
+                        option_d:
+                          mqttQuestionData?.question?.questions?.option_d,
+                      }}
+                      questionIndex={mqttQuestionData?.question_index}
+                      correctAnswer={
+                        mqttQuestionData?.question?.questions?.correct_option
+                      }
+                      question={mqttQuestionData?.question?.questions?.question}
+                      currentQuestionAnswerData={currentQuestionAnswerData}
+                      currentQuestion={mqttQuestionData}
+   mqttAnswerData={mqttAnswerData}
+                   
+
+                    />
+                  )}
+
+                  {/* {showResultModal && (
                     <HustleBoardModal
                       currentQuestionAnswerData={currentQuestionAnswerData}
                       currentQuestion={mqttQuestionData}
+                      currentQuestionData={mqttQuestionData.question.questions.question}
                     />
                   )}
                   { mqttAnswerData && <HustleRevealResult 
                   mqttAnswerData={mqttAnswerData}
                       currentQuestion={mqttQuestionData}
-                  />}
+                  />} */}
                   <div className="h-full w-full">
                     {/* <FastestFingerResult
                       resultArray={mqttAnswerData}

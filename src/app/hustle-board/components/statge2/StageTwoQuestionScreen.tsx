@@ -24,6 +24,7 @@ import { formatAmount } from "@/utils/currency";
 import HustleBoardStageTallyPage from "../HustleBoardStageTally";
 import HustleBoardModal from "../modals/HustleBoardModal";
 import HustleRevealResult from "../modals/HustleRevealResult";
+import HustleQuestionAnswerModal from "../modals/HustleQuestionAnswer";
 
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
 
@@ -42,17 +43,16 @@ const convertOptionToLetter = (option: string | null): string => {
   return optionMap[option] || "";
 };
 
-
-interface prop{
-  onNext:()=>void
+interface prop {
+  onNext: () => void;
 }
-const ViewOnlyQuestionTwoScreen = ({onNext}:prop) => {
+const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
   const { isConnected, onMessage } = useMQTT();
   const params = useParams();
 
   // Get wallet balances for display
   const { data: balanceData, refetch: refetchBalance } = useGetWalletBalance(
-   Number(params?.episodeId)
+    Number(params?.episodeId)
   );
 
   // State for display purposes only - no user interaction
@@ -75,12 +75,13 @@ const ViewOnlyQuestionTwoScreen = ({onNext}:prop) => {
     new Set()
   );
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
-const [showResultModal, setShowResultModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
   const [currentQuestionAnswerData, setCurrentQuestionAnswerData] = useState<
     any | null
   >(null);
   const { refetch } = useGetGameContestants(Number(params?.episodeId));
-  const [mqttAnswerResultData, setMqttAnsweResultData] = useState<any>(mqttAnswerData);
+  const [mqttAnswerResultData, setMqttAnsweResultData] =
+    useState<any>(mqttAnswerData);
 
   // Timer effect - for display only
   useEffect(() => {
@@ -97,11 +98,8 @@ const [showResultModal, setShowResultModal] = useState(false);
     return () => clearTimeout(timer);
   }, [timeLeft, timerActive]);
 
- 
-  
-
   // Function to check if a question has been attempted
- const isQuestionAttempted = (idx: number) => {
+  const isQuestionAttempted = (idx: number) => {
     return idx < currentQuestionIndex;
   };
 
@@ -148,24 +146,24 @@ const [showResultModal, setShowResultModal] = useState(false);
         resetTimerState();
         setCorrectAnswer(null);
         setMqttAnswerData(null);
-     setShowResultModal(false);
+        setShowResultModal(false);
         setCurrentQuestionAnswerData(null);
         // Set current index and question ID
-     setCurrentQuestionIndex(questionData?.index);
+        setCurrentQuestionIndex(questionData?.index);
 
-       const questionId = questionData?.question?.question_id;
+        const questionId = questionData?.question?.question_id;
         if (questionId) {
           setCurrentQuestionId(questionId.toString());
         }
       }
 
-
- if (receivedMessage?.event === "game_s2_question_options_select_reveal") {
+      if (receivedMessage?.event === "game_s2_question_options_select_reveal") {
         const payload = receivedMessage.payload || {};
         const questionId = payload?.answers_data?.question?.question_id;
-        
-        
-        if (questionId?.toString() === currentQuestionIdRef?.current?.toString()) {
+
+        if (
+          questionId?.toString() === currentQuestionIdRef?.current?.toString()
+        ) {
           const answersData = payload?.answers_data?.answers;
           setCurrentQuestionAnswerData(answersData);
           setShowResultModal(true);
@@ -173,67 +171,65 @@ const [showResultModal, setShowResultModal] = useState(false);
       }
 
       // Handle question answer event
-    if (receivedMessage?.event === "game_s2_question_answer") {
-  const payload = receivedMessage.payload || {};
-  const questionId = payload.question_id;
-  const shouldShowModal = payload?.show_modal;
-  
-  console.log("🔄 Answer event received:", {
-    questionId,
-    currentQuestionId: currentQuestionIdRef.current,
-    shouldShowModal,
-    currentQuestionIndex,
-    payload
-  });
+      if (receivedMessage?.event === "game_s2_question_answer") {
+        const payload = receivedMessage.payload || {};
+        const questionId = payload.question_id;
+        const shouldShowModal = payload?.show_modal;
 
-  // FIXED: Compare questionId properly (convert to string if needed)
-  const currentQuestionIdStr = currentQuestionIdRef?.current?.toString();
-  const receivedQuestionIdStr = questionId?.toString();
-  
-  if (receivedQuestionIdStr === currentQuestionIdStr) {
-    const answersData = payload.answers_data?.data;
-    
-    console.log("📊 Processing answer data:", {
-      answersData,
-      currentQuestionIndex,
-      shouldShowModal
-    });
-    
-    // Update answer data for all questions
-    setMqttAnswerData(answersData);
-         setShowResultModal(false);
-    // FIXED: For elimination questions (index > 4), set result data separately
-    if (currentQuestionIndex > 4) {
-      setMqttAnsweResultData(answersData);
-      setMqttAnswerData(answersData);
-      
-    }
-    
-    // FIXED: Always update modal states when shouldShowModal is true
-    if (shouldShowModal) {
-   
-      setMqttAnswerData(answersData)
-    }
-    
-    // Refetch balance data
-    refetchBalance();
-    // Mark submitted and stop timer
-    const correctOption = payload.answers_data?.question?.correct_option || 
-                         answersData?.question?.correct_option;
-    
-    if (correctOption) {
-      setCorrectAnswer(correctOption);
-      setTimerActive(false);
-    }
-    
-    console.log("✅ Answer processing completed");
-  } else {
-    console.log("❌ Question ID mismatch:", {
-      expected: currentQuestionIdStr,
-      received: receivedQuestionIdStr
-    });
-  }
-}
+        console.log("🔄 Answer event received:", {
+          questionId,
+          currentQuestionId: currentQuestionIdRef.current,
+          shouldShowModal,
+          currentQuestionIndex,
+          payload,
+        });
+
+        // FIXED: Compare questionId properly (convert to string if needed)
+        const currentQuestionIdStr = currentQuestionIdRef?.current?.toString();
+        const receivedQuestionIdStr = questionId?.toString();
+
+        if (receivedQuestionIdStr === currentQuestionIdStr) {
+          const answersData = payload.answers_data?.data;
+
+          console.log("📊 Processing answer data:", {
+            answersData,
+            currentQuestionIndex,
+            shouldShowModal,
+          });
+
+          // Update answer data for all questions
+          setMqttAnswerData(answersData);
+          // FIXED: For elimination questions (index > 4), set result data separately
+          if (currentQuestionIndex > 4) {
+            setMqttAnsweResultData(answersData);
+            setMqttAnswerData(answersData);
+          }
+
+          // FIXED: Always update modal states when shouldShowModal is true
+          if (shouldShowModal) {
+            setMqttAnswerData(answersData);
+          }
+
+          // Refetch balance data
+          refetchBalance();
+          // Mark submitted and stop timer
+          const correctOption =
+            payload.answers_data?.question?.correct_option ||
+            answersData?.question?.correct_option;
+
+          if (correctOption) {
+            setCorrectAnswer(correctOption);
+            setTimerActive(false);
+          }
+
+          console.log("✅ Answer processing completed");
+        } else {
+          console.log("❌ Question ID mismatch:", {
+            expected: currentQuestionIdStr,
+            received: receivedQuestionIdStr,
+          });
+        }
+      }
 
       // Handle timer start event
       if (receivedMessage?.event === "game_s2_timer_start") {
@@ -282,31 +278,27 @@ const [showResultModal, setShowResultModal] = useState(false);
     }
   }, [timeLeft, timerActive, currentQuestionIndex]);
 
-
-
-
-
- const [fontSize, setFontSize] = useState('text-4xl 2xl:text-5xl');
+  const [fontSize, setFontSize] = useState("text-4xl 2xl:text-5xl");
   const textRef = useRef(null);
 
-  const getFontSizeClass = (textLength:number) => {
+  const getFontSizeClass = (textLength: number) => {
     if (textLength <= 30) {
-      return 'text-4xl 2xl:text-5xl'; // Large font for short questions
+      return "text-4xl 2xl:text-5xl"; // Large font for short questions
     } else if (textLength <= 60) {
-      return 'text-3xl 2xl:text-4xl'; // Medium font for medium questions
+      return "text-3xl 2xl:text-4xl"; // Medium font for medium questions
     } else if (textLength <= 100) {
-      return 'text-2xl 2xl:text-3xl'; // Smaller font for longer questions
+      return "text-2xl 2xl:text-3xl"; // Smaller font for longer questions
     } else {
-      return 'text-xl 2xl:text-2xl'; // Smallest font for very long questions
+      return "text-xl 2xl:text-2xl"; // Smallest font for very long questions
     }
   };
 
   useEffect(() => {
-    const questionText = mqttQuestionData?.question || "Waiting for question...";
+    const questionText =
+      mqttQuestionData?.question || "Waiting for question...";
     const newFontSize = getFontSizeClass(questionText.length);
     setFontSize(newFontSize);
   }, [mqttQuestionData?.question]);
-
 
   if (showStage2Prep) {
     return <StageTwoGetReadyStage />;
@@ -317,9 +309,9 @@ const [showResultModal, setShowResultModal] = useState(false);
       <HustleBoardStageTallyPage
         eliminationCount={2}
         removeCount={2}
-        title={ "Hustle Board"  }
+        title={"Hustle Board"}
         activeState={2}
-        onNext={()=>onNext}
+        onNext={() => onNext}
       />
     );
   }
@@ -361,19 +353,19 @@ const [showResultModal, setShowResultModal] = useState(false);
 
           <div className="relative w-full py-[2rem] 2xl:py-[2.5rem]  px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
             {/* Animated border */}
-          <div className="absolute inset-0">
-                          <motion.div
-                            className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
-                            style={{
-                              background:
-                                currentQuestionIndex > 4
-                                  ? `conic-gradient(from 0deg at 50% 50%,
+            <div className="absolute inset-0">
+              <motion.div
+                className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+                style={{
+                  background:
+                    currentQuestionIndex > 4
+                      ? `conic-gradient(from 0deg at 50% 50%,
                      #ff0000 0deg,
                      #ff4444 120deg,
                      #cc0000 240deg,
                      #ff0000 360deg
                    )`
-                                  : `conic-gradient(from 0deg at 50% 50%,
+                      : `conic-gradient(from 0deg at 50% 50%,
                      #d91fff 0deg,
                      #d91fff 120deg,
                      #00ffff 100deg,
@@ -382,25 +374,25 @@ const [showResultModal, setShowResultModal] = useState(false);
                      #FFD700 360deg,
                      #d91fff 340deg
                    )`,
-                            }}
-                            animate={{
-                              rotate: [0, 360],
-                            }}
-                            transition={{
-                              duration: currentQuestionIndex > 5 ? 2 : 4, // Faster rotation in danger zone
-                              ease: "linear",
-                              repeat: Infinity,
-                            }}
-                          />
-                        </div>
+                }}
+                animate={{
+                  rotate: [0, 360],
+                }}
+                transition={{
+                  duration: currentQuestionIndex > 5 ? 2 : 4, // Faster rotation in danger zone
+                  ease: "linear",
+                  repeat: Infinity,
+                }}
+              />
+            </div>
 
-                         <div className="absolute inset-0">
-                                        <motion.div
-                                          className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
-                                          style={{
-                                            background:
-                                              currentQuestionIndex > 4
-                                                ? `conic-gradient(from 0deg at 50% 50%,
+            <div className="absolute inset-0">
+              <motion.div
+                className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+                style={{
+                  background:
+                    currentQuestionIndex > 4
+                      ? `conic-gradient(from 0deg at 50% 50%,
                                    #ff0000 0deg, #ff0000 10deg,
                                    #8b0000 10deg, #8b0000 20deg,
                                    #ff4444 20deg, #ff4444 30deg,
@@ -437,7 +429,7 @@ const [showResultModal, setShowResultModal] = useState(false);
                                    #ff5555 330deg, #ff5555 340deg,
                                    #ff0000 340deg, #ff0000 360deg
                                  )`
-                                                : `conic-gradient(from 0deg at 50% 50%,
+                      : `conic-gradient(from 0deg at 50% 50%,
                                    #d91fff 0deg,
                                    #d91fff 120deg,
                                    #00ffff 100deg,
@@ -446,34 +438,34 @@ const [showResultModal, setShowResultModal] = useState(false);
                                    #FFD700 360deg,
                                    #d91fff 340deg
                                  )`,
-                                          }}
-                                          animate={{
-                                            rotate: [0, 360],
-                                            ...(currentQuestionIndex > 4 && {
-                                              filter: [
-                                                "brightness(1) saturate(1)",
-                                                "brightness(1.5) saturate(1.5)",
-                                                "brightness(0.8) saturate(1.2)",
-                                                "brightness(1.3) saturate(1.8)",
-                                                "brightness(1) saturate(1)",
-                                              ],
-                                            }),
-                                          }}
-                                          transition={{
-                                            duration: currentQuestionIndex > 5 ? 2 : 4,
-                                            ease: "linear",
-                                            repeat: Infinity,
-                                            ...(currentQuestionIndex > 4 && {
-                                              filter: {
-                                                duration: 0.3,
-                                                ease: "easeInOut",
-                                                repeat: Infinity,
-                                                repeatType: "reverse",
-                                              },
-                                            }),
-                                          }}
-                                        />
-                                      </div>
+                }}
+                animate={{
+                  rotate: [0, 360],
+                  ...(currentQuestionIndex > 4 && {
+                    filter: [
+                      "brightness(1) saturate(1)",
+                      "brightness(1.5) saturate(1.5)",
+                      "brightness(0.8) saturate(1.2)",
+                      "brightness(1.3) saturate(1.8)",
+                      "brightness(1) saturate(1)",
+                    ],
+                  }),
+                }}
+                transition={{
+                  duration: currentQuestionIndex > 5 ? 2 : 4,
+                  ease: "linear",
+                  repeat: Infinity,
+                  ...(currentQuestionIndex > 4 && {
+                    filter: {
+                      duration: 0.3,
+                      ease: "easeInOut",
+                      repeat: Infinity,
+                      repeatType: "reverse",
+                    },
+                  }),
+                }}
+              />
+            </div>
 
             {/* Content container */}
             <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
@@ -497,13 +489,13 @@ const [showResultModal, setShowResultModal] = useState(false);
 
                 {timerActive && (
                   <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
-                      <span
-                        className="text-[40px] font-extrabold font-verdana text-white"
-                        style={{
-                          WebkitTextStroke: "1.5px #C76000",
-                          textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
-                        }}
-                      >
+                    <span
+                      className="text-[40px] font-extrabold font-verdana text-white"
+                      style={{
+                        WebkitTextStroke: "1.5px #C76000",
+                        textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
+                      }}
+                    >
                       {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
                     </span>
                   </div>
@@ -513,39 +505,39 @@ const [showResultModal, setShowResultModal] = useState(false);
               <div className="grid mt-5 gap-3 grid-cols-[1fr_6fr_1fr] items-start">
                 {/* Question numbers sidebar - Updated to show attempted questions */}
                 <div className="flex gap-2 flex-col">
-                    {Array.from({ length: 8 }, (_, index) => (
-                      <div className="" key={index}>
-                        <NumberCardContainer
-                          // text={index + 1}
-                          text={
-                            isQuestionAttempted(index+1) ? (
-                              <CheckIcon size={160} />
-                            ) : (
-                              index + 1
-                            )
-                          }
-                          textColor={
-                            currentQuestionIndex === index+1
-                              ? "#FFFFFF"
-                              : isQuestionAttempted(index+1)
-                                ? "#fff"
-                                : "#F2C94C"
-                          }
-                          backgroundColor={
-                            currentQuestionIndex === index+1
-                              ? "#FEC124"
-                              : isQuestionAttempted(index+1)
-                                ? "#04DA6A"
-                                : "black"
-                          }
-                          width={75}
-                          height={75}
-                          active={currentQuestionIndex > index+1}
-                          iconPosition={{ y: 33 }}
-                          iconSize={30}
-                        />
-                      </div>
-                    ))}
+                  {Array.from({ length: 8 }, (_, index) => (
+                    <div className="" key={index}>
+                      <NumberCardContainer
+                        // text={index + 1}
+                        text={
+                          isQuestionAttempted(index + 1) ? (
+                            <CheckIcon size={160} />
+                          ) : (
+                            index + 1
+                          )
+                        }
+                        textColor={
+                          currentQuestionIndex === index + 1
+                            ? "#FFFFFF"
+                            : isQuestionAttempted(index + 1)
+                              ? "#fff"
+                              : "#F2C94C"
+                        }
+                        backgroundColor={
+                          currentQuestionIndex === index + 1
+                            ? "#FEC124"
+                            : isQuestionAttempted(index + 1)
+                              ? "#04DA6A"
+                              : "black"
+                        }
+                        width={75}
+                        height={75}
+                        active={currentQuestionIndex > index + 1}
+                        iconPosition={{ y: 33 }}
+                        iconSize={30}
+                      />
+                    </div>
+                  ))}
                 </div>
 
                 {isLoading ? (
@@ -553,319 +545,354 @@ const [showResultModal, setShowResultModal] = useState(false);
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                   </div>
                 ) : (
-
                   <>
-                
-
-
-
-
-<div className="relative">
-  {/* Question display section */}
-  <motion.div
-    className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000] ${
-      currentQuestionIndex > 4 ? "border-red-500" : "border-[#D71BFA]"
-    }`}
-    animate={
-      currentQuestionIndex > 4
-        ? {
-            borderColor: [
-              "#ff0000",
-              "#ff4444",
-              "#cc0000",
-              "#ff6666",
-              "#990000",
-              "#ff3333",
-              "#ff0000",
-            ],
-            boxShadow: [
-              "0 0 20px #ff0000",
-              "0 0 40px #ff4444",
-              "0 0 25px #cc0000",
-              "0 0 35px #ff6666",
-              "0 0 30px #990000",
-              "0 0 45px #ff3333",
-              "0 0 20px #ff0000",
-            ],
-            scale: [1, 1.02, 1, 1.01, 1],
-          }
-        : {}
-    }
-    transition={
-      currentQuestionIndex > 4
-        ? {
-            duration: 0.5,
-            ease: "easeInOut",
-            repeat: Infinity,
-            repeatType: "loop",
-          }
-        : {}
-    }
-  >
-    <div>
-      <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-2xl text-[#04DA6A] font-outfit">
-        Question {currentQuestionIndex}
-      </p>
-    </div>
-
-    <AnimatePresence mode="wait">
-      <motion.h2
-        key={mqttQuestionData?.question}
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -30 }}
-        transition={{ duration: 0.6 }}
-        className={cn(`text-white ${fontSize} text-center mb-10 font-gilroyMedium font-extrabold`)}
-        ref={textRef}
-      >
-        {mqttQuestionData?.question || "Waiting for question..."}
-      </motion.h2>
-    </AnimatePresence>
-
-    <div className="flex absolute -bottom-11 justify-center items-center w-full gap-4">
-      <div className="bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] flex justify-center gap-y-0 space-y-0 items-center flex-col rounded-[12px] py-2 px-[5rem]">
-        <p className="text-xl block font-outfit font-normal text-[#1E1E1E]">
-          Win amount
-        </p>
-        <GlowyStrokeText
-          strokeWidth={2}
-          strokeColor="#C76000"
-          glowColor="#C76000"
-          textclassName="text-[40px] block -my-2 text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
-          fillColor="#1E1E1E"
-          glowIntensity={"none"}
-        >
-          ₦
-          {formatAmount(
-            Number(mqttQuestionData?.allocated_winning_amount || 0)
-          )}
-        </GlowyStrokeText>
-      </div>
-    </div>
-  </motion.div>
-
-  <AnimatePresence mode="wait">
-    {mqttQuestionData ? (
-      <motion.div
-        key={`options-${currentQuestionIndex}-${mqttQuestionData?.question_id}`}
-                              className="grid grid-cols-2 gap-[1.625rem] mt-[5.625rem]"
-                              initial={{ opacity: 0, y: 30 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -30 }}
-                              transition={{ delay: 0.5, duration: 0.5 }}
-      >
-        {(["option_a", "option_b", "option_c", "option_d"] as OptionKey[]).map(
-          (option, index) => {
-            const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-            const isCorrect = isCorrectOption(option);
-            const isSelected = selectedOption === option;
-            const showResult = correctAnswer;
-
-            return (
-              <motion.button
-                key={option}
-                variants={{
-                  hidden: { 
-                    opacity: 0, 
-                    y: 50, 
-                    scale: 0.8,
-                    rotateX: -15
-                  },
-                  visible: { 
-                    opacity: 1, 
-                    y: 0, 
-                    scale: 1,
-                    rotateX: 0,
-                    transition: {
-                      type: "spring",
-                      stiffness: 100,
-                      damping: 15,
-                      duration: 0.6
-                    }
-                  },
-                }}
-                whileHover={
-                  timerActive && mqttQuestionData?.question?.questions
-                    ? {
-                        scale: 1.03,
-                        y: -3,
-                        transition: { duration: 0.2 }
-                      }
-                    : {}
-                }
-                whileTap={
-                  timerActive && mqttQuestionData?.question?.questions
-                    ? { scale: 0.98 }
-                    : {}
-                }
-                animate={
-                  isSelected && !showResult
-                    ? {
-                        scale: [1, 1.05, 1],
-                        transition: {
-                          duration: 0.3,
-                          ease: "easeInOut"
+                    <div className="relative">
+                      {/* Question display section */}
+                      <motion.div
+                        className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000] ${
+                          currentQuestionIndex > 4
+                            ? "border-red-500"
+                            : "border-[#D71BFA]"
+                        }`}
+                        animate={
+                          currentQuestionIndex > 4
+                            ? {
+                                borderColor: [
+                                  "#ff0000",
+                                  "#ff4444",
+                                  "#cc0000",
+                                  "#ff6666",
+                                  "#990000",
+                                  "#ff3333",
+                                  "#ff0000",
+                                ],
+                                boxShadow: [
+                                  "0 0 20px #ff0000",
+                                  "0 0 40px #ff4444",
+                                  "0 0 25px #cc0000",
+                                  "0 0 35px #ff6666",
+                                  "0 0 30px #990000",
+                                  "0 0 45px #ff3333",
+                                  "0 0 20px #ff0000",
+                                ],
+                                scale: [1, 1.02, 1, 1.01, 1],
+                              }
+                            : {}
                         }
-                      }
-                    : showResult && isCorrect
-                    ? {
-                        scale: [1, 1.08, 1.02],
-                        backgroundColor: ["#04DA6A20", "#04DA6A40", "#04DA6A20"],
-                        transition: {
-                          duration: 0.8,
-                          ease: "easeInOut"
+                        transition={
+                          currentQuestionIndex > 4
+                            ? {
+                                duration: 0.5,
+                                ease: "easeInOut",
+                                repeat: Infinity,
+                                repeatType: "loop",
+                              }
+                            : {}
                         }
-                      }
-                    : showResult && isSelected && !isCorrect
-                    ? {
-                        x: [-2, 2, -2, 2, 0],
-                        transition: {
-                          duration: 0.5,
-                          ease: "easeInOut"
-                        }
-                      }
-                    : {}
-                }
-                className={cn(
-                  "bg-[#000000] border-2 rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative transition-all duration-300 transform-gpu",
-                  !showResult && isSelected
-                    ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
-                    : "",
-                  !timerActive || !mqttQuestionData?.question?.questions
-                    ? "opacity-70 cursor-not-allowed"
-                    : "hover:shadow-lg",
-                  mqttAnswerData &&
-                    mqttQuestionData?.correct_option ===
-                      convertOptionToLetter(option)
-                    ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
-                    : ""
-                )}
-              >
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 + index * 0.1, duration: 0.4 }}
-                  className="text-current"
-                >
-                  {optionLetter}:
-                </motion.span>
-                
-                <motion.span
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ 
-                    delay: 0.3 + index * 0.1, 
-                    duration: 0.5,
-                    type: "spring",
-                    stiffness: 80
-                  }}
-                  className={cn(
-                    "ml-2",
-                    selectedOption === option && !showResult
-                      ? "text-white font-bold"
-                      : "",
-                    isCorrect && showResult
-                      ? "text-[#04DA6A] font-bold"
-                      : "",
-                    isSelected && !isCorrect && showResult
-                      ? "text-[#FF3B30] font-bold"
-                      : ""
-                  )}
-                  style={{
-                    WebkitTextStroke:
-                      selectedOption === option && !showResult
-                        ? "1px #C76000"
-                        : "",
-                  }}
-                >
-                  {mqttQuestionData?.[option] || "..."}
-                </motion.span>
+                      >
+                        <div>
+                          <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-2xl text-[#04DA6A] font-outfit">
+                            Question {currentQuestionIndex}
+                          </p>
+                        </div>
 
-                {/* Correct answer indicator */}
-                <AnimatePresence>
-                  {isCorrect && showResult && (
-                    <motion.div 
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ 
-                        scale: 1, 
-                        rotate: 0,
-                        transition: {
-                          type: "spring",
-                          stiffness: 200,
-                          damping: 10,
-                          delay: 0.2
-                        }
-                      }}
-                      exit={{ scale: 0, opacity: 0 }}
-                    >
-                      <div className="bg-[#04DA6A] rounded-full p-1">
-                        <CheckIcon size={16} />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                
-                {/* Incorrect answer indicator */}
-                <AnimatePresence>
-                  {!isCorrect && showResult && (
-                    <motion.div 
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                      initial={{ scale: 0, rotate: 180 }}
-                      animate={{ 
-                        scale: 1, 
-                        rotate: 0,
-                        transition: {
-                          type: "spring",
-                          stiffness: 200,
-                          damping: 10,
-                          delay: 0.2
-                        }
-                      }}
-                      exit={{ scale: 0, opacity: 0 }}
-                    >
-                      <div className="bg-[#FF3B30] rounded-full p-1">
-                        <ErrorIcon />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-            );
-          }
-        )}
-      </motion.div>
-    ) : (
-      <motion.div 
-        key="loading"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="flex justify-center items-center h-full mt-4"
-      >
-        <div className="text-[#D5B9FF] text-lg">
-          {isConnected
-            ? "Waiting for next question..."
-            : "Connecting..."}
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-</div>
+                        <AnimatePresence mode="wait">
+                          <motion.h2
+                            key={mqttQuestionData?.question}
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -30 }}
+                            transition={{ duration: 0.6 }}
+                            className={cn(
+                              `text-white ${fontSize} text-center mb-10 font-gilroyMedium font-extrabold`
+                            )}
+                            ref={textRef}
+                          >
+                            {mqttQuestionData?.question ||
+                              "Waiting for question..."}
+                          </motion.h2>
+                        </AnimatePresence>
 
+                        <div className="flex absolute -bottom-11 justify-center items-center w-full gap-4">
+                          <div className="bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] flex justify-center gap-y-0 space-y-0 items-center flex-col rounded-[12px] py-2 px-[5rem]">
+                            <p className="text-xl block font-outfit font-normal text-[#1E1E1E]">
+                              Win amount
+                            </p>
+                            <GlowyStrokeText
+                              strokeWidth={2}
+                              strokeColor="#C76000"
+                              glowColor="#C76000"
+                              textclassName="text-[40px] block -my-2 text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
+                              fillColor="#1E1E1E"
+                              glowIntensity={"none"}
+                            >
+                              ₦
+                              {formatAmount(
+                                Number(
+                                  mqttQuestionData?.allocated_winning_amount ||
+                                    0
+                                )
+                              )}
+                            </GlowyStrokeText>
+                          </div>
+                        </div>
+                      </motion.div>
 
+                      <AnimatePresence mode="wait">
+                        {mqttQuestionData ? (
+                          <motion.div
+                            key={`options-${currentQuestionIndex}-${mqttQuestionData?.question_id}`}
+                            className="grid grid-cols-2 gap-[1.625rem] mt-[5.625rem]"
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -30 }}
+                            transition={{ delay: 0.5, duration: 0.5 }}
+                          >
+                            {(
+                              [
+                                "option_a",
+                                "option_b",
+                                "option_c",
+                                "option_d",
+                              ] as OptionKey[]
+                            ).map((option, index) => {
+                              const optionLetter = String.fromCharCode(
+                                65 + index
+                              ); // A, B, C, D
+                              const isCorrect = isCorrectOption(option);
+                              const isSelected = selectedOption === option;
+                              const showResult = correctAnswer;
+
+                              return (
+                                <motion.button
+                                  key={option}
+                                  variants={{
+                                    hidden: {
+                                      opacity: 0,
+                                      y: 50,
+                                      scale: 0.8,
+                                      rotateX: -15,
+                                    },
+                                    visible: {
+                                      opacity: 1,
+                                      y: 0,
+                                      scale: 1,
+                                      rotateX: 0,
+                                      transition: {
+                                        type: "spring",
+                                        stiffness: 100,
+                                        damping: 15,
+                                        duration: 0.6,
+                                      },
+                                    },
+                                  }}
+                                  whileHover={
+                                    timerActive &&
+                                    mqttQuestionData?.question?.questions
+                                      ? {
+                                          scale: 1.03,
+                                          y: -3,
+                                          transition: { duration: 0.2 },
+                                        }
+                                      : {}
+                                  }
+                                  whileTap={
+                                    timerActive &&
+                                    mqttQuestionData?.question?.questions
+                                      ? { scale: 0.98 }
+                                      : {}
+                                  }
+                                  animate={
+                                    isSelected && !showResult
+                                      ? {
+                                          scale: [1, 1.05, 1],
+                                          transition: {
+                                            duration: 0.3,
+                                            ease: "easeInOut",
+                                          },
+                                        }
+                                      : showResult && isCorrect
+                                        ? {
+                                            scale: [1, 1.08, 1.02],
+                                            backgroundColor: [
+                                              "#04DA6A20",
+                                              "#04DA6A40",
+                                              "#04DA6A20",
+                                            ],
+                                            transition: {
+                                              duration: 0.8,
+                                              ease: "easeInOut",
+                                            },
+                                          }
+                                        : showResult && isSelected && !isCorrect
+                                          ? {
+                                              x: [-2, 2, -2, 2, 0],
+                                              transition: {
+                                                duration: 0.5,
+                                                ease: "easeInOut",
+                                              },
+                                            }
+                                          : {}
+                                  }
+                                  className={cn(
+                                    "bg-[#000000] border-2 rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative transition-all duration-300 transform-gpu",
+                                    !showResult && isSelected
+                                      ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
+                                      : "",
+                                    !timerActive ||
+                                      !mqttQuestionData?.question?.questions
+                                      ? "opacity-70 cursor-not-allowed"
+                                      : "hover:shadow-lg",
+                                    mqttAnswerData &&
+                                      mqttQuestionData?.correct_option ===
+                                        convertOptionToLetter(option)
+                                      ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                                      : ""
+                                  )}
+                                >
+                                  <motion.span
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{
+                                      delay: 0.2 + index * 0.1,
+                                      duration: 0.4,
+                                    }}
+                                    className="text-current"
+                                  >
+                                    {optionLetter}:
+                                  </motion.span>
+
+                                  <motion.span
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{
+                                      delay: 0.3 + index * 0.1,
+                                      duration: 0.5,
+                                      type: "spring",
+                                      stiffness: 80,
+                                    }}
+                                    className={cn(
+                                      "ml-2",
+                                      selectedOption === option && !showResult
+                                        ? "text-white font-bold"
+                                        : "",
+                                      isCorrect && showResult
+                                        ? "text-[#04DA6A] font-bold"
+                                        : "",
+                                      isSelected && !isCorrect && showResult
+                                        ? "text-[#FF3B30] font-bold"
+                                        : ""
+                                    )}
+                                    style={{
+                                      WebkitTextStroke:
+                                        selectedOption === option && !showResult
+                                          ? "1px #C76000"
+                                          : "",
+                                    }}
+                                  >
+                                    {mqttQuestionData?.[option] || "..."}
+                                  </motion.span>
+
+                                  {/* Correct answer indicator */}
+                                  <AnimatePresence>
+                                    {isCorrect && showResult && (
+                                      <motion.div
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                        initial={{ scale: 0, rotate: -180 }}
+                                        animate={{
+                                          scale: 1,
+                                          rotate: 0,
+                                          transition: {
+                                            type: "spring",
+                                            stiffness: 200,
+                                            damping: 10,
+                                            delay: 0.2,
+                                          },
+                                        }}
+                                        exit={{ scale: 0, opacity: 0 }}
+                                      >
+                                        <div className="bg-[#04DA6A] rounded-full p-1">
+                                          <CheckIcon size={16} />
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+
+                                  {/* Incorrect answer indicator */}
+                                  <AnimatePresence>
+                                    {!isCorrect && showResult && (
+                                      <motion.div
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                        initial={{ scale: 0, rotate: 180 }}
+                                        animate={{
+                                          scale: 1,
+                                          rotate: 0,
+                                          transition: {
+                                            type: "spring",
+                                            stiffness: 200,
+                                            damping: 10,
+                                            delay: 0.2,
+                                          },
+                                        }}
+                                        exit={{ scale: 0, opacity: 0 }}
+                                      >
+                                        <div className="bg-[#FF3B30] rounded-full p-1">
+                                          <ErrorIcon />
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </motion.button>
+                              );
+                            })}
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="loading"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex justify-center items-center h-full mt-4"
+                          >
+                            <div className="text-[#D5B9FF] text-lg">
+                              {isConnected
+                                ? "Waiting for next question..."
+                                : "Connecting..."}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </>
                 )}
+              
 {showResultModal && (
-                    <HustleBoardModal
-                      currentQuestionAnswerData={currentQuestionAnswerData}
-                      currentQuestion={mqttQuestionData}
-                    />
-                  )}
-                  { mqttAnswerData && <HustleRevealResult 
-                  mqttAnswerData={mqttAnswerData}
-                      currentQuestion={mqttQuestionData}
-                  />}
+  <HustleQuestionAnswerModal
+   
+    showBooster={false}
+    currentQuestionOptions={{
+      option_a: mqttQuestionData?.option_a || mqttQuestionData?.question?.option_a,
+      option_b: mqttQuestionData?.option_b || mqttQuestionData?.question?.option_b,
+      option_c: mqttQuestionData?.option_c || mqttQuestionData?.question?.option_c,
+      option_d: mqttQuestionData?.option_d || mqttQuestionData?.question?.option_d,
+    }}
+    questionIndex={currentQuestionIndex}
+    correctAnswer={
+      correctAnswer || 
+      mqttQuestionData?.correct_option || 
+      mqttQuestionData?.question?.correct_option
+    }
+    question={
+      mqttQuestionData?.question || 
+      mqttQuestionData?.question?.question
+    }
+    currentQuestionAnswerData={currentQuestionAnswerData}
+    currentQuestion={mqttQuestionData}
+    mqttAnswerData={mqttAnswerData}
+  />
+)}
+
+             
                 {/* Results sidebar */}
                 <div className="">
                   <FastestFingerResult
@@ -887,8 +914,10 @@ const [showResultModal, setShowResultModal] = useState(false);
           showEmptyCard={false}
           showHustlerCard={true}
           eliminated={2}
-           balanceData={balanceData}
-            mqttAnswerData={currentQuestionIndex > 4 ? mqttAnswerResultData : mqttAnswerData}
+          balanceData={balanceData}
+          mqttAnswerData={
+            currentQuestionIndex > 4 ? mqttAnswerResultData : mqttAnswerData
+          }
         />
       </div>
     </div>

@@ -22,6 +22,7 @@ interface Data {
 interface Prop{
     currentQuestionAnswerData: Data[]
     currentQuestion:any
+    
 }
 
 
@@ -78,28 +79,14 @@ const HustleBoardModal = ({currentQuestionAnswerData,currentQuestion}:Prop) => {
 //   console.log(getOptionValue(currentQuestion?.question.questions.question,  String("A")));
   
   return (
-    <div className="fixed inset-0 z-50 w-full flex items-center justify-center bg-black/80">
-      <div className="bg-[#15052B] rounded-[30px] text-white w-[658px] border border-[#7E3CE0] p-[1.875rem]">
-        {/* Question Header */}
-        <div className="bg-[#1F0541] rounded-10 p-4 flex justify-center items-center flex-col">
-          <div className="bg-[#29005E] rounded-[20px] px-[22px] py-2">
-            <p className="text-[#9E5CFF] text-sm font-sans font-semibold">Question {currentQuestion?.question_index}</p>
-          </div>
-          <div className="mt-[.625rem]">
-            <p className="text-white text-lg font-gilroyBold font-semibold">
-            {currentQuestion?.question.questions.question}
-            </p>
-          </div>
-        </div>
-
-        {/* Animated Result Board */}
-        {currentQuestionAnswerData?.slice(0, visibleItems).map((data, idx) => (
+    <div className=" ">
+          {currentQuestionAnswerData?.slice(0, visibleItems).map((data, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="grid grid-cols-[1.5fr_1fr] mt-3"
+            className="grid grid-cols-[1.5fr_1fr] items-center mb-3"
           >
             <div className="bg-[#29104A] flex items-start gap-3 border-[0.3px] border-[#7E3CE0] w-full p-3 rounded-10">
               <div className="relative w-[5.125rem] h-[5.125rem] rounded-[10px] overflow-hidden">
@@ -117,13 +104,13 @@ const HustleBoardModal = ({currentQuestionAnswerData,currentQuestion}:Prop) => {
                 </p>
                 <p className="font-sans opacity-75 text-xs text-white">
                   Answer:
-                  <span className="font-bold opacity-100 text-sm">
+                  <span className="font-bold opacity-100 text-xs">
                     {" "}
 {data?.answer === "N" ? " -.-- ": data?.answer} : {getOptionValue(currentQuestion?.question.questions, String(data?.answer?.toLowerCase()))}                  </span>
                 </p>
-                <div className="bg-[#200541] mt-1 leading-3 flex justify-center items-center flex-col rounded-[1.5rem] py-2 px-3">
-                  <p className="font-gilroyMedium text-xs text-white">Bid amount:</p>
-                  <h2 className="text-[#B380FF] font-gilroyHeavy font-extrabold text-xl">
+                <div className="bg-[#200541] mt-1 leading-3 flex justify-center items-center flex-col rounded-[1.5rem] py-1 px-6">
+                  <p className="font-gilroyMedium text-[10px] text-white">Bid amount:</p>
+                  <h2 className="text-[#B380FF] font-gilroyHeavy font-extrabold text-base">
                     ₦{addCommasToNumber(Math.ceil(Number(data?.amount_staked) / 100) * 100)}
                   </h2>
                 </div>
@@ -144,7 +131,6 @@ const HustleBoardModal = ({currentQuestionAnswerData,currentQuestion}:Prop) => {
             </div>
           </motion.div>
         ))}
-      </div>
     </div>
   );
 };
