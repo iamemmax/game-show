@@ -340,7 +340,7 @@ export default function Stage2Questions({
                 {!loading && currentQuestionData && currentStageStep === "questions" && !questionsExhausted && (
                     <>
                         {
-                            lastAction === "game_s1_question_bids_reveal" ? (
+                            lastAction === "game_s2_question_options_select_reveal" ? (
                                 <TrapeziumButton onClick={() => refetchQuestionResultData()} variant="purple">
                                     REVEAL QUESTION RESULT
                                 </TrapeziumButton>

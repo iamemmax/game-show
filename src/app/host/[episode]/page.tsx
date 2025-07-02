@@ -248,10 +248,18 @@ export default function HostPage() {
                 } else if (eventCode === "question_s2_time_elapsed") {
                     setGameState((prev) => ({
                         ...prev,
-                        lastAction: "question_s1_time_elapsed",
+                        lastAction: "question_s2_time_elapsed",
                         currentStageStep: "questions",
                     }))
-                } else if (eventCode === "game_s2_results_reveal") {
+                }
+                else if (eventCode === "game_s2_question_options_select_reveal") {
+                    setGameState((prev) => ({
+                        ...prev,
+                        lastAction: eventCode,
+                        currentStageStep: "questions",
+                    }))
+                } 
+                 else if (eventCode === "game_s2_results_reveal") {
                     setGameState((prev) => ({
                         ...prev,
                         lastAction: "game_s2_results_reveal",
