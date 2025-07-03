@@ -294,7 +294,7 @@ export default function EpisodesPage() {
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div>
-                  <Label className="text-sm text-white/70">Episode Name</Label>
+                  <Label className="text-sm text-white/70">Episode Names</Label>
                   <Input
                     value={newEpisodeName}
                     onChange={(e) => setNewEpisodeName(e.target.value)}
