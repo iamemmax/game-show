@@ -692,6 +692,7 @@ export default function HostPage() {
                                     onTimerStart={handleTimerStart}
                                     sendGameMessage={sendGameMessage}
                                     currentStageStep={gameState.currentStageStep}
+                                    lastAction={gameState.lastAction}
                                 />
                             )
                         }
