@@ -589,7 +589,7 @@ const HustleBoardStageTallyPage = ({
                           </div>
                           <div className={`${cn(` flex flex-col`)}`}>
                             <p
-                              className={`${episodeId ? "text-xl" : "text-xs 2xl:text-sm"}  font-gilroyMedium font-normal text-white`}
+                              className={`${episodeId ? "text-2xl" : "text-xs 2xl:text-xl"}  font-gilroyMedium font-normal text-white`}
                             >
                               {tally.name?.split(" ")[0]}
                             </p>
