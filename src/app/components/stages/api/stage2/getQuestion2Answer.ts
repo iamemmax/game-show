@@ -24,11 +24,46 @@ export interface answerOptionProp {
 }
 
 
-export interface Question2AnswerDataAPIResponse{
-  status: string;
-  message: string;
-  data: Question2AnswerData[];
-  question_id: number | string;
+
+export interface Question2AnswerDataAPIResponse {
+  game_episode: number;
+  question_id: string;
+  data: Question2AnswerDataAPIResponseData;
+  question_index: number;
+  show_modal: boolean;
+}
+
+interface Question2AnswerDataAPIResponseData {
+  answers: Answer[];
+  question: Question;
+}
+
+interface Question {
+  question_id: number;
+  correct_option: string;
+}
+
+interface Answer {
+  contestant_id: number;
+  answered_in: number;
+  is_correct: boolean;
+  is_winner: boolean;
+  answer: string;
+  wallet_balance: number;
+  book_balance: number;
+  startup_balance: number;
+  stage_balance: number;
+  contestant_name: string;
+  contestant_attr: string;
+  profit_loss: Profitloss;
+}
+
+interface Profitloss {
+  contestant_id: number;
+  contestant_name: string;
+  contestant_attr: string;
+  amount_gained: number;
+  amount_lost: number;
 }
 
 export interface Question2AnswerData {
@@ -42,16 +77,6 @@ export interface Question2AnswerData {
   contestant_name: null;
   contestant_attr: string;
 }
-
-
-interface Contestant {
-  contestant_attr: string;
-  contestant_name: string;
-  contestant_id: number;
-}
-
-
-
 
 
 export const getQuestionTwoAnswer = async (gameId: number) => {

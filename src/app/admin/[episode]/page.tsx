@@ -105,6 +105,7 @@ export default function GameDetails() {
     const handleMessage = (message: any) => {
       console.log("Received message:", message)
       if (message.event === "game_s2_question_answer") {
+        console.log(message, "debitWalletData")
         setDebitWalletData(message.payload?.answers_data)
       }
     }
@@ -651,7 +652,7 @@ export default function GameDetails() {
             <DialogTitle className="text-xl text-primary">
               Winning Contestant:{" "}
               {convertKebabAndSnakeToTitleCase(
-                debitWalletData?.data?.find((item) => item.is_winner)?.contestant_name || "Unknown",
+                debitWalletData?.data?.answers.find((item) => item.is_winner)?.contestant_name || "Unknown",
               )}
             </DialogTitle>
           </DialogHeader>
@@ -660,7 +661,7 @@ export default function GameDetails() {
             <div className="grid gap-2 mt-2">
               <div className="text-sm text-gray-300">
                 Contestant ID:
-                {debitWalletData?.data?.find((item) => item.is_winner)?.contestant_id || "Unknown"}
+                {debitWalletData?.data?.answers.find((item) => item.is_winner)?.contestant_id || "Unknown"}
               </div>
             </div>
 
@@ -701,7 +702,7 @@ export default function GameDetails() {
                     {contestantsData?.data
                       ?.filter(
                         (contestant: any) =>
-                          contestant.id !== debitWalletData?.data?.find((item: any) => item.is_winner)?.contestant_id &&
+                          contestant.id !== debitWalletData?.data?.answers.find((item: any) => item.is_winner)?.contestant_id &&
                           !contestant.is_eliminated,
                       )
                       .map((contestant: any) => (
