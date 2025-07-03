@@ -1,133 +1,6 @@
-// import StagesCard from '@/app/shared/StagesCard'
-// import UserBadge from '@/app/shared/UserBadge'
-// import React, { useEffect, useState } from 'react'
-// import { motion, AnimatePresence } from 'framer-motion'
-// import { contestantImages } from '../mocks/contestantImages'
-// import { useMQTT } from '@/hooks/useMqttService'
-// import { usePathname } from 'next/navigation'
-
-// // Create a unified type for contestant answers
-// interface ContestantAnswer {
-//   status: string;
-//   message: string;
-//   data: Datum[];
-// }
-
-// interface Datum {
-//   contestant_id: number;
-//   answered_in: number;
-//   is_correct: boolean;
-//   is_winner: boolean;
-//   wallet_balance: number;
-//   book_balance: number;
-//   stage_balance: number;
-//   contestant_name: string | null;
-//   contestant_attr: string;
-// }
-
-// interface FastestFingerResultProps {
-//   resultArray?: Datum[] | null;
-//   timeElapsed?: boolean;
-//   mqttAnswerData?: Datum[] | null;
-//   currentQuestionId?: string | null;
-// }
-// const FastestFingerResult = ({
-//   resultArray,
-//   timeElapsed,
-
-// }: FastestFingerResultProps) => {
-
-//   const itemVariants = {
-//     hidden: { opacity: 0, y: 20 },
-//     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-//     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
-//   };
-
-//   const pathname = usePathname();
-//   const isBoardRoute = pathname?.includes('/hustle-board/');
-
-//   return (
-//     <div className="h-full !z-[999999999999] flex items-center flex-col">
-
-//       {/* Show results when time has elapsed or results are available */}
-//       {(timeElapsed) && resultArray&&resultArray?.length > 0 ? (
-//         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center overflow-y-auto max-h-[600px]">
-//           <AnimatePresence>
-//             {resultArray?.map((result, index) => {
-
-//               // Display the answered_in time exactly as it comes from the backend
-//               const answerTime = result.answered_in;
-
-//               const contestantName = result.contestant_name || `Player ${index + 1}`;
-
-//               return (
-//                 <motion.div
-//                   key={index}
-//                   variants={itemVariants}
-//                   initial="hidden"
-//                   animate="visible"
-//                   exit="exit"
-//                   className="w-full"
-//                 >
-//                   <UserBadge
-//                     username={contestantName}
-//                     amount={`${String(answerTime?.toFixed(2))}` }
-//                     avatarUrl={contestantImages[index % contestantImages.length]} // Use modulo to avoid index errors
-//                     isOnline={true}
-//                     isActive={result.is_winner&& result?.is_correct} // Only active if it's the first correct answer
-//                     borderColor="#FFC125"
-//                     backgroundGradient={{
-//                       middleColor: "#997416",
-//                       endColor: "#FEC124",
-//                       startColor: "#FFC125",
-//                       direction: "vertical"
-//                     }}
-//                     textGradient={{
-//                       startColor: "#FFFFFF",
-//                       endColor: "#FFC125",
-//                       direction: "horizontal"
-//                     }}
-//                     color="#FFFFFF"
-//                     correctAnswerColor={result.is_correct ? "#04DA6A" : "#EB001B"}
-//                     usernameClassName='mt-[6px] text-white text-xs'
-//                     dotPosition={{y:36}}
-//                   width={isBoardRoute?230:130}
-//                   height={isBoardRoute?80:53}
-//                   />
-//                 </motion.div>
-//               );
-//             })}
-//           </AnimatePresence>
-//         </div>
-//       ) : (
-//         // Show placeholder cards
-//         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-start items-start">
-//           {Array.from({length: 6}).map((_, index) => (
-//             <StagesCard
-//               key={index}
-//               title=""
-//               subTitle=""
-//               borderColor="#FFC125"
-//               iconText=""
-//               showIcon={false}
-//               width={isBoardRoute?230:130}
-//                   height={isBoardRoute?80:53}
-//               className="2xl:w-[260px]"
-//             />
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default FastestFingerResult
-
-
-
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   AnimatePresence,
@@ -196,7 +69,7 @@ const AnimatedAmount = ({ from, to, onStart, onComplete }: AnimatedAmountProps) 
       onComplete,
     });
     return controls.stop;
-  }, [to]);
+  }, [to, onStart, onComplete]);
 
   return <motion.span>{rounded}</motion.span>;
 };
@@ -210,59 +83,109 @@ const FastestFingerResult = ({
   const [animatingSlot, setAnimatingSlot] = useState<number | null>(null);
   const [processedBids, setProcessedBids] = useState(new Set<string>());
   const [userInteracted, setUserInteracted] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
   const pathname = usePathname();
   const isBoardRoute = pathname?.includes("/hustle-board/");
   const soundRef = useRef<HTMLAudioElement | null>(null);
   const prevAmountsRef = useRef<{ [id: string]: number }>({});
   const activeAnimations = useRef(0);
 
-  // Add this effect to detect first user interaction
+  // Debug logger
+  const addDebugLog = useCallback((message: string) => {
+    console.log(message);
+    setDebugInfo(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString()}: ${message}`]);
+  }, []);
+
+  // Enhanced user interaction detection
   useEffect(() => {
-    const handleFirstInteraction = () => {
+    const handleFirstInteraction = (event: Event) => {
+      addDebugLog(`First interaction detected: ${event.type}`);
       setUserInteracted(true);
+      
+      // Try to initialize audio context on first interaction
+      if (soundRef.current) {
+        soundRef.current.load();
+        addDebugLog("Audio reloaded on first interaction");
+      }
+      
       document.removeEventListener('click', handleFirstInteraction);
       document.removeEventListener('touchstart', handleFirstInteraction);
       document.removeEventListener('keydown', handleFirstInteraction);
+      document.removeEventListener('pointerdown', handleFirstInteraction);
     };
 
     document.addEventListener('click', handleFirstInteraction);
     document.addEventListener('touchstart', handleFirstInteraction);
     document.addEventListener('keydown', handleFirstInteraction);
+    document.addEventListener('pointerdown', handleFirstInteraction);
 
     return () => {
       document.removeEventListener('click', handleFirstInteraction);
       document.removeEventListener('touchstart', handleFirstInteraction);
       document.removeEventListener('keydown', handleFirstInteraction);
+      document.removeEventListener('pointerdown', handleFirstInteraction);
     };
-  }, []);
+  }, [addDebugLog]);
 
-  // Modify your audio initialization with format fallback
+  // Enhanced audio initialization
   useEffect(() => {
-    soundRef.current = new Audio();
-    if (soundRef.current) {
-      // Try different formats for browser compatibility
-      if (soundRef.current.canPlayType("audio/mpeg")) {
-        soundRef.current.src = "/sounds/select-bid.mp3";
-      } else if (soundRef.current.canPlayType("audio/wav")) {
-        soundRef.current.src = "/sounds/select-bid.wav";
-      } else if (soundRef.current.canPlayType("audio/ogg")) {
-        soundRef.current.src = "/sounds/select-bid.ogg";
-      }
-      
-      soundRef.current.loop = true;
-      soundRef.current.volume = 0.5;
-      soundRef.current.preload = "auto";
-      
-      // Add error handling
-      soundRef.current.onerror = (e) => {
-        console.error("Audio loading error:", e);
-      };
+    addDebugLog("Initializing audio...");
+    
+    const initializeAudio = async () => {
+      try {
+        soundRef.current = new Audio();
+        if (!soundRef.current) {
+          addDebugLog("Failed to create Audio object");
+          return;
+        }
 
-      // Add load event listener
-      soundRef.current.onloadeddata = () => {
-        console.log("Audio loaded successfully");
-      };
-    }
+        // Set source with fallback
+        const audioSrc = "/sounds/select-bid.mp3";
+        soundRef.current.src = audioSrc;
+        soundRef.current.preload = "auto";
+        soundRef.current.loop = false;
+        soundRef.current.volume = 0.5;
+        
+        addDebugLog(`Audio source set to: ${audioSrc}`);
+
+        // Enhanced event listeners
+        soundRef.current.addEventListener('loadstart', () => {
+          addDebugLog("Audio loading started");
+        });
+
+        soundRef.current.addEventListener('canplay', () => {
+          addDebugLog("Audio can play");
+          setAudioReady(true);
+        });
+
+        soundRef.current.addEventListener('canplaythrough', () => {
+          addDebugLog("Audio can play through");
+          setAudioReady(true);
+        });
+
+        soundRef.current.addEventListener('error', (e) => {
+          addDebugLog(`Audio error: ${e.message || 'Unknown error'}`);
+          setAudioReady(false);
+        });
+
+        soundRef.current.addEventListener('play', () => {
+          addDebugLog("Audio started playing");
+        });
+
+        soundRef.current.addEventListener('pause', () => {
+          addDebugLog("Audio paused");
+        });
+
+        // Try to load the audio
+        soundRef.current.load();
+        
+      } catch (error) {
+        addDebugLog(`Audio initialization error: ${error}`);
+      }
+    };
+
+    initializeAudio();
 
     return () => {
       if (soundRef.current) {
@@ -270,15 +193,60 @@ const FastestFingerResult = ({
         soundRef.current = null;
       }
     };
-  }, []);
+  }, [addDebugLog]);
+
+  // Enhanced play sound function with extensive debugging
+  const playSound = useCallback(async () => {
+    addDebugLog(`playSound called - userInteracted: ${userInteracted}, audioReady: ${audioReady}, soundRef exists: ${!!soundRef.current}`);
+    
+    if (!soundRef.current) {
+      addDebugLog("No sound reference available");
+      return;
+    }
+
+    if (!userInteracted) {
+      addDebugLog("User hasn't interacted yet - cannot play sound");
+      return;
+    }
+
+    if (!audioReady) {
+      addDebugLog("Audio not ready yet");
+      return;
+    }
+
+    try {
+      // Reset to start for single play
+      soundRef.current.currentTime = 0;
+
+      addDebugLog("Attempting to play sound...");
+      const playPromise = soundRef.current.play();
+      
+      if (playPromise !== undefined) {
+        await playPromise;
+        addDebugLog("Sound playing successfully!");
+      } else {
+        addDebugLog("Play promise is undefined");
+      }
+    } catch (error) {
+      addDebugLog(`Error playing sound: ${error}`);
+      
+      // Try to reload and play again
+      try {
+        soundRef.current.load();
+        setTimeout(async () => {
+          if (soundRef.current) {
+            await soundRef.current.play();
+            addDebugLog("Sound playing after reload");
+          }
+        }, 100);
+      } catch (retryError) {
+        addDebugLog(`Retry failed: ${retryError}`);
+      }
+    }
+  }, [userInteracted, audioReady, addDebugLog]);
 
  
-  const stopSound = () => {
-    if (soundRef.current && !soundRef.current.paused) {
-      soundRef.current.pause();
-      soundRef.current.currentTime = 0;
-    }
-  };
+ 
 
   useEffect(() => {
     if (!contestantBids || Object.keys(contestantBids).length === 0) {
@@ -288,10 +256,13 @@ const FastestFingerResult = ({
     }
 
     const currentBids = Object.values(contestantBids);
+    addDebugLog(`Processing ${currentBids.length} bids`);
 
     currentBids?.forEach((bid: ContestantBid) => {
       const bidKey = `${bid.contestant_id}_${bid.timestamp}`;
       if (processedBids.has(bidKey)) return;
+
+      addDebugLog(`Processing new bid from ${bid.contestant_name}`);
 
       setBidSlots((prevSlots) => {
         const existingSlotIndex = prevSlots.findIndex(
@@ -299,17 +270,31 @@ const FastestFingerResult = ({
         );
 
         if (existingSlotIndex !== -1) {
+          addDebugLog(`Updating existing bid at slot ${existingSlotIndex}`);
           const newSlots = [...prevSlots];
           newSlots[existingSlotIndex] = { ...bid, is_update: true };
           setAnimatingSlot(existingSlotIndex);
+          
+          // Play sound immediately for updates
+          setTimeout(() => {
+            playSound();
+          }, 100);
+          
           setTimeout(() => setAnimatingSlot(null), 800);
           return newSlots;
         } else {
           const nextEmptySlot = prevSlots.findIndex((slot) => slot === null);
           if (nextEmptySlot !== -1) {
+            addDebugLog(`Adding new bid at slot ${nextEmptySlot}`);
+            
             setTimeout(() => {
-              
               setAnimatingSlot(nextEmptySlot);
+              
+              // Play sound immediately for new bids
+              setTimeout(() => {
+                playSound();
+              }, 100);
+              
               setTimeout(() => setAnimatingSlot(null), 1000);
             }, 300);
             
@@ -323,21 +308,19 @@ const FastestFingerResult = ({
 
       setProcessedBids((prev) => new Set([...prev, bidKey]));
     });
-  }, [contestantBids]);
+  }, [contestantBids, processedBids, playSound, addDebugLog]);
 
-  const handleAmountStart = () => {
+  const handleAmountStart = useCallback(() => {
     activeAnimations.current += 1;
-    if (userInteracted && soundRef.current && soundRef.current.paused) {
-      
-    }
-  };
+    addDebugLog(`Amount animation started (active: ${activeAnimations.current})`);
+    playSound();
+  }, [playSound, addDebugLog]);
 
-  const handleAmountComplete = () => {
+  const handleAmountComplete = useCallback(() => {
     activeAnimations.current -= 1;
-    if (activeAnimations.current <= 0) {
-      stopSound();
-    }
-  };
+    addDebugLog(`Amount animation completed (active: ${activeAnimations.current})`);
+    // Remove the stopSound call since we're not looping anymore
+  }, [addDebugLog]);
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -351,6 +334,7 @@ const FastestFingerResult = ({
 
   return (
     <div className="h-full !z-[999999999999] flex items-center flex-col">
+     
       {timeElapsed && resultArray && resultArray?.length > 0 ? (
         <div className="flex-1 flex h-full 2xl:gap-4 gap-2 flex-col justify-center items-center overflow-y-auto max-h-[600px]">
           <AnimatePresence>
@@ -426,6 +410,10 @@ const FastestFingerResult = ({
             const prevAmount = prevAmountsRef.current[contestantId] ?? 0;
             prevAmountsRef.current[contestantId] = amount;
 
+            // Always ensure there's a meaningful difference for animation
+            const fromAmount = bid.is_new ? 0 : prevAmount;
+            const toAmount = Math.max(amount, fromAmount + 100);
+
             return (
               <motion.div
                 key={`slot-${index}`}
@@ -445,8 +433,8 @@ const FastestFingerResult = ({
                   subTitle="Bid:"
                   amountNode={
                     <AnimatedAmount
-                      from={prevAmount}
-                      to={amount}
+                      from={fromAmount}
+                      to={toAmount}
                       onStart={handleAmountStart}
                       onComplete={handleAmountComplete}
                     />

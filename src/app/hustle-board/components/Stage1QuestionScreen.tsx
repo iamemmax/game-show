@@ -65,10 +65,7 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
   // Get user from storage
   const user = tokenStorage.getUser();
 
-  // Get contestants data to check elimination status
-  const { data: contestantData } = useGetGameContestants(
-    Number(params?.episodeId)
-  );
+ 
 
   // Always call hooks at the top level, even if the result is conditionally used
   const { data: questionData, isLoading } = useGetAllHustleQuestions(
@@ -817,25 +814,9 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
                     />
                   )}
 
-                  {/* {showResultModal && (
-                    <HustleBoardModal
-                      currentQuestionAnswerData={currentQuestionAnswerData}
-                      currentQuestion={mqttQuestionData}
-                      currentQuestionData={mqttQuestionData.question.questions.question}
-                    />
-                  )}
-                  { mqttAnswerData && <HustleRevealResult 
-                  mqttAnswerData={mqttAnswerData}
-                      currentQuestion={mqttQuestionData}
-                  />} */}
+                
                   <div className="h-full w-full">
-                    {/* <FastestFingerResult
-                      resultArray={mqttAnswerData}
-                      mqttAnswerData={mqttAnswerData}
-                      timeElapsed={timeLeft <= 0 || showNextButton}
-                      currentQuestionId={currentQuestionId}
-                      contestantBids={contestantBids}
-                    /> */}
+                    
                     <FastestFingerResult
                       resultArray={mqttAnswerData}
                       mqttAnswerData={mqttAnswerData}

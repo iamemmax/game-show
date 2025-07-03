@@ -288,26 +288,16 @@ const QuestionTwoScreen = ({onNext}:prop) => {
         const questionId = payload.question_id;
         const shouldShowModal = payload?.show_modal;
 
-        console.log("🔄 Answer event received:", {
-          questionId,
-          currentQuestionId: currentQuestionIdRef.current,
-          shouldShowModal,
-          currentQuestionIndex,
-          payload,
-        });
+      
 
         // FIXED: Compare questionId properly (convert to string if needed)
         const currentQuestionIdStr = currentQuestionIdRef?.current?.toString();
         const receivedQuestionIdStr = questionId?.toString();
 
         if (receivedQuestionIdStr === currentQuestionIdStr) {
-          const answersData = payload.answers_data?.data;
+          const answersData = payload?.data?.answers;
 
-          console.log("📊 Processing answer data:", {
-            answersData,
-            currentQuestionIndex,
-            shouldShowModal,
-          });
+         
 
           // Update answer data for all questions
           setMqttAnswerData(answersData);
@@ -329,8 +319,7 @@ const QuestionTwoScreen = ({onNext}:prop) => {
           refetchBalance();
           // Mark submitted and stop timer
           const correctOption =
-            payload.answers_data?.question?.correct_option ||
-            answersData?.question?.correct_option;
+            payload.data?.question?.correct_option 
 
           if (correctOption) {
             setCorrectAnswer(correctOption);

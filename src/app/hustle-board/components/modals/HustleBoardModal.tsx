@@ -22,6 +22,7 @@ interface Data {
 interface Prop{
     currentQuestionAnswerData: Data[]
     currentQuestion:any
+    showBid:boolean
     
 }
 
@@ -40,16 +41,16 @@ function getOptionValue(
   const key = option.toLowerCase() as "a" | "b" | "c" | "d";
 
   const map = {
-    a: questions.option_a,
-    b: questions.option_b,
-    c: questions.option_c,
-    d: questions.option_d,
+    a: questions?.option_a,
+    b: questions?.option_b,
+    c: questions?.option_c,
+    d: questions?.option_d,
   };
 
   return map[key] || null;
 }
 
-const HustleBoardModal = ({currentQuestionAnswerData,currentQuestion}:Prop) => {
+const HustleBoardModal = ({currentQuestionAnswerData,currentQuestion,showBid}:Prop) => {
 // console.log(currentQuestionAnswerData, currentQuestion);
 
 
@@ -108,12 +109,12 @@ const HustleBoardModal = ({currentQuestionAnswerData,currentQuestion}:Prop) => {
                     {" "}
 {data?.answer === "N" ? " -.-- ": data?.answer} : {getOptionValue(currentQuestion?.question.questions, String(data?.answer?.toLowerCase()))}                  </span>
                 </p>
-                <div className="bg-[#200541] mt-1 leading-3 flex justify-center items-center flex-col rounded-[1.5rem] py-1 px-6">
+               {showBid&& <div className="bg-[#200541] mt-1 leading-3 flex justify-center items-center flex-col rounded-[1.5rem] py-1 px-6">
                   <p className="font-gilroyMedium text-[10px] text-white">Bid amount:</p>
                   <h2 className="text-[#B380FF] font-gilroyHeavy font-extrabold text-base">
                     ₦{addCommasToNumber(Math.ceil(Number(data?.amount_staked) / 100) * 100)}
                   </h2>
-                </div>
+                </div>}
               </div>
             </div>
 

@@ -146,7 +146,7 @@ const AllContestants = () => {
                     className="px-4 py-2 text-sm font-medium flex items-center gap-x-2 text-white bg-gray-900 rounded-md hover:bg-gray-800 transition-colors"
                     onClick={() => handleLoginUser(String(user?.login_code))}
                   >
-                    Login as User
+                    Login as {user?.name?.split(" ")[0]}
                     {isLoggingIn && activeLoginCode === user?.login_code && <SmallSpinner color="#fff" />}
                   </button>
                   <div className="flex items-center space-x-2">

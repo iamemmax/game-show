@@ -34,6 +34,7 @@ interface Profitloss {
 interface Props {
   currentQuestion: any;
   mqttAnswerData: Datum[];
+   showBid: boolean
 }
 
 function getOptionValue(
@@ -50,16 +51,16 @@ function getOptionValue(
   const key = option.toLowerCase() as "a" | "b" | "c" | "d";
 
   const map = {
-    a: questions.option_a,
-    b: questions.option_b,
-    c: questions.option_c,
-    d: questions.option_d,
+    a: questions?.option_a,
+    b: questions?.option_b,
+    c: questions?.option_c,
+    d: questions?.option_d,
   };
 
   return map[key] || null;
 }
 
-const HustleRevealResult = ({ currentQuestion, mqttAnswerData }: Props) => {
+const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) => {
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -158,7 +159,7 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData }: Props) => {
                   </p>
 
                   <div className="flex items-center gap-x-[10px]">
-                    <div 
+                   {showBid&& <div 
                       className="mt-1 flex justify-center items-center flex-col rounded-[1.5rem] py-2 px-3" 
                       style={{ backgroundColor: `${styles.text}22` }}
                     >
@@ -166,7 +167,7 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData }: Props) => {
                       <h2 className="font-gilroyHeavy font-extrabold text-base" style={{ color: styles.text }}>
                         ₦{(Math.ceil(Number(data?.profit_loss?.bid_amount || 0) / 100) * 100).toLocaleString()}
                       </h2>
-                    </div>
+                    </div>}
                     
                     <div 
                       className="mt-1 flex justify-center leading-none items-center flex-col rounded-[1.5rem] py-2 px-3" 

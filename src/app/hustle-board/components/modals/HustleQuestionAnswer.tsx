@@ -116,7 +116,7 @@ const QuizOption: React.FC<OptionProps> = ({ label, optionKey, isCorrect = false
                 delay: 0.5 + i * 0.1,
                 ease: "easeOut"
               }}
-              className="absolute w-2 h-2 bg-[#04DA6A] rounded-full"
+              className="absolute w-2 h-3 bg-[#04DA6A] rounded-full"
               style={{
                 left: `${20 + Math.random() * 60}%`,
                 top: `${20 + Math.random() * 60}%`,
@@ -142,6 +142,7 @@ const QuizOption: React.FC<OptionProps> = ({ label, optionKey, isCorrect = false
           {optionKey}
         </motion.span>
         <motion.span
+        className='text-2xl'
           animate={isCorrect && showCorrectAnimation ? {
             textShadow: [
               '0 0 0px #04DA6A',
@@ -213,6 +214,7 @@ interface Profitloss {
 interface prop {
   booster?: string;
   showBooster?: boolean;
+  showBid?:boolean
   questionIndex: number;
   currentQuestionOptions?: {
     option_a?: string;
@@ -236,7 +238,8 @@ const HustleQuestionAnswerModal = ({
   question,
   currentQuestionAnswerData,
   currentQuestion,
-  mqttAnswerData
+  mqttAnswerData,
+  showBid=true
 }: prop) => {
   
   // Helper function to convert option key to letter
@@ -337,11 +340,13 @@ const HustleQuestionAnswerModal = ({
         {!mqttAnswerData&& <HustleBoardModal
          currentQuestion={currentQuestion}
          currentQuestionAnswerData={currentQuestionAnswerData}
+         showBid={showBid}
          />}
 
          { mqttAnswerData && <HustleRevealResult 
                   mqttAnswerData={mqttAnswerData}
                       currentQuestion={currentQuestion}
+                       showBid={showBid}
                   />} 
 
          
