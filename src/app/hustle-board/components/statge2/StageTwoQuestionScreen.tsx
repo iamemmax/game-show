@@ -724,7 +724,7 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
                                           : {}
                                   }
                                   className={cn(
-                                    "bg-[#000000] border-2 rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative transition-all duration-300 transform-gpu",
+                                    "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative transition-all duration-300 transform-gpu",
                                     !showResult && isSelected
                                       ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
                                       : "",

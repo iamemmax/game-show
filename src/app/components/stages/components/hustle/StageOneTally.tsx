@@ -745,10 +745,11 @@ const StageOneTally = ({
                                 ? "ELIMINATED"
                                 : tallyArray[idx]
                             }
-                            fontSize={30}
-                            className={`${episodeId ? "w-full h-[120px]" : "2xl:w-[700px] 2xl:h-[90px]"} `}
+                            
+                            fontSize={40}
+                            className={`font-lucky ${episodeId ? "w-full h-[120px]" : "2xl:w-[700px] 2xl:h-[90px]"}  `}
                             color="#fff"
-                            amount={`₦${formatAmount(Number(tally?.actual_balance) ?? 0)}`}
+                            amount={`N${addCommasToNumber(Number(tally?.actual_balance) ?? 0)}`}
                             badgeColor={
                               tally.is_eliminated ? "#760F1B" : "#035D2E"
                             }

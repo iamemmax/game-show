@@ -589,12 +589,13 @@ const HustleBoardStageTallyPage = ({
                           </div>
                           <div className={`${cn(` flex flex-col`)}`}>
                             <p
-                              className={`${episodeId ? "text-2xl" : "text-xs 2xl:text-xl"}  font-gilroyMedium font-normal text-white`}
+                              className={`${episodeId ? "text-2xl" : "text-xs 2xl:text-xl"}  font-gilroyMedium truncate font-normal text-white`}
                             >
                               {tally.name?.split(" ")[0]}
                             </p>
-                            <p className="text-xs 2xl:text-sm font-gilroyMedium font-normal text-white">
-                              {`₦${addCommasToNumber(Number(tally?.actual_balance || 0))}`}
+                            <p className="text-xs 2xl:text-lg font-gilroyMedium font-normal text-white">
+                              {`₦${addCommasToNumber(Number(Math.ceil(Number(tally?.actual_balance) / 1000) * 1000)) ?? 0}`}
+                              {/* {`₦${addCommasToNumber(Number(tally?.actual_balance || 0))}`} */}
                             </p>
                           </div>
                         </div>
@@ -605,10 +606,10 @@ const HustleBoardStageTallyPage = ({
                                 ? "ELIMINATED"
                                 : tallyArray[idx]
                             }
-                            fontSize={30}
-                            className={`${episodeId ? "w-full h-[120px]" : "2xl:w-[700px] 2xl:h-[90px]"} `}
+                            fontSize={40}
+                            className={`font-lucky text-center ${episodeId ? "w-full h-[120px]" : "2xl:w-[700px] 2xl:h-[90px]"} `}
                             color="#fff"
-                            amount={`₦${formatAmount(Number(tally?.actual_balance) ?? 0)}`}
+                            amount={`N${addCommasToNumber(Number(Math.ceil(Number(tally?.actual_balance) / 1000) * 1000)) ?? 0}`}
                             badgeColor={
                               tally.is_eliminated ? "#760F1B" : "#035D2E"
                             }

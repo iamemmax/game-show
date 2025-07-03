@@ -13,7 +13,7 @@ const HustleStages = ({ activeStage = 1 }: prop) => {
           }
           iconText="1"
           title="Stage1"
-          subTitle="Choose Hustle"
+          subTitle="Hustle kick off"
           backgroundFill={activeStage === 1 ? "#5d400b" : "#FFC125"}
           isActive={activeStage === 1 ? true : false}
           className="[@media(min-width:2000px)]:w-[15rem]  [@media(min-width:2000px)]:h-[7rem]"
@@ -28,7 +28,7 @@ const HustleStages = ({ activeStage = 1 }: prop) => {
         />
         <StagesCard
           title="Stage 2"
-          subTitle="Grind & Grow"
+          subTitle="Prove your hustle"
           isActive={activeStage === 2 ? true : false}
           borderColor={activeStage === 2 ? "#5d400b" : "#FFC125"}
           iconText="2"
@@ -38,7 +38,7 @@ const HustleStages = ({ activeStage = 1 }: prop) => {
 
         <StagesCard
           title="Stage 3"
-          subTitle="Pick a Number"
+          subTitle="DUd & Pass"
           isActive={activeStage === 3 ? true : false}
           borderColor={activeStage === 3 ? "#5d400b" : "#FFC125"}
           iconText="3"

@@ -34,12 +34,11 @@ import { useMQTT } from "@/hooks/useMqttService"
 import type { Question2AnswerDataAPIResponse } from "@/app/components/stages/api/stage2/getQuestion2Answer"
 import { useBooleanStateControl } from "@/hooks"
 import { Label } from "@/components/core/Label"
-import { useCreditDebitContestant,
-    useGetGameContestants,
-  useAssignContestant,  
-  type CreditDebitContestantRequest,
- } from "@/app/admin/misc/api"
-// import { Checkbox } from "@/components/ui/checkbox"
+import { DebitWalletData } from "@/app/admin/misc/types"
+import { useGetGameContestants,   
+  useAssignContestant,
+  useCreditDebitContestant,
+  type CreditDebitContestantRequest, } from "@/app/admin/misc/api"
 
 const assignContestantSchema = z.object({
   constestants_attr: z.string().min(1, "Please select a contestant position"),
@@ -49,7 +48,6 @@ const assignContestantSchema = z.object({
 
 type AssignContestantFormValues = z.infer<typeof assignContestantSchema>
 
-// Updated interface to support multiple contestants
 interface MultiCreditDebitContestantRequest extends Omit<CreditDebitContestantRequest, "giver_contestant_id"> {
   giver_contestant_ids: number[]
 }
@@ -69,7 +67,7 @@ export default function GameDetails() {
   const { isConnected, sendMessage, onMessage } = useMQTT()
   const [isSending, setIsSending] = useState(false)
 
-  const [debitWalletData, setDebitWalletData] = useState<Question2AnswerDataAPIResponse | null>(null)
+  const [debitWalletData, setDebitWalletData] = useState<DebitWalletData | null>(null)
   const [debitWalletPayload, setDebitWalletPayload] = useState<MultiCreditDebitContestantRequest | null>()
   const [selectedContestantIds, setSelectedContestantIds] = useState<number[]>([])
   const [creditSource, setCreditSource] = useState<"gameshow_float" | "contestants">()
@@ -107,7 +105,8 @@ export default function GameDetails() {
     const handleMessage = (message: any) => {
       console.log("Received message:", message)
       if (message.event === "game_s2_question_answer") {
-        setDebitWalletData(message.payload?.answers_data)
+        console.log(message, "debitWalletData")
+        setDebitWalletData(message.payload)
       }
     }
 
@@ -159,8 +158,8 @@ export default function GameDetails() {
         phone_number: values.phone_number,
       })
 
-      form.reset()
       refetchContestants()
+      form.reset()
     } catch (error) {
       console.error("Failed to assign contestant:", error)
     }
@@ -175,9 +174,9 @@ export default function GameDetails() {
         phone_number: values.phone_number,
       })
 
+      refetchContestants()
       modalForm.reset()
       setIsModalOpen(false)
-      refetchContestants()
     } catch (error) {
       console.error("Failed to assign contestant:", error)
     }
@@ -255,15 +254,21 @@ export default function GameDetails() {
 
     // If your API doesn't support arrays, you might need to make multiple calls
     if (creditSource === "contestants" && selectedContestantIds.length > 0) {
-        creditDebit(payload, {
-          onSuccess: () => {
-            toast.success(`Wallet debited for contestant`)
-          },
-          onError: (error) => {
-            console.error(`Failed to debit wallet for contestant `, error)
-            toast.error(`Failed to debit wallet for contestant `)
-          },
-        })
+      creditDebit(payload, {
+        onSuccess: (data) => {
+          toast.success(`Wallet debited for contestant`)
+          sendGameMessage(`game_s2_question_answer`, {
+            question_id: Number(debitWalletData?.question_id),
+            answers_data: data,
+            question_index: Number(debitWalletData?.question_id),
+            show_modal: true,
+          })
+        },
+        onError: (error) => {
+          console.error(`Failed to debit wallet for contestant `, error)
+          toast.error(`Failed to debit wallet for contestant `)
+        },
+      })
     } else {
       // Single API call for gameshow float
       const singlePayload: CreditDebitContestantRequest = {
@@ -273,8 +278,14 @@ export default function GameDetails() {
       }
 
       creditDebit(singlePayload, {
-        onSuccess: () => {
+        onSuccess: (data) => {
           toast.success("Wallet debited successfully")
+          sendGameMessage(`game_s2_question_answer`, {
+            question_id: Number(debitWalletData?.question_id),
+            answers_data: data,
+            question_index: Number(debitWalletData?.question_id),
+            show_modal: true,
+          })
         },
         onError: (error) => {
           console.error("Failed to debit wallet:", error)
@@ -446,9 +457,8 @@ export default function GameDetails() {
                     return (
                       <article
                         key={contestant.id}
-                        className={`relative rounded-2xl overflow-hidden bg-[#462B58] ${
-                          isAssigned ? "]" : "bg-[#1a0b25] hover:border-[#ff00ff]/50 transition-all group relative"
-                        }`}
+                        className={`relative rounded-2xl overflow-hidden bg-[#462B58] ${isAssigned ? "]" : "bg-[#1a0b25] hover:border-[#ff00ff]/50 transition-all group relative"
+                          }`}
                         style={{ height: "100px" }}
                       >
                         {isAssigned && (
@@ -532,7 +542,7 @@ export default function GameDetails() {
                   <TrapeziumButton variant="red" size="sm" backgroundColor="#ff00ff" onClick={startGameEpisode}>
                     START EPISODE
                   </TrapeziumButton>
-                  {debitWalletData !== null && (
+                  {debitWalletData !== null && !!debitWalletData?.data && (
                     <TrapeziumButton
                       variant="yellow"
                       size="sm"
@@ -642,7 +652,7 @@ export default function GameDetails() {
             <DialogTitle className="text-xl text-primary">
               Winning Contestant:{" "}
               {convertKebabAndSnakeToTitleCase(
-                debitWalletData?.data?.find((item) => item.is_winner)?.contestant_name || "Unknown",
+                debitWalletData?.data?.answers.find((item) => item.is_winner)?.contestant_name || "Unknown",
               )}
             </DialogTitle>
           </DialogHeader>
@@ -651,7 +661,7 @@ export default function GameDetails() {
             <div className="grid gap-2 mt-2">
               <div className="text-sm text-gray-300">
                 Contestant ID:
-                {debitWalletData?.data?.find((item) => item.is_winner)?.contestant_id || "Unknown"}
+                {debitWalletData?.data?.answers.find((item) => item.is_winner)?.contestant_id || "Unknown"}
               </div>
             </div>
 
@@ -692,7 +702,7 @@ export default function GameDetails() {
                     {contestantsData?.data
                       ?.filter(
                         (contestant: any) =>
-                          contestant.id !== debitWalletData?.data?.find((item: any) => item.is_winner)?.contestant_id &&
+                          contestant.id !== debitWalletData?.data?.answers.find((item: any) => item.is_winner)?.contestant_id &&
                           !contestant.is_eliminated,
                       )
                       .map((contestant: any) => (

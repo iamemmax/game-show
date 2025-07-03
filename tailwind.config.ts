@@ -25,6 +25,7 @@ const config: Config = {
         outfit: ['var(--font-outfit)'],
         montserrat: ['var(--font-montserrat)'],
         platypi: ['var(--font-platypi)'],
+        lucky: ['var(--font-lucky)']
       },
       fontSize: {
         xxs: '.625rem',

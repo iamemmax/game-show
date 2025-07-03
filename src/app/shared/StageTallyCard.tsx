@@ -63,7 +63,7 @@ const StageTallyCard: React.FC<GreenBadgeSVGProps> = ({
     
     {/* Main text */}
     <text
-  x={amount ? "30%" : "50%"}
+  x={amount ? "33%" : "50%"}
   y="56%"
   textAnchor="middle"
   dominantBaseline="middle"
@@ -74,7 +74,7 @@ const StageTallyCard: React.FC<GreenBadgeSVGProps> = ({
   strokeWidth="2" // Adjust as needed
   filter="url(#text-shadow)"
   style={{
-    fontFamily: "Inter, Arial, sans-serif",
+    // fontFamily: "Inter, Arial, sans-serif",
     letterSpacing: 1,
     userSelect: "none",
   }}
@@ -85,7 +85,7 @@ const StageTallyCard: React.FC<GreenBadgeSVGProps> = ({
     {/* Amount text if provided */}
     {amount && (
      <text
-     x="70%"
+     x="75%"
      y="56%"
      textAnchor="middle"
      dominantBaseline="middle"
@@ -95,9 +95,9 @@ const StageTallyCard: React.FC<GreenBadgeSVGProps> = ({
      stroke={badgeColor}
      strokeWidth="2"
      filter="url(#text-shadow)"
-     className="font-gilroyHeavy"
+     className="font-lucky"
      style={{
-       fontFamily: "Inter, Arial, sans-serif",
+      //  fontFamily: "Inter, Arial, sans-serif",
        letterSpacing: 1,
        userSelect: "none"
      }}

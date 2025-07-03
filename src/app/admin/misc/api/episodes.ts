@@ -25,9 +25,10 @@ interface CreateEpisodeResponse {
   episode: number
 }
 
-interface createEpisode {
+interface createEpisodeType {
   game_nick: string
   season_id: string | number
+  game_type: string | number
 }
 
 
@@ -72,7 +73,7 @@ export const useGetAllSeasonEpisodes = ({
 //   })
 
 // Start a new game
-export const createEpisode = async (data: createEpisode) => {
+export const createEpisode = async (data: createEpisodeType) => {
   const response = await tokenlessAxios.post("api/admin-controller/create_gameshow_episode/", data)
   return response?.data as CreateEpisodeResponse
 }

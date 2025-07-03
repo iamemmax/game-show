@@ -1,6 +1,6 @@
 "use client";
 
-import { DM_Sans, Wix_Madefor_Display, Outfit, Montserrat, Platypi } from "next/font/google";
+import { DM_Sans, Wix_Madefor_Display, Outfit, Montserrat, Platypi,Luckiest_Guy } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/utils/classNames";
 import FullscreenWrapper from "./components/AutoFullScreenMode";
@@ -37,6 +37,14 @@ const platypi = Platypi({
   display: "swap",
 });
 
+
+const lucky = Luckiest_Guy({
+  subsets: ["latin"],
+  variable: "--font-lucky",
+  display: "swap",
+  weight: "400", // Luckiest Guy only has one weight: 400
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -44,7 +52,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={cn(sans.className, display.variable, outfit.variable, montserrat.variable, platypi.variable)}
+      className={cn(sans.className, display.variable, outfit.variable, montserrat.variable, platypi.variable, lucky.variable)}
       lang="en"
     >
       <body>

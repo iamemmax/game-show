@@ -39,6 +39,7 @@ import { useMQTT } from "@/hooks/useMqttService"
 import type { Question2AnswerDataAPIResponse } from "@/app/components/stages/api/stage2/getQuestion2Answer"
 import { useBooleanStateControl } from "@/hooks"
 import { Label } from "@/components/core/Label"
+import { DebitWalletData } from "../misc/types"
 
 const assignContestantSchema = z.object({
   constestants_attr: z.string().min(1, "Please select a contestant position"),
@@ -67,7 +68,7 @@ export default function GameDetails() {
   const { isConnected, sendMessage, onMessage } = useMQTT()
   const [isSending, setIsSending] = useState(false)
 
-  const [debitWalletData, setDebitWalletData] = useState<Question2AnswerDataAPIResponse | null>(null)
+  const [debitWalletData, setDebitWalletData] = useState<DebitWalletData | null>(null)
   const [debitWalletPayload, setDebitWalletPayload] = useState<MultiCreditDebitContestantRequest | null>()
   const [selectedContestantIds, setSelectedContestantIds] = useState<number[]>([])
   const [creditSource, setCreditSource] = useState<"gameshow_float" | "contestants">()
@@ -106,7 +107,7 @@ export default function GameDetails() {
       console.log("Received message:", message)
       if (message.event === "game_s2_question_answer") {
         console.log(message, "debitWalletData")
-        setDebitWalletData(message.payload?.answers_data)
+        setDebitWalletData(message.payload)
       }
     }
 
@@ -542,7 +543,7 @@ export default function GameDetails() {
                   <TrapeziumButton variant="red" size="sm" backgroundColor="#ff00ff" onClick={startGameEpisode}>
                     START EPISODE
                   </TrapeziumButton>
-                  {debitWalletData !== null && (
+                  {debitWalletData !== null && !!debitWalletData?.data && (
                     <TrapeziumButton
                       variant="yellow"
                       size="sm"

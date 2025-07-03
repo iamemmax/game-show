@@ -462,7 +462,7 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
             <HustleStages />
           </div>
           <div className="pb-4 ">
-            <Salary4LifeTrophy className="max-xl:h-[13.25rem]" />
+            <Salary4LifeTrophy className="max-xl:h-[13.25rem] " />
           </div>
         </div>
 
@@ -513,13 +513,19 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
               <div className="relative">
                 <div className="flex justify-between w-full items-center">
                   <div className="text-center flex justify-center items-center w-full">
-                    <h2 className="text-[3.75rem] text-center font-extrabold outline-text text-black">
-                      Stage 1: Prove your hustle
+                     <h2 className="text-[3.75rem] font-lucky text-center font-extrabold  text-black"
+                  style={{  WebkitTextStroke: "1.5px #d91fff"}}
+                  >
+                     Stage 1: Hustle kick off
                     </h2>
                   </div>
 
+                 
+                
+                   
+
                   {timerActive && (
-                    <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+                    <div className="flex items-center  justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
                       <span
                         className="text-[40px] font-extrabold font-verdana text-white"
                         style={{

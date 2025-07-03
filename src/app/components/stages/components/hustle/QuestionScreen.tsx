@@ -83,9 +83,7 @@ interface Prop {
 }
 
 const QuestionScreen = ({ onNext }: Prop) => {
- 
-
-  const { isConnected, onMessage, sendMessage} = useMQTT();
+  const { isConnected, onMessage, sendMessage } = useMQTT();
   const router = useRouter();
 
   // Get user from storage - this should always be called
@@ -124,7 +122,6 @@ const QuestionScreen = ({ onNext }: Prop) => {
   const [mqttAnswerBalanceData, setMqttAnsweBalanceData] = useState<any>(null);
 
   const currentQuestionIdRef = useRef<string | null>(null);
-  
 
   // API hooks - ensure these are called consistently
   const { data: questionData, isLoading } = useGetAllHustleQuestions(
@@ -213,257 +210,257 @@ const QuestionScreen = ({ onNext }: Prop) => {
     currentQuestionIdRef.current = currentQuestionId;
   }, [currentQuestionId]);
 
-  
-
   // Calculate contestant balance
   const contestantBalance = mqttAnswerData?.find(
     (contestant: any) => contestant.contestant_id === user?.contestant_id
   );
   // Fixed calculateRemainingCapital function
-const calculateRemainingCapital = () => {
-  // When MQTT answer data is available, use the latest wallet balance directly
-  if (mqttAnswerData && contestantBalance?.wallet_balance !== undefined) {
-    return Number(contestantBalance.wallet_balance);
-  }
-  
-  // Fallback to contestant data for initial balance
-  const baseCapital = Number(
-    contestantData?.data?.find(
-      (contestant: any) =>
-        String(contestant.id) === String(user?.contestant_id)
-    )?.actual_balance || 0
-  );
-
-  // Only apply deduction if we haven't received MQTT answer data yet
-  const deduction = selectedAmount || 0;
-  return Math.max(0, baseCapital - deduction);
-};
-
-// Updated MQTT message handling effect - key changes in the answer handling section
-useEffect(() => {
-  if (!isConnected) return;
-
-  const handler = (receivedMessage: any) => {
-    // Handle prep page event
-    // if (receivedMessage?.event === "game_s1_question_reveal") {
-    //   setShowPrepPage(false);
-
-    //   const payload = receivedMessage.payload || {};
-    //   const questionData = payload.data || {};
-    //   const spendBreakdown =
-    //     questionData.spend_breakdown ||
-    //     payload.spend_breakdown ||
-    //     payload.data?.spend_breakdown;
-
-    //   setMqttQuestionData(questionData);
-    //   setQuestionKey(`question-${questionData.question_index || Date.now()}`);
-    //   setShowBidPrompt(true);
-
-    //   setSelectedOption(null);
-    //   setSelectedAmount(null);
-    //   setIsSubmitted(false);
-    //   resetTimerState();
-    //   setMqttAnswerData(null);
-    //   setCorrectAnswer(null);
-      
-
-    //   setCurrentQuestionIndex(questionData.question_index || 1);
-    //   const questionId =
-    //     questionData?.question?.questions?.question_id ||
-    //     payload?.question_id;
-    //   if (questionId) {
-    //     setCurrentQuestionId(questionId.toString());
-    //   }
-
-    //   if (spendBreakdown && user?.contestant_id) {
-    //     const userData = Array.isArray(spendBreakdown)
-    //       ? spendBreakdown.find(
-    //           (contestant: any) =>
-    //             String(contestant.contestant_id) ===
-    //             String(user.contestant_id)
-    //         )
-    //       : spendBreakdown;
-
-    //     if (userData?.spend_breakdown) {
-    //       setUserBidAmounts(userData.spend_breakdown);
-    //     } else {
-    //       setUserBidAmounts({});
-    //     }
-    //   }
-    // }
-// In the MQTT message handling useEffect, modify the game_s1_question_reveal handler:
-
-// Handle prep page event
-if (receivedMessage?.event === "game_s1_question_reveal") {
-  setShowPrepPage(false);
-
-  const payload = receivedMessage.payload || {};
-  const questionData = payload.data || {};
-  const spendBreakdown =
-    questionData.spend_breakdown ||
-    payload.spend_breakdown ||
-    payload.data?.spend_breakdown;
-
-  setMqttQuestionData(questionData);
-  setQuestionKey(`question-${questionData.question_index || Date.now()}`);
-  setShowBidPrompt(true);
-
-  // Reset all question-related state
-  setSelectedOption(null);
-  setSelectedAmount(null);
-  setIsSubmitted(false);
-  resetTimerState();
-  setMqttAnswerData(null);
-  setCorrectAnswer(null);
-
-  setCurrentQuestionIndex(questionData.question_index || 1);
-  const questionId =
-    questionData?.question?.questions?.question_id ||
-    payload?.question_id;
-  if (questionId) {
-    setCurrentQuestionId(questionId.toString());
-  }
-
-  if (spendBreakdown && user?.contestant_id) {
-    const userData = Array.isArray(spendBreakdown)
-      ? spendBreakdown.find(
-          (contestant: any) =>
-            String(contestant.contestant_id) ===
-            String(user.contestant_id)
-        )
-      : spendBreakdown;
-
-    if (userData?.spend_breakdown) {
-      setUserBidAmounts(userData.spend_breakdown);
-    } else {
-      setUserBidAmounts({});
+  const calculateRemainingCapital = () => {
+    // When MQTT answer data is available, use the latest wallet balance directly
+    if (mqttAnswerData && contestantBalance?.wallet_balance !== undefined) {
+      return Number(contestantBalance.wallet_balance);
     }
-  }
 
-  // MODIFIED: Send empty bid data to completely clear all bids for new question
-  const clearAllBidsData = {
-    event: "clear_all_bids",
-    payload: {}
+    // Fallback to contestant data for initial balance
+    const baseCapital = Number(
+      contestantData?.data?.find(
+        (contestant: any) =>
+          String(contestant.id) === String(user?.contestant_id)
+      )?.actual_balance || 0
+    );
+
+    // Only apply deduction if we haven't received MQTT answer data yet
+    const deduction = selectedAmount || 0;
+    return Math.max(0, baseCapital - deduction);
   };
-  
-  sendMessage(clearAllBidsData);
-}
-    // FIXED: Enhanced answer handling section
-    if (receivedMessage?.event === "game_s1_question_answer") {
-      const payload = receivedMessage.payload || {};
-        const questionId = payload?.data?.question?.question_id;
 
-      if (questionId?.toString() === currentQuestionIdRef?.current?.toString()) {
-        const answersData = payload?.data?.answers;
+  // Updated MQTT message handling effect - key changes in the answer handling section
+  useEffect(() => {
+    if (!isConnected) return;
 
-        
-        // Set the answer data first
-        setMqttAnswerData(answersData);
-        setMqttAnsweBalanceData(answersData);
-        
-        // Refetch contestant data
-        refetch();
-        refechUser();
+    const handler = (receivedMessage: any) => {
+      // Handle prep page event
+      // if (receivedMessage?.event === "game_s1_question_reveal") {
+      //   setShowPrepPage(false);
 
-        // CRITICAL FIX: Update animated capital immediately with new balance
-        if (answersData && user?.contestant_id) {
-          const updatedContestant = answersData?.find(
-            (contestant: any) => contestant.contestant_id?.toString() === user?.contestant_id?.toString()
-          );
-          
-          if (updatedContestant?.wallet_balance !== undefined) {
-            // Set the animated capital directly to the new balance from MQTT
-            setAnimatedCapital(Number(updatedContestant.wallet_balance));
+      //   const payload = receivedMessage.payload || {};
+      //   const questionData = payload.data || {};
+      //   const spendBreakdown =
+      //     questionData.spend_breakdown ||
+      //     payload.spend_breakdown ||
+      //     payload.data?.spend_breakdown;
+
+      //   setMqttQuestionData(questionData);
+      //   setQuestionKey(`question-${questionData.question_index || Date.now()}`);
+      //   setShowBidPrompt(true);
+
+      //   setSelectedOption(null);
+      //   setSelectedAmount(null);
+      //   setIsSubmitted(false);
+      //   resetTimerState();
+      //   setMqttAnswerData(null);
+      //   setCorrectAnswer(null);
+
+      //   setCurrentQuestionIndex(questionData.question_index || 1);
+      //   const questionId =
+      //     questionData?.question?.questions?.question_id ||
+      //     payload?.question_id;
+      //   if (questionId) {
+      //     setCurrentQuestionId(questionId.toString());
+      //   }
+
+      //   if (spendBreakdown && user?.contestant_id) {
+      //     const userData = Array.isArray(spendBreakdown)
+      //       ? spendBreakdown.find(
+      //           (contestant: any) =>
+      //             String(contestant.contestant_id) ===
+      //             String(user.contestant_id)
+      //         )
+      //       : spendBreakdown;
+
+      //     if (userData?.spend_breakdown) {
+      //       setUserBidAmounts(userData.spend_breakdown);
+      //     } else {
+      //       setUserBidAmounts({});
+      //     }
+      //   }
+      // }
+      // In the MQTT message handling useEffect, modify the game_s1_question_reveal handler:
+
+      // Handle prep page event
+      if (receivedMessage?.event === "game_s1_question_reveal") {
+        setShowPrepPage(false);
+
+        const payload = receivedMessage.payload || {};
+        const questionData = payload.data || {};
+        const spendBreakdown =
+          questionData.spend_breakdown ||
+          payload.spend_breakdown ||
+          payload.data?.spend_breakdown;
+
+        setMqttQuestionData(questionData);
+        setQuestionKey(`question-${questionData.question_index || Date.now()}`);
+        setShowBidPrompt(true);
+
+        // Reset all question-related state
+        setSelectedOption(null);
+        setSelectedAmount(null);
+        setIsSubmitted(false);
+        resetTimerState();
+        setMqttAnswerData(null);
+        setCorrectAnswer(null);
+
+        setCurrentQuestionIndex(questionData.question_index || 1);
+        const questionId =
+          questionData?.question?.questions?.question_id ||
+          payload?.question_id;
+        if (questionId) {
+          setCurrentQuestionId(questionId.toString());
+        }
+
+        if (spendBreakdown && user?.contestant_id) {
+          const userData = Array.isArray(spendBreakdown)
+            ? spendBreakdown.find(
+                (contestant: any) =>
+                  String(contestant.contestant_id) ===
+                  String(user.contestant_id)
+              )
+            : spendBreakdown;
+
+          if (userData?.spend_breakdown) {
+            setUserBidAmounts(userData.spend_breakdown);
+          } else {
+            setUserBidAmounts({});
           }
         }
 
-        if (payload?.question?.correct_option) {
-          setCorrectAnswer(answersData.question.correct_option);
-          setIsSubmitted(true);
-          setShowNextButton(true);
-          setTimerActive(false);
+        // MODIFIED: Send empty bid data to completely clear all bids for new question
+        const clearAllBidsData = {
+          event: "clear_all_bids",
+          payload: {},
+        };
 
-          setTimeout(() => {
-            const newOpenModals: Record<number, boolean> = {};
-            if (answersData?.data && Array.isArray(answersData)) {
-              answersData?.forEach((c: any) => {
-                if (c?.contestant_id) {
-                  newOpenModals[c.contestant_id] = true;
-                }
-              });
-              setTimeout(() => {
-                setIsOpen(newOpenModals);
-              }, 7000);
+        sendMessage(clearAllBidsData);
+      }
+      // FIXED: Enhanced answer handling section
+      if (receivedMessage?.event === "game_s1_question_answer") {
+        const payload = receivedMessage.payload || {};
+        const questionId = payload?.data?.question?.question_id;
+
+        if (
+          questionId?.toString() === currentQuestionIdRef?.current?.toString()
+        ) {
+          const answersData = payload?.data?.answers;
+
+          // Set the answer data first
+          setMqttAnswerData(answersData);
+          setMqttAnsweBalanceData(answersData);
+
+          // Refetch contestant data
+          refetch();
+          refechUser();
+
+          // CRITICAL FIX: Update animated capital immediately with new balance
+          if (answersData && user?.contestant_id) {
+            const updatedContestant = answersData?.find(
+              (contestant: any) =>
+                contestant.contestant_id?.toString() ===
+                user?.contestant_id?.toString()
+            );
+
+            if (updatedContestant?.wallet_balance !== undefined) {
+              // Set the animated capital directly to the new balance from MQTT
+              setAnimatedCapital(Number(updatedContestant.wallet_balance));
             }
-          }, 100);
+          }
+
+          if (payload?.question?.correct_option) {
+            setCorrectAnswer(answersData.question.correct_option);
+            setIsSubmitted(true);
+            setShowNextButton(true);
+            setTimerActive(false);
+
+            setTimeout(() => {
+              const newOpenModals: Record<number, boolean> = {};
+              if (answersData?.data && Array.isArray(answersData)) {
+                answersData?.forEach((c: any) => {
+                  if (c?.contestant_id) {
+                    newOpenModals[c.contestant_id] = true;
+                  }
+                });
+                setTimeout(() => {
+                  setIsOpen(newOpenModals);
+                }, 7000);
+              }
+            }, 100);
+          }
         }
       }
-    }
 
-    if (receivedMessage?.event === "game_s1_timer_start") {
-      handleStartTimer();
-    }
+      if (receivedMessage?.event === "game_s1_timer_start") {
+        handleStartTimer();
+      }
 
-    if (receivedMessage?.event === "game_s1_results_reveal") {
-      setAllQuestionsCompleted(true);
-    }
-  };
+      if (receivedMessage?.event === "game_s1_results_reveal") {
+        setAllQuestionsCompleted(true);
+      }
+    };
 
-  onMessage(handler);
+    onMessage(handler);
 
-  return () => {
-    if (isConnected) {
-      onMessage(null);
-    }
-  };
-}, [
-  isConnected,
-  onMessage,
-  user?.contestant_id,
-  refetch,
-  refechUser, // Added this missing dependency
-]);
+    return () => {
+      if (isConnected) {
+        onMessage(null);
+      }
+    };
+  }, [
+    isConnected,
+    onMessage,
+    user?.contestant_id,
+    refetch,
+    refechUser, // Added this missing dependency
+  ]);
 
-// Updated animated capital effect with better dependency management
-useEffect(() => {
-  const targetCapital = calculateRemainingCapital();
+  // Updated animated capital effect with better dependency management
+  useEffect(() => {
+    const targetCapital = calculateRemainingCapital();
 
-  // If this is the initial load or we have new MQTT data, set immediately
-  if (animatedCapital === 0 || mqttAnswerData) {
-    setAnimatedCapital(targetCapital);
-    return;
-  }
-
-  const startCapital = animatedCapital;
-  const difference = targetCapital - startCapital;
-
-  if (difference === 0) return;
-
-  const duration = 800;
-  const steps = 30;
-  const stepValue = difference / steps;
-  const stepDuration = duration / steps;
-
-  let currentStep = 0;
-  const interval = setInterval(() => {
-    currentStep++;
-    const newValue = startCapital + stepValue * currentStep;
-
-    if (currentStep >= steps) {
+    // If this is the initial load or we have new MQTT data, set immediately
+    if (animatedCapital === 0 || mqttAnswerData) {
       setAnimatedCapital(targetCapital);
-      clearInterval(interval);
-    } else {
-      setAnimatedCapital(Math.round(newValue));
+      return;
     }
-  }, stepDuration);
 
-  return () => clearInterval(interval);
-}, [
-  selectedAmount,
-  mqttAnswerData, // This will trigger when new answer data arrives
-  contestantData,
-  user?.contestant_id,
-]); //
+    const startCapital = animatedCapital;
+    const difference = targetCapital - startCapital;
+
+    if (difference === 0) return;
+
+    const duration = 800;
+    const steps = 30;
+    const stepValue = difference / steps;
+    const stepDuration = duration / steps;
+
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      const newValue = startCapital + stepValue * currentStep;
+
+      if (currentStep >= steps) {
+        setAnimatedCapital(targetCapital);
+        clearInterval(interval);
+      } else {
+        setAnimatedCapital(Math.round(newValue));
+      }
+    }, stepDuration);
+
+    return () => clearInterval(interval);
+  }, [
+    selectedAmount,
+    mqttAnswerData, // This will trigger when new answer data arrives
+    contestantData,
+    user?.contestant_id,
+  ]); //
 
   // 3. Update the animated capital effect to depend on wallet balance changes
   useEffect(() => {
@@ -528,54 +525,50 @@ useEffect(() => {
   //   }
   // };
 
-
   const handleAmountSelect = (amount: number) => {
-  if (timeLeft > 0 && !isSubmitted) {
-    const exactKey = Object.keys(userBidAmounts).find(
-      (key) => Math.abs(parseFloat(key) - amount) < 0.01
-    );
+    if (timeLeft > 0 && !isSubmitted) {
+      const exactKey = Object.keys(userBidAmounts).find(
+        (key) => Math.abs(parseFloat(key) - amount) < 0.01
+      );
 
-    if (exactKey) {
-      setSelectedAmount(parseFloat(exactKey));
-    } else {
-      setSelectedAmount(amount);
-    }
-    
-    setShowBidPrompt(false);
-    
-    // Publish bid amount to leaderboard screen
-    publishBidAmount(amount);
-  }
-};
+      if (exactKey) {
+        setSelectedAmount(parseFloat(exactKey));
+      } else {
+        setSelectedAmount(amount);
+      }
 
+      setShowBidPrompt(false);
 
-
-  
-
-// 1. CONTESTANT SCREEN - Enhanced publishBidAmount function (around line 150)
-const publishBidAmount = async (amount: number) => {
-  if (!user?.contestant_id || !user?.name) return;
-  
-  const bidData = {
-    event: "contestant_bid_selected",
-    payload: {
-      contestant_id: user.contestant_id,
-      contestant_name: user.name,
-      bid_amount: amount,
-      timestamp: new Date().toISOString(),
-      question_id: currentQuestionId,
-      game_episode: user.game_episode,
-      remaining_capital: calculateRemainingCapital() - amount,
-      bid_percentage: ((amount / calculateRemainingCapital()) * 100).toFixed(1)
+      // Publish bid amount to leaderboard screen
+      publishBidAmount(amount);
     }
   };
-  
-  console.log("Publishing bid amount:", bidData);
-  
-  // Publish to MQTT for leaderboard screen to listen
-  await sendMessage(bidData)
-};
 
+  // 1. CONTESTANT SCREEN - Enhanced publishBidAmount function (around line 150)
+  const publishBidAmount = async (amount: number) => {
+    if (!user?.contestant_id || !user?.name) return;
+
+    const bidData = {
+      event: "contestant_bid_selected",
+      payload: {
+        contestant_id: user.contestant_id,
+        contestant_name: user.name,
+        bid_amount: amount,
+        timestamp: new Date().toISOString(),
+        question_id: currentQuestionId,
+        game_episode: user.game_episode,
+        remaining_capital: calculateRemainingCapital() - amount,
+        bid_percentage: ((amount / calculateRemainingCapital()) * 100).toFixed(
+          1
+        ),
+      },
+    };
+
+    console.log("Publishing bid amount:", bidData);
+
+    // Publish to MQTT for leaderboard screen to listen
+    await sendMessage(bidData);
+  };
 
   const handleOptionSelect = (option: OptionKey) => {
     if (timerActive && !isSubmitted) {
@@ -771,13 +764,17 @@ const publishBidAmount = async (amount: number) => {
               <div className="relative">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-[2.75rem] font-extrabold outline-text text-black">
-                      Stage 1: Prove your hustle
-                    </h2>
-                    {/* <p className="text-sm font-normal text-[#D5B9FF]">
-                      Select minimum of 2 number to determine the trivia
-                      questions for this round
-                    </p> */}
+                    <h2 className="text-[2.75rem] font-extrabold outline-text text-black"></h2>
+                    <GlowyStrokeText
+                      className="text-[2rem] font-extrabold"
+                      glowColor="D91FFF"
+                      glowIntensity="low"
+                      fillColor="black"
+                      strokeColor="#d91fff"
+                      strokeWidth={2}
+                    >
+                      Stage 1:Hustle kick off
+                    </GlowyStrokeText>
                   </div>
 
                   {timerActive && (
@@ -992,8 +989,9 @@ const publishBidAmount = async (amount: number) => {
                                     }}
                                   >
                                     ₦
-                                     {/* {mqttAnswerData ?? formatAmount(Number(contestantBalance?.wallet_balance))} */}
-                                    {formatAmount(animatedCapital) || formatAmount(calculateRemainingCapital())}
+                                    {/* {mqttAnswerData ?? formatAmount(Number(contestantBalance?.wallet_balance))} */}
+                                    {formatAmount(animatedCapital) ||
+                                      formatAmount(calculateRemainingCapital())}
                                     {/* {addCommasToNumber(animatedCapital || calculateRemainingCapital())} */}
                                   </span>
                                 </p>
@@ -1068,7 +1066,7 @@ const publishBidAmount = async (amount: number) => {
                             className="flex flex-col items-start gap-1 mt-4"
                           >
                             <p className="text-white text-xs pb-1 font-gilroyMedium">
-                              Select wager amount
+                              Select bid amount
                             </p>
                             <div className="flex items-center w-full">
                               <div className="flex flex-1 items-center">
@@ -1103,7 +1101,7 @@ const publishBidAmount = async (amount: number) => {
                                                   timeLeft <= 0 || // Disable when time has elapsed
                                                   isSubmitted // Disable when already submitted
                                                 }
-                                                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                                                className={`px-5 py-2 rounded-lg text-base font-bold transition-all ${
                                                   selectedAmount === amount
                                                     ? "bg-[#04DA6A] text-black"
                                                     : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
