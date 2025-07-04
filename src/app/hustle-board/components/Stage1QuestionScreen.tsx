@@ -29,6 +29,7 @@ import HustleBoardStageTallyPage from "./HustleBoardStageTally";
 import HustleBoardModal from "./modals/HustleBoardModal";
 import HustleRevealResult from "./modals/HustleRevealResult";
 import HustleQuestionAnswerModal from "./modals/HustleQuestionAnswer";
+import AnimatedText from "@/app/shared/AnimatedText";
 
 // Add type for option keys
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
@@ -56,6 +57,10 @@ const convertOptionToLetter = (option: string | null): string => {
 interface Prop {
   onNext: () => void;
 }
+
+// import typewriterSfx from "@/sounds/typewriter.mp3"; // Replace with your sound file
+
+
 
 const Stage1QuestionScreen = ({ onNext }: Prop) => {
   const { isConnected, onMessage } = useMQTT();
@@ -640,11 +645,10 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
                             ref={textRef}
                           >
                             {mqttQuestionData?.question?.questions?.question ? (
-                              <p
-                                className={`${cn(`${fontSize} text-white  leading-[4rem] text-center font-gilroyMedium font-extrabold`)} `}
-                              >
-                                {mqttQuestionData.question.questions.question}
-                              </p>
+                              <>
+                              <AnimatedText text={mqttQuestionData.question.questions.question} />
+                              </>
+                              
                             ) : (
                               <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
                                 Waiting for question from host...

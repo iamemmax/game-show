@@ -292,7 +292,7 @@ const HustleQuestionAnswerModal = ({
 
   return (
     <div className="fixed inset-0 z-50 w-full flex items-center justify-center bg-black/80">
-      <div className="bg-[#15052B] grid grid-cols-2  items-start gap-[2.1875rem] rounded-[30px] text-white w-[78.25rem] border border-[#7E3CE0] p-[1.875rem]">
+      <div className="bg-[#15052B] grid grid-cols-[1fr_1.5fr]  items-start gap-[2.1875rem] rounded-[30px] text-white w-[78.25rem] border border-[#7E3CE0] p-[1.875rem]">
         
         <div className="">
           <div className="bg-[#29104A] flex items-center justify-center rounded-10 px-[22px] py-2">

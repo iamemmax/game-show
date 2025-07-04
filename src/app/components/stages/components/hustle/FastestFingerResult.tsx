@@ -90,6 +90,7 @@ const FastestFingerResult = ({
   const soundRef = useRef<HTMLAudioElement | null>(null);
   const prevAmountsRef = useRef<{ [id: string]: number }>({});
   const activeAnimations = useRef(0);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   // Debug logger
   const addDebugLog = useCallback((message: string) => {
@@ -97,153 +98,151 @@ const FastestFingerResult = ({
     setDebugInfo(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString()}: ${message}`]);
   }, []);
 
-  // Enhanced user interaction detection
-  useEffect(() => {
-    const handleFirstInteraction = (event: Event) => {
-      addDebugLog(`First interaction detected: ${event.type}`);
-      setUserInteracted(true);
-      
-      // Try to initialize audio context on first interaction
-      if (soundRef.current) {
-        soundRef.current.load();
-        addDebugLog("Audio reloaded on first interaction");
+  // Initialize audio context and audio element
+useEffect(() => {
+  const initializeAudio = async () => {
+    try {
+      // Create audio context with proper TypeScript handling
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContextClass) {
+        audioContextRef.current = new AudioContextClass();
+      } else {
+        addDebugLog("AudioContext not supported");
+        return;
       }
       
-      document.removeEventListener('click', handleFirstInteraction);
-      document.removeEventListener('touchstart', handleFirstInteraction);
-      document.removeEventListener('keydown', handleFirstInteraction);
-      document.removeEventListener('pointerdown', handleFirstInteraction);
-    };
+      // Create audio element
+      soundRef.current = new Audio("/sounds/select-bid.mp3");
+      soundRef.current.preload = "auto";
+      soundRef.current.volume = 0.7;
+      soundRef.current.crossOrigin = "anonymous";
+      
+      // Set up event listeners
+      soundRef.current.addEventListener('canplaythrough', () => {
+        setAudioReady(true);
+        addDebugLog("Audio ready to play");
+      });
+      
+      soundRef.current.addEventListener('error', (e) => {
+        addDebugLog(`Audio error: ${e.message || 'Unknown error'}`);
+      });
 
-    document.addEventListener('click', handleFirstInteraction);
-    document.addEventListener('touchstart', handleFirstInteraction);
-    document.addEventListener('keydown', handleFirstInteraction);
-    document.addEventListener('pointerdown', handleFirstInteraction);
+      // Load the audio
+      soundRef.current.load();
+      
+    } catch (error) {
+      addDebugLog(`Audio initialization error: ${error}`);
+    }
+  };
 
-    return () => {
-      document.removeEventListener('click', handleFirstInteraction);
-      document.removeEventListener('touchstart', handleFirstInteraction);
-      document.removeEventListener('keydown', handleFirstInteraction);
-      document.removeEventListener('pointerdown', handleFirstInteraction);
-    };
-  }, [addDebugLog]);
+  initializeAudio();
 
-  // Enhanced audio initialization
+  return () => {
+    if (soundRef.current) {
+      soundRef.current.pause();
+      soundRef.current.src = "";
+      soundRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
+  };
+}, [addDebugLog]);
+
+  // Enhanced user interaction detection with immediate audio unlock
   useEffect(() => {
-    addDebugLog("Initializing audio...");
-    
-    const initializeAudio = async () => {
-      try {
-        soundRef.current = new Audio();
-        if (!soundRef.current) {
-          addDebugLog("Failed to create Audio object");
-          return;
+    const unlockAudio = async () => {
+      if (!userInteracted && soundRef.current && audioContextRef.current) {
+        try {
+          // Resume audio context
+          if (audioContextRef.current.state === 'suspended') {
+            await audioContextRef.current.resume();
+          }
+          
+          // Play and immediately pause to unlock
+          soundRef.current.volume = 0;
+          const playPromise = soundRef.current.play();
+          
+          if (playPromise !== undefined) {
+            await playPromise;
+            soundRef.current.pause();
+            soundRef.current.currentTime = 0;
+            soundRef.current.volume = 0.7;
+          }
+          
+          setUserInteracted(true);
+          addDebugLog("Audio unlocked successfully");
+        } catch (error) {
+          addDebugLog(`Audio unlock failed: ${error}`);
         }
-
-        // Set source with fallback
-        const audioSrc = "/sounds/select-bid.mp3";
-        soundRef.current.src = audioSrc;
-        soundRef.current.preload = "auto";
-        soundRef.current.loop = false;
-        soundRef.current.volume = 0.5;
-        
-        addDebugLog(`Audio source set to: ${audioSrc}`);
-
-        // Enhanced event listeners
-        soundRef.current.addEventListener('loadstart', () => {
-          addDebugLog("Audio loading started");
-        });
-
-        soundRef.current.addEventListener('canplay', () => {
-          addDebugLog("Audio can play");
-          setAudioReady(true);
-        });
-
-        soundRef.current.addEventListener('canplaythrough', () => {
-          addDebugLog("Audio can play through");
-          setAudioReady(true);
-        });
-
-        soundRef.current.addEventListener('error', (e) => {
-          addDebugLog(`Audio error: ${e.message || 'Unknown error'}`);
-          setAudioReady(false);
-        });
-
-        soundRef.current.addEventListener('play', () => {
-          addDebugLog("Audio started playing");
-        });
-
-        soundRef.current.addEventListener('pause', () => {
-          addDebugLog("Audio paused");
-        });
-
-        // Try to load the audio
-        soundRef.current.load();
-        
-      } catch (error) {
-        addDebugLog(`Audio initialization error: ${error}`);
       }
     };
 
-    initializeAudio();
+    const handleInteraction = async (event: Event) => {
+      addDebugLog(`User interaction: ${event.type}`);
+      await unlockAudio();
+      
+      // Remove listeners after first interaction
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+      document.removeEventListener('pointerdown', handleInteraction);
+      document.removeEventListener('mousedown', handleInteraction);
+    };
+
+    // Add multiple event listeners for better coverage
+    document.addEventListener('click', handleInteraction, { passive: true });
+    document.addEventListener('touchstart', handleInteraction, { passive: true });
+    document.addEventListener('keydown', handleInteraction, { passive: true });
+    document.addEventListener('pointerdown', handleInteraction, { passive: true });
+    document.addEventListener('mousedown', handleInteraction, { passive: true });
 
     return () => {
-      if (soundRef.current) {
-        soundRef.current.pause();
-        soundRef.current = null;
-      }
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+      document.removeEventListener('pointerdown', handleInteraction);
+      document.removeEventListener('mousedown', handleInteraction);
     };
-  }, [addDebugLog]);
+  }, [userInteracted, addDebugLog]);
 
-  // Enhanced play sound function with extensive debugging
+  // Improved play sound function
   const playSound = useCallback(async () => {
-    addDebugLog(`playSound called - userInteracted: ${userInteracted}, audioReady: ${audioReady}, soundRef exists: ${!!soundRef.current}`);
-    
-    if (!soundRef.current) {
-      addDebugLog("No sound reference available");
-      return;
-    }
-
-    if (!userInteracted) {
-      addDebugLog("User hasn't interacted yet - cannot play sound");
-      return;
-    }
-
-    if (!audioReady) {
-      addDebugLog("Audio not ready yet");
+    if (!soundRef.current || !audioReady) {
+      addDebugLog("Sound not ready");
       return;
     }
 
     try {
-      // Reset to start for single play
-      soundRef.current.currentTime = 0;
+      // Ensure audio context is running
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
 
-      addDebugLog("Attempting to play sound...");
+      // Reset and play
+      soundRef.current.currentTime = 0;
+      soundRef.current.volume = 0.7;
+      
       const playPromise = soundRef.current.play();
       
       if (playPromise !== undefined) {
         await playPromise;
-        addDebugLog("Sound playing successfully!");
-      } else {
-        addDebugLog("Play promise is undefined");
+        addDebugLog("Sound played successfully");
       }
     } catch (error) {
-      addDebugLog(`Error playing sound: ${error}`);
+      addDebugLog(`Playback error: ${error}`);
       
-      // Try to reload and play again
+      // Fallback: try to create and play a new audio instance
       try {
-        soundRef.current.load();
-        setTimeout(async () => {
-          if (soundRef.current) {
-            await soundRef.current.play();
-            addDebugLog("Sound playing after reload");
-          }
-        }, 100);
-      } catch (retryError) {
-        addDebugLog(`Retry failed: ${retryError}`);
+        const fallbackAudio = new Audio("/sounds/select-bid.mp3");
+        fallbackAudio.volume = 0.7;
+        await fallbackAudio.play();
+        addDebugLog("Fallback audio played");
+      } catch (fallbackError) {
+        addDebugLog(`Fallback also failed: ${fallbackError}`);
       }
     }
-  }, [userInteracted, audioReady, addDebugLog]);
+  }, [audioReady, addDebugLog]);
 
  
  

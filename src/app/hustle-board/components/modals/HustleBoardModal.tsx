@@ -257,7 +257,7 @@ const HustleBoardModal = ({
           className="grid grid-cols-[1.5fr_1fr] items-center mb-3"
         >
           <div className="bg-[#29104A] flex items-start gap-3 border-[0.3px] border-[#7E3CE0] w-full p-3 rounded-10">
-            <div className="relative w-[5.125rem] h-[5.125rem] rounded-[10px] overflow-hidden">
+            <div className="relative w-[7.125rem] h-[7.125rem] rounded-[10px] overflow-hidden">
               <Image
                 alt="contestant"
                 src={contestantImages[idx]}
@@ -267,12 +267,12 @@ const HustleBoardModal = ({
             </div>
 
             <div>
-              <p className="text-sm capitalize font-gilroyMedium text-white">
+              <p className="text-base capitalize font-gilroyMedium text-white">
                 {capitalizeFirstLetter(data?.contestant_name ?? "")}
               </p>
-              <p className="font-sans opacity-75 text-sm  text-white">
+              <p className="font-sans opacity-75 text-base  text-white">
                 Answer:
-                <span className="font-bold opacity-100 text-sm ">
+                <span className="font-bold opacity-100 text-base ">
                   {" "}
                   {data?.answer === "N" ? " -.-- " : data?.answer} :{" "}
                   {getOptionValue(
@@ -283,10 +283,10 @@ const HustleBoardModal = ({
               </p>
               {showBid && (
                 <div className="bg-[#200541] mt-1 leading-3 flex justify-center items-center flex-col rounded-[1.5rem] py-1 px-6">
-                  <p className="font-gilroyMedium text-[10px] text-white">
+                  <p className="font-gilroyMedium text-lg text-white">
                     Bid amount:
                   </p>
-                  <h2 className="text-[#B380FF] font-gilroyHeavy font-extrabold text-base">
+                  <h2 className="text-[#B380FF] font-gilroyHeavy font-extrabold text-2xl">
                     ₦
                     {addCommasToNumber(
                       Math.ceil(Number(data?.amount_staked) / 100) * 100
