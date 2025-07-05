@@ -282,9 +282,6 @@ export default function Stage1Questions({
                                             endQuestionTimer()
                                         }}
                                     />
-                                    <TrapeziumButton onClick={endQuestionTimer} variant="blue" className="mt-4">
-                                        END TIMER
-                                    </TrapeziumButton>
                                 </div>
                             </div>
                         )}
