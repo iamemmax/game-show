@@ -293,8 +293,13 @@ const QuestionScreen = ({ onNext }: Prop) => {
           event: "clear_all_bids",
           payload: {},
         };
+        const clearAllOptionData = {
+          event: "clear_all_options",
+          payload: {},
+        };
 
         sendMessage(clearAllBidsData);
+        sendMessage(clearAllOptionData);
       }
       // FIXED: Enhanced answer handling section
       if (receivedMessage?.event === "game_s1_question_answer") {
@@ -527,7 +532,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
   const handleOptionSelect = (option: OptionKey) => {
     if (timerActive && !isSubmitted) {
       setSelectedOption(option);
-      publishOption(option)
+  
     }
   };
 
@@ -536,6 +541,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
       return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
+        publishOption(answerLetter)
     const formattedTimestamp = new Date().toISOString();
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);

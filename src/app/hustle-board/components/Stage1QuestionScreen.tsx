@@ -113,6 +113,16 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
       bid_percentage?: string;
     };
   }>({});
+  
+  const [contestantOption, setContestantOption] = useState<{
+    [contestantId: string]: {
+      contestant_id: string;
+      contestant_name: string;
+      timestamp: string;
+      question_id?: string;
+    
+    };
+  }>({});
 
   const [mqttResultData, setMqttResultData] = useState<any>(null);
   // const [showEliminationModal, setShowEliminationModal] = useState(false);
@@ -204,6 +214,7 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
         setCurrentQuestionAnswerData(null);
         // FIXED: Clear contestant bids completely for new question
         setContestantBids({});
+        setContestantOption({})
 
         // 3. Set current index and question ID
         setCurrentQuestionIndex(questionData.question_index || 1);
@@ -295,6 +306,11 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
       if (receivedMessage?.event === "clear_all_bids") {
         setContestantBids({});
       }
+      if (receivedMessage?.event === "clear_all_options") {
+        setContestantOption({});
+      }
+
+
 
       if (receivedMessage?.event === "game_s1_question_bids_reveal") {
         const payload = receivedMessage.payload || {};
