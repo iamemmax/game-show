@@ -459,9 +459,9 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                   <p className="text-base capitalize font-gilroyMedium text-white">
                     {capitalizeFirstLetter(data?.contestant_name?.split(" ")[0] || "Player")}
                   </p>
-                  <p className="font-sans opacity-75 text-base text-white">
+                  <p className="font-sans opacity-75 text-base text-white truncate w-[90%] max-w-[350px]">
                     Answer:
-                    <span className="font-bold opacity-100 text-base truncate">
+                    <span className="font-bold opacity-100 text-base">
                       {" "}{data?.answer}. {getOptionValue(currentQuestion?.question?.questions, String(data?.answer?.toLowerCase()))}  
                     </span>
                   </p>
