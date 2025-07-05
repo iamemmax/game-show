@@ -1,10 +1,23 @@
 export const contestantImages = [
- "/images/userImage.png",
-  "/images/userImage1.png",
-  "/images/userImage2.png",
-  "/images/userImage3.png",
-  "/images/userImage4.png",
-  "/images/userImage5.png",
+ "/images/avarter1.png",
+  "/images/avarter2.png",
+ "/images/avarter1.png",
+  "/images/avarter2.png",
+ "/images/avarter1.png",
+  "/images/avarter2.png",
+ "/images/avarter1.png",
+  "/images/avarter2.png",
+ "/images/avarter1.png",
+  "/images/avarter2.png",
+ "/images/avarter1.png",
+  "/images/avarter2.png",
+ "/images/avarter1.png",
+  "/images/avarter2.png",
+ "/images/avarter1.png",
+  "/images/avarter2.png",
+ "/images/avarter1.png",
+  "/images/avarter2.png",
+ 
 
 ]
 
