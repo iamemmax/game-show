@@ -59,7 +59,7 @@ const QuizOption: React.FC<OptionProps> = ({ label, optionKey, isCorrect = false
       boxShadow: { duration: 1.2, times: [0, 0.5, 1] }
     })
   }}
-  className={`w-full rounded-xl px-6 py-3 font-bold text-lg flex items-center justify-between transition-all duration-500 relative overflow-hidden ${
+  className={`w-full rounded-xl px-6 py-3 font-bold text-2xl flex items-center justify-between transition-all duration-500 relative overflow-hidden ${
     isCorrect 
       ? 'bg-[#04DA6A]/20 border-2 border-[#04DA6A] text-white' 
       : 'border border-[#7E3CE0] text-white'
@@ -264,7 +264,7 @@ const HustleQuestionAnswerModal = ({
       // Fallback to static options if no data provided
       return (
         <>
-          <QuizOption optionKey="A." label="Onitsha market" index={0} />
+          <QuizOption optionKey="A." label="Onitsha market" index={0}  />
           <QuizOption optionKey="B." label="Eko market" index={1} />
           <QuizOption optionKey="C." label="Centre market" index={2} />
           <QuizOption optionKey="D." label="Kumasi market" index={3} />

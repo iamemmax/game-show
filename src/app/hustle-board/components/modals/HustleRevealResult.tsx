@@ -461,7 +461,7 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                   </p>
                   <p className="font-sans opacity-75 text-base text-white">
                     Answer:
-                    <span className="font-bold opacity-100 text-base">
+                    <span className="font-bold opacity-100 text-base truncate">
                       {" "}{data?.answer}. {getOptionValue(currentQuestion?.question?.questions, String(data?.answer?.toLowerCase()))}  
                     </span>
                   </p>
