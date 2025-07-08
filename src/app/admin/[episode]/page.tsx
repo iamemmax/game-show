@@ -337,7 +337,7 @@ export default function GameDetails() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[0.7fr,1fr,1fr] gap-4">
             {/* Left Column - Episode Information */}
-            <section className="lg:col-span-1 space-y-4">
+            <section className="lg:col-span-1 space-y-4 max-h-[1000px]">
               <header className="font-bold text-sm">EPISODE INFORMATION</header>
               <section className="bg-[#341D44] p-5 rounded-xl">
                 <div>
@@ -350,100 +350,22 @@ export default function GameDetails() {
                       <div className="text-[0.65rem] text-white mb-1">Status</div>
                       <div className="flex items-center gap-1.5 text-[0.825rem]">
                         <div className="size-2 rounded-full bg-[#d400ff] animate-pulse"></div>
-                        <span>In Progress</span>
+                        <span>{
+                          contestantsData?.game.status === "IN_ACTIVE"
+                            ? "Not Started"
+                            : contestantsData?.game.status === "IN_PROGRESS"
+                              ? "In Progress"
+                              : "Completed"
+                          }</span>
                       </div>
                     </div>
                     <div>
                       <div className="text-[0.65rem] text-white mb-1">Current Stage</div>
-                      <div className="text-[0.825rem] font-medium">Stage One</div>
+                      <div className="text-[0.825rem] font-medium">{convertKebabAndSnakeToTitleCase(contestantsData?.game.stage)}</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Assign Contestant */}
-                <div className="border-white/40 border-t-[0.3px] mt-6 pt-6">
-                  <h2 className="text uppercase font-semibold mb-4 text-white text-[0.8rem]">ASSIGN CONTESTANT</h2>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-                      <FormField
-                        control={form.control}
-                        name="constestants_attr"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[0.7rem] text-white">Contestant Position</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className=" border-[#ff00ff]/30 focus:border-[#ff00ff] focus:ring-[#ff00ff]/50 text-white h-7">
-                                  <SelectValue placeholder="Select " />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent className=" border-[#ff00ff]/30 text-white">
-                                {contestantsData.data.map((contestant: any) => (
-                                  <SelectItem
-                                    key={contestant.id}
-                                    value={contestant.constestant_attr}
-                                    disabled={getContestantStatus(contestant) === "assigned"}
-                                    className={getContestantStatus(contestant) === "assigned" ? "opacity-50" : ""}
-                                  >
-                                    {convertKebabAndSnakeToTitleCase(contestant.constestant_attr)}{" "}
-                                    {getContestantStatus(contestant) === "assigned" ? "(Assigned)" : ""}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage className="text-[#ff00ff]" />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[0.7rem] text-white">Contestant Name</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder="Enter contestant name"
-                                className=" border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white h-7"
-                              />
-                            </FormControl>
-                            <FormMessage className="text-[#ff00ff]" />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="phone_number"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[0.7rem] text-white">Phone Number</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder="Enter contestant number"
-                                className=" border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white h-7"
-                              />
-                            </FormControl>
-                            <FormMessage className="text-[#ff00ff]" />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div>
-                        <Button
-                          type="submit"
-                          disabled={assignContestantMutation.isLoading || form.formState.isSubmitting}
-                          className="bg-[#6f2da8] hover:bg-[#8a3ad3] text-white w-full"
-                        >
-                          Assign
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </div>
               </section>
             </section>
 
@@ -479,7 +401,7 @@ export default function GameDetails() {
                                 {isAssigned && (
                                   <div className="flex items-center gap-1">
                                     <Phone className="h-3 w-3" />
-                                    08238495867
+                                    {contestant.phone_number}
                                   </div>
                                 )}
                               </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { Button, Input } from "@/components/core"
+import { Button, GlowyStrokeText, Input } from "@/components/core"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/core/Card"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/core/Form"
 import { useGetAllSeasons, useCreateSeason } from "./misc/api"
+import Logo from "../icons/Logo"
 
 // Define the form schema with Zod
 const startGameSchema = z.object({
@@ -35,18 +36,19 @@ export default function AdminDashboard() {
 
 
   return (
-    <div className="min-h-screen bg-[#1a0b25] text-white bg-[url('/images/host-bg.png')] bg-no-repeat bg-contain bg-center">
-      <div className="container mx-auto py-8 px-4 min-h-dvh">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            {/* <Trophy className="h-8 w-8 text-[#ff9500]" /> */}
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-[#ff9500] to-[#ff00ff] bg-clip-text text-transparent">
-              The Hustle Admin
-            </h1>
-          </div>
-        </div>
+    <div className="text-white">
 
-      </div>
+      <section className="grid md:grid-cols-2 lg:grid-cols-3">
+        <Link href="/admin/seasons" className="text-sm text-[#ff9500] hover:underline">
+          <article
+            className={`relative rounded-2xl overflow-hidden h-32 bg-[#341D44] hover:border-[#ff00ff]/50 transition-all group p-4`}
+          >
+            <h1 className="text-2xl font-bold text-white">
+              View Seasons
+            </h1>
+          </article>
+        </Link>
+      </section>
     </div>
   )
 }

@@ -244,7 +244,7 @@ export default function EpisodesPage() {
   }
 
   return (
-    <div className="min-h-screen text-white bg-[#0a0a0a]">
+    <div className="text-white bg-[#0a0a0a]">
       <div className="p-6">
         {/* Page Header */}
         <div className="mb-8">
