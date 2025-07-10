@@ -929,7 +929,7 @@ useEffect(() => {
         </div>
       </div>
 
-      <ErrorModal
+      {/* <ErrorModal
         isErrorModalOpen={isErrorModalOpen}
         setErrorModalState={() => {
           setErrorModalState(false);
@@ -937,7 +937,7 @@ useEffect(() => {
         subheading={
           errorModalMessage || "Please check your inputs and try again."
         }
-      ></ErrorModal>
+      ></ErrorModal> */}
     </>
   );
 };

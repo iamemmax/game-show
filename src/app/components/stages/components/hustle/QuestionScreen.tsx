@@ -120,7 +120,9 @@ const QuestionScreen = ({ onNext }: Prop) => {
     null
   );
   const [mqttAnswerBalanceData, setMqttAnsweBalanceData] = useState<any>(null);
+// Add these state declarations at the top of your component with the other useState declarations
 
+const [contestantOptions, setContestantOptions] = useState<{[key: string]: any}>({});
   const currentQuestionIdRef = useRef<string | null>(null);
 
   // API hooks - ensure these are called consistently
@@ -235,6 +237,153 @@ const QuestionScreen = ({ onNext }: Prop) => {
   };
 
   // Updated MQTT message handling effect - key changes in the answer handling section
+  // useEffect(() => {
+  //   if (!isConnected) return;
+
+  //   const handler = (receivedMessage: any) => {
+    
+
+  //     // Handle prep page event
+  //     if (receivedMessage?.event === "game_s1_question_reveal") {
+  //       setShowPrepPage(false);
+
+  //       const payload = receivedMessage.payload || {};
+  //       const questionData = payload.data || {};
+  //       const spendBreakdown =
+  //         questionData.spend_breakdown ||
+  //         payload.spend_breakdown ||
+  //         payload.data?.spend_breakdown;
+
+  //       setMqttQuestionData(questionData);
+  //       setQuestionKey(`question-${questionData.question_index || Date.now()}`);
+  //       setShowBidPrompt(true);
+
+  //       // Reset all question-related state
+  //       setSelectedOption(null);
+  //       setSelectedAmount(null);
+  //       setIsSubmitted(false);
+  //       resetTimerState();
+  //       setMqttAnswerData(null);
+  //       setCorrectAnswer(null);
+
+  //       setCurrentQuestionIndex(questionData.question_index || 1);
+  //       const questionId =
+  //         questionData?.question?.questions?.question_id ||
+  //         payload?.question_id;
+  //       if (questionId) {
+  //         setCurrentQuestionId(questionId.toString());
+  //       }
+
+  //       if (spendBreakdown && user?.contestant_id) {
+  //         const userData = Array.isArray(spendBreakdown)
+  //           ? spendBreakdown.find(
+  //               (contestant: any) =>
+  //                 String(contestant.contestant_id) ===
+  //                 String(user.contestant_id)
+  //             )
+  //           : spendBreakdown;
+
+  //         if (userData?.spend_breakdown) {
+  //           setUserBidAmounts(userData.spend_breakdown);
+  //         } else {
+  //           setUserBidAmounts({});
+  //         }
+  //       }
+
+  //       // MODIFIED: Send empty bid data to completely clear all bids for new question
+  //       const clearAllBidsData = {
+  //         event: "clear_all_bids",
+  //         payload: {},
+  //       };
+  //       const clearAllOptionData = {
+  //         event: "clear_all_options",
+  //         payload: {},
+  //       };
+
+  //       sendMessage(clearAllBidsData);
+  //       sendMessage(clearAllOptionData);
+  //     }
+  //     // FIXED: Enhanced answer handling section
+  //     if (receivedMessage?.event === "game_s1_question_answer") {
+  //       const payload = receivedMessage.payload || {};
+  //       const questionId = payload?.data?.question?.question_id;
+
+  //       if (
+  //         questionId?.toString() === currentQuestionIdRef?.current?.toString()
+  //       ) {
+  //         const answersData = payload?.data?.answers;
+
+  //         // Set the answer data first
+  //         setMqttAnswerData(answersData);
+  //         setMqttAnsweBalanceData(answersData);
+
+  //         // Refetch contestant data
+  //         refetch();
+  //         refechUser();
+
+  //         // CRITICAL FIX: Update animated capital immediately with new balance
+  //         if (answersData && user?.contestant_id) {
+  //           const updatedContestant = answersData?.find(
+  //             (contestant: any) =>
+  //               contestant.contestant_id?.toString() ===
+  //               user?.contestant_id?.toString()
+  //           );
+
+  //           if (updatedContestant?.wallet_balance !== undefined) {
+  //             // Set the animated capital directly to the new balance from MQTT
+  //             setAnimatedCapital(Number(updatedContestant.wallet_balance));
+  //           }
+  //         }
+
+  //         if (payload?.question?.correct_option) {
+  //           setCorrectAnswer(answersData.question.correct_option);
+  //           setIsSubmitted(true);
+  //           setShowNextButton(true);
+  //           setTimerActive(false);
+
+  //           setTimeout(() => {
+  //             const newOpenModals: Record<number, boolean> = {};
+  //             if (answersData?.data && Array.isArray(answersData)) {
+  //               answersData?.forEach((c: any) => {
+  //                 if (c?.contestant_id) {
+  //                   newOpenModals[c.contestant_id] = true;
+  //                 }
+  //               });
+  //               setTimeout(() => {
+  //                 setIsOpen(newOpenModals);
+  //               }, 7000);
+  //             }
+  //           }, 100);
+  //         }
+  //       }
+  //     }
+
+  //     if (receivedMessage?.event === "game_s1_timer_start") {
+  //       handleStartTimer();
+  //     }
+
+  //     if (receivedMessage?.event === "game_s1_results_reveal") {
+  //       setAllQuestionsCompleted(true);
+  //     }
+  //   };
+
+  //   onMessage(handler);
+
+  //   return () => {
+  //     if (isConnected) {
+  //       onMessage(null);
+  //     }
+  //   };
+  // }, [
+  //   isConnected,
+  //   onMessage,
+  //   user?.contestant_id,
+  //   refetch,
+  //   refechUser, // Added this missing dependency
+  // ]);
+
+
+
   useEffect(() => {
     if (!isConnected) return;
 
@@ -301,6 +450,26 @@ const QuestionScreen = ({ onNext }: Prop) => {
         sendMessage(clearAllBidsData);
         sendMessage(clearAllOptionData);
       }
+
+      // ADD THIS: Handle contestant option selection
+      if (receivedMessage?.event === "contestant_selected_option") {
+        const optionData = receivedMessage.payload;
+        console.log(`Received option selection: ${optionData.contestant_name} selected ${optionData.selected_option}`);
+        
+        setContestantOptions(prev => ({
+          ...prev,
+          [optionData.contestant_id]: {
+            ...optionData,
+            timestamp: optionData.timestamp || new Date().toISOString()
+          }
+        }));
+      }
+
+      // ALSO ADD THIS: Handle clearing all options
+      if (receivedMessage?.event === "clear_all_options") {
+        setContestantOptions({});
+      }
+
       // FIXED: Enhanced answer handling section
       if (receivedMessage?.event === "game_s1_question_answer") {
         const payload = receivedMessage.payload || {};
@@ -502,39 +671,46 @@ const QuestionScreen = ({ onNext }: Prop) => {
       },
     };
 
-    console.log("Publishing bid amount:", bidData);
+    // console.log("Publishing bid amount:", bidData);
 
     // Publish to MQTT for leaderboard screen to listen
     await sendMessage(bidData);
   };
-  const publishOption = async (option: string) => {
-    if (!user?.contestant_id || !user?.name) return;
+ // Updated publishOption function (around line 390)
+const publishOption = async (option: string) => {
+  if (!user?.contestant_id || !user?.name) return;
 
-    const bidData = {
-      event: "contestant_selected_option",
-      payload: {
-        contestant_id: user.contestant_id,
-        contestant_name: user.name,
-       
-        timestamp: new Date().toISOString(),
-        question_id: currentQuestionId,
-        game_episode: user.game_episode,
-      
-      },
-    };
-
-    console.log("Publishing bid amount:", bidData);
-
-    // Publish to MQTT for leaderboard screen to listen
-    await sendMessage(bidData);
+  const optionData = {
+    event: "contestant_selected_option",
+    payload: {
+      contestant_id: user.contestant_id,
+      contestant_name: user.name,
+      is_selected:true,
+      selected_option: option, // Added the actual selected option
+      timestamp: new Date().toISOString(),
+      question_id: currentQuestionId,
+      game_episode: user.game_episode,
+    },
   };
 
-  const handleOptionSelect = (option: OptionKey) => {
-    if (timerActive && !isSubmitted) {
-      setSelectedOption(option);
-  
-    }
-  };
+  console.log("Publishing selected option:", optionData);
+
+  // Publish to MQTT for leaderboard screen to listen
+  await sendMessage(optionData);
+};
+
+// Updated handleOptionSelect function (around line 410)
+const handleOptionSelect = (option: OptionKey) => {
+  if (timerActive && !isSubmitted) {
+    setSelectedOption(option);
+    
+    // Publish the selected option immediately when user selects it
+    const answerLetter = convertOptionToLetter(option);
+    publishOption(answerLetter);
+  }
+};
+
+
 
   const handleSubmitAnswer = () => {
     if (!selectedOption || !currentQuestionId || selectedAmount === null)
@@ -600,7 +776,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
   };
 
   const handleStartTimer = () => {
-    console.log("handleStartTimer called - activating timer");
+    // console.log("handleStartTimer called - activating timer");
     setTimerActive(true);
     setShowBidPrompt(false);
     setGameStartTime(new Date());
@@ -659,9 +835,9 @@ const QuestionScreen = ({ onNext }: Prop) => {
         </Dialog>
       )}
 
-      <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full ">
+      <div className="grid grid-cols-[1.2fr_5fr_1fr] items-start   h-full">
         {/* Left Sidebar */}
-        <div className="flex flex-col justify-between">
+        <div className="flex flex-col justify-between h-full">
           <div className="flex justify-center items-center h-3.5 w-full mt-8">
             <Logo />
           </div>
@@ -674,7 +850,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
         </div>
 
         {/* Center Content */}
-        <div className="flex flex-col justify-between items-center min-h-full">
+        <div className="flex flex-col justify-between items-center h-full">
           {/* Top section */}
           <div className="flex flex-col w-full items-center">
             <div className="w-full h-[100px] flex items-center justify-center">
@@ -786,7 +962,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
                             className="text-2xl "
                           ></motion.div>
                           <p className="text-black text-lg font-extrabold font-gilroyBold">
-                            BID NOW!
+                            Luck Your Hustle
                           </p>
                           {/* <p className="text-black/80 text-sm font-medium mt-1">
                                       Choose your answer & wager amount
@@ -797,7 +973,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
                   )}
                 </div>
 
-                <div className="grid mt-5 gap-3 grid-cols-[1fr_3fr_1fr]">
+                <div className="grid mt-5 gap-2 w-full  grid-cols-[1fr_3fr_1fr] items-start">
                   <div className="flex flex-col">
                     {questionData?.map((contestant, idx: number) => (
                       <div className="flex gap-2 items-center" key={idx}>
@@ -865,6 +1041,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
                       </div>
                     ))}
                   </div>
+                  <>
                   {isLoading ? (
                     <div className="flex justify-center items-center h-full ">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
@@ -966,7 +1143,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
                             className="relative mt-[.625rem]"
                           >
                             {/* Options Grid */}
-                            <div className="grid grid-cols-2 gap-[.625rem]">
+                            <div className="grid grid-cols-2 opacity-5 gap-[.625rem]">
                               {(
                                 [
                                   "option_a",
@@ -985,37 +1162,45 @@ const QuestionScreen = ({ onNext }: Prop) => {
                                 const isSelected = selectedOption === option;
 
                                 return (
-                                  <motion.button
-                                    key={option}
-                                    custom={index}
-                                    variants={optionVariants}
-                                    initial="initial"
-                                    animate="animate"
-                                    whileHover="hover"
-                                    whileTap="tap"
-                                    onClick={() => handleOptionSelect(option)}
-                                    className={cn(
-                                      "bg-[#000000] border-2 rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-white text-left relative",
-                                      !showResult && isSelected
-                                        ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
-                                        : "",
-                                      isSubmitted ||
-                                        !timerActive ||
-                                        !mqttQuestionData?.question?.questions
-                                        ? "opacity-70 cursor-not-allowed"
-                                        : "",
-                                      mqttAnswerData &&
-                                        currentQuestions?.correct_option ===
-                                          convertOptionToLetter(option)
-                                        ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
-                                        : ""
-                                    )}
-                                  >
-                                    {optionLetter}:
-                                    <span className="ml-2">
-                                      {currentQuestions[option] || `...`}
-                                    </span>
-                                  </motion.button>
+                                  <>
+                                 <motion.button
+  key={option}
+  custom={index}
+  variants={optionVariants}
+  initial="initial"
+  animate="animate"
+  whileHover="hover"
+  whileTap="tap"
+  onClick={() => handleOptionSelect(option)}
+  className={cn(
+    "border rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-left relative transition-all duration-300",
+    // Default background/text
+    "bg-black text-white",
+
+    // Selected state (before result)
+    !showResult && isSelected
+      ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
+      : "border-[#d91fff]",
+
+    // Grayed out when submitted, timer ended, or no questions
+    (isSubmitted || !timerActive || !mqttQuestionData?.question?.questions)
+      ? "opacity-30 pointer-events-none  "
+      : "",
+
+    // Correct answer highlight after submission
+    mqttAnswerData &&
+      currentQuestions?.correct_option === convertOptionToLetter(option)
+      ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+      : ""
+  )}
+>
+  {optionLetter}:
+  <span className="ml-2">
+    {currentQuestions[option] || `...`}
+  </span>
+</motion.button>
+
+                                  </>
                                 );
                               })}
                             </div>
@@ -1062,7 +1247,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
                                                   timeLeft <= 0 || // Disable when time has elapsed
                                                   isSubmitted // Disable when already submitted
                                                 }
-                                                className={`px-5 py-2 rounded-lg text-base font-bold transition-all ${
+                                                className={`px-3 py-2 rounded-lg text-base font-bold transition-all ${
                                                   selectedAmount === amount
                                                     ? "bg-[#04DA6A] text-black"
                                                     : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
@@ -1134,15 +1319,16 @@ ${
                       {/* ))} */}
                     </div>
                   )}
+                  </>
                   {/* Pass mqttAnswerData and currentQuestionId to FastestFingerResult */}
-                  <div className="h-full w-full">
-                    <FastestFingerResult
-                      resultArray={mqttAnswerData}
-                      mqttAnswerData={mqttAnswerData}
-                      timeElapsed={timeLeft <= 0 || showNextButton}
-                      currentQuestionId={currentQuestionId}
-                    />
-                  </div>
+                  <div className=" ">
+    <FastestFingerResult
+      resultArray={mqttAnswerData}
+      mqttAnswerData={mqttAnswerData}
+      timeElapsed={timeLeft <= 0 || showNextButton}
+      currentQuestionId={currentQuestionId}
+    />
+  </div>
                 </div>
               </div>
             </div>
@@ -1150,7 +1336,7 @@ ${
         </div>
 
         {/* Right Sidebar */}
-        <div>
+        <div className="h-full">
           <HustleSideBar
             showEmptyCard={false}
             showHustlerCard={true}

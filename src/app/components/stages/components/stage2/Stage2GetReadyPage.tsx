@@ -1,19 +1,15 @@
 "use client"
 import Logo from "@/app/icons/Logo";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
-import React, { useEffect, useState, useRef } from "react";
+import React  from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
-import { useMQTT } from "@/hooks/useMqttService";
 import HustleStages from "../hustle/HustleStages";
 import HustleSideBar from "../hustle/HustleSideBar";
-import QuestionTwoScreen from "./QuestionTwoScreen";
 
 const Stage2GetReadyPage = () => {
-  const { isConnected, onMessage } = useMQTT();
-  const [showQuestionScreen, setshowQuestionScreen] = useState(false)
 
   
   // Animation variants
@@ -51,35 +47,14 @@ const Stage2GetReadyPage = () => {
     }
   };
 
-  // useEffect(() => {
-  //   if (isConnected) {
-  //     const handler = (receivedMessage: any) => {
-  //       console.log("Main page received message:", receivedMessage);
-        
-  //       // Handle stage transition events
-  //       if (receivedMessage?.event === "game_s2_question_reveal_1") {
-  //         // Proceed to the next stage
-  //         setshowQuestionScreen(true);
-  //       }
-  //     };
-      
-  //     // Register the message handler
-  //     onMessage(handler);
-      
-  //     // Clean up function to remove the handler when component unmounts
-  //     return () => {
-  //       onMessage(null);
-  //     };
-  //   }
-  // }, [isConnected, onMessage]);
-
+ 
 
  
 
-if(showQuestionScreen){
-    return <QuestionTwoScreen onNext={()=>null}/>
+// if(showQuestionScreen){
+//     return <QuestionTwoScreen onNext={()=>null}/>
 
-}
+// }
   
   return (
      <AnimatePresence mode="wait">
@@ -131,7 +106,7 @@ if(showQuestionScreen){
             </motion.div>
 
             <motion.div 
-              className="relative w-full py-[2rem] 2xl:py-[6.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
+              className="relative w-full py-[1rem] 2xl:py-[6.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
               variants={itemVariants}
             >
               {/* Animated border */}
@@ -162,66 +137,84 @@ if(showQuestionScreen){
 
               {/* Content container - increased border width from 5px to 8px for bolder appearance */}
               <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
-              <div className="relative flex flex-col items-center w-full">
-                <motion.div 
-                  className="flex flex-col justify-between items-start gap-4 p-6 rounded-lg shadow-md"
-                  variants={itemVariants}
-                >
-                  <motion.h2 
-                    className="text-[2.75rem] font-extrabold outline-text text-black"
-                    variants={itemVariants}
-                    animate={{ 
-                      scale: [1, 1.05, 1],
-                      textShadow: ["0px 0px 0px rgba(217, 31, 255, 0)", "0px 0px 10px rgba(217, 31, 255, 0.7)", "0px 0px 0px rgba(217, 31, 255, 0)"]
-                    }}
-                    transition={{ 
-                      duration: 2,
-                      repeat: Infinity,
-                      repeatType: "reverse"
-                    }}
-                  >
-                    Get Ready for stage 2
-                  </motion.h2>
+              <div className="relative flex flex-col w-full">
+          <motion.div 
+  className="flex flex-col justify-between items-start gap-4 px-6  rounded-lg shadow-md"
+  variants={itemVariants}
+>
+  <motion.h2
+    className="text-[2rem] font-extrabold outline-text text-black"
+    variants={itemVariants}
+    animate={{
+      scale: [1, 1.05, 1],
+      textShadow: [
+        "0px 0px 0px rgba(217, 31, 255, 0)",
+        "0px 0px 10px rgba(217, 31, 255, 0.7)",
+        "0px 0px 0px rgba(217, 31, 255, 0)",
+      ],
+    }}
+    transition={{
+      duration: 2,
+      repeat: Infinity,
+      repeatType: "reverse",
+    }}
+  >
+    Stage 2:Rules & Format
+  </motion.h2>
 
-                  
+  <motion.p className="text-sm font-outfit text-white max-w-2xl" variants={itemVariants}>
+    <strong>8 Questions:</strong> Each contestant faces 8 questions, each requiring a <strong>10-second</strong> response.
+  </motion.p>
 
-                  <motion.p 
-                    className="text-sm font-outfit text-white max-w-2xl"
-                    variants={itemVariants}
-                  >
-                    Welcome to the <span className="font-semibold text-[#d91fff] px-1">Fastest Finger Q&A</span> round! 
-                    In this stage, your speed and accuracy will be tested. Each contestant will face two questions — 
-                    but only the quickest correct response earns the point. Stay sharp, think fast, and respond faster!
-                    This round is not just about getting it right — it's about being the fastest to do so.
-                  </motion.p>
+  <motion.div className="text-sm font-outfit text-white  max-w-2xl" variants={itemVariants}>
+    <p><strong>Earning Points:</strong></p>
+    <ul className="list-disc pl-6 ">
+      <motion.li variants={listItemVariants}>Every question has a Win Amount attached.</motion.li>
+      <motion.li variants={listItemVariants}>Fastest correct answer wins the amount for that question.</motion.li>
+      <motion.li variants={listItemVariants}>Correct but not the fastest? No earnings.</motion.li>
+      <motion.li variants={listItemVariants}>Incorrect answer? No earnings.</motion.li>
+    </ul>
+  </motion.div>
 
-                  <motion.p 
-                    className="text-sm font-outfit text-white max-w-2xl"
-                    variants={itemVariants}
-                  >
-                    At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">two contestants with the lowest scores</span> 
-                    will be <strong>eliminated</strong> from the competition. So bring your A-game — every second and every point counts!
-                  </motion.p>
+  <motion.div className="text-sm font-outfit text-white  max-w-3xl" variants={itemVariants}>
+    <p><strong>Payout Structure</strong></p>
+    <p><strong>Questions 1–4:</strong> <strong className="text-[#d91fff]">Win amount is credited directly to the winner’s purse from the game’s purse</strong>.</p>
+    <p><strong>Questions 5–8:</strong></p>
+    <ul className="list-disc pl-6 space-y-1">
+      <motion.li variants={listItemVariants}>The fastest correct contestant chooses where the Win Amount is deducted:</motion.li>
+      <motion.li variants={listItemVariants}>From one of the other 3 contestants’ purses</motion.li>
+      <motion.li variants={listItemVariants}>Or evenly across all 3 other contestants</motion.li>
+    </ul>
+    <p><strong>Limit:</strong> <strong className="text-[#d91fff]">The maximum deduction from any single contestant is 50% of their current purse.</strong> </p>
+  </motion.div>
 
-                  <motion.ul 
-                    className="list-disc pl-5 leading-7 text-sm text-white font-outfit"
-                    variants={itemVariants}
-                  >
-                    {[
-                      "Each contestant gets <strong>2 questions</strong>.",
-                      "<strong>Only the first correct answer</strong> wins the point.",
-                      "Speed matters — think fast, answer faster!",
-                      "If no one answers correctly, the question is skipped.",
-                      "<span className=\"text-[#d91fff] font-semibold \">Bottom 2 contestants </span> will be eliminated after this round."
-                    ].map((item, index) => (
-                      <motion.li 
-                        key={index}
-                        variants={listItemVariants}
-                        dangerouslySetInnerHTML={{ __html: item }}
-                      />
-                    ))}
-                  </motion.ul>
-                </motion.div>
+  <motion.div className="text-sm font-outfit text-white  max-w-2xl" variants={itemVariants}>
+    <p><strong>Elimination:</strong></p>
+    <ul className="list-disc pl-6">
+      <motion.li variants={listItemVariants}>After all 8 questions, <strong className="text-[#d91fff]">the 2 contestants with the lowest purse values are eliminated.</strong></motion.li>
+      <motion.li variants={listItemVariants}>Only the top 2 contestants by purse value advance to the Dud & Pass round.</motion.li>
+    </ul>
+  </motion.div>
+
+  <motion.div className="" variants={itemVariants}>
+    <p className="text-base font-bold text-white ">Key Tips:</p>
+    <motion.ul
+      className="list-disc pl-6 leading-5 text-sm text-white font-outfit"
+      variants={itemVariants}
+    >
+      {[
+        "Speed & accuracy matter—answer fast, answer right!",
+        "Play smart: your choices can impact your competitors.",
+        "Only the top 2 move forward—every win counts!",
+      ].map((tip, index) => (
+        <motion.li key={index} variants={listItemVariants}>
+          {tip}
+        </motion.li>
+      ))}
+    </motion.ul>
+  </motion.div>
+</motion.div>
+
               </div>
             </motion.div>
           </div>
