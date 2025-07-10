@@ -33,7 +33,7 @@ const HustleStages = ({ activeStage = 1 }: prop) => {
           borderColor={activeStage === 2 ? "#5d400b" : "#FFC125"}
           iconText="2"
           backgroundFill={activeStage === 2 ? "#5d400b" : "#FFC125"}
-           className="[@media(min-width:2000px)]:w-[15rem]  [@media(min-width:2000px)]:h-[7rem]"
+           className="[@media(min-width:2000px)]:w-[25rem]  [@media(min-width:2000px)]:h-[7rem]"
         />
 
         <StagesCard
