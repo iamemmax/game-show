@@ -314,7 +314,7 @@ export default function GameDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a0b25] text-white !font-montserrat">
+    <div className="min-h-full text-white !font-montserrat">
       <div className="w-[90%] max-w-[1200px] mx-auto py-4 px-3">
         {/* Header */}
         <div className="mb-8">

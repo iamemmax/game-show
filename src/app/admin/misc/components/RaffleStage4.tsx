@@ -1,135 +1,149 @@
 "use client"
-
-import { useState } from "react"
+import type React from "react"
+import { useState, useCallback } from "react"
+import { Loader2 } from "lucide-react"
+import { useMQTT } from "@/hooks/useMqttService"
 import { Ball } from "./RaffleBall"
-import { SpecialBallModal } from "./RaffleSpecialBallModal"
-import { Button } from "@/components/core"
-import { DrawnBallSlot } from "./RaffleDrawnBall"
+import { IBallPickData, useGetGameContestants, useHandleBallPick } from "../api"
+import { useParams } from "next/navigation"
 
-interface DrawnBall {
-  number: number
-  isMatched: boolean
+interface PickViewProps {
+  onPickResult?: (result: any) => void
 }
 
-interface SpecialBall {
-  type: string
-  value?: string
-}
+const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
+  const [selectedBall, setSelectedBall] = useState<number | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [revealedBalls, setRevealedBalls] = useState<Map<number, "matched" | "mismatched">>(new Map())
+  const { isConnected, sendMessage } = useMQTT()
 
-export default function Stage4RaffleAdmin() {
-  const [selectedBalls, setSelectedBalls] = useState<number[]>([19, 4, 12, 44, 14])
-  const [drawnBalls, setDrawnBalls] = useState<(DrawnBall | null)[]>([
-    { number: 24, isMatched: false },
-    { number: 4, isMatched: true },
-    null,
-    null,
-    null,
-  ])
-  const [specialBalls, setSpecialBalls] = useState<SpecialBall[]>([])
 
-  const handleBallClick = (number: number) => {
-    if (selectedBalls.includes(number)) {
-      setSelectedBalls(selectedBalls.filter((n) => n !== number))
-    } else if (selectedBalls.length < 5) {
-      setSelectedBalls([...selectedBalls, number])
+  const params = useParams()
+  const gameEpisode = params.episode as string
+  const {
+    data: contestantsData,
+    isLoading: isLoadingContestants,
+    refetch: refetchContestants,
+  } = useGetGameContestants(Number.parseInt(gameEpisode))
+  const { mutate: pickBall } = useHandleBallPick()
+
+  const handleBallPick = async (pickData: IBallPickData) => {
+    pickBall(pickData, {
+      onSuccess: (data) => {
+        sendMessage({
+          event: "ball_picked",
+          payload: data,
+        })
+        const isPositiveResult = data.hustle_match.is_extra_ball
+          ? data.hustle_match.balance_details.is_gain
+          : data.hustle_match.is_match
+
+        setRevealedBalls((prev) => new Map([...prev, [pickData.number_pick, isPositiveResult ? "matched" : "mismatched"]]))
+
+      },
+      onError: (error) => {
+        console.error("API call failed:", error)
+        throw error
+      },
+    })
+  }
+
+  const handleBallClick = useCallback(
+    async (ballNumber: number) => {
+      if (isSubmitting || revealedBalls.has(ballNumber)) return
+      setSelectedBall(ballNumber)
+      setIsSubmitting(true)
+      const lastContestant  = contestantsData?.data.find(contestant => contestant.is_eliminated === false) || {id: 0}
+      try {
+        const pickData = {
+          game_episode: gameEpisode,
+          contestant_id: lastContestant.id,
+          number_pick: ballNumber,
+        }
+        await handleBallPick(pickData)
+      } catch (error) {
+        console.error("Error picking ball:", error)
+      } finally {
+        setIsSubmitting(false)
+        setSelectedBall(null)
+      }
+    },
+    [gameEpisode, isSubmitting, revealedBalls, sendMessage, onPickResult],
+  )
+
+  const getBallVariant = (ballNumber: number): "regular" | "matched" | "mismatched" | "selected" => {
+    if (selectedBall === ballNumber && isSubmitting) {
+      return "selected"
     }
-  }
 
-  const handleSpecialBallSubmit = (data: { type: string; value?: string }) => {
-    setSpecialBalls([...specialBalls, data])
-  }
+    const result = revealedBalls.get(ballNumber)
+    if (result) {
+      return result
+    }
 
-  const matchCount = drawnBalls.filter((ball) => ball?.isMatched).length
+    return "regular"
+  }
 
   return (
-    <div className=" p-8 !font-montserrat ">
+    <div className="h-full flex flex-col w-full justify-center items-center p-8">
       <div className="max-w-6xl mx-auto">
 
-        {/* Prize Amount */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-purple-600 px-6 py-3 rounded-lg shadow-lg">
-            <div className="text-white text-xl font-bold">₦250,000</div>
-          </div>
-        </div>
-
-        {/* Selected Balls Row */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-purple-800/50 rounded-lg p-4 border-2 border-purple-500">
-            <div className="flex space-x-2">
-              {selectedBalls.map((number, index) => (
-                <Ball key={index} number={number} variant="selected" size="md" />
-              ))}
-              {Array.from({ length: 5 - selectedBalls.length }).map((_, index) => (
-                <div
-                  key={`empty-${index}`}
-                  className="w-12 h-12 rounded-lg border-2 border-purple-500 bg-purple-900/20"
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* Ball Grid */}
-        <div className="mb-8">
-          <div className="grid grid-cols-12 gap-2 max-w-4xl mx-auto">
-            {Array.from({ length: 49 }, (_, i) => i + 1).map((number) => (
+        <div className="grid grid-cols-10 gap-4 max-w-4xl mx-auto">
+          {Array.from({ length: 60 }, (_, i) => i + 1).map((ballNumber) => (
+            <div key={ballNumber} className="flex justify-center">
               <Ball
-                key={number}
-                number={number}
-                // isMatched={true}
-                variant={selectedBalls.includes(number) ? "selected" : "regular"}
-                onClick={() => handleBallClick(number)}
-                className="mx-auto !cursor-pointer"
+                number={ballNumber}
+                variant={getBallVariant(ballNumber)}
+                size="lg"
+                onClick={() => handleBallClick(ballNumber)}
+                className={`
+                  ${revealedBalls.has(ballNumber) ? "cursor-not-allowed opacity-75" : "cursor-pointer"}
+                  ${selectedBall === ballNumber && isSubmitting ? "animate-pulse" : ""}
+                `}
+                textClassName="text-lg font-black"
               />
-            ))}
-          </div>
-        </div>
-
-        {/* Drawn Balls */}
-        <div className="flex justify-center mb-8">
-          <div className="flex justify-center  items-center ">
-            <div className="flex space-x-4">
-              {drawnBalls.map((ball, index) => (
-                <DrawnBallSlot key={index} number={ball?.number} isMatched={ball?.isMatched} isEmpty={!ball} />
-              ))}
-            </div>
-            {/* Match Counter */}
-            <div className="flex justify-center ml-6">
-              <div className="bg-white rounded-full px-4 py-2">
-                <div className="text-center">
-                  <div className="text-xl font-bold text-gray-900">{matchCount}/5</div>
-                  <div className="text-xs text-gray-600">MATCH</div>
+              {selectedBall === ballNumber && isSubmitting && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
                 </div>
-              </div>
+              )}
             </div>
-          </div>
-
-        </div>
-
-        {/* Controls */}
-        <div className="flex justify-center space-x-4 mb-8">
-          <SpecialBallModal onSubmit={handleSpecialBallSubmit} />
-          <Button className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-8 py-3 rounded-lg">
-            REVEAL
-          </Button>
+          ))}
         </div>
 
 
-        {/* Special Balls Display */}
-        {specialBalls.length > 0 && (
-          <div className="mt-8">
-            <h3 className="text-white text-lg font-bold mb-4">Special Balls Added:</h3>
-            <div className="space-y-2">
-              {specialBalls.map((ball, index) => (
-                <div key={index} className="bg-purple-800/50 rounded-lg p-3 text-white">
-                  <span className="font-semibold">{ball.type}</span>
-                  {ball.value && <span className="ml-2 text-gray-300">- {ball.value}</span>}
-                </div>
+        {/* Recent Picks */}
+        {revealedBalls.size > 0 && (
+          <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-lg p-6 max-w-2xl mx-auto">
+            <h3 className="text-white font-semibold mb-4">Recent Picks</h3>
+            <div className="flex flex-wrap gap-2">
+              {Array.from(revealedBalls.entries()).map(([ballNumber, result]) => (
+                <span
+                  key={ballNumber}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${result === "matched" ? "bg-green-600 text-green-100" : "bg-red-600 text-red-100"
+                    }`}
+                >
+                  {ballNumber} {result === "matched" ? "✓" : "✗"}
+                </span>
               ))}
             </div>
           </div>
         )}
       </div>
+
+      {/* Loading Overlay */}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-purple-900/90 backdrop-blur-sm p-8 rounded-lg flex flex-col items-center">
+            <Loader2 className="w-12 h-12 text-yellow-400 animate-spin mb-4" />
+            <div className="text-white text-lg">Processing your pick...</div>
+            <div className="text-white/70 text-sm mt-2">Ball #{selectedBall}</div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
+export default PickView

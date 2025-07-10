@@ -1143,7 +1143,11 @@ const handleOptionSelect = (option: OptionKey) => {
                             className="relative mt-[.625rem]"
                           >
                             {/* Options Grid */}
-                            <div className="grid grid-cols-2 opacity-5 gap-[.625rem]">
+                            <div className={cn("grid grid-cols-2 gap-[.625rem]",
+                            selectedAmount ? "opacity-100" : "opacity-5 pointer-events-none",
+
+                              
+                            )}>
                               {(
                                 [
                                   "option_a",
