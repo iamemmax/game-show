@@ -54,7 +54,7 @@ const useSoundEffects = () => {
   useEffect(() => {
     const handleUserInteraction = () => {
       setHasUserInteracted(true);
-      console.log('User interaction detected - audio enabled');
+      // console.log('User interaction detected - audio enabled');
       // Remove listeners after first interaction
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('keydown', handleUserInteraction);

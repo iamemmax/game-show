@@ -2,64 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Viewport behavior */
 html {
   scroll-snap-type: y mandatory !important;
   height: -webkit-fill-available;
 }
 
-@layer utilities {
-  .min-h-screen {
-    min-height: 100vh;
-    /* mobile viewport bug fix */
-    min-height: -webkit-fill-available;
-  }
+/* Global scrollbar hide */
+html,
+body {
+  overflow: auto;
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE 10+ */
 }
 
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;                  /* Chrome, Safari, Opera */
+}
+
+/* Global body styles */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'verdana', Arial, Helvetica, sans-serif;
   min-height: 100vh;
   min-height: -webkit-fill-available;
 }
-
+::-webkit-scrollbar{
+  display: none !important;
+}
+/* Custom Fonts */
 @font-face {
   font-family: 'verdana';
   src: url('/fonts/verdana.ttf') format('truetype');
-  font-weight: 400; /* Normal */
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'verdana';
-  src: url('/fonts/verdana-bold.ttf') format('truetype');
-  font-weight: 700; /* Bold */
-  font-style: normal;
-}
-/* @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-} */
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@font-face {
-  font-family: 'verdana';
-  src: url('/fonts/verdana.ttf') format('truetype');
-  font-weight: 400; /* Normal */
+  font-weight: 400;
   font-style: normal;
 }
 
@@ -76,55 +53,75 @@ body {
   font-weight: 700;
   font-style: normal;
 }
+
 @font-face {
   font-family: 'gilroy-heavy';
   src: url('/fonts/gilroy-heavy.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
 }
+
 @font-face {
   font-family: 'gilroy-bold';
   src: url('/fonts/gilroy-bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
 }
+
+/* Custom Utilities */
 @layer utilities {
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: -webkit-fill-available; /* Mobile Safari fix */
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .outline-text {
     -webkit-text-stroke: 2px #D91FFF;
     text-shadow:
-     -1px -1px 0 #000,  
-      1px -1px 0 #000,
-     -1px  1px 0 #000,
-      1px  1px 0 #000;
+      -1px -1px 0 #000,
+       1px -1px 0 #000,
+      -1px  1px 0 #000,
+       1px  1px 0 #000;
   }
+
   .outline-text-white {
     -webkit-text-stroke: 0.8px #D91FFF;
     text-shadow:
-     -1px -1px 0 #000,  
-      1px -1px 0 #000,
-     -1px  1px 0 #000,
-      1px  1px 0 #000;
+      -1px -1px 0 #000,
+       1px -1px 0 #000,
+      -1px  1px 0 #000,
+       1px  1px 0 #000;
   }
+
   .outline-text-white-2 {
     -webkit-text-stroke: 1px #7E3CE0;
     text-shadow:
-     -1px -1px 0 #000,  
-      1px -1px 0 #000,
-     -1px  1px 0 #000,
-      1px  1px 0 #000;
+      -1px -1px 0 #000,
+       1px -1px 0 #000,
+      -1px  1px 0 #000,
+       1px  1px 0 #000;
   }
+
   .outline-invest-text {
     -webkit-text-stroke: 2px #3C1272;
     text-shadow:
-     -1px -1px 0 #000,  
-      1px -1px 0 #000,
-     -1px  1px 0 #000,
-      1px  1px 0 #000;
+      -1px -1px 0 #000,
+       1px -1px 0 #000,
+      -1px  1px 0 #000,
+       1px  1px 0 #000;
+  }
+  .disable-selected-option{
+    display: none !important;
   }
 }
-
-
-
-
 
 

@@ -229,9 +229,9 @@ const ContestantCard = ({
                   glowIntensity={isBalanceChanging ? "high" : "low"}
                   textclassName={`${
                     isBoardRoute
-                      ? "text-[1.3rem]"
+                      ? "text-[1.5rem]"
                       : "text-[19.18px]"
-                  } font-extrabold font-gilroyHeavy text-white transition-all duration-300 ${
+                  } font-extrabold font-gilroyHeavy text-white  mt-1 transition-all duration-300 ${
                     isBalanceChanging ? 'text-shadow-lg' : ''
                   }`}
                   fillColor="#fff"
@@ -247,8 +247,8 @@ const ContestantCard = ({
               glowColor="#ce45eb"
               glowIntensity="low"
               textclassName={`${
-                isBoardRoute ? "text-[1.2rem]" : "text-[19.18px]"
-              } font-extrabold font-gilroyHeavy text-white -mt-1   max-w-[110px] truncate`}
+                isBoardRoute ? "text-[1.5rem]  max-w-[130px]" : "text-[19.18px]  max-w-[110px]"
+              } font-extrabold font-gilroyHeavy text-white -mt-3   truncate`}
               fillColor="#fff"
             >
               {name}
@@ -260,170 +260,6 @@ const ContestantCard = ({
   );
 };
 
-// const HustleSideBar = ({
-
-
-//   showJackpot = true,
-//   showEmptyCard = false,
-//   showHustlerCard = false,
-//   showHustleCardAmt = true,
-//   mqttAnswerData,
-//   balanceData
-//   // mqttAnswerBalanceData
-// }: prop) => {
-//   const user = tokenStorage.getUser();
-//   const params = useParams();
-
-//   const { data: allContestsant, isLoading } = useGetGameContestants(
-//     !params?.episodeId
-//       ? (user?.game_episode as number)
-//       : Number(params?.episodeId)
-//   );
-
-//   // Preserve backend order - no sorting applied
-//   // Only use allContestsant when mqttAnswerData is empty array, undefined, or null
-//   const dataToRender =
-//     !mqttAnswerData || mqttAnswerData.length === 0
-//       ? allContestsant?.data || []
-//       : mqttAnswerData;
-
-//   // Add a comment to document that we're preserving backend order
-//   // console.log('Rendering contestants in backend order:', dataToRender);
-
-//   const getContestantInfo = (id: number) => {
-//     const allconstestant = allContestsant?.data?.find(
-//       (contestant) => contestant.id === id
-//     );
-
-//     return allconstestant;
-//   };
-  
-//   const getContestantBalanceInfo = (id: number) => {
-//     const allconstestant = balanceData?.data?.balances?.find(
-//       (balance) => balance.contestant_id === id
-//     );
-
-//     return allconstestant;
-//   };
-
-//   const myContestant = getContestantInfo(Number(user?.contestant_id));
-
-//   // Helper function to calculate balance with fallback logic
-//   const calculateBalance = (contestant: any, contestantInfo: any) => {
-//     // For non-STAGE_ONE games, prioritize balance data
-//     if (allContestsant?.game?.stage !== "STAGE_ONE") {
-//       const balanceInfo = getContestantBalanceInfo(contestant?.contestant_id || contestant?.id);
-//       if (balanceInfo?.actual_balance !== undefined && balanceInfo?.actual_balance !== null) {
-//         return Number(balanceInfo.actual_balance);
-//       }
-//     }
-
-//     // For STAGE_ONE or fallback logic
-//     if (mqttAnswerData && mqttAnswerData.length > 0) {
-//       // Use MQTT data if available
-//       if (contestant?.stage_balance !== undefined && contestant?.stage_balance !== null) {
-//         return Number(contestant.stage_balance);
-//       }
-//       if (contestant?.wallet_balance !== undefined && contestant?.wallet_balance !== null) {
-//         return Number(contestant.wallet_balance);
-//       }
-//     } else {
-//       // Use contestant info from API
-//       if (contestantInfo?.actual_balance !== undefined && contestantInfo?.actual_balance !== null) {
-//         return Number(contestantInfo.actual_balance);
-//       }
-//       if (contestantInfo?.wallet_balance !== undefined && contestantInfo?.wallet_balance !== null) {
-//         return Number(contestantInfo.wallet_balance);
-//       }
-//     }
-
-//     // Final fallback - return 0 but log for debugging
-//     // console.warn('Balance calculation fallback to 0 for contestant:', {
-//     //   contestant,
-//     //   contestantInfo,
-//     //   stage: allContestsant?.game?.stage,
-//     //   hasMqttData: !!(mqttAnswerData && mqttAnswerData.length > 0)
-//     // });
-    
-//     return 0;
-//   };
-
-//   return (
-//     <div className="flex justify-between !z-[999999999999] h-full items-center flex-col">
-//       <div className="relative flex flex-col justify-center items-center"></div>
-
-//       {showHustlerCard && (
-//         <>
-//           {isLoading ? (
-//             <div className="flex-1 flex px-3 h-full flex-col justify-center items-center">
-//               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-//             </div>
-//           ) : (
-//             <div
-//               className={`flex-1 flex px-3 gap-6 h-full flex-col justify-center items-center`}
-//             >
-//               {/* Maintain the exact order from backend - no sorting applied */}
-//               {dataToRender?.map((contestant: any, idx: number) => {
-//                 const isBoardRoute = typeof params?.episodeId !== "undefined";
-
-//                 let contestantInfo = contestant;
-//                 if (mqttAnswerData && mqttAnswerData.length > 0) {
-//                   contestantInfo =
-//                     allContestsant?.data?.find(
-//                       (c) => c?.id === contestant.contestant_id
-//                     ) || contestant;
-//                 }
-                
-//                 const isMyContestant =
-//                   contestantInfo.id === myContestant?.id ||
-//                   contestant.contestant_id === myContestant?.id;
-
-//                 // Use the improved balance calculation
-//                 const balance = calculateBalance(contestant, contestantInfo);
-
-//                 const name = contestantInfo?.name?.split(" ")[0] || "";
-
-//                 return (
-//                   <ContestantCard
-//                     key={`${contestant?.id || contestant?.contestant_id}-${idx}`}
-//                     contestant={contestant}
-//                     originalIndex={idx} // Pass the original backend index
-//                     contestantInfo={contestantInfo}
-//                     isMyContestant={isMyContestant}
-//                     isBoardRoute={isBoardRoute}
-//                     showHustleCardAmt={showHustleCardAmt}
-//                     balance={balance}
-//                     name={name}
-//                   />
-//                 );
-//               })}
-//             </div>
-//           )}
-//         </>
-//       )}
-
-//       {showEmptyCard && (
-//         <div className="flex-1 flex px-3 h-full 2xl:gap-4 flex-col justify-center items-center">
-//           {Array.from({ length: 6 }).map((_, index) => (
-//             <StagesCard
-//               key={index}
-//               title=""
-//               subTitle=""
-//               borderColor="#FFC125"
-//               iconText=""
-//               showIcon={false}
-//               width={130}
-//               className="2xl:w-[260px]"
-//             />
-//           ))}
-//         </div>
-//       )}
-//       <div className="min-h-[100px]">
-//         {showJackpot && <JackpotContainer size={80} text="₦100m" />}
-//       </div>
-//     </div>
-//   );
-// };
 
 
 // Replace the existing dataToRender logic with this ranked version
@@ -443,6 +279,13 @@ const HustleSideBar = ({
       ? (user?.game_episode as number)
       : Number(params?.episodeId)
   );
+
+    const getContestantBalanceInfo = (id: number) => {
+    const allconstestant = balanceData?.data?.balances?.find(
+      (balance) => balance.contestant_id === id
+    );
+    return allconstestant;
+  };
 
   // Helper function to calculate balance with fallback logic
   const calculateBalance = (contestant: any, contestantInfo: any) => {
@@ -509,12 +352,7 @@ const HustleSideBar = ({
     return allconstestant;
   };
   
-  const getContestantBalanceInfo = (id: number) => {
-    const allconstestant = balanceData?.data?.balances?.find(
-      (balance) => balance.contestant_id === id
-    );
-    return allconstestant;
-  };
+
 
   const myContestant = getContestantInfo(Number(user?.contestant_id));
 

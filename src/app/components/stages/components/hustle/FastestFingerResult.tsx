@@ -249,19 +249,16 @@ useEffect(() => {
 
   useEffect(() => {
     if (!contestantBids || Object.keys(contestantBids).length === 0) {
-      setBidSlots(Array(6).fill(null));
+      setBidSlots(Array(6)?.fill(null));
       setProcessedBids(new Set());
       return;
     }
 
     const currentBids = Object.values(contestantBids);
-    addDebugLog(`Processing ${currentBids.length} bids`);
-
+ 
     currentBids?.forEach((bid: ContestantBid) => {
       const bidKey = `${bid.contestant_id}_${bid.timestamp}`;
       if (processedBids.has(bidKey)) return;
-
-      addDebugLog(`Processing new bid from ${bid.contestant_name}`);
 
       setBidSlots((prevSlots) => {
         const existingSlotIndex = prevSlots.findIndex(
@@ -269,8 +266,7 @@ useEffect(() => {
         );
 
         if (existingSlotIndex !== -1) {
-          addDebugLog(`Updating existing bid at slot ${existingSlotIndex}`);
-          const newSlots = [...prevSlots];
+                const newSlots = [...prevSlots];
           newSlots[existingSlotIndex] = { ...bid, is_update: true };
           setAnimatingSlot(existingSlotIndex);
           
@@ -284,8 +280,6 @@ useEffect(() => {
         } else {
           const nextEmptySlot = prevSlots.findIndex((slot) => slot === null);
           if (nextEmptySlot !== -1) {
-            addDebugLog(`Adding new bid at slot ${nextEmptySlot}`);
-            
             setTimeout(() => {
               setAnimatingSlot(nextEmptySlot);
               
@@ -311,14 +305,11 @@ useEffect(() => {
 
   const handleAmountStart = useCallback(() => {
     activeAnimations.current += 1;
-    addDebugLog(`Amount animation started (active: ${activeAnimations.current})`);
     playSound();
   }, [playSound, addDebugLog]);
 
   const handleAmountComplete = useCallback(() => {
     activeAnimations.current -= 1;
-    addDebugLog(`Amount animation completed (active: ${activeAnimations.current})`);
-    // Remove the stopSound call since we're not looping anymore
   }, [addDebugLog]);
 
   const itemVariants = {

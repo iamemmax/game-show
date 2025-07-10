@@ -291,8 +291,10 @@ const HustleQuestionAnswerModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 w-full flex items-center justify-center bg-black/80">
-      <div className="bg-[#15052B] grid grid-cols-[1fr_1.5fr]  items-start gap-[2.1875rem] rounded-[30px] text-white w-[78.25rem] border border-[#7E3CE0] p-[1.875rem]">
+    <div className="fixed inset-0 z-50  flex items-center w-[103.25rem] justify-center bg-black/80">
+      <div className="px-8">
+
+      <div className="bg-[#15052B] grid grid-cols-[1fr_1.5fr]  items-start gap-[2.1875rem] rounded-[30px] text-white w-full border border-[#7E3CE0] p-[1.875rem]">
         
         <div className="">
           <div className="bg-[#29104A] flex items-center justify-center rounded-10 px-[22px] py-2">
@@ -335,23 +337,25 @@ const HustleQuestionAnswerModal = ({
           </div>
         </div>
         
-        <div className="">
-         
-        {!mqttAnswerData&& <HustleBoardModal
-         currentQuestion={currentQuestion}
-         currentQuestionAnswerData={currentQuestionAnswerData}
-         showBid={showBid}
-         />}
+       <div className="relative min-h-[62rem] w-full">
+  <div className="absolute inset-0 transition-opacity duration-300">
+    {!mqttAnswerData ? (
+      <HustleBoardModal
+        currentQuestion={currentQuestion}
+        currentQuestionAnswerData={currentQuestionAnswerData}
+        showBid={showBid}
+      />
+    ) : (
+      <HustleRevealResult
+        mqttAnswerData={mqttAnswerData}
+        currentQuestion={currentQuestion}
+        showBid={showBid}
+      />
+    )}
+  </div>
+</div>
 
-         { mqttAnswerData && <HustleRevealResult 
-                  mqttAnswerData={mqttAnswerData}
-                      currentQuestion={currentQuestion}
-                       showBid={showBid}
-                  />} 
-
-         
-         
-        </div>
+      </div>
       </div>
     </div>
   )

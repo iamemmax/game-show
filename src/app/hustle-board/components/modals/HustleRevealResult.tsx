@@ -456,13 +456,13 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                 </div>
 
                 <div>
-                  <p className="text-base capitalize font-gilroyMedium text-white">
-                    {capitalizeFirstLetter(data?.contestant_name?.split(" ")[0] || "Player")}
+                  <p className="text-2xl capitalize font-gilroyMedium text-white">
+                    {capitalizeFirstLetter(data?.contestant_name)}
                   </p>
-                  <p className="font-sans opacity-75 text-base text-white truncate w-[90%] max-w-[350px]">
+                  <p className="font-sans opacity-75 text-base text-white truncate w-[90%] max-w-[400px]">
                     Answer:
-                    <span className="font-bold opacity-100 text-base">
-                      {" "}{data?.answer}. {getOptionValue(currentQuestion?.question?.questions, String(data?.answer?.toLowerCase()))}  
+                    <span className="font-bold opacity-100 text-lg">
+                      {" "}{data?.answer === "N" ? "No answer": data?.answer}. {getOptionValue(currentQuestion?.question?.questions, String(data?.answer?.toLowerCase()))}  
                     </span>
                   </p>
 
@@ -485,14 +485,14 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                       {data?.profit_loss?.amount_lost > 0 && <p className="font-gilroyMedium text-base text-white">Lost amount:</p>}
                       
                       {data?.is_correct && (
-                        <h2 className="font-gilroyHeavy block font-extrabold text-2xl" style={{ color: styles.text }}>
+                        <h2 className="font-gilroyHeavy block font-extrabold text-xl" style={{ color: styles.text }}>
                           {/* ₦{formatAmount(Number(data?.profit_loss?.amount_gained) || 0)} */}
                              ₦{(Math.ceil(Number(data?.profit_loss?.amount_gained || 0) / 100) * 100).toLocaleString()}
                         </h2>
                       )}
                       
                       {!data?.is_correct && (
-                        <h2 className="font-gilroyHeavy block font-extrabold text-2xl" style={{ color: styles.text }}>
+                        <h2 className="font-gilroyHeavy block font-extrabold text-xl" style={{ color: styles.text }}>
                           {/* ₦{formatAmount(Number(data?.profit_loss?.amount_lost) || 0)} */}
                         
                          ₦{(Math.ceil(Number(data?.profit_loss?.amount_lost || 0) / 100) * 100).toLocaleString()}
