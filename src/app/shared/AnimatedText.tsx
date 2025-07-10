@@ -141,7 +141,7 @@ const AnimatedText = ({
     <p 
       className={cn(
         fontSize,
-        "text-white leading-[2rem] text-center font-gilroyMedium font-extrabold"
+        "text-white leading-[3rem] text-center font-gilroyMedium font-extrabold"
       )}
       aria-live="polite"
       aria-label={isAnimating ? "Typing text..." : text}
