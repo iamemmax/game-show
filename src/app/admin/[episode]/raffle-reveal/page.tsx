@@ -1,5 +1,5 @@
 import React from 'react'
-import RafflePickReveal from '../misc/components/RafflePickReveal'
+import RafflePickReveal from '../../misc/components/RafflePickReveal'
 
 const page = () => {
   return (
