@@ -204,7 +204,7 @@ const RafflePickReveal = () => {
       case "KILLER_BALL":
         return "💀"
       case "EXTRA_PICK_BALL":
-        return "🎯"
+        return "➕"
       case "LIBERTY_LIFE_BALL":
         return "🏥"
       default:
@@ -320,8 +320,8 @@ const RafflePickReveal = () => {
                         animate={
                           animatingBall === ballNumber
                             ? {
-                                scale: [1, 1.3, 1.1],
-                                y: [0, -20, -10],
+                                scale: [1, 2, 1],
+                                y: [0, -20, 0],
                               }
                             : {}
                         }
@@ -334,23 +334,18 @@ const RafflePickReveal = () => {
                           className={cn(
                             "transition-all duration-300 w-16 h-16", // Even bigger balls
                             animatingBall === ballNumber && "z-50",
-                            isExtraBall && ballInfo?.is_extra_ball && "ring-2 ring-yellow-400 ring-opacity-60",
+                            isExtraBall && ballInfo?.is_extra_ball && "",
                           )}
                           textClassName="text-xl font-black" // Much bigger text
                         />
 
                         {/* Enhanced Ball Type Indicator for balls 50-60 */}
-                        {isExtraBall && ballInfo?.is_extra_ball && !revealedBalls.has(ballNumber) && (
+                        {isExtraBall && ballInfo?.is_extra_ball && (
                           <div className="absolute -top-2 -right-2 z-10">
-                            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full w-8 h-8 flex items-center justify-center border-2 border-white shadow-lg">
-                              <span className="text-lg">{ballIndicator}</span>
+                            <div className=" rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
+                              <span className="text-2xl">{ballIndicator}</span>
                             </div>
-                            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                              {ballInfo.extra_ball_name
-                                ?.replace(/_/g, " ")
-                                .toLowerCase()
-                                .replace(/\b\w/g, (l) => l.toUpperCase())}
-                            </div>
+                            
                           </div>
                         )}
 
@@ -454,11 +449,12 @@ const RafflePickReveal = () => {
                   })}
                 </div>
                 {/* Match Counter */}
-                <div className="w-[6.8563rem] h-[6.8563rem] bg-white rounded-full flex justify-center flex-col items-center ml-4">
-                  <p className="font-display text-black font-black text-[2rem]">
+                <div 
+                className="size-[6.8563rem]  bg-white rounded-full flex justify-center flex-col items-center font-display text-black font-black text-[2rem] ml-2">
+                  <p className="">
                     {displayCount}/5
                   </p>
-                  <p className="block text-base font-display font-bold uppercase -mt-2">match</p>
+                  <p className="block text-base font-display font-bold uppercase text-black">match</p>
                 </div>
               </div>
             </div>
@@ -473,7 +469,7 @@ const RafflePickReveal = () => {
 
       {/* Modal Overlay - Positioned above the ball grid */}
       {showModal && currentResult && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm font-montserrat">
           <div className="relative max-w-4xl w-full px-4">
             {currentResult.hustle_match.extra_ball_details?.name === "KILLER_BALL" && (
               <KillerHustlePulledModal isOpen={true} data={currentResult} />
@@ -513,7 +509,7 @@ const RafflePickReveal = () => {
 
       {/* Loading Overlay */}
       {(isLoadingMatches || isLoadingMatched) && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 !font-montserrat">
           <div className="bg-purple-900/90 backdrop-blur-sm p-8 rounded-lg flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
             <div className="text-white text-lg">Loading ball data...</div>
