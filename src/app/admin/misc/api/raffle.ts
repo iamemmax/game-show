@@ -1,5 +1,5 @@
 import { tokenlessAxios } from "@/lib/axios";
-import { useMutation } from "react-query";
+import { useMutation, useQuery } from "react-query";
 
 export interface IBallPickData {
     game_episode: string | number;
@@ -23,13 +23,17 @@ interface BalanceDetails {
     current_balance: number
 }
 
-interface HustleMatch {
-    contestant_id: number
+export interface HustleMatch {
+    contestant_id?: number
     number_pick: number
-    is_match: boolean
+    is_match?: boolean
     is_extra_ball: boolean
-    extra_ball_details: ExtraBallDetails | null
-    balance_details: BalanceDetails
+    extra_ball_details?: ExtraBallDetails | null
+    balance_details?: BalanceDetails
+    extra_ball_name?: string | null
+    extra_ball_type?: string | null
+    extra_ball_effect_action?: string | null
+    extra_ball_effect_desc?: string | null
 }
 
 export interface BallPickAPIResponse {
@@ -48,3 +52,54 @@ export const useHandleBallPick = () => {
         mutationKey: "handleBallPick",
     });
 }
+
+interface HustleMatchesResponse {
+    status: string
+    data: HustleMatch[]
+}
+
+export const getHustleMatches = async (gameEpisode: number) => {
+    if (!gameEpisode) return null
+    const response = await tokenlessAxios.get(`api/admin-controller/get_hustle_matches?game_episode=${gameEpisode}`)
+    return response?.data as HustleMatchesResponse
+}
+
+export const useGetHustleMatches = (gameEpisode: number) =>
+    useQuery({
+        queryKey: ["hustle-matches", gameEpisode],
+        queryFn: () => getHustleMatches(gameEpisode),
+        enabled: !!gameEpisode,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        cacheTime: 10 * 60 * 1000, // 10 minutes
+    })
+
+
+interface MatchedHustle {
+    number_pick: number
+    is_match: boolean
+    is_extra_ball: boolean
+    extra_ball_name: string | null
+    extra_ball_type: string | null
+    extra_ball_effect_action: string | null
+    extra_ball_effect_desc: string | null
+}
+
+interface MatchedHustlesResponse {
+    status: string
+    data: MatchedHustle[]
+}
+
+export const getMatchedHustles = async (gameEpisode: number) => {
+    if (!gameEpisode) return null
+    const response = await tokenlessAxios.get(`/api/admin-controller/get_matched_hustles?game_episode=${gameEpisode}`)
+    return response?.data as MatchedHustlesResponse
+}
+
+export const useGetMatchedHustles = (gameEpisode: number) =>
+    useQuery({
+        queryKey: ["matched-hustles", gameEpisode],
+        queryFn: () => getMatchedHustles(gameEpisode),
+        enabled: !!gameEpisode,
+        staleTime: 0, // Always fresh data
+        cacheTime: 5 * 60 * 1000, // 5 minutes cache
+    })

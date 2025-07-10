@@ -260,7 +260,7 @@ export default function GameDetails() {
           toast.success(`Wallet debited for contestant`)
           sendGameMessage(`game_s2_question_answer`, {
             question_id: Number(debitWalletData?.question_id),
-            answers_data: data,
+            data: data?.data,
             question_index: Number(debitWalletData?.question_id),
             show_modal: true,
           })
@@ -283,7 +283,7 @@ export default function GameDetails() {
           toast.success("Wallet debited successfully")
           sendGameMessage(`game_s2_question_answer`, {
             question_id: Number(debitWalletData?.question_id),
-            answers_data: data,
+            data: data?.data,
             question_index: Number(debitWalletData?.question_id),
             show_modal: true,
           })

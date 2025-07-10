@@ -16,10 +16,10 @@ import CheckIcon from "@/app/icons/CheckIcon"
 import KillerHustlePulledModal from "./RafflePickRevealKillerModal"
 import CrystalModal from "./RafflePickRevealCrystalModal"
 import WinnerBallModal from "./RafflePickRevealWinnerModal"
+import LibertyLifeModal from "./RafflePickRevealLibertyLifeModal"
 import { useGetLastContestantPick } from "@/app/components/stages/api/stage4/getLastContestantPick"
-import { useGetGameContestants } from "@/app/admin/misc/api"
+import { useGetGameContestants, useGetHustleMatches, useGetMatchedHustles } from "@/app/admin/misc/api"
 import { Ball } from "./RaffleBall"
-
 
 // Types for MQTT data
 interface ExtraBallDetails {
@@ -59,13 +59,19 @@ interface BallPickedResult {
 const RafflePickReveal = () => {
   const { isConnected, onMessage } = useMQTT()
   const params = useParams()
-  const episodeId = Number(params?.episodeId)
+  const episodeId = Number(params?.episode)
 
   // State for ball animations and reveals
   const [revealedBalls, setRevealedBalls] = useState<Set<number>>(new Set())
   const [animatingBall, setAnimatingBall] = useState<number | null>(null)
   const [currentResult, setCurrentResult] = useState<BallPickedPayload | null>(null)
   const [showModal, setShowModal] = useState(false)
+
+  // Fetch hustle matches data (what each ball contains)
+  const { data: hustleMatchesData, isLoading: isLoadingMatches } = useGetHustleMatches(episodeId)
+
+  // Fetch matched hustles data (already revealed balls)
+  const { data: matchedHustlesData, isLoading: isLoadingMatched } = useGetMatchedHustles(episodeId)
 
   // 1. Fetch all contestants for the episode
   const { data: contestantsData, isLoading: isLoadingContestants } = useGetGameContestants(episodeId)
@@ -84,6 +90,14 @@ const RafflePickReveal = () => {
 
   const mynumbers = lastPickData && lastPickData[0]?.picks
   const revealedNumbers = currentResult?.number_revealed?.filter((x) => x !== null) ?? []
+
+  // Initialize revealed balls from matched hustles data
+  useEffect(() => {
+    if (matchedHustlesData?.data) {
+      const alreadyRevealed = new Set(matchedHustlesData.data.map((hustle) => hustle.number_pick))
+      setRevealedBalls(alreadyRevealed)
+    }
+  }, [matchedHustlesData])
 
   // Check how many numbers match
   const matchedCount = revealedNumbers?.filter((num) => mynumbers?.includes(num)).length
@@ -129,7 +143,7 @@ const RafflePickReveal = () => {
     // Auto-hide modal after some time
     setTimeout(() => {
       setShowModal(false)
-    }, 5000)
+    }, 8000) // Increased time for better UX
   }, [])
 
   // Handle MQTT messages
@@ -152,18 +166,19 @@ const RafflePickReveal = () => {
     }
   }, [isConnected, onMessage, animateBallReveal])
 
-  // Get ball variant based on state
+  // Get ball variant based on state and pre-loaded data
   const getBallVariant = (ballNumber: number): "regular" | "matched" | "mismatched" | "selected" => {
     if (animatingBall === ballNumber) {
       return "selected"
     }
 
     if (revealedBalls.has(ballNumber)) {
-      // Determine if this ball was a positive or negative result
-      if (currentResult && currentResult.hustle_match.number_pick === ballNumber) {
-        const isPositive = currentResult.hustle_match.is_extra_ball
-          ? currentResult.hustle_match.balance_details.is_gain
-          : currentResult.hustle_match.is_match
+      // Check if this ball had a positive or negative result from matched hustles
+      const matchedHustle = matchedHustlesData?.data?.find((hustle) => hustle.number_pick === ballNumber)
+      if (matchedHustle) {
+        const isPositive = matchedHustle.is_extra_ball
+          ? matchedHustle.extra_ball_name === "CRYSTAL_BALL" || matchedHustle.extra_ball_name === "LIBERTY_LIFE_BALL"
+          : matchedHustle.is_match
         return isPositive ? "matched" : "mismatched"
       }
       return "matched" // Default for revealed balls
@@ -172,8 +187,33 @@ const RafflePickReveal = () => {
     return "regular"
   }
 
+  // Get ball info from pre-loaded data
+  const getBallInfo = (ballNumber: number) => {
+    const ballData = hustleMatchesData?.data?.find((match) => match.number_pick === ballNumber)
+    return ballData || null
+  }
+
+  // Get ball display indicator
+  const getBallIndicator = (ballNumber: number) => {
+    const ballInfo = getBallInfo(ballNumber)
+    if (!ballInfo?.is_extra_ball) return null
+
+    switch (ballInfo.extra_ball_name) {
+      case "CRYSTAL_BALL":
+        return "💎"
+      case "KILLER_BALL":
+        return "💀"
+      case "EXTRA_PICK_BALL":
+        return "🎯"
+      case "LIBERTY_LIFE_BALL":
+        return "🏥"
+      default:
+        return "⭐"
+    }
+  }
+
   return (
-    <div className="min-h-screen grid grid-cols-[1fr_5fr_1fr] h-full">
+    <div className="min-h-screen grid grid-cols-[1fr_5fr_1fr] h-full relative">
       {/* Left Sidebar */}
       <div className="flex flex-col justify-between">
         <div className="flex justify-center items-center h-3.5 w-full mt-8">
@@ -265,40 +305,103 @@ const RafflePickReveal = () => {
                 </p>
               </div>
 
-              {/* 60 Ball Grid */}
+              {/* 60 Ball Grid - Much Bigger */}
               <div className="flex justify-center mt-6">
-                <div className="grid grid-cols-10 gap-2 max-w-2xl">
-                  {Array.from({ length: 60 }, (_, i) => i + 1).map((ballNumber) => (
-                    <motion.div
-                      key={ballNumber}
-                      className="flex justify-center"
-                      animate={
-                        animatingBall === ballNumber
-                          ? {
-                              scale: [1, 1.5, 1],
-                              x: [0, 0, 0],
-                              y: [0, -50, 0],
-                            }
-                          : {}
-                      }
-                      transition={{ duration: 1.5, ease: "easeInOut" }}
-                    >
-                      <Ball
-                        number={ballNumber}
-                        variant={getBallVariant(ballNumber)}
-                        size="sm"
-                        className={cn(
-                          "transition-all duration-300",
-                          animatingBall === ballNumber && "z-50 animate-pulse",
+                <div className="grid grid-cols-10 gap-6 max-w-6xl">
+                  {Array.from({ length: 60 }, (_, i) => i + 1).map((ballNumber) => {
+                    const ballIndicator = getBallIndicator(ballNumber)
+                    const isExtraBall = ballNumber >= 50 && ballNumber <= 60
+                    const ballInfo = getBallInfo(ballNumber)
+
+                    return (
+                      <motion.div
+                        key={ballNumber}
+                        className="flex justify-center relative"
+                        animate={
+                          animatingBall === ballNumber
+                            ? {
+                                scale: [1, 1.3, 1.1],
+                                y: [0, -20, -10],
+                              }
+                            : {}
+                        }
+                        transition={{ duration: 1, ease: "easeOut" }}
+                      >
+                        <Ball
+                          number={ballNumber}
+                          variant={getBallVariant(ballNumber)}
+                          size="lg"
+                          className={cn(
+                            "transition-all duration-300 w-16 h-16", // Even bigger balls
+                            animatingBall === ballNumber && "z-50",
+                            isExtraBall && ballInfo?.is_extra_ball && "ring-2 ring-yellow-400 ring-opacity-60",
+                          )}
+                          textClassName="text-xl font-black" // Much bigger text
+                        />
+
+                        {/* Enhanced Ball Type Indicator for balls 50-60 */}
+                        {isExtraBall && ballInfo?.is_extra_ball && !revealedBalls.has(ballNumber) && (
+                          <div className="absolute -top-2 -right-2 z-10">
+                            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full w-8 h-8 flex items-center justify-center border-2 border-white shadow-lg">
+                              <span className="text-lg">{ballIndicator}</span>
+                            </div>
+                            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                              {ballInfo.extra_ball_name
+                                ?.replace(/_/g, " ")
+                                .toLowerCase()
+                                .replace(/\b\w/g, (l) => l.toUpperCase())}
+                            </div>
+                          </div>
                         )}
-                      />
-                    </motion.div>
-                  ))}
+
+                        {/* Regular indicator for other balls */}
+                        {!isExtraBall && ballIndicator && !revealedBalls.has(ballNumber) && (
+                          <div className="absolute -top-1 -right-1 text-sm bg-black/80 rounded-full w-6 h-6 flex items-center justify-center border border-white/20">
+                            {ballIndicator}
+                          </div>
+                        )}
+                      </motion.div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Ball Legend */}
+              <div className="flex justify-center mt-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-white/80 bg-black/40 rounded-lg px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">💎</span>
+                    <div>
+                      <div className="font-semibold">Crystal Ball</div>
+                      <div className="text-xs text-white/60">Big Gains</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">💀</span>
+                    <div>
+                      <div className="font-semibold">Killer Ball</div>
+                      <div className="text-xs text-white/60">Balance Loss</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🎯</span>
+                    <div>
+                      <div className="font-semibold">Extra Pick</div>
+                      <div className="text-xs text-white/60">Bonus Draw</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🏥</span>
+                    <div>
+                      <div className="font-semibold">Liberty Life</div>
+                      <div className="text-xs text-white/60">Health Plan</div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Top: Hustle Picks */}
-              <div className="flex justify-center mt-8">
+              {/* <div className="flex justify-center mt-8">
                 <div className="flex border-[4px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[10.35px] px-3 border-[#CE64FF]">
                   {mynumbers?.map((num) => {
                     const { matched, showRed } = getNumberMatchStatus(num, revealedNumbers.length === 5)
@@ -317,36 +420,7 @@ const RafflePickReveal = () => {
                     )
                   })}
                 </div>
-              </div>
-
-              {/* Modal Content */}
-              <div className="flex-1 mt-6">
-                {showModal && currentResult && (
-                  <>
-                    {!isWinner && currentResult.hustle_match.extra_ball_details?.name === "KILLER_BALL" && (
-                      <KillerHustlePulledModal
-                        isOpen={true}
-                        data={{
-                          name: {
-                            ...currentResult.hustle_match,
-                            extra_ball_details: currentResult.hustle_match.extra_ball_details ?? {
-                              name: "",
-                              type: "",
-                              effect_action: null,
-                              effect_desc: null,
-                            },
-                          },
-                          number_revealed: currentResult.number_revealed,
-                        }}
-                      />
-                    )}
-                    {currentResult.hustle_match.extra_ball_details?.name === "CRYSTAL_BALL" && (
-                      <CrystalModal isOpen={true} />
-                    )}
-                    {isWinner && <WinnerBallModal isOpen={true} />}
-                  </>
-                )}
-              </div>
+              </div> */}
 
               {/* Bottom: Picked Numbers */}
               <div className="flex justify-center items-center mt-10 mb-6">
@@ -382,7 +456,7 @@ const RafflePickReveal = () => {
                 {/* Match Counter */}
                 <div className="w-[6.8563rem] h-[6.8563rem] bg-white rounded-full flex justify-center flex-col items-center ml-4">
                   <p className="font-display text-black font-black text-[2rem]">
-                    {displayCount}/{mynumbers?.length}
+                    {displayCount}/5
                   </p>
                   <p className="block text-base font-display font-bold uppercase -mt-2">match</p>
                 </div>
@@ -396,6 +470,56 @@ const RafflePickReveal = () => {
       <div>
         <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={2} />
       </div>
+
+      {/* Modal Overlay - Positioned above the ball grid */}
+      {showModal && currentResult && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative max-w-4xl w-full px-4">
+            {currentResult.hustle_match.extra_ball_details?.name === "KILLER_BALL" && (
+              <KillerHustlePulledModal isOpen={true} data={currentResult} />
+            )}
+            {currentResult.hustle_match.extra_ball_details?.name === "CRYSTAL_BALL" && (
+              <CrystalModal isOpen={true} data={currentResult} />
+            )}
+            {currentResult.hustle_match.extra_ball_details?.name === "LIBERTY_LIFE_BALL" && (
+              <LibertyLifeModal isOpen={true} data={currentResult} />
+            )}
+            {!currentResult.hustle_match.is_extra_ball && currentResult.hustle_match.is_match && (
+              <WinnerBallModal
+                isOpen={true}
+                data={{
+                  name: {
+                    balance_details: {
+                      current_balance: currentResult.hustle_match.balance_details.current_balance,
+                    },
+                  },
+                }}
+              />
+            )}
+            {!currentResult.hustle_match.is_extra_ball && !currentResult.hustle_match.is_match && (
+              <div className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-lg rounded-2xl p-8 border-2 border-gray-500/50 shadow-2xl max-w-2xl mx-auto">
+                <div className="flex flex-col items-center text-center text-white space-y-6">
+                  <div className="text-6xl">😔</div>
+                  <h2 className="text-4xl font-bold text-gray-300">No Match</h2>
+                  <p className="text-lg text-white/80">
+                    Ball #{currentResult.hustle_match.number_pick} - Better luck next time!
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Loading Overlay */}
+      {(isLoadingMatches || isLoadingMatched) && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-purple-900/90 backdrop-blur-sm p-8 rounded-lg flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
+            <div className="text-white text-lg">Loading ball data...</div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

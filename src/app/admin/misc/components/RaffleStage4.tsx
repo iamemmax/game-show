@@ -27,40 +27,39 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
   } = useGetGameContestants(Number.parseInt(gameEpisode))
   const { mutate: pickBall } = useHandleBallPick()
 
-  const handleBallPick = async (pickData: IBallPickData) => {
-    pickBall(pickData, {
-      onSuccess: (data) => {
-        sendMessage({
-          event: "ball_picked",
-          payload: data,
-        })
-        const isPositiveResult = data.hustle_match.is_extra_ball
-          ? data.hustle_match.balance_details.is_gain
-          : data.hustle_match.is_match
 
-        setRevealedBalls((prev) => new Map([...prev, [pickData.number_pick, isPositiveResult ? "matched" : "mismatched"]]))
-
-      },
-      onError: (error) => {
-        console.error("API call failed:", error)
-        throw error
-      },
-    })
-  }
 
   const handleBallClick = useCallback(
     async (ballNumber: number) => {
       if (isSubmitting || revealedBalls.has(ballNumber)) return
       setSelectedBall(ballNumber)
       setIsSubmitting(true)
-      const lastContestant  = contestantsData?.data.find(contestant => contestant.is_eliminated === false) || {id: 0}
+      console.log(contestantsData?.data, "contestantsData")
+      const lastContestant = contestantsData?.data.find(contestant => !contestant.is_eliminated) || { id: 0 }
       try {
         const pickData = {
           game_episode: gameEpisode,
           contestant_id: lastContestant.id,
           number_pick: ballNumber,
         }
-        await handleBallPick(pickData)
+        pickBall(pickData, {
+          onSuccess: (data) => {
+            sendMessage({
+              event: "ball_picked",
+              payload: data,
+            })
+            const isPositiveResult = data.hustle_match.is_extra_ball
+              ? data.hustle_match.balance_details?.is_gain
+              : data.hustle_match.is_match
+
+            setRevealedBalls((prev) => new Map([...prev, [pickData.number_pick, isPositiveResult ? "matched" : "mismatched"]]))
+
+          },
+          onError: (error) => {
+            console.error("API call failed:", error)
+            throw error
+          },
+        })
       } catch (error) {
         console.error("Error picking ball:", error)
       } finally {
