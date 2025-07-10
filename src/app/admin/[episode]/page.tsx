@@ -261,7 +261,7 @@ export default function GameDetails() {
           sendGameMessage(`game_s2_question_answer`, {
             question_id: Number(debitWalletData?.question_id),
             data: data?.data,
-            question_index: Number(debitWalletData?.question_id),
+            question_index: Number(debitWalletData?.question_index),
             show_modal: true,
           })
         },
@@ -284,7 +284,7 @@ export default function GameDetails() {
           sendGameMessage(`game_s2_question_answer`, {
             question_id: Number(debitWalletData?.question_id),
             data: data?.data,
-            question_index: Number(debitWalletData?.question_id),
+            question_index: Number(debitWalletData?.question_index),
             show_modal: true,
           })
         },
