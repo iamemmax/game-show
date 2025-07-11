@@ -183,6 +183,7 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
 
         if (receivedQuestionIdStr === currentQuestionIdStr) {
           const answersData = payload?.data?.answers;
+          
 
           // Update answer data for all questions
           setMqttAnswerData(answersData);
@@ -208,11 +209,6 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
           }
 
           console.log("✅ Answer processing completed");
-        } else {
-          console.log("❌ Question ID mismatch:", {
-            expected: currentQuestionIdStr,
-            received: receivedQuestionIdStr,
-          });
         }
       }
 

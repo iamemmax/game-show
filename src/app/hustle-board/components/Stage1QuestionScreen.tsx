@@ -573,7 +573,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
         </span>
       </div>}
 
-               {showBidPrompt&&  <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+               {  showBidPrompt&&  <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
         <span
           className={`${
             "text-[40px]"

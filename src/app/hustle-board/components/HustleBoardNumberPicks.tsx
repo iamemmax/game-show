@@ -367,7 +367,7 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
                       strokeColor="#D91FFF"
                       glowColor="#13051E"
                       glowIntensity="low"
-                      textclassName="text-[2.125rem] font-extrabold font-gilroyHeavy [@media(min-width:2000px)]:text-[5rem]"
+                      textclassName="text-[3.125rem] font-extrabold font-lucky [@media(min-width:2000px)]:text-[5rem]"
                       fillColor="#000"
                     >
                       Stage 1 : Hustle Kick-off
