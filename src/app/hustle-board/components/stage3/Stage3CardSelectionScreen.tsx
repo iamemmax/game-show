@@ -65,7 +65,7 @@ const params = useParams()
   const [currentTurn, setCurrentTurn] = useState<number | null>(null);
   const [currentTurnName, setCurrentTurnName] = useState<string>("");
  const [showStageResult, setShowStageResult] = useState(false);
-  const { data: contestantsData, isLoading: isLoadingContestants } = useGetGameContestants(Number(params?.episodeId));
+  const { data: contestantsData, isLoading: isLoadingContestants, refetch } = useGetGameContestants(Number(params?.episodeId));
 
   // Helper function to get contestant name by ID
   const getContestantName = (contestantId: number): string => {
@@ -252,9 +252,11 @@ const params = useParams()
           
           if (card_type === CARD_TYPES.PASS) {
             setPassCardIndex(card_index);
+
             const finderName = contestant_name || getContestantName(contestant_id);
             setPassFinderName(finderName);
             setTimeout(() => setPassFound(true), 300);
+            refetch()
           } else {
             // Update turn to next contestant
             const nextContestant = remainingContestants.find(c => c.id !== contestant_id);
