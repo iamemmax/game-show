@@ -89,7 +89,7 @@ export default function Stage2Questions({
                 question_id: currentQuestionData?.data.question.question_id.toString(),
                 data: questionResultData?.data,
                 question_index: currentQuestionData?.data.index,
-                show_modal: true,
+                show_modal: (currentQuestionData?.data.index ?? 0) > 4 ? false : true,
             })
         }
     }, [refetchQuestionResultData, questionResultData, isLoadingQuestionResultData])
