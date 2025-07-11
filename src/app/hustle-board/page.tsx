@@ -1,9 +1,9 @@
 import React from 'react'
-import RevealBallNumber from './components/stage4/RevealBallNumber'
+import RafflePickReveal from './components/stage4/RafflePickReveal'
 
 const page = () => {
   return (
-    <div><RevealBallNumber/></div>
+    <div><RafflePickReveal/></div>
   )
 }
 
