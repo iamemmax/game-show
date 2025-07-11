@@ -19,7 +19,7 @@ import WinnerBallModal from "./RafflePickRevealWinnerModal"
 import LibertyLifeModal from "./RafflePickRevealLibertyLifeModal"
 import { useGetLastContestantPick } from "@/app/components/stages/api/stage4/getLastContestantPick"
 import { useGetGameContestants, useGetHustleMatches, useGetMatchedHustles } from "@/app/admin/misc/api"
-import { Ball } from "./RaffleBall"
+import { Ball } from "@/app/admin/misc/components/RaffleBall"
 
 // Types for MQTT data
 interface ExtraBallDetails {
