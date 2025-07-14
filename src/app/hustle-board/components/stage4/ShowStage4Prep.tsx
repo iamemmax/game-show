@@ -11,8 +11,8 @@ import RafflePickReveal from "./RafflePickReveal";
 
 // Rename component to match the import in StageOneTally
 const Stage4BoardGetReadyPage = () => {
-  const { isConnected, onMessage } = useMQTT();
-  const [showCardSRevealBall, setShowCardSRevealBall] = useState(true);
+  // const { isConnected, onMessage } = useMQTT();
+  // const [showCardSRevealBall, setShowCardSRevealBall] = useState(true);
 
   // Animation variants
   const containerVariants = {
@@ -40,29 +40,29 @@ const Stage4BoardGetReadyPage = () => {
     }
   };
   
-  useEffect(() => {
-    if (isConnected) {
-      const handler = (receivedMessage: any) => {        
-        // Handle stage transition events
-        if (receivedMessage?.event === "game_s4_start") {
-          // Proceed to the next stage
-          setShowCardSRevealBall(true);
-        }
-      };
+  // useEffect(() => {
+  //   if (isConnected) {
+  //     const handler = (receivedMessage: any) => {        
+  //       // Handle stage transition events
+  //       if (receivedMessage?.event === "game_s4_start") {
+  //         // Proceed to the next stage
+  //         setShowCardSRevealBall(true);
+  //       }
+  //     };
       
-      // Register the message handler
-      onMessage(handler);
+  //     // Register the message handler
+  //     onMessage(handler);
       
-      // Clean up function to remove the handler when component unmounts
-      return () => {
-        onMessage(null);
-      };
-    }
-  }, [isConnected, onMessage]);
+  //     // Clean up function to remove the handler when component unmounts
+  //     return () => {
+  //       onMessage(null);
+  //     };
+  //   }
+  // }, [isConnected, onMessage]);
 
-  if(showCardSRevealBall){
-    return <RafflePickReveal />
-  }
+  // if(showCardSRevealBall){
+  //   return <RafflePickReveal />
+  // }
   
   return (
     <AnimatePresence mode="wait">

@@ -118,7 +118,7 @@ const CrystalModal = ({ isOpen, data }: CrystalModalProps) => {
             textclassName="text-[3.5rem] font-black font-gilroyHeavy"
             fillColor="#fff"
           >
-            +₦{animatedAmount.toLocaleString()}
+            +₦{animatedAmount?.toLocaleString()}
           </GlowyStrokeText>
         </motion.div>
 

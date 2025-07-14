@@ -80,15 +80,14 @@ const Stage3CardSelection = () => {
   const [otherContestantId, setOtherContestantId] = useState<number | null>(null);
   const [otherContestantName, setOtherContestantName] = useState<string>("");
 
-  const { data: contestantsData, isLoading: isLoadingContestants } = useGetGameContestants(user?.game_episode as number);
+  const { data: contestantsData, isLoading: isLoadingContestants, refetch } = useGetGameContestants(user?.game_episode as number);
 
 
   const getUserName = (id:number)=>{
   const contestn = contestantsData?.data?.find((x)=>x?.id === Number(id))
   return contestn?.name
 }
-console.log(getUserName(Number(user?.contestant_id)));
-console.log(contestantsData?.data);
+
 
 
   // Helper function to get contestant name by ID
@@ -186,36 +185,7 @@ useEffect(() => {
   
   return (
     <div className="">
-      {/* <div className="flex items-center justify-between bg-[#13051E] border-2 border-[#D91FFF] rounded-lg p-3"> */}
-        {/* Current User */}
-        {/* <div className={cn(
-          "flex items-center px-4 py-2 rounded border-2 min-w-[120px] justify-center",
-          isMyTurn 
-            ? "bg-blue-600 border-blue-400 text-white" 
-            : "bg-gray-700 border-gray-500 text-gray-300"
-        )}>
-          <span className="font-gilroyBold text-sm uppercase tracking-wide">
-            {user?.name || "YOU"}
-          </span>
-        </div> */}
-        
-        {/* VS */}
-        {/* <div className="mx-4">
-          <span className="text-white font-gilroyBold text-lg">VS</span>
-        </div>
-         */}
-        {/* Other Contestant */}
-        {/* <div className={cn(
-          "flex items-center px-4 py-2 rounded border-2 min-w-[120px] justify-center",
-          !isMyTurn 
-            ? "bg-purple-600 border-purple-400 text-white" 
-            : "bg-gray-700 border-gray-500 text-gray-300"
-        )}>
-          <span className="font-gilroyBold text-sm uppercase tracking-wide">
-            {otherContestantName || "OPPONENT"}
-          </span>
-        </div>
-      {/* </div> */}
+    
       
       {/* Turn Status */}
       <div className={cn(
@@ -397,6 +367,7 @@ useEffect(() => {
             const finderName = contestant_name || getContestantName(contestant_id);
             setPassFinderName(finderName);
             setPassFinderIsCurrentUser(false);
+            refetch()
             setTimeout(() => setPassFound(true), 300);
           } else {
             setCurrentTurn(user?.contestant_id || null);

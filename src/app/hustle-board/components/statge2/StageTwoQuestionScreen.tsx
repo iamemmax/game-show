@@ -25,6 +25,7 @@ import HustleBoardStageTallyPage from "../HustleBoardStageTally";
 import HustleBoardModal from "../modals/HustleBoardModal";
 import HustleRevealResult from "../modals/HustleRevealResult";
 import HustleQuestionAnswerModal from "../modals/HustleQuestionAnswer";
+import AnimatedText from "@/app/shared/AnimatedText";
 
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
 
@@ -176,16 +177,13 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
         const questionId = payload.question_id;
         const shouldShowModal = payload?.show_modal;
 
-       
-
         // FIXED: Compare questionId properly (convert to string if needed)
         const currentQuestionIdStr = currentQuestionIdRef?.current?.toString();
         const receivedQuestionIdStr = questionId?.toString();
 
         if (receivedQuestionIdStr === currentQuestionIdStr) {
-           const answersData = payload?.data?.answers;
-
-        
+          const answersData = payload?.data?.answers;
+          
 
           // Update answer data for all questions
           setMqttAnswerData(answersData);
@@ -203,8 +201,7 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
           // Refetch balance data
           refetchBalance();
           // Mark submitted and stop timer
-          const correctOption =
-            payload?.data?.question?.correct_option
+          const correctOption = payload?.data?.question?.correct_option;
 
           if (correctOption) {
             setCorrectAnswer(correctOption);
@@ -212,11 +209,6 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
           }
 
           console.log("✅ Answer processing completed");
-        } else {
-          console.log("❌ Question ID mismatch:", {
-            expected: currentQuestionIdStr,
-            received: receivedQuestionIdStr,
-          });
         }
       }
 
@@ -586,7 +578,14 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
                         </div>
 
                         <AnimatePresence mode="wait">
-                          <motion.h2
+                          <div className="py-4 pb-8">
+                          <AnimatedText text={mqttQuestionData?.question ||
+                              "Waiting for question..."}
+                              
+                              />
+
+                          </div>
+                          {/* <motion.h2
                             key={mqttQuestionData?.question}
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -599,7 +598,7 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
                           >
                             {mqttQuestionData?.question ||
                               "Waiting for question..."}
-                          </motion.h2>
+                          </motion.h2> */}
                         </AnimatePresence>
 
                         <div className="flex absolute -bottom-11 justify-center items-center w-full gap-4">
@@ -854,31 +853,30 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
                     </div>
                   </>
                 )}
-              
-{showResultModal && (
-  <HustleQuestionAnswerModal
-    booster={mqttQuestionData?.question_booster}
-    showBooster={false}
-    currentQuestionOptions={{
-      option_a: mqttQuestionData?.option_a,
-      option_b: mqttQuestionData?.option_b,
-      option_c: mqttQuestionData?.option_c,
-      option_d: mqttQuestionData?.option_d,
-    }}
-    questionIndex={currentQuestionIndex}
-    correctAnswer={
-      correctAnswer || mqttQuestionData?.correct_option
-    }
-    question={mqttQuestionData?.question}
-    currentQuestionAnswerData={currentQuestionAnswerData}
-    currentQuestion={mqttQuestionData}
-    mqttAnswerData={mqttAnswerData}
-    showBid={false}
-    // allocatedWinningAmount={mqttQuestionData?.allocated_winning_amount}
-  />
-)}
 
-             
+                {showResultModal && (
+                  <HustleQuestionAnswerModal
+                    booster={mqttQuestionData?.question_booster}
+                    showBooster={false}
+                    currentQuestionOptions={{
+                      option_a: mqttQuestionData?.option_a,
+                      option_b: mqttQuestionData?.option_b,
+                      option_c: mqttQuestionData?.option_c,
+                      option_d: mqttQuestionData?.option_d,
+                    }}
+                    questionIndex={currentQuestionIndex}
+                    correctAnswer={
+                      correctAnswer || mqttQuestionData?.correct_option
+                    }
+                    question={mqttQuestionData?.question}
+                    currentQuestionAnswerData={currentQuestionAnswerData}
+                    currentQuestion={mqttQuestionData}
+                    mqttAnswerData={mqttAnswerData}
+                    showBid={false}
+                    // allocatedWinningAmount={mqttQuestionData?.allocated_winning_amount}
+                  />
+                )}
+
                 {/* Results sidebar */}
                 <div className="">
                   <FastestFingerResult

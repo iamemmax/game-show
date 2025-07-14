@@ -35,7 +35,7 @@ const FullscreenWrapper = () => {
         const screenOrientation = (screen.orientation as any);
         if (screenOrientation && typeof screenOrientation.lock === 'function') {
           screenOrientation.lock('landscape').catch((err: Error) => {
-            console.log('Orientation lock failed:', err);
+            // console.log('Orientation lock failed:', err);
           });
         }
       }

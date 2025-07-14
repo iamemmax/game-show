@@ -282,7 +282,6 @@ const QuestionTwoScreen = ({onNext}:prop) => {
       }
 
       // Fix 3: Update the MQTT message handler for game_s2_question_answer
-      // Fix 3: Update the MQTT message handler for game_s2_question_answer
       if (receivedMessage?.event === "game_s2_question_answer") {
         const payload = receivedMessage.payload || {};
         const questionId = payload.question_id;
@@ -308,6 +307,8 @@ const QuestionTwoScreen = ({onNext}:prop) => {
             setMqttAnswerData(answersData);
           }
 
+          console.log(shouldShowModal);
+          
           // FIXED: Always update modal states when shouldShowModal is true
           if (shouldShowModal) {
             setOpenModals(true);
@@ -882,18 +883,19 @@ useEffect(() => {
                         </AnimatePresence>
                       </div>
 
-                      {mqttAnswerData && (openModals || showModal) && (
-                        <GameResultModal
-                          key={`${user?.contestant_id}-${currentQuestionIndex}-${currentQuestionId}`}
-                          isOpen={true} // Force to true since we're conditionally rendering
-                          data={
-                            currentQuestionIndex > 4
-                              ? mqttAnswerResultData || mqttAnswerData
-                              : mqttAnswerData
-                          }
-                          questions={mqttQuestionData}
-                        />
-                      )}
+                     {((mqttAnswerData && (openModals || showModal)) || 
+  (currentQuestionIndex > 4 && mqttAnswerResultData && (openModals || showModal))) && (
+  <GameResultModal
+    key={`${user?.contestant_id}-${currentQuestionIndex}-${currentQuestionId}`}
+    isOpen={true}
+    data={
+      currentQuestionIndex > 4
+        ? mqttAnswerResultData || mqttAnswerData
+        : mqttAnswerData
+    }
+    questions={mqttQuestionData}
+  />
+)}
                     </>
                   )}
                   <div className="">
