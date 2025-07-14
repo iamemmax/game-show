@@ -501,6 +501,8 @@ export default function HostPage() {
             return null
         }
 
+
+
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////                      STAGE TWO                     /////////////////////////
@@ -599,6 +601,31 @@ export default function HostPage() {
             }
             return null
 
+        }
+
+
+
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////                      STAGE FOUR                    /////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        else if (currentStage.includes("STAGE_FOUR")) {
+            if (currentStageStep === "init") {
+                return (
+                    <div className="flex justify-center mt-8">
+                        <div className="text-center">
+                            <div className="flex justify-center items-center">
+                                <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
+                            </div>
+                            <p className="text-white mb-4">Prep Stage 2 Questions</p>
+                            {/* <TrapeziumButton onClick={initStage2} variant="orange">
+                                INITIALIZE STAGE 2
+                            </TrapeziumButton> */}
+                        </div>
+                    </div>
+                )
+            }
         }
 
         // Default - game not started

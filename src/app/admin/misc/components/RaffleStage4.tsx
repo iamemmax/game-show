@@ -89,6 +89,12 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
     [gameEpisode, isSubmitting, revealedBalls, sendMessage, onPickResult],
   )
 
+  const handCloseRevealModal = useCallback(() => {
+    sendMessage({
+      event: "close_reveal_modal",
+    })
+  }, [])
+
   const getBallVariant = (ballNumber: number): "regular" | "matched" | "mismatched" | "selected" => {
     if (selectedBall === ballNumber && isSubmitting) {
       return "selected"
@@ -106,14 +112,24 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
   return (
     <div className="h-full flex flex-col w-full justify-center items-center p-8">
       <div className="max-w-6xl mx-auto">
-        <TrapeziumButton
-          onClick={handleStartStageFour}
-        >
-          INIT STAGE
-          {
-            isStartingStage && <SmallSpinner className="ml-2" />
-          }
-        </TrapeziumButton>
+        <div className="flex justify-between items-center mb-6">
+
+          <TrapeziumButton
+            onClick={handleStartStageFour}
+          >
+            INIT STAGE
+            {
+              isStartingStage && <SmallSpinner className="ml-2" />
+            }
+          </TrapeziumButton>
+          <TrapeziumButton
+            onClick={handCloseRevealModal}
+            variant={"orange"}
+          >
+            CLOSE REVEAL MODAL
+
+          </TrapeziumButton>
+        </div>
 
         {/* Ball Grid */}
         <div className="grid grid-cols-10 gap-4 max-w-4xl mx-auto">
