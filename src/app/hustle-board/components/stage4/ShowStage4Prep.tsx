@@ -7,7 +7,7 @@ import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
-import RevealBallNumber from "./RevealBallNumber";
+import RafflePickReveal from "./RafflePickReveal";
 
 // Rename component to match the import in StageOneTally
 const Stage4BoardGetReadyPage = () => {
@@ -61,7 +61,7 @@ const Stage4BoardGetReadyPage = () => {
   }, [isConnected, onMessage]);
 
   if(showCardSRevealBall){
-    return <RevealBallNumber />
+    return <RafflePickReveal />
   }
   
   return (
