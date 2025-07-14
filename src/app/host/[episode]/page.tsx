@@ -258,8 +258,8 @@ export default function HostPage() {
                         lastAction: eventCode,
                         currentStageStep: "questions",
                     }))
-                } 
-                 else if (eventCode === "game_s2_results_reveal") {
+                }
+                else if (eventCode === "game_s2_results_reveal") {
                     setGameState((prev) => ({
                         ...prev,
                         lastAction: "game_s2_results_reveal",
@@ -388,6 +388,9 @@ export default function HostPage() {
     const handleEndStageThree = () => {
         endStageThree({ episode: gameId }, {
             onSuccess() {
+                sendGameMessage("game_s3_prep", {
+                    episode: gameId,
+                })
                 sendGameMessage("game_s3_end")
                 setGameState((prev) => ({
                     ...prev,
@@ -527,7 +530,7 @@ export default function HostPage() {
                         </TrapeziumButton>
                     </div>
                 )
-            }  else if (currentStageStep === "results") {
+            } else if (currentStageStep === "results") {
                 return (
                     <div className="flex flex-col items-center mt-8">
                         <div className="flex justify-center mb-4">
