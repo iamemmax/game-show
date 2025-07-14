@@ -962,7 +962,7 @@ const handleOptionSelect = (option: OptionKey) => {
                             className="text-2xl "
                           ></motion.div>
                           <p className="text-black text-lg font-extrabold font-gilroyBold">
-                            Luck Your Hustle
+                            Lock Your Hustle
                           </p>
                           {/* <p className="text-black/80 text-sm font-medium mt-1">
                                       Choose your answer & wager amount
@@ -1144,7 +1144,7 @@ const handleOptionSelect = (option: OptionKey) => {
                           >
                             {/* Options Grid */}
                             <div className={cn("grid grid-cols-2 gap-[.625rem]",
-                            selectedAmount ? "opacity-100" : "opacity-5 pointer-events-none",
+                            selectedAmount ? "opacity-100" : "opacity-10 pointer-events-none",
 
                               
                             )}>
@@ -1188,7 +1188,7 @@ const handleOptionSelect = (option: OptionKey) => {
 
     // Grayed out when submitted, timer ended, or no questions
     (isSubmitted || !timerActive || !mqttQuestionData?.question?.questions)
-      ? "opacity-30 pointer-events-none  "
+      ? "opacity-70 pointer-events-none  "
       : "",
 
     // Correct answer highlight after submission

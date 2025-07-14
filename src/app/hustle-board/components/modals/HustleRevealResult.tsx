@@ -456,7 +456,7 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                 </div>
 
                 <div>
-                  <p className="text-2xl capitalize font-gilroyMedium text-white">
+                  <p className="text-xl capitalize font-gilroyMedium text-white">
                     {capitalizeFirstLetter(data?.contestant_name)}
                   </p>
                   <p className="font-sans opacity-75 text-base text-white truncate w-[90%] max-w-[400px]">
@@ -472,7 +472,7 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                       style={{ backgroundColor: `${styles.text}22` }}
                     >
                       <p className="font-gilroyMedium text-base text-white">Bid amount:</p>
-                      <h2 className="font-gilroyHeavy font-extrabold text-2xl" style={{ color: styles.text }}>
+                      <h2 className="font-gilroyHeavy font-semibold text-2xl" style={{ color: styles.text }}>
                         ₦{(Math.ceil(Number(data?.profit_loss?.bid_amount || 0) / 100) * 100).toLocaleString()}
                       </h2>
                     </div>}

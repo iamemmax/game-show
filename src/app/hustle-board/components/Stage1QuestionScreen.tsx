@@ -72,7 +72,8 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
   // State declarations at the top level
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
-;
+  const [showBidPrompt, setShowBidPrompt] = useState(false);
+
   // const [selectedAmount, setSelectedAmount] = useState(10000); // Default selected amount
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
@@ -187,7 +188,7 @@ const playBidSelectedSound = () => {
 
 const playOptionSelectedSound = () => {
   try {
-    const audio = new Audio("/sounds/select-bid.mp3");
+    const audio = new Audio("/sounds/select-option.mp3");
     audio.volume = 0.7; // Adjust volume as needed
     audio.play().catch(console.error);
   } catch (error) {
@@ -219,6 +220,7 @@ const playOptionSelectedSound = () => {
         setSelectedOption(null);
         setIsSubmitted(false);
         resetTimerState();
+         setShowBidPrompt(true);
         // setResultMessageSent(false);
         setMqttAnswerData(null);
         setShowResultModal(false);
@@ -258,74 +260,7 @@ const playOptionSelectedSound = () => {
         }
       }
 
-      // Handle contestant bid updates
-      // if (receivedMessage?.event === "contestant_bid_selected") {
-      //   const payload = receivedMessage.payload || {};
-      //   const {
-      //     contestant_id,
-      //     contestant_name,
-      //     bid_amount,
-      //     timestamp,
-      //     question_id,
-      //     remaining_capital,
-      //     bid_percentage,
-      //   } = payload;
-
-      //   if (contestant_id && contestant_name && bid_amount !== undefined) {
-
-      //     // Only update bids for the current question
-      //     if (question_id === currentQuestionId) {
-      //       setContestantBids((prevBids) => {
-      //         const updatedBids = {
-      //           ...prevBids,
-      //           [contestant_id]: {
-      //             contestant_id,
-      //             contestant_name,
-      //             bid_amount,
-      //             timestamp,
-      //             question_id,
-      //             remaining_capital,
-      //             bid_percentage,
-      //           },
-      //         };
-
-      //         return updatedBids;
-      //       });
-      //     } 
-      //   }
-      // }
-      // if (receivedMessage?.event === "contestant_selected_option") {
-      //   const payload = receivedMessage.payload || {};
-      //   const {
-      //     contestant_id,
-      //     contestant_name,
-      //     selected_option,
-      //     is_selected,
-      //     timestamp,
-      //     question_id,
-      //   } = payload;
-
-      //   if (contestant_id && contestant_name && selected_option !== undefined) {
-      //     // Only update bids for the current question
-      //     if (question_id === currentQuestionId) {
-      //       setContestantOption((prevOpt) => {
-      //         const updatedBids = {
-      //           ...prevOpt,
-      //           [contestant_id]: {
-      //             contestant_id,
-      //             contestant_name,
-      //             selected_option,
-      //             is_selected,
-      //             timestamp,
-      //             question_id,
-      //           },
-      //         };
-
-      //         return updatedBids;
-      //       });
-      //     } 
-      //   }
-      // }
+    
 if (receivedMessage?.event === "contestant_bid_selected") {
   const payload = receivedMessage.payload || {};
   const {
@@ -360,6 +295,7 @@ if (receivedMessage?.event === "contestant_bid_selected") {
 
         return updatedBids;
       });
+         setShowBidPrompt(false);
     }
   }
 }
@@ -512,11 +448,11 @@ if (receivedMessage?.event === "contestant_selected_option") {
   const textRef = useRef(null);
   const getFontSizeClass = (textLength: number) => {
     if (textLength <= 35) {
-      return "text-4xl 2xl:text-[3.75rem]"; // Very short: Big and bold
+      return "text-3  xl 2xl:text-[3.75rem]"; // Very short: Big and bold
     } else if (textLength <= 70) {
-      return "text-3xl 2xl:text-[3.4375rem]"; // Medium: Still large
+      return "text-2xl 2xl:text-[3.4375rem]"; // Medium: Still large
     } else if (textLength <= 100) {
-      return "text-2xl 2xl:text-[3.125rem]"; // Longer, fit within 2 lines
+      return "text-2xl 2xl:text-[2.125rem]"; // Longer, fit within 2 lines
     } else {
       return "text-xl 2xl:text-[3rem]"; // Fallback: Smaller but readable
     }
@@ -613,7 +549,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
               <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
               <div className="relative">
                 <div className="flex justify-between w-full items-start">
-                  <div className="text-center flex justify-center items-start w-full">
+                  <div className="text-left  w-full">
                     <h2
                       className="text-[3.75rem] font-lucky text-left font-extrabold  text-black"
                       style={{ WebkitTextStroke: "1.5px #d91fff" }}
@@ -636,7 +572,8 @@ if (receivedMessage?.event === "contestant_selected_option") {
             {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
         </span>
       </div>}
-               {!timerActive&&  <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+
+               {showBidPrompt&&  <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
         <span
           className={`${
             "text-[40px]"
@@ -811,8 +748,10 @@ if (receivedMessage?.event === "contestant_selected_option") {
                               <>
                                 <AnimatedText
                                   text={
-                                    mqttQuestionData.question.questions.question
+                                    mqttQuestionData.question.questions.question 
+
                                   }
+                                  // fontSize={fontSize}
                                 />
                               </>
                             ) : (
@@ -1117,8 +1056,8 @@ if (receivedMessage?.event === "contestant_selected_option") {
                                   ? "#04DA6A"
                                   : "black"
                             }
-                            width={40}
-                            height={50}
+                            width={60}
+                            height={60}
                             active={
                               mqttQuestionData?.question?.hustle_reveal
                                 ?.hustle_number > contestant?.hustle_number
@@ -1128,7 +1067,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
                             className="select-none"
                           />
                         </div>
-                        <GlowyStrokeText
+                        {/* <GlowyStrokeText
                               strokeWidth={2}
                               strokeColor="#7E3CE0"
                               glowColor="#13051e"
@@ -1136,9 +1075,8 @@ if (receivedMessage?.event === "contestant_selected_option") {
                               fillColor="#fff"
                               glowIntensity={"none"}
                             >
-                              {/* {contestant?.contestant_name?.split(" ")[0]} */}
                               2x
-                            </GlowyStrokeText>
+                            </GlowyStrokeText> */}
                       </div>
                     ))}
               </div>
