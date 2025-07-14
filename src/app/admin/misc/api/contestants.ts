@@ -24,7 +24,7 @@ interface GameInfo {
   stage: string
 }
 
-interface ContestantsResponse {
+export interface ContestantsResponse {
   status: string
   message: string
   data: Contestant[]

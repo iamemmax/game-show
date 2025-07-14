@@ -56,12 +56,7 @@ interface Questions {
   question_booster: string;
 }
 
-// Sound utility functions
-const playCountingSound = () => {
-  const audio = new Audio('/sounds/cash-counting.wav');
-  audio.volume = 0.3;
-  audio.play().catch(console.error);
-};
+
 
 // Animation hook for counting up/down numbers with sound
 const useAnimatedBalance = (targetValue: number, duration: number = 1000) => {
