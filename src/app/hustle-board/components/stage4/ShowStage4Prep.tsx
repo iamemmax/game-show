@@ -163,7 +163,7 @@ const Stage4BoardGetReadyPage = () => {
                       repeatType: "reverse"
                     }}
                   >
-                    Get Ready for stage 3
+                    Get Ready for stage 4
                   </motion.h2>
 
                   

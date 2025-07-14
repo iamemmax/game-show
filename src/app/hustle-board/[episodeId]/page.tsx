@@ -564,6 +564,8 @@ const ContestantHomePage = () => {
         return 4;
       case "STAGE_THREE":
         return 5;
+      case "STAGE_FOUR":
+        return 6;
       default:
         return 1;
     }

@@ -20,6 +20,7 @@ import { contestantImages } from "@/app/components/stages/components/mocks/conte
 import HustleBottomCard from "@/app/components/stages/components/hustle/HustleBottomCard";
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
+import RafflePickReveal from "./stage4/RafflePickReveal";
 
 interface StageOneTallyProps {
   eliminationCount?: number;
@@ -249,6 +250,7 @@ const HustleBoardStageTallyPage = ({
   const { isConnected, onMessage } = useMQTT();
   const [goToStage2, setGoToStage2] = useState(false);
   const [goToStage3, setGoToStage3] = useState(false);
+  const [goToStage4, setGoToStage4] = useState(false);
   const [showEliminationModal, setShowEliminationModal] = useState(false);
   const [processedBalances, setProcessedBalances] = useState<any[]>([]);
   const [revealedItems, setRevealedItems] = useState<Set<number>>(new Set());
@@ -383,6 +385,10 @@ const HustleBoardStageTallyPage = ({
         stopAllSounds();
         setGoToStage3(true);
       }
+      if (receivedMessage?.event === "game_s4_prep") {
+        stopAllSounds();
+        setGoToStage4(true);
+      }
     };
 
     // Register the message handler
@@ -405,6 +411,11 @@ const HustleBoardStageTallyPage = ({
         key={`stage3-board-ready-${episodeId}`}
         onNext={() => onNext?.()}  
       />
+    );
+  }
+  if (goToStage4) {
+    return (
+      <RafflePickReveal key={`stage4-raffle-pick-${episodeId}`} />
     );
   }
 
@@ -538,7 +549,7 @@ const HustleBoardStageTallyPage = ({
                       strokeColor="#D91FFF"
                       glowIntensity="low"
                       glowColor="#13051E"
-                      textclassName={`${episodeId ? "text-[4.5rem]" : "text-[2.5rem]"} font-extrabold font-display`}
+                      textclassName={`${episodeId ? "text-[4.5rem]" : "text-[2.5rem]"} font-extrabold font-lucky`}
                       fillColor="#000"
                     >
                       Stage tally
@@ -627,7 +638,6 @@ const HustleBoardStageTallyPage = ({
                       </motion.div>
                     ))}
                   </motion.div> */}
-                  // Replace the existing motion.div section with this corrected version:
 
 <motion.div
   className={`flex items-center gap-1 ${allContestsant && allContestsant?.data?.length <= 4 ? "gap-3" : "gap-1"} 2xl:gap-2 flex-col`}

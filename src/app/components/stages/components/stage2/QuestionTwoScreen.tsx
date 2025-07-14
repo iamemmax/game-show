@@ -307,7 +307,6 @@ const QuestionTwoScreen = ({onNext}:prop) => {
             setMqttAnswerData(answersData);
           }
 
-          console.log(shouldShowModal);
           
           // FIXED: Always update modal states when shouldShowModal is true
           if (shouldShowModal) {

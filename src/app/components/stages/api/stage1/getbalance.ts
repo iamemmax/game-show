@@ -1,4 +1,4 @@
-import { salaryAxios } from '@/lib/axios';
+import { salaryAxios, tokenlessAxios } from '@/lib/axios';
 import {  useQuery } from 'react-query';
 
 export interface balanceProp {
@@ -20,7 +20,7 @@ interface Balance {
 }
 export const getWalletBalance = async (episode_id: number) => {
   if (!episode_id) return null;
-  const response = await salaryAxios.post(`api/accounts/contestant_wallets/${episode_id}/`);
+  const response = await tokenlessAxios.post(`api/accounts/contestant_wallets/${episode_id}/`);
   return response?.data as  balanceProp 
     ;
 };

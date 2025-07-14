@@ -1,4 +1,4 @@
-import { salaryAxios } from '@/lib/axios';
+import { salaryAxios, tokenlessAxios } from '@/lib/axios';
 import { useQuery } from 'react-query';
 
 
@@ -13,7 +13,7 @@ export interface hustleQuestionPicksProps {
 
 export const getAllHustleQuestions = async (episode_id: number) => {
   if (!episode_id) return null;
-  const response = await salaryAxios.post(`api/game/hustle_opportunities?game_episode=${episode_id}`);
+  const response = await tokenlessAxios.post(`api/game/hustle_opportunities?game_episode=${episode_id}`);
   return response?.data as hustleQuestionPicksProps[];
 };
 

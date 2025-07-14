@@ -884,6 +884,7 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
                     mqttAnswerData={mqttAnswerData}
                     timeElapsed={timeLeft <= 0 || !timerActive}
                     currentQuestionId={currentQuestionId}
+                    
                   />
                 </div>
               </div>
