@@ -94,6 +94,8 @@ const RafflePickReveal = () => {
   const mynumbers = lastPickData && lastPickData[0]?.picks
   const revealedNumbers = currentResult?.number_revealed?.filter((x) => x !== null) ?? []
 
+
+
   // Initialize revealed balls from matched hustles data
   useEffect(() => {
     if (matchedHustlesData?.data) {
@@ -154,6 +156,9 @@ const RafflePickReveal = () => {
     const handleMessage = (message: BallPickedResult) => {
       if(message.event === "game_s4_start"){
         setShowStage4Prep(false)
+      }
+       if(message.event === "close_reveal_modal"){
+        setShowModal(false)
       }
       if (message.event === "ball_picked") {
         const { hustle_match } = message.payload

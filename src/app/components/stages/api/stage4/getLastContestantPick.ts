@@ -1,4 +1,4 @@
-import { salaryAxios } from '@/lib/axios';
+import { salaryAxios, tokenlessAxios } from '@/lib/axios';
 import { useQuery } from 'react-query';
 
 interface PickNumberProp {
@@ -12,7 +12,7 @@ export interface finalePicksProp {
   picks: number[];
 }
 export const getLastContestantPick = async ({ contestant_id, episode_id }: PickNumberProp) => {
-  const response = await salaryAxios.get(
+  const response = await tokenlessAxios.get(
     `api/admin-controller/get_hustle_picks?game_episode=${episode_id}&contestant_id=${contestant_id}`
   );
   return response?.data as finalePicksProp[];
@@ -20,7 +20,7 @@ export const getLastContestantPick = async ({ contestant_id, episode_id }: PickN
 
 export const useGetLastContestantPick = ({ contestant_id, episode_id }: PickNumberProp) =>
   useQuery({
-    queryKey: ['get-hustle-pick', contestant_id, episode_id],
+    queryKey: ['get-last-contestant-4-pick', contestant_id, episode_id],
     queryFn: () => getLastContestantPick({ contestant_id, episode_id }),
     enabled: !!contestant_id && !!episode_id, // Optional: prevents query from running on undefined
   });
