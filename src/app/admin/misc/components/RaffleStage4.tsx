@@ -6,6 +6,9 @@ import { useMQTT } from "@/hooks/useMqttService"
 import { Ball } from "./RaffleBall"
 import { IBallPickData, useGetGameContestants, useHandleBallPick } from "../api"
 import { useParams } from "next/navigation"
+import { useInitStageFour } from "@/app/host/misc/api"
+import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
+import { SmallSpinner } from "@/icons/core"
 
 interface PickViewProps {
   onPickResult?: (result: any) => void
@@ -26,7 +29,23 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
     refetch: refetchContestants,
   } = useGetGameContestants(Number.parseInt(gameEpisode))
   const { mutate: pickBall } = useHandleBallPick()
+  const { mutate: initStage, isLoading: isStartingStage } = useInitStageFour()
 
+  const handleStartStageFour = useCallback(() => {
+    if (!gameEpisode) return
+    initStage({ episode: gameEpisode }, {
+      onSuccess: (data) => {
+        console.log("Stage Four initialized successfully:", data)
+        sendMessage({
+          event: "game_s4_start",
+          payload: { episode: gameEpisode },
+        })
+      },
+      onError: (error) => {
+        console.error("Failed to initialize Stage Four:", error)
+      },
+    })
+  }, [gameEpisode, initStage, sendMessage])
 
 
   const handleBallClick = useCallback(
@@ -83,9 +102,18 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
     return "regular"
   }
 
+
   return (
     <div className="h-full flex flex-col w-full justify-center items-center p-8">
       <div className="max-w-6xl mx-auto">
+        <TrapeziumButton
+          onClick={handleStartStageFour}
+        >
+          INIT STAGE
+          {
+            isStartingStage && <SmallSpinner className="ml-2" />
+          }
+        </TrapeziumButton>
 
         {/* Ball Grid */}
         <div className="grid grid-cols-10 gap-4 max-w-4xl mx-auto">

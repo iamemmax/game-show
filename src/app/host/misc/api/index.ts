@@ -252,3 +252,21 @@ export const useEndStageThree = () => {
         mutationKey: ["end-stage-3"],
     });
 }
+
+
+
+
+//////////////////////////////////////////////////////////
+///////////             STAGE FOUR         ///////////////
+//////////////////////////////////////////////////////////
+const startEndStageFour = async ({ episode }: { episode: string | number }) => {
+    const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/admin-controller/init_final_stage/${episode}`);
+    return res.data;
+}
+
+export const useInitStageFour = () => {
+    return useMutation({
+        mutationFn: startEndStageFour,
+        mutationKey: ["init-stage-4"],
+    });
+}
