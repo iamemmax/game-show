@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import KillerIcon from "@/app/icons/KillerIcon"
 import { GlowyStrokeText } from "@/components/core"
 import { useEffect, useState } from "react"
-import { HustleMatch } from "../api"
+import { HustleMatch } from "@/app/admin/misc/api"
 
 interface KillerModalProps {
   isOpen: boolean

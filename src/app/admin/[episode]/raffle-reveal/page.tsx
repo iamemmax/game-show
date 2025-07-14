@@ -1,5 +1,5 @@
+import RafflePickReveal from '@/app/hustle-board/components/stage4/RafflePickReveal'
 import React from 'react'
-import RafflePickReveal from '../../misc/components/RafflePickReveal'
 
 const page = () => {
   return (

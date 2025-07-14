@@ -523,6 +523,7 @@ import Stage1QuestionScreen from "../components/Stage1QuestionScreen";
 import ViewOnlyQuestionTwoScreen from "../components/statge2/StageTwoQuestionScreen";
 import Stage3BoardGetReadyPage from "../components/stage3/Stage3GetReadyScreen";
 import Stage4BoardGetReadyPage from "../components/stage4/ShowStage4Prep";
+import RafflePickReveal from "../components/stage4/RafflePickReveal";
 
 const LOCAL_STORAGE_KEY = "hustle_board_last_step";
 
@@ -827,11 +828,12 @@ const ContestantHomePage = () => {
         {step === 5 && (
           <motion.div key="step5" className="h-full" {...motionProps}>
             <Stage3BoardGetReadyPage onNext={onNextStep6} />
+            {/* <RafflePickReveal /> */}
           </motion.div>
         )}
         {step === 6 && (
           <motion.div key="step6" className="h-full" {...motionProps}>
-            <Stage4BoardGetReadyPage />
+            <RafflePickReveal />
           </motion.div>
         )}
       </AnimatePresence>

@@ -20,6 +20,7 @@ import LibertyLifeModal from "./RafflePickRevealLibertyLifeModal"
 import { useGetLastContestantPick } from "@/app/components/stages/api/stage4/getLastContestantPick"
 import { useGetGameContestants, useGetHustleMatches, useGetMatchedHustles } from "@/app/admin/misc/api"
 import { Ball } from "@/app/admin/misc/components/RaffleBall"
+import Stage4BoardGetReadyPage from "./ShowStage4Prep"
 
 // Types for MQTT data
 interface ExtraBallDetails {
@@ -59,13 +60,14 @@ interface BallPickedResult {
 const RafflePickReveal = () => {
   const { isConnected, onMessage } = useMQTT()
   const params = useParams()
-  const episodeId = Number(params?.episode)
+  const episodeId = Number(params?.episodeId || params?.episode)
 
   // State for ball animations and reveals
   const [revealedBalls, setRevealedBalls] = useState<Set<number>>(new Set())
   const [animatingBall, setAnimatingBall] = useState<number | null>(null)
   const [currentResult, setCurrentResult] = useState<BallPickedPayload | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [ShowStage4Prep, setShowStage4Prep] = useState(true)
 
   // Fetch hustle matches data (what each ball contains)
   const { data: hustleMatchesData, isLoading: isLoadingMatches } = useGetHustleMatches(episodeId)
@@ -75,6 +77,7 @@ const RafflePickReveal = () => {
 
   // 1. Fetch all contestants for the episode
   const { data: contestantsData, isLoading: isLoadingContestants } = useGetGameContestants(episodeId)
+  
 
   // 2. Get the last non-eliminated contestant (memoized for stability)
   const lastContestantId = useMemo(() => {
@@ -141,14 +144,17 @@ const RafflePickReveal = () => {
     setShowModal(true)
 
     // Auto-hide modal after some time
-    setTimeout(() => {
-      setShowModal(false)
-    }, 8000) // Increased time for better UX
+    // setTimeout(() => {
+    //   setShowModal(false)
+    // }, 8000) // Increased time for better UX
   }, [])
 
   // Handle MQTT messages
   useEffect(() => {
     const handleMessage = (message: BallPickedResult) => {
+      if(message.event === "game_s4_start"){
+        setShowStage4Prep(false)
+      }
       if (message.event === "ball_picked") {
         const { hustle_match } = message.payload
         animateBallReveal(hustle_match.number_pick, message.payload)
@@ -211,7 +217,9 @@ const RafflePickReveal = () => {
         return "⭐"
     }
   }
-
+  if (ShowStage4Prep) {
+    return <Stage4BoardGetReadyPage />;
+  }
   return (
     <div className="min-h-screen grid grid-cols-[1fr_5fr_1fr] h-full relative">
       {/* Left Sidebar */}
@@ -289,7 +297,7 @@ const RafflePickReveal = () => {
             {/* Actual Content */}
             <div className="relative z-10 flex flex-col justify-between h-full w-full">
               {/* Title & Subtitle */}
-              <div className="flex flex-col items-center text-center">
+              {/* <div className="flex flex-col items-center text-center">
                 <GlowyStrokeText
                   strokeWidth={2}
                   strokeColor="#D91FFF"
@@ -303,11 +311,34 @@ const RafflePickReveal = () => {
                 <p className="text-lg font-normal text-[#D5B9FF]">
                   Watch as balls are revealed to determine your hustle fate
                 </p>
+              </div> */}
+
+                 {/* Top: Hustle Picks */}
+              <div className="flex justify-center mt-8">
+                <div className="flex border-[4px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[10.35px] px-3 border-[#CE64FF]">
+                  {mynumbers?.map((num) => {
+                    const { matched, showRed } = getNumberMatchStatus(num, revealedNumbers.length === 5)
+                    return (
+                      <div key={num} className="px-4">
+                        <NumberCardContainer
+                          text={String(num)}
+                          textColor={matched ? "#fff" : showRed ? "#fff" : "#F2C94C"}
+                          backgroundColor={matched ? "#04DA6A" : showRed ? "#EB001B" : ""}
+                          active={matched || showRed}
+                          width={80}
+                          height={85}
+                          className="cursor-pointer transition-transform hover:scale-105"
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
+
 
               {/* 60 Ball Grid - Much Bigger */}
               <div className="flex justify-center mt-6">
-                <div className="grid grid-cols-10 gap-6 max-w-6xl">
+                <div className="grid grid-cols-12 gap-6 max-w-7xl">
                   {Array.from({ length: 60 }, (_, i) => i + 1).map((ballNumber) => {
                     const ballIndicator = getBallIndicator(ballNumber)
                     const isExtraBall = ballNumber >= 50 && ballNumber <= 60
@@ -395,28 +426,7 @@ const RafflePickReveal = () => {
                 </div>
               </div>
 
-              {/* Top: Hustle Picks */}
-              {/* <div className="flex justify-center mt-8">
-                <div className="flex border-[4px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[10.35px] px-3 border-[#CE64FF]">
-                  {mynumbers?.map((num) => {
-                    const { matched, showRed } = getNumberMatchStatus(num, revealedNumbers.length === 5)
-                    return (
-                      <div key={num} className="px-4">
-                        <NumberCardContainer
-                          text={String(num)}
-                          textColor={matched ? "#fff" : showRed ? "#fff" : "#F2C94C"}
-                          backgroundColor={matched ? "#04DA6A" : showRed ? "#EB001B" : ""}
-                          active={matched || showRed}
-                          width={80}
-                          height={85}
-                          className="cursor-pointer transition-transform hover:scale-105"
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-              </div> */}
-
+           
               {/* Bottom: Picked Numbers */}
               <div className="flex justify-center items-center mt-10 mb-6">
                 <div className="flex items-center justify-center">

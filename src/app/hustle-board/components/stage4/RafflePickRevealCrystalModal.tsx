@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import CrystalIcon from "@/app/icons/CrystalIcon"
 import { GlowyStrokeText } from "@/components/core"
 import { useEffect, useState } from "react"
-import { HustleMatch } from "../api"
+import { HustleMatch } from "@/app/admin/misc/api"
 
 interface CrystalModalProps {
   isOpen: boolean
@@ -118,7 +118,7 @@ const CrystalModal = ({ isOpen, data }: CrystalModalProps) => {
             textclassName="text-[3.5rem] font-black font-gilroyHeavy"
             fillColor="#fff"
           >
-            +₦{animatedAmount.toLocaleString()}
+            +₦{animatedAmount?.toLocaleString()}
           </GlowyStrokeText>
         </motion.div>
 
