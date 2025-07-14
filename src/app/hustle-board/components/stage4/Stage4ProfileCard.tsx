@@ -135,7 +135,8 @@ const Stage4ProfileCard = ({contestantsData}:prop) => {
                   textclassName="text-[1.8rem] font-normal font-gilroyBold"
                   fillColor="#fff"
                 > 
-               ₦ {addCommasToNumber(useAnimatedBalance(Number(lastContestantId?.actual_balance ?? 0), 800))}
+               ₦ {addCommasToNumber(Math.ceil(useAnimatedBalance(Number(lastContestantId?.actual_balance ?? 0), 800)))}
+
 
                  </GlowyStrokeText>
            

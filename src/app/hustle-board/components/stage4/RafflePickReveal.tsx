@@ -1064,13 +1064,13 @@ const RafflePickReveal = () => {
                   })}
                 </div>
                 {/* Match Counter */}
-                <div 
+               {currentResult&&currentResult?.number_revealed?.length>0&& <div 
                 className="size-[6.8563rem]  bg-white rounded-full flex justify-center flex-col items-center font-display text-black font-black text-[1.5rem] ml-2">
                   <p className="">
                     {displayCount}/5
                   </p>
                   <p className="block text-base font-display font-bold uppercase text-black">match</p>
-                </div>
+                </div>}
               </div>
             </div>
           </div>
