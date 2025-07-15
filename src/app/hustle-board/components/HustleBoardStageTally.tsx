@@ -696,7 +696,7 @@ const HustleBoardStageTallyPage = ({
             {tally.name?.split(" ")[0]}
           </p>
           <p className="text-xs 2xl:text-lg font-gilroyMedium font-normal text-white">
-            {`₦${addCommasToNumber(Number(Math.ceil(Number(tally?.actual_balance) / 1000) * 1000)) ?? 0}`}
+              {`₦${addCommasToNumber(Number(tally?.actual_balance || 0))}`}
           </p>
         </div>
       </div>
