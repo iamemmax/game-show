@@ -45,7 +45,8 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
 
   const connectionAttemptsRef = useRef(0);
   const maxConnectionAttempts = 3;
-
+  const messageListenersRef = useRef<Set<(message: any) => void>>(new Set());
+  
   useEffect(() => {
     let mqttClient: MqttClient | null = null;
 
@@ -71,9 +72,6 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
         // protocol: 'ws',
         rejectUnauthorized: false,
       });
-
-      const messageListenersRef = useRef<Set<(message: any) => void>>(new Set());
-
 
 
       mqttClient.on('connect', () => {
@@ -192,7 +190,6 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
   //   []
   // );
 
-  const messageListenersRef = useRef<Set<(message: any) => void>>(new Set());
 
   useEffect(() => {
     const mqttClient = clientRef.current;
