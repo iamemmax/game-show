@@ -65,7 +65,7 @@ export default function GameDetails() {
     setState: setCreditDebitModalState,
   } = useBooleanStateControl()
   const [selectedContestant, setSelectedContestant] = useState("")
-  const { isConnected, sendMessage, onMessage } = useMQTT()
+  const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT()
   const [isSending, setIsSending] = useState(false)
 
   const [debitWalletData, setDebitWalletData] = useState<DebitWalletData | null>(null)
@@ -111,17 +111,17 @@ export default function GameDetails() {
       }
     }
 
+
     if (isConnected) {
-      onMessage(handleMessage)
+      addMessageListener(handleMessage);
       refetchContestants()
     }
 
     return () => {
-      if (isConnected) {
-        onMessage(null)
-      }
-    }
-  }, [isConnected, onMessage])
+      removeMessageListener(handleMessage);
+    };
+
+  }, [isConnected,  addMessageListener, removeMessageListener])
 
   const startGameEpisode = () => sendGameMessage("game_start")
 
@@ -356,7 +356,7 @@ export default function GameDetails() {
                             : contestantsData?.game.status === "IN_PROGRESS"
                               ? "In Progress"
                               : "Completed"
-                          }</span>
+                        }</span>
                       </div>
                     </div>
                     <div>

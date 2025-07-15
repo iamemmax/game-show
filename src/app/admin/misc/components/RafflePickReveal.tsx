@@ -57,7 +57,7 @@ interface BallPickedResult {
 }
 
 const RafflePickReveal = () => {
-  const { isConnected, onMessage } = useMQTT()
+  const { isConnected, addMessageListener, removeMessageListener } = useMQTT()
   const params = useParams()
   const episodeId = Number(params?.episode)
 
@@ -148,23 +148,22 @@ const RafflePickReveal = () => {
 
   // Handle MQTT messages
   useEffect(() => {
-    const handleMessage = (message: BallPickedResult) => {
+    const handleMQTTMessage = (message: BallPickedResult) => {
       if (message.event === "ball_picked") {
         const { hustle_match } = message.payload
         animateBallReveal(hustle_match.number_pick, message.payload)
       }
     }
-
-    if (isConnected) {
-      onMessage(handleMessage)
+ if (isConnected) {
+      addMessageListener(handleMQTTMessage);
     }
 
     return () => {
-      if (isConnected) {
-        onMessage(null)
-      }
-    }
-  }, [isConnected, onMessage, animateBallReveal])
+      removeMessageListener(handleMQTTMessage);
+    };
+
+
+  }, [isConnected, addMessageListener, removeMessageListener, animateBallReveal])
 
   // Get ball variant based on state and pre-loaded data
   const getBallVariant = (ballNumber: number): "regular" | "matched" | "mismatched" | "selected" => {

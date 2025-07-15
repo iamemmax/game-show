@@ -60,7 +60,7 @@ const StageOneTally = ({
     return Array.isArray(params.episodeId) ? Number(params.episodeId[0]) : Number(params.episodeId);
   }, [params?.episodeId]);
 
-  const { isConnected, onMessage } = useMQTT();
+  const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const [goToStage2, setGoToStage2] = useState(false);
   const [goToStage3, setGoToStage3] = useState(false);
   const [showEliminationModal, setShowEliminationModal] = useState(false);
@@ -125,7 +125,7 @@ const StageOneTally = ({
   useEffect(() => {
     if (!isConnected) return;
 
-    const handler = (receivedMessage: any) => {
+    const handleMQTTMessage = (receivedMessage: any) => {
       console.log("Main page received message:", receivedMessage);
 
       // Handle stage transition events
@@ -137,14 +137,16 @@ const StageOneTally = ({
       }
     };
 
-    // Register the message handler
-    onMessage(handler);
+    if (isConnected) {
+      addMessageListener(handleMQTTMessage);
+    }
 
-    // Clean up function to remove the handler when component unmounts
     return () => {
-      onMessage(null);
+      removeMessageListener(handleMQTTMessage);
     };
-  }, [isConnected, onMessage]);
+
+
+  }, [isConnected, addMessageListener, removeMessageListener]);
 
   // Early returns for stage transitions
   if (goToStage2) {

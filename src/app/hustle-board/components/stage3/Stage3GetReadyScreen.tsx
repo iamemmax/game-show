@@ -13,7 +13,7 @@
 // // Rename component to match the import in StageOneTally
 // const Stage3BoardGetReadyPage = () => {
 //   console.log("Stage3BoardGetReadyPage rendering"); // Add debug log
-//   const { isConnected, onMessage } = useMQTT();
+//   const { isConnected } = useMQTT();
 //   const [showCardRevealScreen, setShowCardRevealScreen] = useState(false);
 
 //   // Animation variants
@@ -236,7 +236,7 @@ interface prop{
   onNext:()=>void
 }
 const Stage3BoardGetReadyPage = ({onNext}:prop) => {
-    const { isConnected, onMessage } = useMQTT();
+    const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   
     const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
   
@@ -279,7 +279,7 @@ const Stage3BoardGetReadyPage = ({onNext}:prop) => {
 
    useEffect(() => {
       if (isConnected) {
-        const handler = (receivedMessage: any) => {
+        const handleMQTTMessage = (receivedMessage: any) => {
           console.log("Main page received message:", receivedMessage);
           
           // Handle stage transition events
@@ -288,16 +288,17 @@ const Stage3BoardGetReadyPage = ({onNext}:prop) => {
             setShowCardRevealScreen(true);
           }
         };
-        
-        // Register the message handler
-        onMessage(handler);
-        
-        // Clean up function to remove the handler when component unmounts
-        return () => {
-          onMessage(null);
-        };
+        if (isConnected) {
+      addMessageListener(handleMQTTMessage);
+    }
+
+    return () => {
+      removeMessageListener(handleMQTTMessage);
+    };
+
+
       }
-    }, [isConnected, onMessage]);
+    }, [isConnected, addMessageListener, removeMessageListener]);
   
   if(showCardRevealScreen){
     return <Stage3CardSelectionScreens onNext={()=>onNext?.()}/>

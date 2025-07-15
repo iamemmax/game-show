@@ -1,5 +1,5 @@
 export { default as Progress } from './ProgressBar';
-
+export { Badge, badgeVariants } from './Badge';
 export * from './Button';
 export * from './FormError';
 export * from './Input';
@@ -35,7 +35,7 @@ export {
   SelectItem,
   SelectSeparator,
 } from './Select';
-
+export { Separator } from './Seperator';
 export {
   Dialog,
   DialogTrigger,

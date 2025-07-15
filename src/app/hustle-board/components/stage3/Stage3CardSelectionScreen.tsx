@@ -16,13 +16,13 @@ import { useParams } from "next/navigation";
 import StageThreeWinnerModal from "@/app/components/stages/components/StageThreeWinnerModal";
 import HustleBoardStageTallyPage from "../HustleBoardStageTally";
 
-interface prop{
+interface prop {
   onNext: () => void
 }
-const Stage3CardSelectionScreens = ({onNext}:prop) => {
+const Stage3CardSelectionScreens = ({ onNext }: prop) => {
   const user = tokenStorage.getUser();
-  const { isConnected, onMessage } = useMQTT();
-  const [remainingContestants, setRemainingContestants] = useState<Array<{id: number, name: string}>>([]);
+  const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
+  const [remainingContestants, setRemainingContestants] = useState<Array<{ id: number, name: string }>>([]);
 
   const MIN_CARDS_BEFORE_PASS = 10;
 
@@ -40,7 +40,7 @@ const Stage3CardSelectionScreens = ({onNext}:prop) => {
       style: CARD_STYLES[Math.floor(Math.random() * CARD_STYLES.length)],
       contestant_id: null
     }));
-    
+
     const passIndex = Math.floor(Math.random() * 24);
     const passCard = {
       type: CARD_TYPES.PASS,
@@ -49,13 +49,13 @@ const Stage3CardSelectionScreens = ({onNext}:prop) => {
       style: CARD_STYLES[Math.floor(Math.random() * CARD_STYLES.length)],
       contestant_id: null
     };
-    
+
     cardArray.splice(passIndex, 0, passCard);
     if (cardArray.length > 24) cardArray.length = 24;
-    
+
     return cardArray;
   });
-const params = useParams()
+  const params = useParams()
   const [passFound, setPassFound] = useState(false);
   const [recentlyUpdated, setRecentlyUpdated] = useState<number[]>([]);
   const [flippingCards, setFlippingCards] = useState<number[]>([]);
@@ -64,7 +64,7 @@ const params = useParams()
   const [passCardIndex, setPassCardIndex] = useState<number>(-1);
   const [currentTurn, setCurrentTurn] = useState<number | null>(null);
   const [currentTurnName, setCurrentTurnName] = useState<string>("");
- const [showStageResult, setShowStageResult] = useState(false);
+  const [showStageResult, setShowStageResult] = useState(false);
   const { data: contestantsData, isLoading: isLoadingContestants, refetch } = useGetGameContestants(Number(params?.episodeId));
 
   // Helper function to get contestant name by ID
@@ -76,12 +76,12 @@ const params = useParams()
         return contestant.name;
       }
     }
-    
+
     // Then try the contestantNames map (cached data)
     if (contestantNames[contestantId]) {
       return contestantNames[contestantId];
     }
-    
+
     // Only use fallback if no name is found anywhere
     return `Contestant ${contestantId}`;
   };
@@ -89,19 +89,19 @@ const params = useParams()
   // Set remaining contestants and contestant names
   useEffect(() => {
     if (!contestantsData?.data) return;
-    
+
     // Get remaining contestants (not eliminated)
     const remaining = contestantsData.data
-      .filter((contestant: any) => 
+      .filter((contestant: any) =>
         contestant.eliminated_stage === null && !contestant.is_eliminated
       )
       .map((contestant: any) => ({
         id: contestant.id,
         name: contestant?.name || `Contestant ${contestant.id}`
       }));
-    
+
     setRemainingContestants(remaining);
-    
+
     // Create contestant names map
     const namesMap: Record<number, string> = {};
     contestantsData.data.forEach((contestant: any) => {
@@ -110,7 +110,7 @@ const params = useParams()
       }
     });
     setContestantNames(namesMap);
-    
+
   }, [contestantsData?.data]);
 
   // Update current turn name when current turn changes
@@ -122,17 +122,17 @@ const params = useParams()
 
   const TurnIndicator = () => {
     if (passFound || remainingContestants.length !== 2) return null;
-    
+
     return (
       <div className="mb-4 flex items-center gap-4">
-        <div className="flex items-center justify-between bg-[#13051E] border-2 border-[#D91FFF] rounded-lg p-3"> 
+        <div className="flex items-center justify-between bg-[#13051E] border-2 border-[#D91FFF] rounded-lg p-3">
           {/* Contestants */}
           {remainingContestants?.map((contestant, index) => (
             <React.Fragment key={contestant.id}>
               <div className={cn(
                 "flex items-center px-4 py-2 rounded border-2 min-w-[120px] justify-center",
                 currentTurn === contestant.id
-                  ? "bg-blue-600 border-blue-400 text-white" 
+                  ? "bg-blue-600 border-blue-400 text-white"
                   : "bg-gray-700 border-gray-500 text-gray-300"
               )}>
                 <span className="font-gilroyBold text-sm uppercase tracking-wide">
@@ -147,7 +147,7 @@ const params = useParams()
             </React.Fragment>
           ))}
         </div>
-        
+
         {/* Turn Status */}
         {currentTurn && (
           <div className=" p-5 rounded-lg text-center bg-blue-600 bg-opacity-20 border border-blue-400">
@@ -181,7 +181,7 @@ const params = useParams()
             const startX = Math.random() * 100;
             const waveAmplitude = Math.random() * 100 + 50;
             const waveSpeed = Math.random() * 2 + 1;
-            
+
             return (
               <motion.div
                 key={i}
@@ -213,9 +213,9 @@ const params = useParams()
             );
           })}
         </div>
-        
+
         {/* Celebration content */}
-         <StageThreeWinnerModal/>
+        <StageThreeWinnerModal />
       </div>
     );
   };
@@ -223,20 +223,20 @@ const params = useParams()
   // MQTT message handler - Listen only
   useEffect(() => {
     if (!isConnected) return;
-    
-    const handler = (receivedMessage: any) => {
+
+    const handleMQTTMessage = (receivedMessage: any) => {
       if (receivedMessage?.event === "stage3_card_selection") {
         const { contestant_id, card_index, card_type: originalCardType, contestant_name } = receivedMessage.payload;
-        
+
         setFlippingCards(prev => [...prev, card_index]);
-        
+
         const revealedCount = cards.filter(card => card.revealed).length;
         let card_type = originalCardType;
-        
+
         if (originalCardType === CARD_TYPES.PASS && revealedCount < MIN_CARDS_BEFORE_PASS - 1) {
           card_type = CARD_TYPES.DUD;
         }
-        
+
         setTimeout(() => {
           setCards(prevCards => {
             const newCards = [...prevCards];
@@ -249,7 +249,7 @@ const params = useParams()
             };
             return newCards;
           });
-          
+
           if (card_type === CARD_TYPES.PASS) {
             setPassCardIndex(card_index);
 
@@ -264,20 +264,26 @@ const params = useParams()
               setCurrentTurn(nextContestant.id);
             }
           }
-          
+
           setFlippingCards(prev => prev.filter(idx => idx !== card_index));
           setRecentlyUpdated([card_index]);
           setTimeout(() => setRecentlyUpdated([]), 1000);
         }, 600);
       }
-       if (receivedMessage?.event === "game_s3_results_reveal") {
+      if (receivedMessage?.event === "game_s3_results_reveal") {
         console.log("✅ Processing game_s3_results_reveal");
         setShowStageResult(true);
       }
     };
-    
-    onMessage(handler);
-  }, [isConnected, onMessage, cards, remainingContestants, contestantNames, contestantsData?.data]);
+
+    if (isConnected) {
+      addMessageListener(handleMQTTMessage);
+    }
+
+    return () => {
+      removeMessageListener(handleMQTTMessage);
+    };
+  }, [isConnected, addMessageListener, removeMessageListener, cards, remainingContestants, contestantNames, contestantsData?.data]);
 
   // Initialize turn system
   useEffect(() => {
@@ -287,16 +293,16 @@ const params = useParams()
       setCurrentTurn(firstTurnId);
     }
   }, [remainingContestants, passFound]);
-   
 
- if (showStageResult) {
+
+  if (showStageResult) {
     return (
       <HustleBoardStageTallyPage
         eliminationCount={5}
         removeCount={2}
         title="stage 3"
         activeState={3}
-        onNext={()=>onNext}
+        onNext={() => onNext}
       />
     );
   }
@@ -371,12 +377,12 @@ const params = useParams()
                   >
                     Stage 3: Showdown for pass
                   </GlowyStrokeText>
-                  
+
                   <div className="text-white flex justify-center items-center gap-5 flex-col">
                     <span className="font-gilroyBold text-[#D5B9FF] text-sm">
                       Watch as contestants select business elements for their hustle
                     </span>
-                    
+
                     {/* Turn Indicator */}
                     <TurnIndicator />
                   </div>
@@ -395,15 +401,15 @@ const params = useParams()
                     const style = card.revealed && card.type === CARD_TYPES.PASS ? PASS_CARD_STYLE : card.style;
                     const isRecentlyUpdated = recentlyUpdated.includes(index);
                     const isRevealedPass = card.revealed && card.type === CARD_TYPES.PASS;
-                    
+
                     let displayName = "";
                     if (card.revealed && card.contestant_id) {
                       displayName = getContestantName(card.contestant_id);
                     }
-                    
+
                     return (
-                      <div 
-                        key={index} 
+                      <div
+                        key={index}
                         className={cn(
                           "relative transition-transform perspective-[1000px] pointer-events-none",
                           card.revealed ? "opacity-70" : "opacity-100",
@@ -417,8 +423,8 @@ const params = useParams()
                             key={`card-${index}-${card.revealed ? "revealed" : "hidden"}`}
                             initial={isFlipping ? { rotateY: 0, opacity: 1 } : false}
                             animate={
-                              isFlipping 
-                                ? { rotateY: 180, opacity: 0 } 
+                              isFlipping
+                                ? { rotateY: 180, opacity: 0 }
                                 : { rotateY: 0, opacity: 1 }
                             }
                             transition={{ duration: isRevealedPass ? 0.5 : 0.3, ease: "easeInOut" }}
@@ -468,8 +474,8 @@ const params = useParams()
                                   <div className="text-center">
                                     <span className={cn(
                                       "font-black text-[3rem] font-gilroyBold tracking-wider",
-                                      cardText === CARD_TYPES.PASS 
-                                        ? "text-yellow-300 drop-shadow-[0_0_12px_rgba(255,215,0,0.9)] animate-pulse" 
+                                      cardText === CARD_TYPES.PASS
+                                        ? "text-yellow-300 drop-shadow-[0_0_12px_rgba(255,215,0,0.9)] animate-pulse"
                                         : "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
                                       "filter drop-shadow-[3px_3px_6px_rgba(0,0,0,1)] text-stroke-2 text-stroke-black"
                                     )}>
@@ -504,11 +510,11 @@ const params = useParams()
       <div>
         <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={4} />
       </div>
-      
+
       {/* Celebration Animation */}
-      <CelebrationAnimation 
-        isVisible={passFound} 
-        finderName={passFinderName} 
+      <CelebrationAnimation
+        isVisible={passFound}
+        finderName={passFinderName}
       />
     </div>
   );

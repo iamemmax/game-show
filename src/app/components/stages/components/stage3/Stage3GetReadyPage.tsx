@@ -12,74 +12,74 @@ import HustleSideBar from "../hustle/HustleSideBar";
 import Stage3CardSelection from "./Stage3CardSelection";
 
 
-interface prop{
-  onNext:()=>void
+interface prop {
+  onNext: () => void
 }
-const Stage3GetReadyPage = ({onNext}:prop) => {
-  const { isConnected, onMessage } = useMQTT();
+const Stage3GetReadyPage = ({ onNext }: prop) => {
+  const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
 
-  
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
+      transition: {
         duration: 0.5,
         when: "beforeChildren",
         staggerChildren: 0.2
       }
     },
-    exit: { 
+    exit: {
       opacity: 0,
       transition: { duration: 0.3 }
     }
   };
-  
+
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
+    visible: {
+      y: 0,
       opacity: 1,
       transition: { duration: 0.5, ease: "easeOut" }
     }
   };
-  
-  
+
+
   useEffect(() => {
     if (isConnected) {
-      const handler = (receivedMessage: any) => {
+      const handleMQTTMessage = (receivedMessage: any) => {
         console.log("Main page received message:", receivedMessage);
-        
+
         // Handle stage transition events
         if (receivedMessage?.event === "game_s3_start") {
           // Proceed to the next stage
           setShowCardRevealScreen(true);
         }
       };
-      
-      // Register the message handler
-      onMessage(handler);
-      
-      // Clean up function to remove the handler when component unmounts
+
+      if (isConnected) {
+        addMessageListener(handleMQTTMessage);
+      }
+
       return () => {
-        onMessage(null);
+        removeMessageListener(handleMQTTMessage);
       };
     }
-  }, [isConnected, onMessage]);
+  }, [isConnected, addMessageListener, removeMessageListener]);
 
 
- 
 
-if(showCardRevealScreen){
- 
-    return <Stage3CardSelection/>
 
-}
-  
+  if (showCardRevealScreen) {
+
+    return <Stage3CardSelection />
+
+  }
+
   return (
-     <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait">
       <motion.div
         key="getReadyScreen"
         initial="hidden"
@@ -89,7 +89,7 @@ if(showCardRevealScreen){
         className="grid grid-cols-[1.2fr_5fr_1fr] h-full"
       >
         {/* Left Sidebar */}
-        <motion.div 
+        <motion.div
           className="flex flex-col justify-between"
           variants={itemVariants}
         >
@@ -100,7 +100,7 @@ if(showCardRevealScreen){
             <HustleStages activeStage={3} />
           </div>
           <div className="pb-4">
-            <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>
+            <Salary4LifeTrophy className="max-xl:h-[13.25rem]" />
           </div>
         </motion.div>
 
@@ -108,7 +108,7 @@ if(showCardRevealScreen){
         <div className="flex flex-col justify-between items-center min-h-full">
           {/* Top section */}
           <div className="flex flex-col w-full items-center">
-            <motion.div 
+            <motion.div
               className="w-full h-[100px] flex items-center justify-center"
               variants={itemVariants}
             >
@@ -127,7 +127,7 @@ if(showCardRevealScreen){
               />
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="relative w-full py-[2rem] 2xl:py-[6.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
               variants={itemVariants}
             >
@@ -160,18 +160,18 @@ if(showCardRevealScreen){
               {/* Content container - increased border width from 5px to 8px for bolder appearance */}
               <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
               <div className="relative flex flex-col items-center w-full">
-                <motion.div 
+                <motion.div
                   className="flex flex-col justify-between items-start gap-4 p-6 rounded-lg shadow-md"
                   variants={itemVariants}
                 >
-                  <motion.h2 
+                  <motion.h2
                     className="text-[2.75rem] font-extrabold outline-text text-black"
                     variants={itemVariants}
-                    animate={{ 
+                    animate={{
                       scale: [1, 1.05, 1],
                       textShadow: ["0px 0px 0px rgba(217, 31, 255, 0)", "0px 0px 10px rgba(217, 31, 255, 0.7)", "0px 0px 0px rgba(217, 31, 255, 0)"]
                     }}
-                    transition={{ 
+                    transition={{
                       duration: 2,
                       repeat: Infinity,
                       repeatType: "reverse"
@@ -180,28 +180,28 @@ if(showCardRevealScreen){
                     Get Ready for stage 3
                   </motion.h2>
 
-                  
 
-                  <motion.p 
+
+                  <motion.p
                     className="text-sm font-outfit text-white max-w-2xl"
                     variants={itemVariants}
                   >
-                   Contestants will select Dud or Opportunity cards. The system will automatically handle the selections.
+                    Contestants will select Dud or Opportunity cards. The system will automatically handle the selections.
                   </motion.p>
 
-                  <motion.p 
+                  <motion.p
                     className="text-sm font-outfit text-white max-w-2xl"
                     variants={itemVariants}
                   >
-                    At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">1 contestants with the lowest scores</span> 
+                    At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">1 contestants with the lowest scores</span>
                     will be <strong>eliminated</strong> from the competition. So bring your A-game — every second and every point counts!
                   </motion.p>
 
-                  <motion.ul 
+                  <motion.ul
                     className="list-disc pl-5 leading-7 text-sm text-white font-outfit"
                     variants={itemVariants}
                   >
-                    
+
                   </motion.ul>
                 </motion.div>
               </div>

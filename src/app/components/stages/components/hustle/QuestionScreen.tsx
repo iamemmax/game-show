@@ -83,7 +83,7 @@ interface Prop {
 }
 
 const QuestionScreen = ({ onNext }: Prop) => {
-  const { isConnected, onMessage, sendMessage } = useMQTT();
+  const { isConnected, addMessageListener, removeMessageListener, sendMessage } = useMQTT();
   const router = useRouter();
 
   // Get user from storage - this should always be called
@@ -367,16 +367,9 @@ const [contestantOptions, setContestantOptions] = useState<{[key: string]: any}>
   //     }
   //   };
 
-  //   onMessage(handler);
-
-  //   return () => {
-  //     if (isConnected) {
-  //       onMessage(null);
-  //     }
-  //   };
   // }, [
   //   isConnected,
-  //   onMessage,
+  //   ,
   //   user?.contestant_id,
   //   refetch,
   //   refechUser, // Added this missing dependency
@@ -387,7 +380,7 @@ const [contestantOptions, setContestantOptions] = useState<{[key: string]: any}>
   useEffect(() => {
     if (!isConnected) return;
 
-    const handler = (receivedMessage: any) => {
+    const handleMQTTMessage = (receivedMessage: any) => {
     
 
       // Handle prep page event
@@ -534,16 +527,19 @@ const [contestantOptions, setContestantOptions] = useState<{[key: string]: any}>
       }
     };
 
-    onMessage(handler);
+  if (isConnected) {
+      addMessageListener(handleMQTTMessage);
+    }
 
     return () => {
-      if (isConnected) {
-        onMessage(null);
-      }
+      removeMessageListener(handleMQTTMessage);
     };
+
+
   }, [
     isConnected,
-    onMessage,
+    addMessageListener,
+    removeMessageListener,
     user?.contestant_id,
     refetch,
     refechUser, // Added this missing dependency
