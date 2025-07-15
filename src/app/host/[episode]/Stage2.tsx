@@ -354,7 +354,7 @@ export default function Stage2Questions({
                 )}
 
             </div>
-            )
+            
         </div>
     )
 }

@@ -1,33 +1,24 @@
 import Logo from "@/app/icons/Logo";
-import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import React, { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import NumberCardContainer from "@/app/shared/NumberContainer";
 import { cn } from "@/utils/classNames";
 import CheckIcon from "@/app/icons/CheckIcon";
-import { tokenStorage } from "@/utils/auth";
 import { GlowyStrokeText } from "@/components/core";
-import { addCommasToNumber } from "@/utils";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
 import { useGetWalletBalance } from "@/app/components/stages/api/stage1/getbalance";
-import FastestFingerResult from "@/app/components/stages/components/hustle/FastestFingerResult";
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
-import StageOneTally from "@/app/components/stages/components/hustle/StageOneTally";
 import StageTwoGetReadyStage from "./StageTwoGetReadyStage";
 import { useParams } from "next/navigation";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import ErrorIcon from "@/app/icons/ErrorIcon";
 import { formatAmount } from "@/utils/currency";
 import HustleBoardStageTallyPage from "../HustleBoardStageTally";
-import HustleBoardModal from "../modals/HustleBoardModal";
-import HustleRevealResult from "../modals/HustleRevealResult";
 import HustleQuestionAnswerModal from "../modals/HustleQuestionAnswer";
 import AnimatedText from "@/app/shared/AnimatedText";
-import Image from "next/image";
-import { contestantImages } from "@/app/components/stages/components/mocks/contestantImages";
 
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
 
@@ -48,6 +39,31 @@ const convertOptionToLetter = (option: string | null): string => {
 
 interface prop {
   onNext: () => void;
+}
+
+// Type definitions
+interface ContestantSelection {
+  contestant_id: string;
+  contestant_name: string;
+  selected_option: string;
+  is_selected: boolean;
+  timestamp: string;
+  question_id?: string;
+}
+
+interface Contestant {
+  id: string | number;
+  name: string;
+  eliminated_stage: any;
+}
+
+interface MQTTPayload {
+  contestant_id: string;
+  contestant_name: string;
+  selected_option: string;
+  is_selected: boolean;
+  timestamp: string;
+  question_id: string;
 }
 const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
   const { isConnected, onMessage } = useMQTT();
@@ -71,9 +87,7 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [completedQuestions, setCompletedQuestions] = useState<Set<number>>(
-    new Set()
-  );
+ 
   const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(
     new Set()
   );
@@ -136,15 +150,36 @@ useEffect(() => {
   };
 }, [timerActive, timeLeft, currentQuestionIndex]);
 
-// Update the real-time timestamp counting useEffect
+// 2. Timer start handler - Records when question timer begins
+const handleStartTimer = () => {
+  setTimerActive(true);
+  setTimeLeft(10);
+  const startTime = Date.now();
+  setQuestionStartTime(startTime);
+  setCurrentTimestamp(0);
+  
+  // ❌ REMOVE THIS LINE - Don't clear contestant timestamps on new questions
+  // setContestantTimestamps({});
+};
+
+// 2. Update the resetTimerState function - Only clear on question change
+const resetTimerState = () => {
+  setTimerActive(false);
+  setTimeLeft(10);
+  setQuestionStartTime(null);
+  setCurrentTimestamp(0);
+  // Only clear timestamps when actually resetting for new question
+  setContestantTimestamps({});
+};
+// 3. Real-time timestamp tracking - Updates every 100ms
 useEffect(() => {
   let interval: NodeJS.Timeout;
   
   if (timerActive && questionStartTime) {
     interval = setInterval(() => {
       const now = Date.now();
-      const elapsed = (now - questionStartTime) / 1000;
-      setCurrentTimestamp(Math.min(elapsed, 10)); // Cap at 10 seconds
+      const elapsed = (now - questionStartTime) / 1000; // Convert to seconds
+      setCurrentTimestamp(Math.min(elapsed, 10)); // Cap at 10 seconds max
     }, 100); // Update every 100ms for smooth counting
   }
   
@@ -153,25 +188,7 @@ useEffect(() => {
   };
 }, [timerActive, questionStartTime]);
 
-// Update the handleStartTimer function
-const handleStartTimer = () => {
-  setTimerActive(true);
-  setTimeLeft(10); // Start countdown from 10
-  const startTime = Date.now();
-  setQuestionStartTime(startTime);
-  setCurrentTimestamp(0);
-  // Clear previous timestamps when new question starts
-  setContestantTimestamps({});
-};
 
-// Update the resetTimerState function
-const resetTimerState = () => {
-  setTimerActive(false);
-  setTimeLeft(10); // Reset to 10 seconds
-  setQuestionStartTime(null);
-  setContestantTimestamps({});
-  setCurrentTimestamp(0);
-};
 
 const isQuestionAttempted = (idx: number) => {
     return idx < currentQuestionIndex;
@@ -281,41 +298,72 @@ const isQuestionAttempted = (idx: number) => {
       }
 
       // Handle timer end event - mark question as attempted when time elapses
+if (receivedMessage?.event === "game_s2_question_reveal") {
+  setShowStage2Prep(false);
+
+  const payload: any = receivedMessage.payload || {};
+  const questionData: any = payload.data || {};
+
+  setMqttQuestionData(questionData?.question);
+
+  // Only reset timer state, not contestant data
+  setTimerActive(false);
+  setTimeLeft(10);
+  setQuestionStartTime(null);
+  setCurrentTimestamp(0);
+  
+  setCorrectAnswer(null);
+  setMqttAnswerData(null);
+  setShowResultModal(false);
+  setCurrentQuestionAnswerData(null);
+  
+  // ✅ Only clear contestant options for NEW questions
+  setContestantOption({});
+  setContestantTimestamps({}); // Clear timestamps for new question
+  
+  setCurrentQuestionIndex(questionData?.index);
+
+  const questionId: string | undefined = questionData?.question?.question_id;
+  if (questionId) {
+    setCurrentQuestionId(questionId.toString());
+  }
+}
+
+// 7. Update the timer end handler with proper TypeScript types
 if (receivedMessage?.event === "game_s2_timer_end") {
   console.log("✅ Processing game_s2_timer_end");
   setTimerActive(false);
-  setTimeLeft(0); // Set timer to 0 when it ends
+  setTimeLeft(0);
   
-  // Mark current question as attempted when timer ends
   setAttemptedQuestions(
-    (prev) => new Set([...prev, currentQuestionIndex])
+    (prev: Set<number>) => new Set([...prev, currentQuestionIndex])
   );
   
   // Set timestamp to 10.000 for contestants who didn't answer
-  setContestantOption(prevOpt => {
-    const updatedOpt = { ...prevOpt };
+  setContestantOption((prevOpt: {[contestantId: string]: ContestantSelection}) => {
+    const updatedOpt: {[contestantId: string]: ContestantSelection} = { ...prevOpt };
     
-    // Get remaining contestants for current question
-    remainingContestants?.forEach(contestant => {
-      const contestantId = contestant.id;
-      const existingOption = updatedOpt[contestantId];
+    remainingContestants?.forEach((contestant) => {
+      const contestantId: string = String(contestant.id);
+      const existingOption: ContestantSelection | undefined = updatedOpt[contestantId];
       
-      // If contestant didn't answer or didn't select an option
       if (!existingOption || !existingOption.is_selected) {
         updatedOpt[contestantId] = {
-          contestant_id: String(contestantId),
+          contestant_id: contestantId,
           contestant_name: String(contestant.name),
           selected_option: existingOption?.selected_option || '',
           is_selected: false,
-          timestamp: "10.000", // 10 seconds for non-answered
+          timestamp: "10.000",
           question_id: String(currentQuestionId),
         };
       }
     });
     
+    console.log("📊 Updated non-answered contestants timestamps:", updatedOpt);
     return updatedOpt;
   });
 }
+
 
       // Handle results reveal event
       if (receivedMessage?.event === "game_s2_results_reveal") {
@@ -326,9 +374,8 @@ if (receivedMessage?.event === "game_s2_timer_end") {
       if (receivedMessage?.event === "game_s2_debit_wallet") {
         refetch();
       }
-  // Update the contestant_selected_option handler in the MQTT useEffect
 if (receivedMessage?.event === "contestant_selected_option") {
-  const payload = receivedMessage.payload || {};
+  const payload: MQTTPayload = receivedMessage.payload || {};
   const {
     contestant_id,
     contestant_name,
@@ -339,36 +386,45 @@ if (receivedMessage?.event === "contestant_selected_option") {
   } = payload;
 
   if (contestant_id && contestant_name && selected_option !== undefined) {
-    // Only update options for the current question
     if (question_id === currentQuestionId) {
-      // Play sound effect for option selection
       playOptionSelectedSound();
       
-      // Calculate timestamp if timer is active and question has started
-      let calculatedTimestamp = 0;
+      let calculatedTimestamp: number = 0;
+      let formattedTimestamp: string = "0.000";
+      
       if (questionStartTime && is_selected) {
-        const answerTime = Date.now();
-        calculatedTimestamp = (answerTime - questionStartTime) / 1000; // Convert to seconds
+        const answerTime: number = Date.now();
+        calculatedTimestamp = Math.min((answerTime - questionStartTime) / 1000, 10);
+        formattedTimestamp = calculatedTimestamp.toFixed(3);
         
-        // Store the timestamp for this contestant
-        setContestantTimestamps(prev => ({
+        // ✅ IMPORTANT: Store the timestamp - this prevents reset
+        setContestantTimestamps((prev: {[contestantId: string]: number}) => ({
           ...prev,
           [contestant_id]: calculatedTimestamp
         }));
+      } else if (!is_selected) {
+        formattedTimestamp = "0.000";
       }
       
-      setContestantOption((prevOpt) => {
-        const updatedBids = {
+      setContestantOption((prevOpt: {[contestantId: string]: ContestantSelection}) => {
+        const updatedBids: {[contestantId: string]: ContestantSelection} = {
           ...prevOpt,
           [contestant_id]: {
             contestant_id,
             contestant_name,
             selected_option,
             is_selected,
-            timestamp: calculatedTimestamp.toFixed(3), // Store calculated timestamp with 3 decimal places
+            timestamp: formattedTimestamp, // This timestamp should be preserved
             question_id,
           },
         };
+
+        console.log(`📊 Updated contestant ${contestant_name} option:`, {
+          selected_option,
+          is_selected,
+          timestamp: formattedTimestamp,
+          calculatedTime: calculatedTimestamp
+        });
 
         return updatedBids;
       });
@@ -380,12 +436,10 @@ if (receivedMessage?.event === "contestant_selected_option") {
       }
     };
 
-    console.log("🔄 Registering MQTT handler for view-only mode");
     onMessage(handler);
 
     return () => {
       if (isConnected) {
-        console.log("🧹 Cleaning up MQTT message handler");
         onMessage(null);
       }
     };
@@ -441,6 +495,31 @@ if (receivedMessage?.event === "contestant_selected_option") {
   const  remainingContestants = contestantData?.data?.filter(
     (contestant) => contestant.eliminated_stage === null
   );
+
+  // 3. Fix the timestamp display logic in the contestant cards
+const getDisplayTimestamp = (
+  contestant: any, 
+  contestantSelection: any | undefined, 
+  hasSelected: any
+): string => {
+  // Priority 1: If contestant has answered, show their frozen timestamp
+  if (hasSelected && contestantSelection?.timestamp) {
+    return contestantSelection.timestamp;
+  }
+  
+  // Priority 2: If timer is active and contestant hasn't answered, show live counting
+  if (timerActive && questionStartTime && !hasSelected) {
+    return currentTimestamp.toFixed(3);
+  }
+  
+  // Priority 3: If timer ended and contestant didn't answer, show 0.000
+  if (!timerActive && !hasSelected) {
+    return "0.000";
+  }
+  
+  // Fallback
+  return "0.000";
+};
 
   return (
     <div className="grid grid-cols-[1fr_5fr_1fr] h-full">
@@ -631,24 +710,13 @@ if (receivedMessage?.event === "contestant_selected_option") {
               <div className="grid mt-5 gap-14 grid-cols-[1fr_3fr_1fr] items-start">
                 {/* Question numbers sidebar - Updated to show attempted questions */}
                
-            <div className="flex flex-col gap-4 w-full">
-  {remainingContestants?.slice(0,2)?.map((contestant, index: number) => {
-  const contestantSelection = contestantOption[contestant?.id];
-  const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
-  
-  // Calculate display timestamp
-  let displayTimestamp = "0.000";
-  
-  if (hasSelected && contestantSelection?.timestamp) {
-    // Contestant has answered - show their frozen timestamp
-    displayTimestamp = contestantSelection.timestamp;
-  } else if (timerActive && questionStartTime) {
-    // Timer is active and contestant hasn't answered - show live counting
-    displayTimestamp = currentTimestamp.toFixed(3);
-  } else if (!timerActive && !hasSelected) {
-    // Timer ended and contestant didn't answer
-    displayTimestamp = "0.00";
-  }
+          <div className="flex flex-col gap-4 w-full">
+  {remainingContestants?.slice(0,2)?.map((contestant, index) => {
+    const contestantSelection = contestantOption[contestant?.id];
+    const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
+    
+    // Use the fixed display timestamp function
+    const displayTimestamp = getDisplayTimestamp(contestant, contestantSelection, hasSelected);
     
     return (
       <div
@@ -683,7 +751,60 @@ if (receivedMessage?.event === "contestant_selected_option") {
         <p className="text-white text-opacity-70 text-base">
           Status:
           <span className="text-white text-opacity-100">
-            {hasSelected ? " answered" : " "}
+            {hasSelected ? " answered" : " waiting"}
+          </span>
+        </p>
+        <p className="text-white text-opacity-70 text-base">
+          Timestamp:
+          <span className="text-white text-opacity-100">
+            {displayTimestamp}s
+          </span>
+        </p>
+      </div>
+    );
+  })}
+</div><div className="flex flex-col gap-4 w-full">
+  {remainingContestants?.slice(0,2)?.map((contestant, index: number) => {
+    const contestantSelection: ContestantSelection | undefined = contestantOption[contestant?.id];
+    const hasSelected: boolean = !!(contestantSelection?.is_selected && contestantSelection?.selected_option);
+    
+    // Use the fixed display timestamp function
+    const displayTimestamp: string = getDisplayTimestamp(contestant, contestantSelection, hasSelected);
+    
+    return (
+      <div
+        key={`left-${contestant?.id}`}
+        className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${
+          hasSelected 
+            ? 'bg-[#04DA6A] text-white' 
+            : 'bg-[#160036] text-white'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <p className="text-2xl">{contestant.name?.split(" ")[0]} </p>
+          {hasSelected && (
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ 
+                scale: 1, 
+                rotate: 0,
+                transition: {
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 10
+                }
+              }}
+              className="ml-auto"
+            >
+              <CheckIcon size={24} />
+            </motion.div>
+          )}
+        </div>
+       
+        <p className="text-white text-opacity-70 text-base">
+          Status:
+          <span className="text-white text-opacity-100">
+            {hasSelected ? " answered" : " waiting"}
           </span>
         </p>
         <p className="text-white text-opacity-70 text-base">
@@ -760,24 +881,9 @@ if (receivedMessage?.event === "contestant_selected_option") {
                           <div className="py-4 pb-8">
                           <AnimatedText text={mqttQuestionData?.question ||
                               "Waiting for question..."}
-                              
                               />
-
                           </div>
-                          {/* <motion.h2
-                            key={mqttQuestionData?.question}
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -30 }}
-                            transition={{ duration: 0.6 }}
-                            className={cn(
-                              `text-white ${fontSize} text-center mb-10 font-gilroyMedium font-extrabold`
-                            )}
-                            ref={textRef}
-                          >
-                            {mqttQuestionData?.question ||
-                              "Waiting for question..."}
-                          </motion.h2> */}
+                          
                         </AnimatePresence>
 
                         <div className="flex absolute -bottom-11 justify-center items-center w-full gap-4">
@@ -1053,39 +1159,19 @@ if (receivedMessage?.event === "contestant_selected_option") {
                       />
                     )}
     
-                    {/* Results sidebar */}
-                    {/* <div className="">
-                      <FastestFingerResult
-                        resultArray={mqttAnswerData}
-                        mqttAnswerData={mqttAnswerData}
-                        timeElapsed={timeLeft <= 0 || !timerActive}
-                        currentQuestionId={currentQuestionId}
-                        
-                      />
-                    </div> */}
+                   
                   </>
                 )}
 </>
   
 
- <div className="flex flex-col gap-4 w-full">
-  {remainingContestants?.slice(-2)?.map((contestant, index: number) => {
-  const contestantSelection = contestantOption[contestant?.id];
-  const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
-  
-  // Calculate display timestamp
-  let displayTimestamp = "0.000";
-  
-  if (hasSelected && contestantSelection?.timestamp) {
-    // Contestant has answered - show their frozen timestamp
-    displayTimestamp = contestantSelection.timestamp;
-  } else if (timerActive && questionStartTime) {
-    // Timer is active and contestant hasn't answered - show live counting
-    displayTimestamp = currentTimestamp.toFixed(3);
-  } else if (!timerActive && !hasSelected) {
-    // Timer ended and contestant didn't answer
-    displayTimestamp = "0.000";
-  }
+<div className="flex flex-col gap-4 w-full">
+  {remainingContestants?.slice(-2)?.map((contestant, index) => {
+    const contestantSelection = contestantOption[contestant?.id];
+    const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
+    
+    // Use the fixed display timestamp function
+    const displayTimestamp = getDisplayTimestamp(contestant, contestantSelection, hasSelected);
     
     return (
       <div
@@ -1120,7 +1206,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
         <p className="text-white text-opacity-70 text-base">
           Status:
           <span className="text-white text-opacity-100">
-            {hasSelected ? " answered" : " "}
+            {hasSelected ? " answered" : " waiting"}
           </span>
         </p>
         <p className="text-white text-opacity-70 text-base">
