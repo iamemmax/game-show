@@ -527,7 +527,7 @@ import RafflePickReveal from "../components/stage4/RafflePickReveal";
 
 const LOCAL_STORAGE_KEY = "hustle_board_last_step";
 
-const ContestantHomePage = () => {
+const HustleBoard = () => {
   const params = useParams()
   const [step, setStep] = useState<number | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -855,4 +855,4 @@ const motionProps = {
   },
 };
 
-export default ContestantHomePage;
+export default HustleBoard;

@@ -2,7 +2,6 @@
 
 import { useParams } from "next/navigation"
 import { useState, useEffect, useCallback } from "react"
-import Link from "next/link"
 import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMQTT } from "@/hooks/useMqttService"
@@ -12,14 +11,16 @@ import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import Stage1Questions from "./Stage1"
 import Stage2Questions from "./Stage2"
 import Stage4 from "./Stage4"
+import { STEP_PROGRESSION, UNIVERSAL_GAME_STEPS, UniversalGameStep } from "@/constants"
+import { GameHeartbeat } from "@/components/gameplay/Heartbeat"
 
 export default function HostPage() {
     const params = useParams()
     const gameId = params.episode as string
     const { mutate: notifyBackendStartTimer } = useNotifyBackendStartQuestionTimer()
-
     const { isConnected, sendMessage, onMessage } = useMQTT()
     const [activeStage, setActiveStage] = useState<string>("stage1")
+    const [currentUniversalStep, setCurrentUniversalStep] = useState<UniversalGameStep>(UNIVERSAL_GAME_STEPS.GAME_SETUP)
     const [gameState, setGameState] = useState<{
         currentStage: string
         status: string
@@ -40,50 +41,140 @@ export default function HostPage() {
     const [isSending, setIsSending] = useState(false)
     const [messageLog, setMessageLog] = useState<Array<{ type: string; message: string; timestamp: string }>>([])
 
+
     const {
         data: contestantsData,
         isLoading: isLoadingContestants,
         refetch: refetchContestants,
     } = useGetGameContestants(Number.parseInt(gameId))
 
-    // Handle incoming messages
-    useEffect(() => {
-        const handleMessage = (message: any) => {
-            console.log("Received message:", message)
 
-            // Add to message log
-            setMessageLog((prev) => [
-                ...prev,
-                {
-                    type: "received",
-                    message: JSON.stringify(message),
-                    timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
-                },
-            ])
-
-            // Update game state based on message
-            if (message.event === "game_general_update") {
-                setGameState((prevState) => ({
-                    ...prevState,
-                    ...message.payload,
+    // Update game state based on universal step
+    const updateGameStateFromUniversalStep = (step: UniversalGameStep) => {
+        switch (step) {
+            case UNIVERSAL_GAME_STEPS.GAME_SETUP:
+                setGameState((prev) => ({
+                    ...prev,
+                    status: "IN_PROGRESS",
+                    currentStage: "STAGE_ONE",
+                    currentStageStep: "init",
                 }))
-            }
-
-            // Show toast notification
-            toast.success(`Received: ${message.event || "Message"}`)
+                break
+            case UNIVERSAL_GAME_STEPS.GAME_START:
+                setGameState((prev) => ({
+                    ...prev,
+                    status: "IN_PROGRESS",
+                    currentStage: "STAGE_ONE",
+                    currentStageStep: "start",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE1_INIT:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStage: "STAGE_ONE",
+                    currentStageStep: "init",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "hustle_pick",
+                    currentStage: "STAGE_ONE",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_REVEAL:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "hustle_reveal",
+                    currentStage: "STAGE_ONE",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS_PREP:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "prep_questions",
+                    currentStage: "STAGE_ONE",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "questions",
+                    showQuestions: true,
+                    currentStage: "STAGE_ONE",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "question_reveal",
+                    currentStage: "STAGE_ONE",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "timer_running",
+                    currentStage: "STAGE_ONE",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "bids_reveal",
+                    currentStage: "STAGE_ONE",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE1_RESULTS:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "results",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE2_INIT:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStage: "STAGE_TWO",
+                    currentStageStep: "init",
+                    
+                }))
+                setActiveStage("stage2")
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE2_PREP:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "prep_questions",
+                    currentStage: "STAGE_TWO",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "questions",
+                    showQuestions: true,
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE3_INIT:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStage: "STAGE_THREE",
+                    currentStageStep: "init",
+                }))
+                setActiveStage("stage3")
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE4_INIT:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStage: "STAGE_FOUR",
+                    currentStageStep: "init",
+                }))
+                setActiveStage("stage4")
+                break
+            default:
+                break
         }
+    }
 
-        if (isConnected) {
-            onMessage(handleMessage)
-            refetchContestants()
-        }
-
-        return () => {
-            if (isConnected) {
-                onMessage(null)
-            }
-        }
-    }, [isConnected, onMessage, refetchContestants])
 
     // Initialize game data when contestants data is loaded
     useEffect(() => {
@@ -104,13 +195,17 @@ export default function HostPage() {
                         ...prevState,
                         currentStageStep: "start",
                     }))
+                    setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP)
                 }
             } else if (contestantsData.game.stage?.includes("STAGE_TWO")) {
                 setActiveStage("stage2")
+                setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_INIT)
             } else if (contestantsData.game.stage?.includes("STAGE_THREE")) {
                 setActiveStage("stage3")
+                setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_INIT)
             } else if (contestantsData.game.stage?.includes("STAGE_FOUR")) {
                 setActiveStage("stage4")
+                setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
             }
         }
     }, [contestantsData, isLoadingContestants])
@@ -122,14 +217,15 @@ export default function HostPage() {
                 toast.error("Not connected to server")
                 return
             }
-
             setIsSending(true)
-
             try {
                 const message = {
                     event: eventCode,
                     payload: {
                         game_episode: Number.parseInt(gameId),
+                        current_universal_step: eventCode,
+                        new_universal_step: eventCode,
+                        source: "host",
                         ...data,
                     },
                 }
@@ -146,153 +242,9 @@ export default function HostPage() {
 
                 await sendMessage(message)
                 refetchContestants()
-                toast.success(`Sent: ${eventCode}`)
 
-                // Update local game state based on action
-                if (eventCode === "game_start") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        status: "IN_PROGRESS",
-                        lastAction: "game_start",
-                        currentStage: "STAGE_ONE",
-                        currentStageStep: "init",
-                    }))
-                } else if (eventCode === "game_end") {
-                    setGameState((prev) => ({ ...prev, status: "IS_COMPLETED", lastAction: "game_end" }))
-                } else if (eventCode === "game_s1_init") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        currentStage: "STAGE_ONE",
-                        lastAction: "game_s1_init",
-                        currentStageStep: "hustle_pick",
-                    }))
-                } else if (eventCode === "game_s1_hustle_pick_time_elapse") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "game_s1_hustle_pick_time_elapse",
-                        currentStageStep: "hustle_reveal",
-                    }))
-                } else if (eventCode === "game_s1_hustle_reveal") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "game_s1_hustle_reveal",
-                        currentStageStep: "prep_questions",
-                    }))
-                } else if (eventCode === "game_s1_questions_prep") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "game_s1_questions_prep",
-                        currentStageStep: "questions",
-                        showQuestions: true,
-                    }))
-                } else if (eventCode == "game_s1_question_reveal") {
-                    const questionNumber = Number.parseInt(eventCode.split("_").pop() || "0")
-                    setGameState((prev) => ({
-                        ...prev,
-                        currentQuestion: questionNumber,
-                        lastAction: eventCode,
-                        currentStageStep: "question_reveal",
-                    }))
-                } else if (eventCode.includes("game_s1_timer_start")) {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: eventCode,
-                        currentStageStep: "timer_running",
-                    }))
-                } else if (eventCode === "question_s1_time_elapsed") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "question_s1_time_elapsed",
-                        currentStageStep: "questions",
-                    }))
-                } else if (eventCode === "game_s1_question_bids_reveal") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: eventCode,
-                        currentStageStep: "questions",
-                    }))
-                } else if (eventCode === "game_s1_results_reveal") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "game_s1_results_reveal",
-                        currentStageStep: "init",
-                        currentStage: "STAGE_TWO",
-                    }))
-                } else if (eventCode === "game_s2_init") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "game_s2_init",
-                        currentStageStep: "prep_questions",
-                    }))
-                } else if (eventCode === "game_s2_prep") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "game_s2_questions_prep",
-                        currentStageStep: "questions",
-                        showQuestions: true,
-                    }))
-                } else if (eventCode == "game_s2_question_reveal") {
-                    const questionNumber = Number.parseInt(eventCode.split("_").pop() || "0")
-                    setGameState((prev) => ({
-                        ...prev,
-                        currentQuestion: questionNumber,
-                        lastAction: eventCode,
-                        currentStageStep: "question_reveal",
-                    }))
-                } else if (eventCode.includes("game_s2_timer_start")) {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: eventCode,
-                        currentStageStep: "timer_running",
-                    }))
-                } else if (eventCode === "question_s2_time_elapsed") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "question_s2_time_elapsed",
-                        currentStageStep: "questions",
-                    }))
-                }
-                else if (eventCode === "game_s2_question_options_select_reveal") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: eventCode,
-                        currentStageStep: "questions",
-                    }))
-                }
-                else if (eventCode === "game_s2_results_reveal") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "game_s2_results_reveal",
-                        currentStageStep: "init",
-                        currentStage: "STAGE_THREE",
-                    }))
-                }
-                else if (eventCode === "game_s3_init") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "game_s3_init",
-                        currentStageStep: "prep_dud_opportunity_pick",
-                    }))
-                } else if (eventCode === "game_s3_prep") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "game_s3_dud_opportunity_prep",
-                        currentStageStep: "start_dud_opportunity_pick",
-                        showQuestions: true,
-                    }))
-
-                } else if (eventCode === "game_s3_start") {
-                    setGameState((prev) => ({
-                        ...prev,
-                        lastAction: "start_dud_opportunity_pick",
-                        currentStageStep: "game_s3_end",
-                        showQuestions: true,
-                    }))
-                }
-                // Add other stage handlers here...
-                else {
-                    setGameState((prev) => ({ ...prev, lastAction: eventCode }))
-                }
+                // Update local game state and universal step based on action
+                updateLocalStateAfterAction(eventCode)
             } catch (error) {
                 console.error("Failed to send message:", error)
                 toast.error("Failed to send message")
@@ -300,22 +252,192 @@ export default function HostPage() {
                 setIsSending(false)
             }
         },
-        [isConnected, sendMessage, gameId, refetchContestants],
+        [isConnected, sendMessage, gameId, refetchContestants, currentUniversalStep],
     )
+
+    // Update local state after sending an action
+    const updateLocalStateAfterAction = (eventCode: string) => {
+        if(!eventCode) return
+        if (eventCode === "game_start") {
+            setGameState((prev) => ({
+                ...prev,
+                status: "IN_PROGRESS",
+                lastAction: "game_start",
+                currentStage: "STAGE_ONE",
+                currentStageStep: "init",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_INIT)
+        } else if (eventCode === "game_end") {
+            setGameState((prev) => ({ ...prev, status: "IS_COMPLETED", lastAction: "game_end" }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_END)
+        } else if (eventCode === "game_s1_init") {
+            setGameState((prev) => ({
+                ...prev,
+                currentStage: "STAGE_ONE",
+                lastAction: "game_s1_init",
+                currentStageStep: "hustle_pick",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK)
+        } else if (eventCode === "game_s1_hustle_pick_time_elapse") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "game_s1_hustle_pick_time_elapse",
+                currentStageStep: "hustle_reveal",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_REVEAL)
+        } else if (eventCode === "game_s1_hustle_reveal") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "game_s1_hustle_reveal",
+                currentStageStep: "prep_questions",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS_PREP)
+        } else if (eventCode === "game_s1_questions_prep") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "game_s1_questions_prep",
+                currentStageStep: "questions",
+                showQuestions: true,
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS)
+        } else if (eventCode == "game_s1_question_reveal") {
+            const questionNumber = Number.parseInt(eventCode.split("_").pop() || "0")
+            setGameState((prev) => ({
+                ...prev,
+                currentQuestion: questionNumber,
+                lastAction: eventCode,
+                currentStageStep: "question_reveal",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL)
+        } else if (eventCode.includes("game_s1_timer_start")) {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: eventCode,
+                currentStageStep: "timer_running",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING)
+        } else if (eventCode === "question_s1_time_elapsed") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "question_s1_time_elapsed",
+                currentStageStep: "questions",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS)
+        } else if (eventCode === "game_s1_question_bids_reveal") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: eventCode,
+                currentStageStep: "questions",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL)
+        } else if (eventCode === "game_s1_results_reveal") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "game_s1_results_reveal",
+                currentStageStep: "init",
+                currentStage: "STAGE_TWO",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_INIT)
+        } else if (eventCode === "game_s2_init") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "game_s2_init",
+                currentStageStep: "prep_questions",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_PREP)
+        } else if (eventCode === "game_s2_prep") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "game_s2_questions_prep",
+                currentStageStep: "questions",
+                showQuestions: true,
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS)
+        } else if (eventCode == "game_s2_question_reveal") {
+            const questionNumber = Number.parseInt(eventCode.split("_").pop() || "0")
+            setGameState((prev) => ({
+                ...prev,
+                currentQuestion: questionNumber,
+                lastAction: eventCode,
+                currentStageStep: "question_reveal",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_REVEAL)
+        } else if (eventCode.includes("game_s2_timer_start")) {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: eventCode,
+                currentStageStep: "timer_running",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_TIMER_RUNNING)
+        } else if (eventCode === "question_s2_time_elapsed") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "question_s2_time_elapsed",
+                currentStageStep: "questions",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS)
+        } else if (eventCode === "game_s2_question_options_select_reveal") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: eventCode,
+                currentStageStep: "questions",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_OPTIONS_REVEAL)
+        } else if (eventCode === "game_s2_results_reveal") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "game_s2_results_reveal",
+                currentStageStep: "init",
+                currentStage: "STAGE_THREE",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_INIT)
+        } else if (eventCode === "game_s3_init") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "game_s3_init",
+                currentStageStep: "prep_dud_opportunity_pick",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PREP)
+        } else if (eventCode === "game_s3_prep") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "game_s3_dud_opportunity_prep",
+                currentStageStep: "start_dud_opportunity_pick",
+                showQuestions: true,
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START)
+        } else if (eventCode === "game_s3_start") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: "start_dud_opportunity_pick",
+                currentStageStep: "game_s3_end",
+                showQuestions: true,
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_END)
+        }
+        // Add other stage handlers here...
+        else {
+            setGameState((prev) => ({ ...prev, lastAction: eventCode }))
+        }
+    }
 
     // Game control functions
     const { mutate: gameStartMutation, isLoading: isStartingGame } = useStartGame()
     const startGame = () => {
-        gameStartMutation({ game_episode: gameId }, {
-            onSuccess() {
-                sendGameMessage("game_start", { start_time: new Date().toISOString() })
+        gameStartMutation(
+            { game_episode: gameId },
+            {
+                onSuccess() {
+                    sendGameMessage("game_start", { start_time: new Date().toISOString() })
+                },
+                onError(error) {
+                    console.error("Error starting game:", error)
+                    toast.error("Failed to start game")
+                },
             },
-            onError(error) {
-                console.error("Error starting game:", error)
-                toast.error("Failed to start game")
-            },
-        })
+        )
     }
+
     const endGame = () => sendGameMessage("game_end")
 
     //////////////////////////////
@@ -324,13 +446,17 @@ export default function HostPage() {
     //////////////////////////////
     //////////////////////////////
     const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
+
     const { mutate: handleTimeElapse } = useHandleHustlePickTimeElapse()
     const endTimerHustlePick = () => {
-        handleTimeElapse({ game_episode: gameId }, {
-            onSuccess() {
-                sendGameMessage("game_s1_hustle_pick_time_elapse")
-            }
-        },)
+        handleTimeElapse(
+            { game_episode: gameId },
+            {
+                onSuccess() {
+                    sendGameMessage("game_s1_hustle_pick_time_elapse")
+                },
+            },
+        )
     }
 
     const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
@@ -340,7 +466,6 @@ export default function HostPage() {
     const handleQuestionComplete = (questionId: number) => {
         // Logic to handle when a question is completed
         console.log(`Question ${questionId} completed`)
-
         // Update game state to show we're ready for the next question
         setGameState((prev) => ({
             ...prev,
@@ -355,16 +480,20 @@ export default function HostPage() {
     //////////////////////////////
     const { mutate: handleInitStage2 } = useInitStage2()
     const initStage2 = () => {
-        handleInitStage2({ game_episode: gameId }, {
-            onSuccess() {
-                sendGameMessage("game_s2_init", { start_time: new Date().toISOString() })
+        handleInitStage2(
+            { game_episode: gameId },
+            {
+                onSuccess() {
+                    sendGameMessage("game_s2_init", { start_time: new Date().toISOString() })
+                },
+                onError(error) {
+                    console.error("Error initializing stage 2:", error)
+                    toast.error("Failed to initialize stage 2")
+                },
             },
-            onError(error) {
-                console.error("Error initializing stage 2:", error)
-                toast.error("Failed to initialize stage 2")
-            },
-        })
+        )
     }
+
     const prepStage2Questions = () => sendGameMessage("game_s2_prep")
 
     // Handle timer start
@@ -384,28 +513,31 @@ export default function HostPage() {
     const initStage3 = () => sendGameMessage("game_s3_init", { start_time: new Date().toISOString() })
     const prepStage3Picks = () => sendGameMessage("game_s3_prep")
     const startStage3Picks = () => sendGameMessage("game_s3_start")
+
     const { mutate: endStageThree, isLoading: isEndingStage3 } = useEndStageThree()
     const handleEndStageThree = () => {
-        endStageThree({ episode: gameId }, {
-            onSuccess() {
-                sendGameMessage("game_s3_prep", {
-                    episode: gameId,
-                })
-                sendGameMessage("game_s3_end")
-                setGameState((prev) => ({
-                    ...prev,
-                    currentStage: "STAGE_FOUR",
-                    currentStageStep: "init",
-                }))
-
+        endStageThree(
+            { episode: gameId },
+            {
+                onSuccess() {
+                    sendGameMessage("game_s3_prep", {
+                        episode: gameId,
+                    })
+                    sendGameMessage("game_s3_end")
+                    setGameState((prev) => ({
+                        ...prev,
+                        currentStage: "STAGE_FOUR",
+                        currentStageStep: "init",
+                    }))
+                    setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
+                },
+                onError(error) {
+                    console.error("Error ending stage 3:", error)
+                    toast.error("Failed to end stage 3")
+                },
             },
-            onError(error) {
-                console.error("Error ending stage 3:", error)
-                toast.error("Failed to end stage 3")
-            },
-        })
+        )
     }
-
 
     const getStageInfo = () => {
         if (gameState.currentStage.includes("STAGE_ONE")) {
@@ -420,7 +552,6 @@ export default function HostPage() {
         return { title: "Game Setup", subtitle: "PREPARE TO START" }
     }
 
-
     const getStageButtons = () => {
         const { currentStage, currentStageStep } = gameState
 
@@ -434,26 +565,20 @@ export default function HostPage() {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={startGame} color="green">
-                            START GAME
-                            {
-                                isStartingGame && (
-                                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                                )
-                            }
+                            START EPISODE
+                            {isStartingGame && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
                         </TrapeziumButton>
                     </div>
                 )
-            }
-            else if (currentStageStep === "init") {
+            } else if (currentStageStep === "init") {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={initStage1} variant="green">
-                            INITIALIZE STAGE
+                            INITIALIZE HUSTLE PICK
                         </TrapeziumButton>
                     </div>
                 )
-            }
-            else if (currentStageStep === "hustle_pick") {
+            } else if (currentStageStep === "hustle_pick") {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={endTimerHustlePick} variant="yellow">
@@ -496,12 +621,8 @@ export default function HostPage() {
                     </div>
                 )
             }
-
-
             return null
         }
-
-
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
@@ -523,8 +644,7 @@ export default function HostPage() {
                         </div>
                     </div>
                 )
-            }
-            else if (currentStageStep === "prep_questions") {
+            } else if (currentStageStep === "prep_questions") {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={prepStage2Questions} variant="green">
@@ -546,10 +666,7 @@ export default function HostPage() {
                 )
             }
             return null
-
         }
-
-
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
@@ -571,8 +688,7 @@ export default function HostPage() {
                         </div>
                     </div>
                 )
-            }
-            else if (currentStageStep === "prep_dud_opportunity_pick") {
+            } else if (currentStageStep === "prep_dud_opportunity_pick") {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={prepStage3Picks} variant="green">
@@ -588,22 +704,17 @@ export default function HostPage() {
                         </TrapeziumButton>
                     </div>
                 )
-
             } else if (currentStageStep === "game_s3_end") {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={handleEndStageThree} variant="yellow">
-                            END STAGE 3
-                            {isEndingStage3 && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+                            END STAGE 3{isEndingStage3 && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
                         </TrapeziumButton>
                     </div>
                 )
             }
             return null
-
         }
-
-
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
@@ -618,7 +729,7 @@ export default function HostPage() {
                             <div className="flex justify-center items-center">
                                 <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
                             </div>
-                            <p className="text-white mb-4">Prep Stage 2 Questions</p>
+                            <p className="text-white mb-4">Prep Stage 4 Questions</p>
                             {/* <TrapeziumButton onClick={initStage2} variant="orange">
                                 INITIALIZE STAGE 2
                             </TrapeziumButton> */}
@@ -640,7 +751,6 @@ export default function HostPage() {
 
     return (
         <div className="min-h-screen bg-[#1a0b25] text-white bg-[url('/images/host-bg.png')] bg-no-repeat bg-contain bg-center">
-
             {isLoadingContestants ? (
                 <div className="flex flex-col items-center justify-center h-dvh">
                     <Loader2 className="h-12 w-12 text-[#ff00ff] animate-spin mb-4" />
@@ -656,6 +766,11 @@ export default function HostPage() {
             ) : (
                 <main className="container mx-auto py-8 px-4 h-dvh">
                     <div className="flex flex-col items-center h-full justify-center">
+                        {/* Universal Step Indicator */}
+                        <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded text-sm">
+                            Step: {currentUniversalStep}
+                        </div>
+
                         {/* Stage Title */}
                         <div className="relative w-80 h-28 flex items-center justify-center mb-8">
                             <img
@@ -669,7 +784,6 @@ export default function HostPage() {
                             </div>
                         </div>
 
-
                         {/* Contestants */}
                         {!(
                             gameState.currentStage.includes("STAGE_ONE") &&
@@ -680,10 +794,7 @@ export default function HostPage() {
                                 <div className="flex justify-center gap-4 mb-8">
                                     {gameState.contestants.map((contestant, index) => (
                                         <div key={contestant.id} className="relative">
-
-                                            <div className="w-24 h-32 bg-gradient-to-b from-[#9c4dcc] to-[#6a2a8c] clip-path-contestant">
-
-                                            </div>
+                                            <div className="w-24 h-32 bg-gradient-to-b from-[#9c4dcc] to-[#6a2a8c] clip-path-contestant"></div>
                                         </div>
                                     ))}
                                 </div>
@@ -693,8 +804,7 @@ export default function HostPage() {
                         {getStageButtons()}
 
                         {/* Stage 1 Questions Component */}
-                        {
-                            gameState.currentStage.includes("STAGE_ONE") &&
+                        {gameState.currentStage.includes("STAGE_ONE") &&
                             (gameState.currentStageStep === "questions" ||
                                 gameState.currentStageStep === "question_reveal" ||
                                 gameState.currentStageStep === "bids_reveal" ||
@@ -707,12 +817,10 @@ export default function HostPage() {
                                     currentStageStep={gameState.currentStageStep}
                                     lastAction={gameState.lastAction}
                                 />
-                            )
-                        }
+                            )}
 
                         {/* Stage 2 Questions Component */}
-                        {
-                            gameState.currentStage.includes("STAGE_TWO") &&
+                        {gameState.currentStage.includes("STAGE_TWO") &&
                             (gameState.currentStageStep === "questions" ||
                                 gameState.currentStageStep === "question_reveal" ||
                                 gameState.currentStageStep === "timer_running") && (
@@ -724,19 +832,10 @@ export default function HostPage() {
                                     currentStageStep={gameState.currentStageStep}
                                     lastAction={gameState.lastAction}
                                 />
-                            )
-                        }
+                            )}
 
-                        {/* Stage 2 Questions Component */}
-                        {
-                            gameState.currentStage.includes("STAGE_FOUR") &&
-
-                            <Stage4
-                            />
-
-                        }
-
-
+                        {/* Stage 4 Component */}
+                        {gameState.currentStage.includes("STAGE_FOUR") && <Stage4 />}
                     </div>
                 </main>
             )}
@@ -750,24 +849,18 @@ export default function HostPage() {
                     </div>
                 </div>
             )}
+
+            {/* Enhanced Heartbeat Component */}
+            <GameHeartbeat
+                participantId={`host-${gameId}`}
+                participantType="host"
+                participantName="Game Host"
+                currentScreen={gameState.currentStageStep || "init"}
+                currentStep={currentUniversalStep}
+                gameStage={gameState.currentStage || contestantsData?.game.stage || "STAGE_ONE"}
+                setCurrentUniversalStep={setCurrentUniversalStep}
+                updateGameStateFromUniversalStep={updateGameStateFromUniversalStep}
+            />
         </div>
-    )
-}
-
-type StageTabProps = {
-    label: string
-    active?: boolean
-    onClick: () => void
-}
-
-const StageTab = ({ label, active = false, onClick }: StageTabProps) => {
-    return (
-        <button
-            onClick={onClick}
-            className={`px-4 py-2 ${active ? "text-white" : "text-white/50"} 
-                font-medium hover:text-white transition-colors`}
-        >
-            {label}
-        </button>
     )
 }
