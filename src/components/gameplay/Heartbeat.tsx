@@ -3,7 +3,7 @@
 import { SetStateAction, useEffect, useRef } from "react"
 import { useMQTT } from "@/hooks/useMqttService"
 import { UNIVERSAL_GAME_STEPS, UniversalGameStep } from "@/constants"
-interface GameHeartbeatProps {
+interface GameSynchroniserProps {
     participantId: string
     participantType: "contestant" | "host" | "audience"
     participantName: string
@@ -13,14 +13,14 @@ interface GameHeartbeatProps {
     contestantId?: number
     setCurrentUniversalStep: (value: SetStateAction<UniversalGameStep>) => void
     updateGameStateFromUniversalStep: (step: UniversalGameStep) => void
-    
+
 }
 
 /**
- * Enhanced heartbeat component that handles universal step synchronization
+ * component that handles universal step synchronization
  * and bidirectional communication with the super admin dashboard
  */
-export function GameHeartbeat({
+export function GameSynchroniser({
     participantId,
     participantType,
     participantName,
@@ -30,8 +30,8 @@ export function GameHeartbeat({
     contestantId,
     setCurrentUniversalStep,
     updateGameStateFromUniversalStep
-}: GameHeartbeatProps) {
-    const { isConnected, sendMessage, onMessage } = useMQTT()
+}: GameSynchroniserProps) {
+    const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT()
     const lastScreenRef = useRef(currentScreen)
     const lastStepRef = useRef(currentStep)
     const heartbeatIntervalRef = useRef<NodeJS.Timeout>()
@@ -119,7 +119,7 @@ export function GameHeartbeat({
 
     // Listen for commands from super admin
     useEffect(() => {
-        const handleMessage = (message: any) => {
+        const handleMQTTMessage = (message: any) => {
             console.log(message, "heartbeat received message")
 
             switch (message.event) {
@@ -156,9 +156,18 @@ export function GameHeartbeat({
                 case "game_s2_prep":
                     setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_PREP)
                     break
-                case "participant_heartbeat":
+                case "game_s2_question_reveal":
+                    setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_REVEAL)
+                    break
+                case "game_s2_timer_start":
+                    setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_TIMER_RUNNING)
+                    break
+                case "game_s2_results_reveal":
+                    setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_RESULTS)
+                    break
+                case "participant_sync":
                     sendMessage({
-                        event: "participant_heartbeat",
+                        event: "participant_sync",
                         payload: {
                             participant_id: participantId,
                             participant_type: participantType,
@@ -187,9 +196,9 @@ export function GameHeartbeat({
                 case "universal_step_change":
                     console.log("Universal step change received:", message.payload)
                     const { new_universal_step } = message.payload
-                        setCurrentUniversalStep(new_universal_step)                       
-                        updateGameStateFromUniversalStep(new_universal_step)
-         
+                    setCurrentUniversalStep(new_universal_step)
+                    updateGameStateFromUniversalStep(new_universal_step)
+
                     break
 
                 default:
@@ -201,17 +210,17 @@ export function GameHeartbeat({
         }
 
         if (isConnected) {
-            onMessage(handleMessage)
+            addMessageListener(handleMQTTMessage);
         }
 
         return () => {
-            if (isConnected) {
-                onMessage(null)
-            }
-        }
+            removeMessageListener(handleMQTTMessage);
+        };
+
+
     }, [
         isConnected,
-        onMessage,
+        addMessageListener, removeMessageListener,
         participantId,
         participantType,
         participantName,

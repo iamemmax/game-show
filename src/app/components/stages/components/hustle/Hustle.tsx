@@ -24,7 +24,7 @@ interface Prop{
   onNext: () => void
 }
 const Hustle = ({onNext}:Prop) => {
-  const { isConnected, onMessage } = useMQTT();
+  const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const [ShowQuestionScreen, setShowQuestionScreen] = useState(false);
   const router = useRouter();
   const user = tokenStorage.getUser();
@@ -53,7 +53,7 @@ const Hustle = ({onNext}:Prop) => {
   useEffect(() => {
     if (isConnected) {
      
-      const handler = (receivedMessage: any) => {
+      const handleMQTTMessage = (receivedMessage: any) => {
         console.log("Main page received message:", receivedMessage);
         
         // Handle stage transition events
@@ -65,9 +65,17 @@ const Hustle = ({onNext}:Prop) => {
      }
       };
       
-      onMessage(handler);
+      if (isConnected) {
+      addMessageListener(handleMQTTMessage);
     }
-  }, [isConnected, onMessage]);
+
+    return () => {
+      removeMessageListener(handleMQTTMessage);
+    };
+
+
+    }
+  }, [isConnected, addMessageListener, removeMessageListener]);
 
 
   const  contestant = data?.data?.find((contestant) => contestant.contestant_id === user?.contestant_id);

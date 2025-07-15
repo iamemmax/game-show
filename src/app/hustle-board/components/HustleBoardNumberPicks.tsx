@@ -38,7 +38,7 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
   // Use the elimination check hook
 
   // Use the MQTT context
-  const { isConnected, onMessage } = useMQTT();
+  const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const params = useParams()
 
   // Fetch all hustle picks
@@ -147,7 +147,7 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
   // Set up MQTT message handler
   useEffect(() => {
     if (isConnected) {
-      const handler = (receivedMessage: any) => {
+      const handleMQTTMessage = (receivedMessage: any) => {
 
         // Handle proceed to next stage event
         if (
@@ -236,15 +236,17 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
                 }
       };
 
-      // Pass the handler function to onMessage
-      onMessage(handler);
-
-      return () => {
-        // Clean up the message handler when the component unmounts
-        onMessage(null);
-      };
+      if (isConnected) {
+      addMessageListener(handleMQTTMessage);
     }
-  }, [isConnected, onMessage, handleAllHustlePicks, onNext]);
+
+    return () => {
+      removeMessageListener(handleMQTTMessage);
+    };
+
+
+    }
+  }, [isConnected, addMessageListener, removeMessageListener, handleAllHustlePicks, onNext]);
 
   // Add a connection status indicator
   const ConnectionStatus = () => (

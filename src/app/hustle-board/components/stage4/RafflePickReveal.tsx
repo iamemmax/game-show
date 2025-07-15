@@ -65,7 +65,7 @@
 // }
 
 // const RafflePickReveal = () => {
-//   const { isConnected, onMessage } = useMQTT()
+//   const { isConnected } = useMQTT()
 //   const params = useParams()
 //   const episodeId = Number(params?.episodeId || params?.episode)
 
@@ -651,7 +651,7 @@ interface BallPickedResult {
 }
 
 const RafflePickReveal = () => {
-  const { isConnected, onMessage } = useMQTT()
+  const { isConnected, addMessageListener, removeMessageListener } = useMQTT()
   const params = useParams()
   const episodeId = Number(params?.episodeId || params?.episode)
 
@@ -746,7 +746,7 @@ const RafflePickReveal = () => {
 
   // Handle MQTT messages
   useEffect(() => {
-    const handleMessage = (message: BallPickedResult) => {
+    const handleMQTTMessage = (message: BallPickedResult) => {
       if(message.event === "game_s4_start"){
         setShowStage4Prep(false)
       }
@@ -759,17 +759,15 @@ const RafflePickReveal = () => {
         refetch()
       }
     }
-
-    if (isConnected) {
-      onMessage(handleMessage)
+ if (isConnected) {
+      addMessageListener(handleMQTTMessage);
     }
 
     return () => {
-      if (isConnected) {
-        onMessage(null)
-      }
-    }
-  }, [isConnected, onMessage, animateBallReveal])
+      removeMessageListener(handleMQTTMessage);
+    };
+
+  }, [isConnected, addMessageListener, removeMessageListener, animateBallReveal])
 
   // Get ball variant based on state and pre-loaded data
   const getBallVariant = (ballNumber: number): "regular" | "matched" | "mismatched" | "selected" => {

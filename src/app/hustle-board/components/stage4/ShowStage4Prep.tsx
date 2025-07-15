@@ -11,7 +11,6 @@ import RafflePickReveal from "./RafflePickReveal";
 
 // Rename component to match the import in StageOneTally
 const Stage4BoardGetReadyPage = () => {
-  // const { isConnected, onMessage } = useMQTT();
   // const [showCardSRevealBall, setShowCardSRevealBall] = useState(true);
 
   // Animation variants

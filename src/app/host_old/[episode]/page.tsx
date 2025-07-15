@@ -25,7 +25,7 @@ export default function HostPage() {
     const { mutate: notifyBackendStartTimer } = useNotifyBackendStartQuestionTimer()
 
 
-    const { isConnected, sendMessage, onMessage } = useMQTT()
+    const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT()
     const [activeStage, setActiveStage] = useState<string>("stage1")
     const [gameState, setGameState] = useState<{
         currentStage: string;
@@ -51,7 +51,7 @@ export default function HostPage() {
 
     // Handle incoming messages
     useEffect(() => {
-        const handleMessage = (message: any) => {
+        const handleMQTTMessage = (message: any) => {
             console.log("Received message:", message)
 
             // Add to message log
@@ -76,17 +76,18 @@ export default function HostPage() {
             toast.success(`Received: ${message.event || "Message"}`)
         }
 
+     
         if (isConnected) {
-            onMessage(handleMessage)
+            addMessageListener(handleMQTTMessage);
             refetchContestants()
-        }
+    }
 
-        return () => {
-            if (isConnected) {
-                onMessage(null)
-            }
-        }
-    }, [isConnected, onMessage])
+    return () => {
+      removeMessageListener(handleMQTTMessage);
+    };
+
+
+    }, [isConnected, addMessageListener, removeMessageListener, refetchContestants])
 
     // Initialize game data when contestants data is loaded
     useEffect(() => {

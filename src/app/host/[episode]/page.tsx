@@ -11,14 +11,14 @@ import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import Stage1Questions from "./Stage1"
 import Stage2Questions from "./Stage2"
 import Stage4 from "./Stage4"
-import { STEP_PROGRESSION, UNIVERSAL_GAME_STEPS, UniversalGameStep } from "@/constants"
-import { GameHeartbeat } from "@/components/gameplay/Heartbeat"
+import { UNIVERSAL_GAME_STEPS, UniversalGameStep } from "@/constants"
+import { GameSynchroniser } from "@/components/gameplay/Heartbeat"
 
 export default function HostPage() {
     const params = useParams()
     const gameId = params.episode as string
     const { mutate: notifyBackendStartTimer } = useNotifyBackendStartQuestionTimer()
-    const { isConnected, sendMessage, onMessage } = useMQTT()
+    const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT()
     const [activeStage, setActiveStage] = useState<string>("stage1")
     const [currentUniversalStep, setCurrentUniversalStep] = useState<UniversalGameStep>(UNIVERSAL_GAME_STEPS.GAME_SETUP)
     const [gameState, setGameState] = useState<{
@@ -136,7 +136,7 @@ export default function HostPage() {
                     ...prev,
                     currentStage: "STAGE_TWO",
                     currentStageStep: "init",
-                    
+
                 }))
                 setActiveStage("stage2")
                 break
@@ -257,7 +257,7 @@ export default function HostPage() {
 
     // Update local state after sending an action
     const updateLocalStateAfterAction = (eventCode: string) => {
-        if(!eventCode) return
+        if (!eventCode) return
         if (eventCode === "game_start") {
             setGameState((prev) => ({
                 ...prev,
@@ -851,7 +851,7 @@ export default function HostPage() {
             )}
 
             {/* Enhanced Heartbeat Component */}
-            <GameHeartbeat
+            <GameSynchroniser
                 participantId={`host-${gameId}`}
                 participantType="host"
                 participantName="Game Host"

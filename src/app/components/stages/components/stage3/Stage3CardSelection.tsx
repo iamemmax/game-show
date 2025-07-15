@@ -22,7 +22,7 @@ import StageThreeWinnerModal from "../StageThreeWinnerModal";
 
 const Stage3CardSelection = () => {
   const user = tokenStorage.getUser();
-  const { isConnected, sendMessage, onMessage } = useMQTT();
+  const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT();
   const [isEliminated, setIsEliminated] = useState(false);
   const [remainingContestants, setRemainingContestants] = useState<Array<{id: number, name: string}>>([]);
 
@@ -326,7 +326,7 @@ useEffect(() => {
   useEffect(() => {
     if (!isConnected) return;
     
-    const handler = (receivedMessage: any) => {
+    const handleMQTTMessage = (receivedMessage: any) => {
       if (receivedMessage?.event === "stage3_card_selection") {
         const { contestant_id, card_index, card_type: originalCardType, contestant_name } = receivedMessage.payload;
         
@@ -377,8 +377,16 @@ useEffect(() => {
       }
     };
     
-    onMessage(handler);
-  }, [isConnected, onMessage, cards, user?.contestant_id, contestantNames, contestantsData?.data]);
+     if (isConnected) {
+      addMessageListener(handleMQTTMessage);
+    }
+
+    return () => {
+      removeMessageListener(handleMQTTMessage);
+    };
+
+
+  }, [isConnected, addMessageListener, removeMessageListener, cards, user?.contestant_id, contestantNames, contestantsData?.data]);
 
   // Send card selection
 

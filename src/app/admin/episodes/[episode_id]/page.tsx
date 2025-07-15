@@ -61,7 +61,7 @@ export default function GameDetails() {
     setState: setCreditDebitModalState,
   } = useBooleanStateControl()
   const [selectedContestant, setSelectedContestant] = useState("")
-  const { isConnected, sendMessage, onMessage } = useMQTT()
+  const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT()
   const [isSending, setIsSending] = useState(false)
 
   const [debitWalletData, setDebitWalletData] = useState<Question2AnswerDataAPIResponse | null>(null)
@@ -99,7 +99,7 @@ export default function GameDetails() {
   )
 
   React.useEffect(() => {
-    const handleMessage = (message: any) => {
+    const handleMQTTMessage = (message: any) => {
       console.log("Received message:", message)
       if (message.event === "game_s2_question_answer") {
         console.log(message, "debitWalletData")
@@ -107,17 +107,18 @@ export default function GameDetails() {
       }
     }
 
+ 
+    
     if (isConnected) {
-      onMessage(handleMessage)
-      refetchContestants()
+       refetchContestants()
+      addMessageListener(handleMQTTMessage);
     }
 
     return () => {
-      if (isConnected) {
-        onMessage(null)
-      }
-    }
-  }, [isConnected, onMessage])
+      removeMessageListener(handleMQTTMessage);
+    };
+
+  }, [isConnected,  addMessageListener, removeMessageListener])
 
   const startGameEpisode = () => sendGameMessage("game_start")
 

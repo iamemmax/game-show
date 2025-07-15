@@ -223,7 +223,7 @@ const ENHANCED_GAME_EVENTS = {
 
 
 export default function SuperAdminDashboard() {
-  const { isConnected, sendMessage, onMessage } = useMQTT()
+  const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT()
   const [participants, setParticipants] = useState<ParticipantStatus[]>([])
   const [systemEvents, setSystemEvents] = useState<SuperAdminSystemEvent[]>([])
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([])
@@ -285,7 +285,7 @@ export default function SuperAdminDashboard() {
           gameStage: contestantsData.game.stage,
         },
         {
-          id: "audience-1",
+          id: `audience-${gameId}`,
           name: "Audience View",
           type: "audience",
           currentScreen: "audience-waiting",
@@ -302,7 +302,7 @@ export default function SuperAdminDashboard() {
 
   // Handle incoming MQTT messages
   useEffect(() => {
-    const handleMessage = (message: any) => {
+    const handleMQTTMessage = (message: any) => {
       console.log("Super Admin received:", message)
       addSystemEvent("info", `Received: ${message.event || "Unknown Event"}`, "MQTT")
       if (message.payload.new_universal_step) {
@@ -325,7 +325,7 @@ export default function SuperAdminDashboard() {
       }
 
       // Handle heartbeat responses
-      if (message.event === "participant_heartbeat") {
+      if (message.event === "participant_sync") {
         handleHeartbeatResponse(message)
       }
 
@@ -347,8 +347,9 @@ export default function SuperAdminDashboard() {
       }
     }
 
+
     if (isConnected) {
-      onMessage(handleMessage)
+      addMessageListener(handleMQTTMessage);
       addSystemEvent("success", "MQTT connection established", "System")
       requestHeartbeat()
     } else {
@@ -357,11 +358,11 @@ export default function SuperAdminDashboard() {
     }
 
     return () => {
-      if (isConnected) {
-        onMessage(null)
-      }
-    }
-  }, [isConnected, onMessage])
+      removeMessageListener(handleMQTTMessage);
+    };
+
+
+  }, [isConnected, addMessageListener, removeMessageListener])
 
   const addSystemEvent = (type: SuperAdminSystemEvent["type"], message: string, source: string) => {
     const event: SuperAdminSystemEvent = {

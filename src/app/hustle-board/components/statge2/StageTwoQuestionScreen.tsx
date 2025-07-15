@@ -50,7 +50,7 @@ interface prop {
   onNext: () => void;
 }
 const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
-  const { isConnected, onMessage } = useMQTT();
+  const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const params = useParams();
 
   // Get wallet balances for display
@@ -191,7 +191,7 @@ const isQuestionAttempted = (idx: number) => {
   useEffect(() => {
     if (!isConnected) return;
 
-    const handler = ( receivedMessage: any) => {
+    const handleMQTTMessage = ( receivedMessage: any) => {
       // console.log("📡 Received MQTT message:", receivedMessage);
 
       // Handle prep page event
@@ -380,16 +380,15 @@ if (receivedMessage?.event === "contestant_selected_option") {
       }
     };
 
-    console.log("🔄 Registering MQTT handler for view-only mode");
-    onMessage(handler);
+    if (isConnected) {
+      addMessageListener(handleMQTTMessage);
+    }
 
     return () => {
-      if (isConnected) {
-        console.log("🧹 Cleaning up MQTT message handler");
-        onMessage(null);
-      }
+      removeMessageListener(handleMQTTMessage);
     };
-  }, [isConnected, onMessage, currentQuestionIndex]);
+
+  }, [isConnected, addMessageListener, removeMessageListener, currentQuestionIndex]);
 
   // Add effect to mark question as attempted when timer ends
   useEffect(() => {

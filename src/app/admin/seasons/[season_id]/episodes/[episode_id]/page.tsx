@@ -35,10 +35,12 @@ import type { Question2AnswerDataAPIResponse } from "@/app/components/stages/api
 import { useBooleanStateControl } from "@/hooks"
 import { Label } from "@/components/core/Label"
 import { DebitWalletData } from "@/app/admin/misc/types"
-import { useGetGameContestants,   
+import {
+  useGetGameContestants,
   useAssignContestant,
   useCreditDebitContestant,
-  type CreditDebitContestantRequest, } from "@/app/admin/misc/api"
+  type CreditDebitContestantRequest,
+} from "@/app/admin/misc/api"
 
 const assignContestantSchema = z.object({
   constestants_attr: z.string().min(1, "Please select a contestant position"),
@@ -64,7 +66,7 @@ export default function GameDetails() {
     setState: setCreditDebitModalState,
   } = useBooleanStateControl()
   const [selectedContestant, setSelectedContestant] = useState("")
-  const { isConnected, sendMessage, onMessage } = useMQTT()
+  const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT()
   const [isSending, setIsSending] = useState(false)
 
   const [debitWalletData, setDebitWalletData] = useState<DebitWalletData | null>(null)
@@ -102,7 +104,7 @@ export default function GameDetails() {
   )
 
   React.useEffect(() => {
-    const handleMessage = (message: any) => {
+    const handleMQTTMessage = (message: any) => {
       console.log("Received message:", message)
       if (message.event === "game_s2_question_answer") {
         console.log(message, "debitWalletData")
@@ -110,17 +112,18 @@ export default function GameDetails() {
       }
     }
 
+
     if (isConnected) {
-      onMessage(handleMessage)
       refetchContestants()
+      addMessageListener(handleMQTTMessage);
     }
 
     return () => {
-      if (isConnected) {
-        onMessage(null)
-      }
-    }
-  }, [isConnected, onMessage])
+      removeMessageListener(handleMQTTMessage);
+    };
+
+
+  }, [isConnected, addMessageListener, removeMessageListener])
 
   const startGameEpisode = () => sendGameMessage("game_start")
 

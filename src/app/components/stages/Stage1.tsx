@@ -46,7 +46,7 @@ const Stage1 = ({ onNext }: Props) => {
   } = useErrorModalState();
 
   // Use the MQTT context
-  const { isConnected, sendMessage, onMessage } = useMQTT();
+  const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT();
 
   // Explicitly type the state with number[]
   const [selectedNumbers, setSelectedNumbers] = useState<Array<number>>([]);
@@ -161,7 +161,7 @@ const Stage1 = ({ onNext }: Props) => {
   useEffect(() => {
     if (isConnected) {
       // Set up message handler
-      const handler = (receivedMessage: any) => {
+      const handleMQTTMessage = (receivedMessage: any) => {
         // Handle start timer event
         if (receivedMessage?.event === "game_s1_init") {
           setTimerStarted(true);
@@ -307,15 +307,18 @@ const Stage1 = ({ onNext }: Props) => {
         }
       };
 
-      // Pass the handler function to onMessage
-      onMessage(handler);
-
-      return () => {
-        // Clean up the message handler when the component unmounts
-        onMessage(null);
-      };
+    
+     if (isConnected) {
+      addMessageListener(handleMQTTMessage);
     }
-  }, [isConnected, onMessage, user?.contestant_id, handleAllHustlePicks]);
+
+    return () => {
+      removeMessageListener(handleMQTTMessage);
+    };
+
+
+    }
+  }, [isConnected, addMessageListener, removeMessageListener, user?.contestant_id, handleAllHustlePicks]);
 
   // Add a connection status indicator
   const ConnectionStatus = () => (

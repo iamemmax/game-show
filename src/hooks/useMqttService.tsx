@@ -14,10 +14,10 @@ import mqtt, { MqttClient } from 'mqtt';
 interface MQTTContextProps {
   isConnected: boolean;
   sendMessage: (message: any, event?: string) => Promise<boolean>;
-  onMessage: (callback: ((message: any) => void) | null) => void;
+  addMessageListener: (callback: (message: any) => void) => void;
+  removeMessageListener: (callback: (message: any) => void) => void;
   userId: string;
 }
-
 const MQTTContext = createContext<MQTTContextProps | null>(null);
 
 
@@ -52,12 +52,12 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
     const connect = () => {
       console.log('MQTT connect URL:', connectUrl);
 
-   
+
 
       topicsRef.current = {
         publisher: `test/topic/local`,
         subscriber: `test/topic/local`,
-      }; 
+      };
 
       mqttClient = mqtt.connect(connectUrl, {
         clientId: `mqtt_${Math.random().toString(16).slice(3)}`,
@@ -71,6 +71,10 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
         // protocol: 'ws',
         rejectUnauthorized: false,
       });
+
+      const messageListenersRef = useRef<Set<(message: any) => void>>(new Set());
+
+
 
       mqttClient.on('connect', () => {
         console.log('Connected to MQTT broker');
@@ -138,7 +142,7 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
       }
 
       return new Promise<boolean>((resolve, reject) => {
-      
+
 
         clientRef.current!.publish(
           topicsRef.current.publisher,
@@ -159,39 +163,73 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
     [isConnected]
   );
 
-  const onMessage = useCallback(
-    (callback: ((message: any) => void) | null) => {
-      if (!clientRef.current) {
-        console.error('MQTT client not initialized');
-        return;
-      }
+  // const onMessage = useCallback(
+  //   (callback: ((message: any) => void) | null) => {
+  //     if (!clientRef.current) {
+  //       console.error('MQTT client not initialized');
+  //       return;
+  //     }
 
-      clientRef.current.removeAllListeners('message');
+  //     clientRef.current.removeAllListeners('message');
 
-      if (callback !== null) {
-        clientRef.current.on('message', (topic, payload) => {
-          // console.log(`Received message on topic: ${topic}`);
-          // console.log(`Received payload: ${payload.toString()}`);
-          try {
-            const message = JSON.parse(payload.toString());
-            callback(message);
-          } catch (err) {
-            console.error('Error parsing message:', err);
-            callback({
-              error: 'Failed to parse message',
-              raw: payload.toString(),
-            });
-          }
-        });
+  //     if (callback !== null) {
+  //       clientRef.current.on('message', (topic, payload) => {
+  //         // console.log(`Received message on topic: ${topic}`);
+  //         // console.log(`Received payload: ${payload.toString()}`);
+  //         try {
+  //           const message = JSON.parse(payload.toString());
+  //           callback(message);
+  //         } catch (err) {
+  //           console.error('Error parsing message:', err);
+  //           callback({
+  //             error: 'Failed to parse message',
+  //             raw: payload.toString(),
+  //           });
+  //         }
+  //       });
+  //     }
+  //   },
+  //   []
+  // );
+
+  const messageListenersRef = useRef<Set<(message: any) => void>>(new Set());
+
+  useEffect(() => {
+    const mqttClient = clientRef.current;
+    if (!mqttClient) return;
+
+    mqttClient.on('message', (topic, payload) => {
+      try {
+        const message = JSON.parse(payload.toString());
+        messageListenersRef.current.forEach((cb) => cb(message));
+      } catch (err) {
+        console.error('Error parsing message:', err);
+        const fallback = { error: 'Failed to parse message', raw: payload.toString() };
+        messageListenersRef.current.forEach((cb) => cb(fallback));
       }
-    },
-    []
-  );
+    });
+
+    return () => {
+      mqttClient?.removeAllListeners('message');
+      messageListenersRef.current.clear();
+    };
+  }, []);
+
+  const addMessageListener = useCallback((callback: (message: any) => void) => {
+    messageListenersRef.current.add(callback);
+  }, []);
+
+  const removeMessageListener = useCallback((callback: (message: any) => void) => {
+    messageListenersRef.current.delete(callback);
+  }, []);
+
+
 
   const contextValue: MQTTContextProps = {
     isConnected,
     sendMessage,
-    onMessage,
+    addMessageListener,
+    removeMessageListener,
     userId: userIdRef.current,
   };
 
