@@ -110,6 +110,8 @@ const QuestionTwoScreen = ({onNext}:prop) => {
   const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(
     new Set()
   );
+  const [contestantOptions, setContestantOptions] = useState<{[key: string]: any}>({});
+  
   // Add state to track if answer has been received
   const [answerReceived, setAnswerReceived] = useState(false);
   const [openModals, setOpenModals] = useState(false);
@@ -143,15 +145,7 @@ const QuestionTwoScreen = ({onNext}:prop) => {
     return () => clearTimeout(timer);
   }, [timeLeft, selectedOption, isSubmitted, timerActive]);
 
-  // Handle option selection - now just selects without checking correctness
-  const handleOptionSelect = (option: OptionKey) => {
-    // Only allow selection if timer is active and not submitted yet
-    if (timerActive && !isSubmitted) {
-      setSelectedOption(option);
-
-      // Auto-submit immediately after selection
-    }
-  };
+ 
 
   const { mutate: handleAnswerStageTwoQuestion } = useAnswerStageTwoQuestion();
   const { refetch, isLoading } = useGetGameContestants(
@@ -349,6 +343,24 @@ const QuestionTwoScreen = ({onNext}:prop) => {
       if (receivedMessage?.event === "game_s2_debit_wallet") {
         refetch();
       }
+
+      if (receivedMessage?.event === "contestant_selected_option") {
+        const optionData = receivedMessage.payload;
+        console.log(`Received option selection: ${optionData.contestant_name} selected ${optionData.selected_option}`);
+        
+        setContestantOptions(prev => ({
+          ...prev,
+          [optionData.contestant_id]: {
+            ...optionData,
+            timestamp: optionData.timestamp || new Date().toISOString()
+          }
+        }));
+      }
+
+      // ALSO ADD THIS: Handle clearing all options
+      if (receivedMessage?.event === "clear_all_options") {
+        setContestantOptions({});
+      }
     };
 
     console.log("🔄 Registering MQTT handler");
@@ -365,6 +377,40 @@ const QuestionTwoScreen = ({onNext}:prop) => {
   // Watch for answer data and publish event when available
 
   // Automatically refetch answer data when shouldFetchAnswer is true
+
+
+const publishOption = async (option: string) => {
+  if (!user?.contestant_id || !user?.name) return;
+
+  const optionData = {
+    event: "contestant_selected_option",
+    payload: {
+      contestant_id: user.contestant_id,
+      contestant_name: user.name,
+      is_selected:true,
+      selected_option: option, // Added the actual selected option
+      timestamp: new Date().toISOString(),
+      question_id: currentQuestionId,
+      game_episode: user.game_episode,
+    },
+  };
+
+  console.log("Publishing selected option:", optionData);
+
+  // Publish to MQTT for leaderboard screen to listen
+  await sendMessage(optionData);
+};
+
+ // Handle option selection - now just selects without checking correctness
+  const handleOptionSelect = (option: OptionKey) => {
+    // Only allow selection if timer is active and not submitted yet
+    if (timerActive && !isSubmitted) {
+      setSelectedOption(option);
+const answerLetter = convertOptionToLetter(option);
+    publishOption(answerLetter);
+      // Auto-submit immediately after selection
+    }
+  };
 
 
   const getFontSizeClass = (textLength:number) => {

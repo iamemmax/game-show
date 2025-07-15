@@ -26,6 +26,8 @@ import HustleBoardModal from "../modals/HustleBoardModal";
 import HustleRevealResult from "../modals/HustleRevealResult";
 import HustleQuestionAnswerModal from "../modals/HustleQuestionAnswer";
 import AnimatedText from "@/app/shared/AnimatedText";
+import Image from "next/image";
+import { contestantImages } from "@/app/components/stages/components/mocks/contestantImages";
 
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
 
@@ -80,41 +82,101 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
   const [currentQuestionAnswerData, setCurrentQuestionAnswerData] = useState<
     any | null
   >(null);
-  const { refetch } = useGetGameContestants(Number(params?.episodeId));
+  
+// Add these new state variables after the existing state declarations
+const [questionStartTime, setQuestionStartTime] = useState<number | null>(null);
+const [contestantTimestamps, setContestantTimestamps] = useState<{[contestantId: string]: number}>({});
+const [currentTimestamp, setCurrentTimestamp] = useState<number>(0);
+
+
+  const { refetch, data:contestantData } = useGetGameContestants(Number(params?.episodeId));
   const [mqttAnswerResultData, setMqttAnsweResultData] =
     useState<any>(mqttAnswerData);
+     const [contestantOption, setContestantOption] = useState<{
+        [contestantId: string]: {
+          contestant_id: string;
+          contestant_name: string;
+          selected_option: string;
+          is_selected: boolean;
+          timestamp: string;
+          question_id?: string;
+        };
+      }>({});
 
   // Timer effect - for display only
-  useEffect(() => {
-    if (!timerActive) return;
 
-    if (timeLeft <= 0) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setTimeLeft(timeLeft - 1);
+  const playOptionSelectedSound = () => {
+  try {
+    const audio = new Audio("/sounds/select-option.mp3");
+    audio.volume = 0.7; // Adjust volume as needed
+    audio.play().catch(console.error);
+  } catch (error) {
+    console.error("Error playing option selected sound:", error);
+  }
+}
+useEffect(() => {
+  let interval: NodeJS.Timeout;
+  
+  if (timerActive && timeLeft > 0) {
+    interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          setTimerActive(false);
+          // Mark current question as attempted when timer ends
+          setAttemptedQuestions(prevAttempted => new Set([...prevAttempted, currentQuestionIndex]));
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
+  }
+  
+  return () => {
+    if (interval) clearInterval(interval);
+  };
+}, [timerActive, timeLeft, currentQuestionIndex]);
 
-    return () => clearTimeout(timer);
-  }, [timeLeft, timerActive]);
+// Update the real-time timestamp counting useEffect
+useEffect(() => {
+  let interval: NodeJS.Timeout;
+  
+  if (timerActive && questionStartTime) {
+    interval = setInterval(() => {
+      const now = Date.now();
+      const elapsed = (now - questionStartTime) / 1000;
+      setCurrentTimestamp(Math.min(elapsed, 10)); // Cap at 10 seconds
+    }, 100); // Update every 100ms for smooth counting
+  }
+  
+  return () => {
+    if (interval) clearInterval(interval);
+  };
+}, [timerActive, questionStartTime]);
 
-  // Function to check if a question has been attempted
-  const isQuestionAttempted = (idx: number) => {
+// Update the handleStartTimer function
+const handleStartTimer = () => {
+  setTimerActive(true);
+  setTimeLeft(10); // Start countdown from 10
+  const startTime = Date.now();
+  setQuestionStartTime(startTime);
+  setCurrentTimestamp(0);
+  // Clear previous timestamps when new question starts
+  setContestantTimestamps({});
+};
+
+// Update the resetTimerState function
+const resetTimerState = () => {
+  setTimerActive(false);
+  setTimeLeft(10); // Reset to 10 seconds
+  setQuestionStartTime(null);
+  setContestantTimestamps({});
+  setCurrentTimestamp(0);
+};
+
+const isQuestionAttempted = (idx: number) => {
     return idx < currentQuestionIndex;
   };
 
-  // Handle timer start (from events)
-  const handleStartTimer = () => {
-    setTimerActive(true);
-    setTimeLeft(10);
-  };
-
-  // Reset timer state for next question
-  const resetTimerState = () => {
-    setTimerActive(false);
-    setTimeLeft(10);
-  };
   const isCorrectOption = (option: OptionKey): boolean => {
     if (!correctAnswer) return false;
     return convertOptionToLetter(option) === correctAnswer;
@@ -129,12 +191,11 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
   useEffect(() => {
     if (!isConnected) return;
 
-    const handler = (receivedMessage: any) => {
+    const handler = ( receivedMessage: any) => {
       // console.log("📡 Received MQTT message:", receivedMessage);
 
       // Handle prep page event
       if (receivedMessage?.event === "game_s2_question_reveal") {
-        console.log("✅ Processing game_s2_question_reveal");
         setShowStage2Prep(false);
 
         const payload = receivedMessage.payload || {};
@@ -149,6 +210,7 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
         setMqttAnswerData(null);
         setShowResultModal(false);
         setCurrentQuestionAnswerData(null);
+          setContestantOption({});
         // Set current index and question ID
         setCurrentQuestionIndex(questionData?.index);
 
@@ -219,14 +281,41 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
       }
 
       // Handle timer end event - mark question as attempted when time elapses
-      if (receivedMessage?.event === "game_s2_timer_end") {
-        console.log("✅ Processing game_s2_timer_end");
-        setTimerActive(false);
-        // Mark current question as attempted when timer ends
-        setAttemptedQuestions(
-          (prev) => new Set([...prev, currentQuestionIndex])
-        );
+if (receivedMessage?.event === "game_s2_timer_end") {
+  console.log("✅ Processing game_s2_timer_end");
+  setTimerActive(false);
+  setTimeLeft(0); // Set timer to 0 when it ends
+  
+  // Mark current question as attempted when timer ends
+  setAttemptedQuestions(
+    (prev) => new Set([...prev, currentQuestionIndex])
+  );
+  
+  // Set timestamp to 10.000 for contestants who didn't answer
+  setContestantOption(prevOpt => {
+    const updatedOpt = { ...prevOpt };
+    
+    // Get remaining contestants for current question
+    remainingContestants?.forEach(contestant => {
+      const contestantId = contestant.id;
+      const existingOption = updatedOpt[contestantId];
+      
+      // If contestant didn't answer or didn't select an option
+      if (!existingOption || !existingOption.is_selected) {
+        updatedOpt[contestantId] = {
+          contestant_id: String(contestantId),
+          contestant_name: String(contestant.name),
+          selected_option: existingOption?.selected_option || '',
+          is_selected: false,
+          timestamp: "10.000", // 10 seconds for non-answered
+          question_id: String(currentQuestionId),
+        };
       }
+    });
+    
+    return updatedOpt;
+  });
+}
 
       // Handle results reveal event
       if (receivedMessage?.event === "game_s2_results_reveal") {
@@ -236,6 +325,58 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
 
       if (receivedMessage?.event === "game_s2_debit_wallet") {
         refetch();
+      }
+  // Update the contestant_selected_option handler in the MQTT useEffect
+if (receivedMessage?.event === "contestant_selected_option") {
+  const payload = receivedMessage.payload || {};
+  const {
+    contestant_id,
+    contestant_name,
+    selected_option,
+    is_selected,
+    timestamp,
+    question_id,
+  } = payload;
+
+  if (contestant_id && contestant_name && selected_option !== undefined) {
+    // Only update options for the current question
+    if (question_id === currentQuestionId) {
+      // Play sound effect for option selection
+      playOptionSelectedSound();
+      
+      // Calculate timestamp if timer is active and question has started
+      let calculatedTimestamp = 0;
+      if (questionStartTime && is_selected) {
+        const answerTime = Date.now();
+        calculatedTimestamp = (answerTime - questionStartTime) / 1000; // Convert to seconds
+        
+        // Store the timestamp for this contestant
+        setContestantTimestamps(prev => ({
+          ...prev,
+          [contestant_id]: calculatedTimestamp
+        }));
+      }
+      
+      setContestantOption((prevOpt) => {
+        const updatedBids = {
+          ...prevOpt,
+          [contestant_id]: {
+            contestant_id,
+            contestant_name,
+            selected_option,
+            is_selected,
+            timestamp: calculatedTimestamp.toFixed(3), // Store calculated timestamp with 3 decimal places
+            question_id,
+          },
+        };
+
+        return updatedBids;
+      });
+    }
+  }
+}
+ if (receivedMessage?.event === "clear_all_options") {
+        setContestantOption({});
       }
     };
 
@@ -296,6 +437,10 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
       />
     );
   }
+
+  const  remainingContestants = contestantData?.data?.filter(
+    (contestant) => contestant.eliminated_stage === null
+  );
 
   return (
     <div className="grid grid-cols-[1fr_5fr_1fr] h-full">
@@ -483,43 +628,77 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
                 )}
               </div>
 
-              <div className="grid mt-5 gap-3 grid-cols-[1fr_6fr_1fr] items-start">
+              <div className="grid mt-5 gap-14 grid-cols-[1fr_3fr_1fr] items-start">
                 {/* Question numbers sidebar - Updated to show attempted questions */}
-                <div className="flex gap-2 flex-col">
-                  {Array.from({ length: 8 }, (_, index) => (
-                    <div className="" key={index}>
-                      <NumberCardContainer
-                        // text={index + 1}
-                        text={
-                          isQuestionAttempted(index + 1) ? (
-                            <CheckIcon size={160} />
-                          ) : (
-                            index + 1
-                          )
-                        }
-                        textColor={
-                          currentQuestionIndex === index + 1
-                            ? "#FFFFFF"
-                            : isQuestionAttempted(index + 1)
-                              ? "#fff"
-                              : "#F2C94C"
-                        }
-                        backgroundColor={
-                          currentQuestionIndex === index + 1
-                            ? "#FEC124"
-                            : isQuestionAttempted(index + 1)
-                              ? "#04DA6A"
-                              : "black"
-                        }
-                        width={75}
-                        height={75}
-                        active={currentQuestionIndex > index + 1}
-                        iconPosition={{ y: 33 }}
-                        iconSize={30}
-                      />
-                    </div>
-                  ))}
-                </div>
+               
+            <div className="flex flex-col gap-4 w-full">
+  {remainingContestants?.slice(0,2)?.map((contestant, index: number) => {
+  const contestantSelection = contestantOption[contestant?.id];
+  const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
+  
+  // Calculate display timestamp
+  let displayTimestamp = "0.000";
+  
+  if (hasSelected && contestantSelection?.timestamp) {
+    // Contestant has answered - show their frozen timestamp
+    displayTimestamp = contestantSelection.timestamp;
+  } else if (timerActive && questionStartTime) {
+    // Timer is active and contestant hasn't answered - show live counting
+    displayTimestamp = currentTimestamp.toFixed(3);
+  } else if (!timerActive && !hasSelected) {
+    // Timer ended and contestant didn't answer
+    displayTimestamp = "0.00";
+  }
+    
+    return (
+      <div
+        key={`left-${contestant?.id}`}
+        className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${
+          hasSelected 
+            ? 'bg-[#04DA6A] text-white' 
+            : 'bg-[#160036] text-white'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <p className="text-2xl">{contestant.name?.split(" ")[0]} </p>
+          {hasSelected && (
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ 
+                scale: 1, 
+                rotate: 0,
+                transition: {
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 10
+                }
+              }}
+              className="ml-auto"
+            >
+              <CheckIcon size={24} />
+            </motion.div>
+          )}
+        </div>
+       
+        <p className="text-white text-opacity-70 text-base">
+          Status:
+          <span className="text-white text-opacity-100">
+            {hasSelected ? " answered" : " "}
+          </span>
+        </p>
+        <p className="text-white text-opacity-70 text-base">
+          Timestamp:
+          <span className="text-white text-opacity-100">
+            {displayTimestamp}s
+          </span>
+        </p>
+      </div>
+    );
+  })}
+</div>
+               
+
+<>
 
                 {isLoading ? (
                   <div className="flex justify-center items-center h-full">
@@ -851,43 +1030,149 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
                         )}
                       </AnimatePresence>
                     </div>
+                    {showResultModal && (
+                      <HustleQuestionAnswerModal
+                        booster={mqttQuestionData?.question_booster}
+                        showBooster={false}
+                        currentQuestionOptions={{
+                          option_a: mqttQuestionData?.option_a,
+                          option_b: mqttQuestionData?.option_b,
+                          option_c: mqttQuestionData?.option_c,
+                          option_d: mqttQuestionData?.option_d,
+                        }}
+                        questionIndex={currentQuestionIndex}
+                        correctAnswer={
+                          correctAnswer || mqttQuestionData?.correct_option
+                        }
+                        question={mqttQuestionData?.question}
+                        currentQuestionAnswerData={currentQuestionAnswerData}
+                        currentQuestion={mqttQuestionData}
+                        mqttAnswerData={mqttAnswerData}
+                        showBid={false}
+                        // allocatedWinningAmount={mqttQuestionData?.allocated_winning_amount}
+                      />
+                    )}
+    
+                    {/* Results sidebar */}
+                    {/* <div className="">
+                      <FastestFingerResult
+                        resultArray={mqttAnswerData}
+                        mqttAnswerData={mqttAnswerData}
+                        timeElapsed={timeLeft <= 0 || !timerActive}
+                        currentQuestionId={currentQuestionId}
+                        
+                      />
+                    </div> */}
                   </>
                 )}
+</>
+  
 
-                {showResultModal && (
-                  <HustleQuestionAnswerModal
-                    booster={mqttQuestionData?.question_booster}
-                    showBooster={false}
-                    currentQuestionOptions={{
-                      option_a: mqttQuestionData?.option_a,
-                      option_b: mqttQuestionData?.option_b,
-                      option_c: mqttQuestionData?.option_c,
-                      option_d: mqttQuestionData?.option_d,
-                    }}
-                    questionIndex={currentQuestionIndex}
-                    correctAnswer={
-                      correctAnswer || mqttQuestionData?.correct_option
-                    }
-                    question={mqttQuestionData?.question}
-                    currentQuestionAnswerData={currentQuestionAnswerData}
-                    currentQuestion={mqttQuestionData}
-                    mqttAnswerData={mqttAnswerData}
-                    showBid={false}
-                    // allocatedWinningAmount={mqttQuestionData?.allocated_winning_amount}
-                  />
-                )}
+ <div className="flex flex-col gap-4 w-full">
+  {remainingContestants?.slice(-2)?.map((contestant, index: number) => {
+  const contestantSelection = contestantOption[contestant?.id];
+  const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
+  
+  // Calculate display timestamp
+  let displayTimestamp = "0.000";
+  
+  if (hasSelected && contestantSelection?.timestamp) {
+    // Contestant has answered - show their frozen timestamp
+    displayTimestamp = contestantSelection.timestamp;
+  } else if (timerActive && questionStartTime) {
+    // Timer is active and contestant hasn't answered - show live counting
+    displayTimestamp = currentTimestamp.toFixed(3);
+  } else if (!timerActive && !hasSelected) {
+    // Timer ended and contestant didn't answer
+    displayTimestamp = "0.000";
+  }
+    
+    return (
+      <div
+        key={`left-${contestant?.id}`}
+        className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${
+          hasSelected 
+            ? 'bg-[#04DA6A] text-white' 
+            : 'bg-[#160036] text-white'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <p className="text-2xl">{contestant.name?.split(" ")[0]} </p>
+          {hasSelected && (
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ 
+                scale: 1, 
+                rotate: 0,
+                transition: {
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 10
+                }
+              }}
+              className="ml-auto"
+            >
+              <CheckIcon size={24} />
+            </motion.div>
+          )}
+        </div>
+       
+        <p className="text-white text-opacity-70 text-base">
+          Status:
+          <span className="text-white text-opacity-100">
+            {hasSelected ? " answered" : " "}
+          </span>
+        </p>
+        <p className="text-white text-opacity-70 text-base">
+          Timestamp:
+          <span className="text-white text-opacity-100">
+            {displayTimestamp}s
+          </span>
+        </p>
+      </div>
+    );
+  })}
+</div>
 
-                {/* Results sidebar */}
-                <div className="">
-                  <FastestFingerResult
-                    resultArray={mqttAnswerData}
-                    mqttAnswerData={mqttAnswerData}
-                    timeElapsed={timeLeft <= 0 || !timerActive}
-                    currentQuestionId={currentQuestionId}
-                    
-                  />
-                </div>
+  {/*  */}
               </div>
+               <div className="flex w-full justify-center items-center mt-10 gap-[2rem]  ">
+                  {Array.from({ length: 8 }, (_, index) => (
+                    <div className="" key={index}>
+                      <NumberCardContainer
+                        // text={index + 1}
+                        text={
+                          isQuestionAttempted(index + 1) ? (
+                            <CheckIcon size={160} />
+                          ) : (
+                            index + 1
+                          )
+                        }
+                        textColor={
+                          currentQuestionIndex === index + 1
+                            ? "#FFFFFF"
+                            : isQuestionAttempted(index + 1)
+                              ? "#fff"
+                              : "#F2C94C"
+                        }
+                        backgroundColor={
+                          currentQuestionIndex === index + 1
+                            ? "#FEC124"
+                            : isQuestionAttempted(index + 1)
+                              ? "#04DA6A"
+                              : "black"
+                        }
+                        width={65}
+                        height={65}
+                        active={currentQuestionIndex > index + 1}
+                        iconPosition={{ y: 33 }}
+                        iconSize={30}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+
             </div>
           </div>
         </div>
