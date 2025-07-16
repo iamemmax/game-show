@@ -691,12 +691,12 @@ if (receivedMessage?.event === "game_s2_timer_end") {
             {hasSelected ? " answered" : " "}
           </span>
         </p>
-        <p className="text-white text-opacity-70 text-base">
+        {/* <p className="text-white text-opacity-70 text-base">
           Timestamp:
           <span className="text-white text-opacity-100">
             {displayTimestamp}s
           </span>
-        </p>
+        </p> */}
       </div>
     );
   })}
@@ -1104,12 +1104,12 @@ if (receivedMessage?.event === "game_s2_timer_end") {
             {hasSelected ? " answered" : " "}
           </span>
         </p>
-        <p className="text-white text-opacity-70 text-base">
+        {/* <p className="text-white text-opacity-70 text-base">
           Timestamp:
           <span className="text-white text-opacity-100">
             {displayTimestamp}s
           </span>
-        </p>
+        </p> */}
       </div>
     );
   })}
