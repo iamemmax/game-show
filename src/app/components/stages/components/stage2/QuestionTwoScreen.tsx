@@ -65,7 +65,7 @@ const QuestionTwoScreen = ({onNext}:prop) => {
     openErrorModalWithMessage,
     errorModalMessage,
   } = useErrorModalState();
-  const { isConnected, onMessage, sendMessage } = useMQTT();
+  const { isConnected, addMessageListener, removeMessageListener, sendMessage } = useMQTT();
   // Add hook to publish MQTT messages
   // const { publishMessage } = usePublishMQTT();
   // Get user from storage
@@ -245,7 +245,7 @@ const QuestionTwoScreen = ({onNext}:prop) => {
   useEffect(() => {
     if (!isConnected) return;
 
-    const handler = (receivedMessage: any) => {
+    const handleMQTTMessage = (receivedMessage: any) => {
       // Handle prep page event
       if (receivedMessage?.event === "game_s2_question_reveal") {
         console.log("✅ Processing game_s1_question_reveal");
@@ -362,17 +362,15 @@ const QuestionTwoScreen = ({onNext}:prop) => {
         setContestantOptions({});
       }
     };
-
-    console.log("🔄 Registering MQTT handler");
-    onMessage(handler);
+ if (isConnected) {
+      addMessageListener(handleMQTTMessage);
+    }
 
     return () => {
-      if (isConnected) {
-        console.log("🧹 Cleaning up MQTT message handler");
-        onMessage(null);
-      }
+      removeMessageListener(handleMQTTMessage);
     };
-  }, [isConnected, onMessage, user?.contestant_id]);
+   
+  }, [isConnected, addMessageListener, removeMessageListener, user?.contestant_id]);
 
   // Watch for answer data and publish event when available
 

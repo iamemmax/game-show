@@ -21,16 +21,12 @@ interface Response {
   picks: number[];
 }
 
-interface Props {
-  onNext: () => void;
-}
-
 // Define an extended type for the user that includes game_episode
 interface ExtendedContestantDetails extends ContestantDetails {
   game_episode?: number;
 }
 
-const HustleBoardNumberPicks = ({ onNext }: Props) => {
+const HustleBoardNumberPicks = () => {
 
 
   // Use the elimination check hook
@@ -147,14 +143,6 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
     if (isConnected) {
       const handleMQTTMessage = (receivedMessage: any) => {
 
-        // Handle proceed to next stage event
-        if (
-          receivedMessage?.event === "proceed_to_next_stage" ||
-          receivedMessage?.event === "stage_complete"
-        ) {
-          onNext();
-        }
-
         // Handle game_s1_init event to start timer
         if (receivedMessage?.event === "game_s1_init") {
           setTimerStarted(true);
@@ -228,10 +216,7 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
             setRecentlyUpdated(prev => prev.filter(n => n !== pick));
           }, 1000);
         }
-        if (receivedMessage?.event === "game_s1_hustle_reveal") {
-          // Proceed to the next stage
-          onNext();
-        }
+       
       };
 
       if (isConnected) {
@@ -244,7 +229,7 @@ const HustleBoardNumberPicks = ({ onNext }: Props) => {
 
 
     }
-  }, [isConnected, addMessageListener, removeMessageListener, handleAllHustlePicks, onNext]);
+  }, [isConnected, addMessageListener, removeMessageListener, handleAllHustlePicks]);
 
   // Add a connection status indicator
   const ConnectionStatus = () => (

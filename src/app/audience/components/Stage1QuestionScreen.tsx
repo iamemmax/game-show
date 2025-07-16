@@ -51,13 +51,9 @@ const convertOptionToLetter = (option: string | null): string => {
   return optionMap[option] || "";
 };
 
-interface Prop {
-  onNext: () => void;
-}
-
 // import typewriterSfx from "@/sounds/typewriter.mp3"; // Replace with your sound file
 
-const Stage1QuestionScreen = ({ onNext }: Prop) => {
+const Stage1QuestionScreen = () => {
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const params = useParams();
 
@@ -468,21 +464,8 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
     setFontSize(newFontSize);
   }, [mqttQuestionData?.question]);
 
-  // FIXED: Now all conditional returns come AFTER all hooks have been called
-  if (showPrepPage) {
-    return <GetHustleBoardReadyScreen />;
-  }
 
-  if (allQuestionsCompleted) {
-    return (
-      <HustleBoardStageTallyPage
-        eliminationCount={0}
-        removeCount={0}
-        activeState={1}
-        onNext={() => onNext}
-      />
-    );
-  }
+
   const handleAmountStart = (id: string) => {
     console.log("Animation started for contestant:", id);
   };

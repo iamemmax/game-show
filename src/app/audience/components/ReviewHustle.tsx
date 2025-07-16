@@ -20,10 +20,8 @@ import HustleBottomCard from "@/app/components/stages/components/hustle/HustleBo
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import Stage1QuestionScreen from "./Stage1QuestionScreen";
-interface Props {
-  onNext: () => void;
-}
-const ReviewHustle = ({ onNext }: Props) => {
+
+const ReviewHustle = () => {
   const params = useParams();
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   // const [ShowQuestionScreen, setShowQuestionScreen] = useState(false);
@@ -32,29 +30,7 @@ const ReviewHustle = ({ onNext }: Props) => {
 
   const { data, isLoading } = useGetHustleReveal(Number(params?.episodeId));
 
-  useEffect(() => {
-    const handleMQTTMessage = (receivedMessage: any) => {
-      console.log("Main page received message:", receivedMessage);
 
-      // Handle stage transition events
-
-      if (receivedMessage?.event === "game_s1_questions_prep") {
-        // Proceed to the next stage
-        // setShowQuestionScreen(true);
-        onNext()
-      }
-    };
-
-    if (isConnected) {
-      addMessageListener(handleMQTTMessage);
-    }
-
-    return () => {
-      removeMessageListener(handleMQTTMessage);
-    };
-
-
-  }, [isConnected, addMessageListener, removeMessageListener]);
 
   const contestant = data?.data?.find(
     (contestant) => contestant.contestant_id === user?.contestant_id

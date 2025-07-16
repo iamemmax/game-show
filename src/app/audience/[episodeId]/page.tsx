@@ -12,6 +12,9 @@ import Stage3BoardGetReadyPage from "../components/stage3/Stage3GetReadyScreen"
 import RafflePickReveal from "../components/stage4/RafflePickReveal"
 import { UNIVERSAL_GAME_STEPS, type UniversalGameStep } from "@/constants"
 import { GameSynchroniser } from "@/components/gameplay/Heartbeat"
+import GetHustleBoardReadyScreen from "../components/GettHustleBoardReadyScreen"
+import HustleBoardStageTallyPage from "../components/HustleBoardStageTally"
+import StageTwoGetReadyStage from "../components/statge2/StageTwoGetReadyStage"
 
 const LOCAL_STORAGE_KEY = "hustle_board_last_step"
 
@@ -25,147 +28,8 @@ const HustleBoard = () => {
   const currentStepRef = useRef<number | null>(null)
   const gameEpisode = params?.episodeId
 
-  const { data: allContestants, isLoading } = useGetGameContestants(Number(gameEpisode))
+  const { data: contestantsData, isLoading: isLoadingContestants } = useGetGameContestants(Number(gameEpisode))
 
-  const [currentUniversalStep, setCurrentUniversalStep] = useState<UniversalGameStep>(UNIVERSAL_GAME_STEPS.GAME_SETUP)
-  const [gameState, setGameState] = useState<{
-    currentStage: string
-    status: string
-    lastAction: string
-    currentQuestion: number
-    contestants: any[]
-    showQuestions: boolean
-    currentStageStep: string
-  }>({
-    currentStage: "STAGE_ONE",
-    status: "",
-    lastAction: "",
-    currentQuestion: 0,
-    contestants: [],
-    showQuestions: false,
-    currentStageStep: "init",
-  })
-
-  const updateGameStateFromUniversalStep = (step: UniversalGameStep) => {
-    switch (step) {
-      case UNIVERSAL_GAME_STEPS.GAME_SETUP:
-        setGameState((prev) => ({
-          ...prev,
-          status: "IN_PROGRESS",
-          currentStage: "STAGE_ONE",
-          currentStageStep: "init",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.GAME_START:
-        setGameState((prev) => ({
-          ...prev,
-          status: "IN_PROGRESS",
-          currentStage: "STAGE_ONE",
-          currentStageStep: "start",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE1_INIT:
-        setGameState((prev) => ({
-          ...prev,
-          currentStage: "STAGE_ONE",
-          currentStageStep: "init",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "hustle_pick",
-          currentStage: "STAGE_ONE",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_REVEAL:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "hustle_reveal",
-          currentStage: "STAGE_ONE",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS_PREP:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "prep_questions",
-          currentStage: "STAGE_ONE",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "questions",
-          showQuestions: true,
-          currentStage: "STAGE_ONE",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "question_reveal",
-          currentStage: "STAGE_ONE",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "timer_running",
-          currentStage: "STAGE_ONE",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "bids_reveal",
-          currentStage: "STAGE_ONE",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE1_RESULTS:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "results",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE2_INIT:
-        setGameState((prev) => ({
-          ...prev,
-          currentStage: "STAGE_TWO",
-          currentStageStep: "init",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE2_PREP:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "prep_questions",
-          currentStage: "STAGE_TWO",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "questions",
-          showQuestions: true,
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE3_INIT:
-        setGameState((prev) => ({
-          ...prev,
-          currentStage: "STAGE_THREE",
-          currentStageStep: "init",
-        }))
-        break
-      case UNIVERSAL_GAME_STEPS.STAGE4_INIT:
-        setGameState((prev) => ({
-          ...prev,
-          currentStage: "STAGE_FOUR",
-          currentStageStep: "init",
-        }))
-        break
-      default:
-        break
-    }
-  }
 
   // Map universal steps to local hustle board steps
   const mapUniversalStepToLocalStep = (universalStep: UniversalGameStep): number | null => {
@@ -305,7 +169,7 @@ const HustleBoard = () => {
   }
 
   useEffect(() => {
-    if (isLoading || !gameEpisode || initializationRef.current) return
+    if (isLoadingContestants || !gameEpisode || initializationRef.current) return
     initializationRef.current = true
 
     // Early validation: if no game episode, reset to step 1
@@ -315,7 +179,7 @@ const HustleBoard = () => {
     }
 
     const savedStep = getSavedStep()
-    const gameStage = allContestants?.game?.stage
+    const gameStage = contestantsData?.game?.stage
     const gameStageStep = gameStage ? getStepFromGameStage(gameStage) : null
 
     // Optional: Range map for stage step validation
@@ -348,8 +212,8 @@ const HustleBoard = () => {
     }
 
     // Fallback: If contestant data is available and user isn't eliminated
-    if (allContestants?.data && gameEpisode) {
-      const myContestant = allContestants.data.find((c) => c.is_eliminated === false)
+    if (contestantsData?.data && gameEpisode) {
+      const myContestant = contestantsData.data.find((c) => c.is_eliminated === false)
       if (myContestant && !myContestant?.is_eliminated && gameStageStep !== null) {
         console.log("Setting step from game stage fallback:", gameStage, "->", gameStageStep)
         setStep(gameStageStep)
@@ -361,7 +225,7 @@ const HustleBoard = () => {
 
     // Default: Reset to step 1
     resetToStep1("No valid saved step or game stage found")
-  }, [isLoading, allContestants?.data, gameEpisode])
+  }, [isLoadingContestants, contestantsData?.data, gameEpisode])
 
   // Save step changes to localStorage
   useEffect(() => {
@@ -406,13 +270,7 @@ const HustleBoard = () => {
   const onNextStep6 = useCallback(() => handleStepChange(6), [handleStepChange])
 
   // Show loading state until properly initialized
-  if (!isInitialized || step === null) {
-    return (
-      <div className="fixed top-0 right-0 m-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-      </div>
-    )
-  }
+
 
   const clearStoredSteps = () => {
     try {
@@ -427,6 +285,209 @@ const HustleBoard = () => {
     }
   }
 
+
+
+
+
+
+
+
+
+
+
+  /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+  /////////////////////////////////////////////////
+
+  // Initialize game data when contestants data is loaded
+  useEffect(() => {
+    if (!isLoadingContestants && contestantsData) {
+      console.log(contestantsData.game.stage, "game stage in contestantsData")
+      setGameState((prevState) => ({
+        ...prevState,
+        currentStage: contestantsData.game.stage || "STAGE_ONE",
+        status: contestantsData.game.status,
+        contestants: contestantsData.data,
+      }))
+
+      // Set active tab based on current stage
+      if (contestantsData.game.stage?.includes("STAGE_ONE")) {
+        if (contestantsData.game.status == "IN_ACTIVE") {
+          setGameState((prevState) => ({
+            ...prevState,
+            currentStageStep: "start",
+          }))
+          setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP)
+        }
+      } else if (contestantsData.game.stage?.includes("STAGE_TWO")) {
+        setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_INIT)
+      } else if (contestantsData.game.stage?.includes("STAGE_THREE")) {
+        setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_INIT)
+      } else if (contestantsData.game.stage?.includes("STAGE_FOUR")) {
+        setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
+      }
+    }
+  }, [contestantsData, isLoadingContestants])
+  const [currentUniversalStep, setCurrentUniversalStep] = useState<UniversalGameStep>(UNIVERSAL_GAME_STEPS.GAME_SETUP)
+  const [gameState, setGameState] = useState<{
+    currentStage: string
+    status: string
+    lastAction: string
+    currentQuestion: number
+    contestants: any[]
+    showQuestions: boolean
+    currentStageStep: string
+  }>({
+    currentStage: "STAGE_ONE",
+    status: "",
+    lastAction: "",
+    currentQuestion: 0,
+    contestants: [],
+    showQuestions: false,
+    currentStageStep: "init",
+  })
+
+  const updateGameStateFromUniversalStep = (step: UniversalGameStep) => {
+    switch (step) {
+      case UNIVERSAL_GAME_STEPS.GAME_SETUP:
+        setGameState((prev) => ({
+          ...prev,
+          status: "IN_PROGRESS",
+          currentStage: "STAGE_ONE",
+          currentStageStep: "init",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.GAME_START:
+        setGameState((prev) => ({
+          ...prev,
+          status: "IN_PROGRESS",
+          currentStage: "STAGE_ONE",
+          currentStageStep: "start",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE1_INIT:
+        setGameState((prev) => ({
+          ...prev,
+          currentStage: "STAGE_ONE",
+          currentStageStep: "init",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "hustle_pick",
+          currentStage: "STAGE_ONE",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_REVEAL:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "hustle_reveal",
+          currentStage: "STAGE_ONE",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS_PREP:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "prep_questions",
+          currentStage: "STAGE_ONE",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "questions",
+          showQuestions: true,
+          currentStage: "STAGE_ONE",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "question_reveal",
+          currentStage: "STAGE_ONE",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "timer_running",
+          currentStage: "STAGE_ONE",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "bids_reveal",
+          currentStage: "STAGE_ONE",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE1_RESULTS:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "results",
+          currentStage: "STAGE_ONE",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE2_INIT:
+        setGameState((prev) => ({
+          ...prev,
+          currentStage: "STAGE_TWO",
+          currentStageStep: "init",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE2_PREP:
+        setGameState((prev) => ({
+          ...prev,
+          currentStage: "STAGE_TWO",
+          currentStageStep: "prep_questions",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "questions",
+          showQuestions: true,
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE3_INIT:
+        setGameState((prev) => ({
+          ...prev,
+          currentStage: "STAGE_THREE",
+          currentStageStep: "init",
+        }))
+        break
+      case UNIVERSAL_GAME_STEPS.STAGE4_INIT:
+        setGameState((prev) => ({
+          ...prev,
+          currentStage: "STAGE_FOUR",
+          currentStageStep: "init",
+        }))
+        break
+      default:
+        break
+    }
+  }
+
+
+
+  if (!isInitialized || step === null) {
+    return (
+      <div className="fixed inset flex items-center justify-center top-0 right-0 m-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-full relative">
       {/* Debug info */}
@@ -435,21 +496,102 @@ const HustleBoard = () => {
       </div>
 
       <AnimatePresence mode="wait">
-        {step === 1 && (
-          <motion.div key="step1" className="h-full" {...motionProps}>
-            <HustleBoardNumberPicks onNext={onNextStep2} />
-          </motion.div>
-        )}
-        {step === 2 && (
-          <motion.div key="step2" className="h-full" {...motionProps}>
-            <ReviewHustle onNext={onNextStep3} />
-          </motion.div>
-        )}
-        {step === 3 && (
-          <motion.div key="step3" className="h-full" {...motionProps}>
-            <Stage1QuestionScreen onNext={onNextStep4} />
-          </motion.div>
-        )}
+
+        {
+          gameState.currentStage.includes("STAGE_ONE") && (
+            <>
+              {
+                (
+                  gameState.currentStageStep === "init" ||
+                  gameState.currentStageStep === "hustle_pick" ||
+                  gameState.currentStageStep === "start"
+                ) && (
+                  <motion.div key={gameState.currentStageStep} className="h-full" {...motionProps}>
+                    <HustleBoardNumberPicks />
+                  </motion.div>
+                )
+              }
+              {
+                (
+                  gameState.currentStageStep === "hustle_reveal"
+                ) && (
+                  <motion.div key={gameState.currentStageStep} className="h-full" {...motionProps}>
+                    <ReviewHustle />
+                  </motion.div>
+                )
+              }
+              {
+                (
+                  gameState.currentStageStep === "prep_questions"
+                ) && (
+                  <motion.div key={gameState.currentStageStep} className="h-full" {...motionProps}>
+                    <GetHustleBoardReadyScreen />
+                  </motion.div>
+                )
+              }
+              {
+                (
+                  gameState.currentStageStep === "questions" ||
+                  gameState.currentStageStep === "question_reveal" ||
+                  gameState.currentStageStep === "timer_running"
+                )
+                && (
+                  <motion.div key={gameState.currentStageStep} className="h-full" {...motionProps}>
+                    <Stage1QuestionScreen />
+                  </motion.div>
+                )
+              }
+              {
+                (
+                  gameState.currentStageStep === "results"
+                )
+                && (
+                  <motion.div key={gameState.currentStageStep} className="h-full" {...motionProps}>
+                    <HustleBoardStageTallyPage
+                      eliminationCount={0}
+                      removeCount={0}
+                      activeState={1}
+
+                    />
+                  </motion.div>
+                )
+              }
+            </>
+          )
+        }
+        {
+          gameState.currentStage.includes("STAGE_TWO") && (
+            <>
+              {
+                (
+                  gameState.currentStageStep === "init"
+                )
+                && (
+                  <motion.div key={gameState.currentStageStep} className="h-full" {...motionProps}>
+                    <HustleBoardStageTallyPage
+                      eliminationCount={0}
+                      removeCount={0}
+                      activeState={1}
+
+                    />
+                  </motion.div>
+                )
+              }
+              {
+                (
+                  gameState.currentStageStep === "prep_questions"
+                ) && (
+                  <motion.div key={gameState.currentStageStep} className="h-full" {...motionProps}>
+                    <StageTwoGetReadyStage />
+                  </motion.div>
+                )
+              }
+            </>
+          )
+        }
+
+
+
         {step === 4 && (
           <motion.div key="step4" className="h-full" {...motionProps}>
             <ViewOnlyQuestionTwoScreen onNext={onNextStep5} />
@@ -474,7 +616,7 @@ const HustleBoard = () => {
         participantName="Game Audience"
         currentScreen={gameState.currentStageStep || "init"}
         currentStep={currentUniversalStep}
-        gameStage={gameState.currentStage || allContestants?.game?.stage || "STAGE_ONE"}
+        gameStage={gameState.currentStage || contestantsData?.game?.stage || "STAGE_ONE"}
         setCurrentUniversalStep={setCurrentUniversalStep}
         updateGameStateFromUniversalStep={updateGameStateFromUniversalStep}
       />

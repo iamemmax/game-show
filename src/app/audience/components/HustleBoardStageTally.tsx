@@ -27,7 +27,6 @@ interface StageOneTallyProps {
   removeCount?: number;
   title?: string;
   activeState: number;
-  onNext?: () => void;
 }
 
 // Sound effects configuration
@@ -213,7 +212,6 @@ const HustleBoardStageTallyPage = ({
   removeCount = 0,
   title = "Stage 1",
   activeState,
-  onNext
 }: StageOneTallyProps) => {
   const borderArray = [
     "#7E3CE0",
@@ -404,14 +402,16 @@ const HustleBoardStageTallyPage = ({
 
   // Early returns for stage transitions
   if (goToStage2) {
-    return <ViewOnlyQuestionTwoScreen onNext={() => onNext?.()} />;
+    return <ViewOnlyQuestionTwoScreen onNext={() => {}} />;
   }
 
   if (goToStage3) {
     return (
       <Stage3HustleBoardGetReadyPage 
         key={`stage3-board-ready-${episodeId}`}
-        onNext={() => onNext?.()}  
+        onNext={() => {
+          //
+        }}  
       />
     );
   }
