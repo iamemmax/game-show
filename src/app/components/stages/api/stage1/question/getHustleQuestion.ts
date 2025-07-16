@@ -8,6 +8,8 @@ export interface hustleQuestionPicksProps {
   hustle_name: string;
   contestant_name: string;
   contestant_id: number;
+  contestant_photo_url: string | undefined;
+
 }
 
 

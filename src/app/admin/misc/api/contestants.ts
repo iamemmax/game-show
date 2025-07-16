@@ -15,6 +15,7 @@ interface Contestant {
   actual_balance: string;
   book_balance: string;
   wallet_balance: string;
+  contestant_photo_url:string | null
 }
 
 interface GameInfo {
@@ -35,7 +36,8 @@ interface AssignContestantRequest {
   game_episode: number
   constestants_attr: string
   name: string
-  phone_number: string
+  phone_number: string;
+  contestant_photo:any
 }
 
 interface AssignContestantResponse {
@@ -64,7 +66,20 @@ export const useGetGameContestants = (gameId: number) =>
 
 // Assign a contestant
 export const assignContestant = async (data: AssignContestantRequest) => {
-  const response = await tokenlessAxios.post("api/accounts/assign_contestants/", data)
+  const formData = new FormData()
+  console.log(data);
+  
+  formData.append("name", data?.name)
+  formData.append("constestants_attr", data?.constestants_attr)
+  formData.append("game_episode", String(data?.game_episode))
+  formData.append("phone_number", data?.phone_number)
+  formData.append("contestant_photo", data?.contestant_photo)
+
+  const response = await tokenlessAxios.post("api/accounts/assign_contestants/", formData,{
+    headers:{
+      "Content-Type": "multipart/form-data",
+    }
+  })
   return response?.data as AssignContestantResponse
 }
 

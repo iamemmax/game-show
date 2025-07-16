@@ -245,7 +245,7 @@ const QuestionTwoScreen = ({onNext}:prop) => {
   useEffect(() => {
     if (!isConnected) return;
 
-    const handler = (receivedMessage: any) => {
+    const handleMQTTMessage = (receivedMessage: any) => {
       // Handle prep page event
       if (receivedMessage?.event === "game_s2_question_reveal") {
         console.log("✅ Processing game_s1_question_reveal");
@@ -362,15 +362,14 @@ const QuestionTwoScreen = ({onNext}:prop) => {
         setContestantOptions({});
       }
     };
-
-    console.log("🔄 Registering MQTT handler");
-   if (isConnected) {
-      addMessageListener(handler);
+ if (isConnected) {
+      addMessageListener(handleMQTTMessage);
     }
 
     return () => {
-      removeMessageListener(handler);
+      removeMessageListener(handleMQTTMessage);
     };
+   
   }, [isConnected, addMessageListener, removeMessageListener, user?.contestant_id]);
 
   // Watch for answer data and publish event when available

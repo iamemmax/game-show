@@ -41,6 +41,7 @@ const assignContestantSchema = z.object({
   constestants_attr: z.string().min(1, "Please select a contestant position"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   phone_number: z.string().min(10, "Phone number must be at least 10 digits").max(15, "Phone number is too long"),
+  contestant_photo:z.any()
 })
 
 type AssignContestantFormValues = z.infer<typeof assignContestantSchema>
@@ -144,8 +145,14 @@ export default function GameDetails() {
       constestants_attr: "",
       name: "",
       phone_number: "",
+      contestant_photo: null,
     },
   })
+
+  const handleFileChange =(e:React.ChangeEvent<HTMLInputElement>)=>{
+form.setValue("contestant_photo", e.target.files?.[0])
+e.target.value = ""
+  }
 
   const onSubmit = async (values: AssignContestantFormValues) => {
     try {
@@ -154,6 +161,7 @@ export default function GameDetails() {
         constestants_attr: values.constestants_attr,
         name: values.name,
         phone_number: values.phone_number,
+        contestant_photo:values?.contestant_photo
       })
 
       refetchContestants()
@@ -170,6 +178,7 @@ export default function GameDetails() {
         constestants_attr: values.constestants_attr,
         name: values.name,
         phone_number: values.phone_number,
+        contestant_photo:values?.contestant_photo
       })
 
       refetchContestants()
@@ -361,7 +370,7 @@ export default function GameDetails() {
                 <div className="border-white/40 border-t-[0.3px] mt-6 pt-6">
                   <h2 className="text uppercase font-semibold mb-4 text-white text-[0.8rem]">ASSIGN CONTESTANT</h2>
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+                    <form  encType="multipart/form-data" onSubmit={form.handleSubmit(onSubmit)} className="space-y-2" >
                       <FormField
                         control={form.control}
                         name="constestants_attr"
@@ -438,6 +447,7 @@ export default function GameDetails() {
                           Assign
                         </Button>
                       </div>
+                      <input type="file" onChange={(e)=>handleFileChange(e)} />
                     </form>
                   </Form>
                 </div>

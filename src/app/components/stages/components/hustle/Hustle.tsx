@@ -212,7 +212,7 @@ useEffect(() => {
                     <div className="relative h-[2.8rem] w-[2.8rem] bg-[#bf7222] border-[2px] border-[#dba531] rounded-full overflow-hidden">
                       <Image
                         alt="User avatar"
-                        src="/images/userImage5.png"
+                        src={String(contestant?.contestant_details?.contestant_photo_url)}
                         fill
                         className="object-cover"
                       />

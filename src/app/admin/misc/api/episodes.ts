@@ -8,6 +8,7 @@ interface IEpisode {
   status: string
   stage: string
   created_at: string
+  contestant_photo_url: string|null
   updated_at: string
   hustle_season: number;
 

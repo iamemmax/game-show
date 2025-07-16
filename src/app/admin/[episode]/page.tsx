@@ -19,7 +19,7 @@ import {
 } from "@/components/core"
 import { Input } from "@/components/core/Input"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, User, Phone, AlertCircle, Plus, Copy, Award, ScanLine } from "lucide-react"
+import { ArrowLeft, User, Phone, AlertCircle, Plus, Copy, Award, ScanLine, Upload } from "lucide-react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -45,6 +45,7 @@ const assignContestantSchema = z.object({
   constestants_attr: z.string().min(1, "Please select a contestant position"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   phone_number: z.string().min(10, "Phone number must be at least 10 digits").max(15, "Phone number is too long"),
+  contestant_photo:z.any()
 })
 
 type AssignContestantFormValues = z.infer<typeof assignContestantSchema>
@@ -72,6 +73,9 @@ export default function GameDetails() {
   const [debitWalletPayload, setDebitWalletPayload] = useState<MultiCreditDebitContestantRequest | null>()
   const [selectedContestantIds, setSelectedContestantIds] = useState<number[]>([])
   const [creditSource, setCreditSource] = useState<"gameshow_float" | "contestants">()
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+ 
 
   const sendGameMessage = React.useCallback(
     async (eventCode: string, data: any = {}) => {
@@ -132,40 +136,26 @@ export default function GameDetails() {
   } = useGetGameContestants(Number.parseInt(gameId))
 
   const assignContestantMutation = useAssignContestant()
-  const form = useForm<AssignContestantFormValues>({
-    resolver: zodResolver(assignContestantSchema),
-    defaultValues: {
-      constestants_attr: "",
-      name: "",
-      phone_number: "",
-    },
-  })
-
+ 
   const modalForm = useForm<AssignContestantFormValues>({
     resolver: zodResolver(assignContestantSchema),
     defaultValues: {
       constestants_attr: "",
       name: "",
       phone_number: "",
+      contestant_photo:null
     },
   })
 
-  const onSubmit = async (values: AssignContestantFormValues) => {
-    try {
-      await assignContestantMutation.mutateAsync({
-        game_episode: Number.parseInt(gameId),
-        constestants_attr: values.constestants_attr,
-        name: values.name,
-        phone_number: values.phone_number,
-      })
-
-      refetchContestants()
-      form.reset()
-    } catch (error) {
-      console.error("Failed to assign contestant:", error)
-    }
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (file) {
+    setSelectedFile(file);
+    modalForm.setValue("contestant_photo", e.target.files?.[0])
   }
-
+  e.target.value = ""
+  };
+ 
   const onModalSubmit = async (values: AssignContestantFormValues) => {
     try {
       await assignContestantMutation.mutateAsync({
@@ -173,6 +163,7 @@ export default function GameDetails() {
         constestants_attr: values.constestants_attr,
         name: values.name,
         phone_number: values.phone_number,
+        contestant_photo:values.contestant_photo
       })
 
       refetchContestants()
@@ -496,7 +487,7 @@ export default function GameDetails() {
 
           <DialogBody>
             <Form {...modalForm}>
-              <form onSubmit={modalForm.handleSubmit(onModalSubmit)} className="grid gap-2 mt-2">
+              <form  encType="multipart/form-data" onSubmit={modalForm.handleSubmit(onModalSubmit)} className="grid gap-2 mt-2">
                 <FormField
                   control={modalForm.control}
                   name="constestants_attr"
@@ -544,6 +535,32 @@ export default function GameDetails() {
                     </FormItem>
                   )}
                 />
+                <div className="w-full max-w-sm mx-auto p-4 bg-white rounded-xl shadow-md border border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+      <label
+        htmlFor="fileInput"
+        className="flex flex-col items-center justify-center p-6 text-center cursor-pointer border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+      >
+        <Upload className="w-8 h-8 mb-2 text-gray-500 dark:text-gray-400" />
+        <p className="text-gray-600 dark:text-gray-300 text-sm">
+          Tap to upload or use your camera
+        </p>
+        <p className="text-xs text-gray-400 mt-1">JPEG, PNG, or take photo</p>
+        <input
+          id="fileInput"
+          type="file"
+          accept="image/*"
+          capture="environment" // "user" for front camera, "environment" for back camera
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      </label>
+
+      {selectedFile && (
+        <div className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+          Selected: <strong>{selectedFile.name}</strong>
+        </div>
+      )}
+    </div>
 
                 <div className="flex justify-end gap-2 mt-2">
                   <Button

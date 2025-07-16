@@ -209,6 +209,38 @@ export default function HostPage() {
             }
         }
     }, [contestantsData, isLoadingContestants])
+  
+    // Initialize game data when contestants data is loaded
+    useEffect(() => {
+        if (!isLoadingContestants && contestantsData) {
+            console.log(contestantsData.game.stage, "game stage in contestantsData")
+            setGameState((prevState) => ({
+                ...prevState,
+                currentStage: contestantsData.game.stage || "STAGE_ONE",
+                status: contestantsData.game.status,
+                contestants: contestantsData.data,
+            }))
+
+            // Set active tab based on current stage
+            if (contestantsData.game.stage?.includes("STAGE_ONE")) {
+                setActiveStage("stage1")
+                if (contestantsData.game.status == "IN_ACTIVE") {
+                    setGameState((prevState) => ({
+                        ...prevState,
+                        currentStageStep: "start",
+                    }))
+                    setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP)
+                }
+            } else if (gameState.currentStage.includes("STAGE_TWO")) {
+                setActiveStage("stage2")               
+            } else if (contestantsData.game.stage?.includes("STAGE_THREE")) {
+                setActiveStage("stage3")
+            } else if (contestantsData.game.stage?.includes("STAGE_FOUR")) {
+                
+                setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
+            }
+        }
+    }, [contestantsData, isLoadingContestants])
 
     // Send message helper function
     const sendGameMessage = useCallback(

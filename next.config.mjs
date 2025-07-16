@@ -22,6 +22,12 @@ const nextConfig = {
         hostname: 'cdn.brandfetch.io',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: '192.168.0.131',
+        pathname: '/**',
+      },
+
     ],
   },
   // Add WebSocket support

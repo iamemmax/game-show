@@ -338,7 +338,7 @@ const StageOneTally = ({
                           <div className="shrink-0">
                             <Image
                               alt=""
-                              src={contestantImages[idx]}
+                              src={tally?.contestant_photo_url ??""}
                               width={18}
                               height={18}
                               className={`rounded-full shrink-0 ${episodeId ? "w-[80px] h-[60px]" : "2xl:w-[60px] 2xl:h-[30px]"} `}

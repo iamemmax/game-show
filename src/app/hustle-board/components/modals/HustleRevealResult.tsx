@@ -30,6 +30,7 @@ interface Profitloss {
   contestant_id: number;
   bid_amount: number;
   amount_gained: number;
+  contestant_photo_url:string | null
   amount_lost: number;
 }
 
@@ -203,7 +204,7 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                 <div className="relative w-[6.125rem] h-[7.125rem] rounded-[10px] overflow-hidden">
                   <Image
                     alt={`contestant ${data.contestant_name}`}
-                    src={contestantImages[idx % contestantImages.length]}
+                    src={data?.profit_loss?.contestant_photo_url ??""}
                     fill
                     className="object-cover rounded-10"
                   />

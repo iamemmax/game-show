@@ -421,9 +421,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
     setFontSize(newFontSize);
   }, [mqttQuestionData?.question]);
 
-  if (showStage2Prep) {
-    return <StageTwoGetReadyStage />;
-  }
+
 
   if (allQuestionsCompleted) {
     return (
@@ -432,7 +430,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
         removeCount={2}
         title={"Hustle Board"}
         activeState={2}
-        onNext={() => onNext}
+        // onNext={() => onNext}
       />
     );
   }

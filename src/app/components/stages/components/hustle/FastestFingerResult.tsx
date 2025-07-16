@@ -24,6 +24,7 @@ interface Datum {
   stage_balance: number;
   contestant_name: string | null;
   contestant_attr: string;
+  contestant_photo_url:string | null
 }
 
 interface ContestantBid {
@@ -346,6 +347,7 @@ useEffect(() => {
                     username={contestantName}
                     amount={`${String(answerTime?.toFixed(2))}`}
                     avatarUrl={
+                      result?.contestant_photo_url ??
                       contestantImages[index % contestantImages.length]
                     }
                     isOnline={true}

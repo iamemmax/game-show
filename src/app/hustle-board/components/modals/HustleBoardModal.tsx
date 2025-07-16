@@ -190,6 +190,7 @@ import { motion } from "framer-motion";
 
 interface Data {
   contestant_id: number;
+  contestant_photo_url:string | null;
   contestant_name: string;
   answer: string;
   amount_staked: number;
@@ -321,7 +322,7 @@ const HustleBoardModal = ({
               <div className="relative w-[7.125rem] h-[7.125rem] rounded-[10px] overflow-hidden">
                 <Image
                   alt="contestant"
-                  src={contestantImages[idx]}
+                  src={data?.contestant_photo_url ??""}
                   fill
                   className="object-cover rounded-10"
                 />

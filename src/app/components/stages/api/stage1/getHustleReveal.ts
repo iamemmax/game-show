@@ -30,6 +30,7 @@ interface Contestantdetails {
   phone_number: string;
   final_pot: number;
   eliminated_stage: null | string;
+contestant_photo_url:string | null
 }
 
 export const getHustleReveal = async (episode_id: number) => {

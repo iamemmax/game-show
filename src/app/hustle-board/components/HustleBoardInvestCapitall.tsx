@@ -157,7 +157,7 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
                 >
                   <Image
                     alt=""
-                    src={contestantImages[contestantIdx] || "/images/userImage.png"}
+                    src={contestant?.contestant_details?.contestant_photo_url ?? ""}
                     width={40}
                     height={40}
                     className="rounded-full w-full h-full object-cover"

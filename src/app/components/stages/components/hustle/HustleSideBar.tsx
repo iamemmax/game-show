@@ -13,6 +13,7 @@ import { useGetGameContestants } from "@/app/admin/misc/api";
 import { useParams } from "next/navigation";
 import { balanceProp, useGetWalletBalance } from "../../api/stage1/getbalance";
 import { formatAmount } from "@/utils/currency";
+import { Contestant } from "@/app/super-admin/misc/types";
 
 interface prop {
   showJackpot?: boolean;
@@ -38,12 +39,14 @@ interface Datum {
   contestant_attr: string;
   profit_loss: ProfitLoss;
    startup_balance: number;
+   photo_url:string
 }
 
 type ProfitLoss = {
   contestant_id: number;
   amount_gained: number;
   amount_lost: number;
+  contestant_photo_url:string|null
 };
 interface Questions {
   question: string;
@@ -138,7 +141,7 @@ const ContestantCard = ({
   balance,
   name 
 }: {
-  contestant: any;
+  contestant: Contestant;
   originalIndex: number; // Changed from idx to originalIndex for clarity
   contestantInfo: any;
   isMyContestant: boolean;
@@ -191,7 +194,7 @@ const ContestantCard = ({
           }`}
         >
           <Image
-            src={contestantImages[originalIndex] ?? ""}
+            src={String(contestantInfo?.contestant_photo_url)??"/"}
             alt="User Image"
             width={isBoardRoute ? 64 : 30}
             height={isBoardRoute ? 64 : 30}

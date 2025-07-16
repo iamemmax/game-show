@@ -25,6 +25,7 @@ export interface mqttDatum {
   contestant_attr: string;
   profit_loss: ProfitLoss;
    startup_balance: number;
+   contestant_photo_url:string
 }
 
 type ProfitLoss = {

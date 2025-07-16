@@ -10,6 +10,8 @@ interface BidData {
   contestant_name: string;
   answer: string;
   amount_staked: number;
+  contestant_photo_url:string | null;
+  
 }
 
 type OptionProps = {
@@ -207,6 +209,7 @@ interface Profitloss {
   contestant_id: number;
   bid_amount: number;
   amount_gained: number;
+  contestant_photo_url:string|null
   amount_lost: number;
 }
 

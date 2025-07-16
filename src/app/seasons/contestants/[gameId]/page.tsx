@@ -5,6 +5,7 @@ import { useClipboard, useErrorModalState } from '@/hooks'
 import { SmallSpinner } from '@/icons/core'
 import { formatAxiosErrorMessage } from '@/utils'
 import { AxiosError } from 'axios'
+import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 
@@ -100,11 +101,30 @@ const AllContestants = () => {
               <div className="px-6 py-5 border-b border-gray-100">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
-                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+  {!user?.contestant_photo_url ? (
+    <svg
+      className="w-6 h-6 text-gray-400"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
+    </svg>
+  ) : (
+    <img
+      alt="profile"
+      src={String(user?.contestant_photo_url)}
+      className="w-full h-full object-cover rounded-full"
+    />
+  )}
+</div>
+
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                   </div>
                   <div className="flex-1 min-w-0">
