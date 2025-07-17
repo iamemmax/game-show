@@ -190,7 +190,7 @@ const QuizOption: React.FC<OptionProps> = ({ label, optionKey, isCorrect = false
 
 
 
-interface Datum {
+export interface Datum {
   contestant_id: number;
   answered_in: number;
   is_correct: boolean;

@@ -23,7 +23,6 @@ import ErrorIcon from "@/app/icons/ErrorIcon";
 import { formatAmount } from "@/utils/currency";
 import HustleBoardStageTallyPage from "../HustleBoardStageTally";
 import HustleBoardModal from "../modals/HustleBoardModal";
-import HustleRevealResult from "../modals/HustleRevealResult";
 import HustleQuestionAnswerModal from "../modals/HustleQuestionAnswer";
 import AnimatedText from "@/app/shared/AnimatedText";
 import Image from "next/image";
