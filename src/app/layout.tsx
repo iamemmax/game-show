@@ -9,7 +9,7 @@ import { AuthProvider } from "@/contexts/authentication";
 import ProtectedRouteGuard from "@/contexts/ProtectedRouteGuard";
 import { Suspense } from "react";
 import { Wrapper } from "@/contexts/Wrapper";
-import { MQTTProvider } from "@/hooks/useMqttService";
+import { MQTTProvider } from "@/contexts/MQTTProvider";
 
 const sans = DM_Sans({
   subsets: ["latin"],

@@ -611,6 +611,7 @@ const HustleBoard = () => {
 
       {/* Enhanced Heartbeat Component */}
       <GameSynchroniser
+        gameId={gameEpisode! as string}
         participantId={`audience-${gameEpisode}`}
         participantType="audience"
         participantName="Game Audience"

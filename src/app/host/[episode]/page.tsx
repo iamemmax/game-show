@@ -3,7 +3,7 @@ import { useParams } from "next/navigation"
 import { useState, useEffect, useCallback } from "react"
 import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
-import { useMQTT } from "@/hooks/useMqttService"
+import { useMQTT } from "@/hooks/useMqttService" // Import useMQTTTopic
 import { useGetGameContestants, useHandleHustlePickTimeElapse } from "@/app/admin/misc/api"
 import { useEndStageThree, useInitStage2, useNotifyBackendStartQuestionTimer, useStartGame } from "../misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
@@ -17,7 +17,7 @@ export default function HostPage() {
   const params = useParams()
   const gameId = params.episode as string
   const { mutate: notifyBackendStartTimer } = useNotifyBackendStartQuestionTimer()
-  const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT()
+  const { isConnected, sendMessage } = useMQTT()
   const [activeStage, setActiveStage] = useState<string>("stage1")
   const [currentUniversalStep, setCurrentUniversalStep] = useState<UniversalGameStep>(UNIVERSAL_GAME_STEPS.GAME_SETUP)
   const [gameState, setGameState] = useState<{
@@ -39,6 +39,7 @@ export default function HostPage() {
   })
   const [isSending, setIsSending] = useState(false)
   const [messageLog, setMessageLog] = useState<Array<{ type: string; message: string; timestamp: string }>>([])
+
   const {
     data: contestantsData,
     isLoading: isLoadingContestants,
@@ -51,10 +52,8 @@ export default function HostPage() {
       // Check for right arrow key or page down key
       if (event.key === "ArrowRight" || event.key === "PageDown") {
         event.preventDefault() // Prevent default scroll behavior
-
         // Find the currently visible button that should respond to the remote
         const targetButton = document.querySelector<HTMLButtonElement>('[data-remote-target="true"]')
-
         if (targetButton) {
           targetButton.click() // Programmatically click the button
         }
@@ -62,7 +61,6 @@ export default function HostPage() {
     }
 
     window.addEventListener("keydown", handleKeyDown)
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
     }
@@ -192,6 +190,7 @@ export default function HostPage() {
         break
     }
   }
+
   // Initialize game data when contestants data is loaded
   useEffect(() => {
     if (!isLoadingContestants && contestantsData) {
@@ -202,25 +201,25 @@ export default function HostPage() {
         status: contestantsData.game.status,
         contestants: contestantsData.data,
       }))
+
+      // Set currentUniversalStep based on fetched data, or default to GAME_SETUP
+      const initialUniversalStep =  UNIVERSAL_GAME_STEPS.GAME_SETUP
+      setCurrentUniversalStep(initialUniversalStep)
+      updateGameStateFromUniversalStep(initialUniversalStep) // Ensure local state is aligned
+
       // Set active tab based on current stage
       if (contestantsData.game.stage?.includes("STAGE_ONE")) {
         setActiveStage("stage1")
-        if (contestantsData.game.status == "IN_ACTIVE") {
-          setGameState((prevState) => ({
-            ...prevState,
-            currentStageStep: "start",
-          }))
-          setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP)
-        }
-      } else if (gameState.currentStage.includes("STAGE_TWO")) {
+      } else if (contestantsData.game.stage?.includes("STAGE_TWO")) {
         setActiveStage("stage2")
       } else if (contestantsData.game.stage?.includes("STAGE_THREE")) {
         setActiveStage("stage3")
       } else if (contestantsData.game.stage?.includes("STAGE_FOUR")) {
-        setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
+        setActiveStage("stage4")
       }
     }
   }, [contestantsData, isLoadingContestants])
+
   // Send message helper function
   const sendGameMessage = useCallback(
     async (eventCode: string, data: any = {}) => {
@@ -249,7 +248,7 @@ export default function HostPage() {
             timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
           },
         ])
-        await sendMessage(message)
+        await sendMessage(message, `/game-sync/${gameId}`) // Specify topic for sending
         refetchContestants()
         // Update local game state and universal step based on action
         updateLocalStateAfterAction(eventCode)
@@ -262,9 +261,11 @@ export default function HostPage() {
     },
     [isConnected, sendMessage, gameId, refetchContestants, currentUniversalStep],
   )
+
   // Update local state after sending an action
   const updateLocalStateAfterAction = (eventCode: string) => {
     if (!eventCode) return
+
     if (eventCode === "game_start") {
       setGameState((prev) => ({
         ...prev,
@@ -427,6 +428,7 @@ export default function HostPage() {
       setGameState((prev) => ({ ...prev, lastAction: eventCode }))
     }
   }
+
   // Game control functions
   const { mutate: gameStartMutation, isLoading: isStartingGame } = useStartGame()
   const startGame = () => {
@@ -444,11 +446,13 @@ export default function HostPage() {
     )
   }
   const endGame = () => sendGameMessage("game_end")
+
   //////////////////////////////
   //////////////////////////////
   ////////    Stage 1 functions
   //////////////////////////////
   //////////////////////////////
+
   const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
   const { mutate: handleTimeElapse } = useHandleHustlePickTimeElapse()
   const endTimerHustlePick = () => {
@@ -463,6 +467,7 @@ export default function HostPage() {
   }
   const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
   const prepStage1Questions = () => sendGameMessage("game_s1_questions_prep")
+
   // Handle question completion
   const handleQuestionComplete = (questionId: number) => {
     // Logic to handle when a question is completed
@@ -473,11 +478,13 @@ export default function HostPage() {
       currentStageStep: "questions",
     }))
   }
+
   //////////////////////////////
   //////////////////////////////
   ////////    Stage 2 functions
   //////////////////////////////
   //////////////////////////////
+
   const { mutate: handleInitStage2 } = useInitStage2()
   const initStage2 = () => {
     handleInitStage2(
@@ -494,6 +501,7 @@ export default function HostPage() {
     )
   }
   const prepStage2Questions = () => sendGameMessage("game_s2_prep")
+
   // Handle timer start
   const handleTimerStart = (questionId: string, startTime: string, questionType: string) => {
     notifyBackendStartTimer({
@@ -502,11 +510,13 @@ export default function HostPage() {
       question_type: questionType,
     })
   }
+
   //////////////////////////////
   //////////////////////////////
   ////////    Stage 3 functions
   //////////////////////////////
   //////////////////////////////
+
   const initStage3 = () => sendGameMessage("game_s3_init", { start_time: new Date().toISOString() })
   const prepStage3Picks = () => sendGameMessage("game_s3_prep")
   const startStage3Picks = () => sendGameMessage("game_s3_start")
@@ -534,6 +544,7 @@ export default function HostPage() {
       },
     )
   }
+
   const getStageInfo = () => {
     if (gameState.currentStage.includes("STAGE_ONE")) {
       return { title: "Stage 1", subtitle: "STARTUP CAPITAL" }
@@ -546,13 +557,16 @@ export default function HostPage() {
     }
     return { title: "Game Setup", subtitle: "PREPARE TO START" }
   }
+
   const getStageButtons = () => {
     const { currentStage, currentStageStep } = gameState
+
     /////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////
     //////////////// Stage ONE
     /////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////
+
     if (currentStage.includes("STAGE_ONE")) {
       if (currentStageStep === "start") {
         return (
@@ -616,6 +630,7 @@ export default function HostPage() {
       }
       return null
     }
+
     /////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////
     //////////////// Stage TWO
@@ -659,6 +674,7 @@ export default function HostPage() {
       }
       return null
     }
+
     /////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////
     //////////////// Stage THREE
@@ -706,6 +722,7 @@ export default function HostPage() {
       }
       return null
     }
+
     /////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////
     //////////////// Stage FOUR
@@ -721,13 +738,14 @@ export default function HostPage() {
               </div>
               <p className="text-white mb-4">Prep Stage 4 Questions</p>
               {/* <TrapeziumButton onClick={initStage2} variant="orange">
-                                INITIALIZE STAGE 2
-                            </TrapeziumButton> */}
+                              INITIALIZE STAGE 2
+                          </TrapeziumButton> */}
             </div>
           </div>
         )
       }
     }
+
     // Default - game not started
     return (
       <div className="flex justify-center">
@@ -737,6 +755,7 @@ export default function HostPage() {
       </div>
     )
   }
+
   return (
     <div className="min-h-screen bg-[#1a0b25] text-white bg-[url('/images/host-bg.png')] bg-no-repeat bg-contain bg-center">
       {isLoadingContestants ? (
@@ -758,6 +777,7 @@ export default function HostPage() {
             <div className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded text-sm">
               Step: {currentUniversalStep}
             </div>
+
             {/* Stage Title */}
             <div className="relative w-80 h-28 flex items-center justify-center mb-8">
               <img
@@ -770,6 +790,7 @@ export default function HostPage() {
                 <p className="text-xs font-montserrat font-bold text-black uppercase">{getStageInfo().subtitle}</p>
               </div>
             </div>
+
             {/* Contestants */}
             {!(
               gameState.currentStage.includes("STAGE_ONE") &&
@@ -785,8 +806,10 @@ export default function HostPage() {
                 ))}
               </div>
             )}
+
             {/* Stage-specific buttons */}
             {getStageButtons()}
+
             {/* Stage 1 Questions Component */}
             {gameState.currentStage.includes("STAGE_ONE") &&
               (gameState.currentStageStep === "questions" ||
@@ -802,6 +825,7 @@ export default function HostPage() {
                   lastAction={gameState.lastAction}
                 />
               )}
+
             {/* Stage 2 Questions Component */}
             {gameState.currentStage.includes("STAGE_TWO") &&
               (gameState.currentStageStep === "questions" ||
@@ -816,11 +840,13 @@ export default function HostPage() {
                   lastAction={gameState.lastAction}
                 />
               )}
+
             {/* Stage 4 Component */}
             {gameState.currentStage.includes("STAGE_FOUR") && <Stage4 />}
           </div>
         </main>
       )}
+
       {/* Loading Overlay */}
       {isSending && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -830,8 +856,10 @@ export default function HostPage() {
           </div>
         </div>
       )}
+
       {/* Enhanced Heartbeat Component */}
       <GameSynchroniser
+        gameId={gameId}
         participantId={`host-${gameId}`}
         participantType="host"
         participantName="Game Host"

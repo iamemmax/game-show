@@ -1,216 +1,253 @@
-'use client';
+import { MQTTContext, MQTTMessage } from '@/contexts/MQTTProvider';
+import { useContext, useEffect, useCallback, useState, useRef } from 'react';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  ReactNode,
-} from 'react';
-import mqtt, { MqttClient, MqttProtocol } from 'mqtt';
-
-interface MQTTContextProps {
+// Hook return types
+export interface MQTTHookReturn {
   isConnected: boolean;
-  sendMessage: (message: any, event?: string) => Promise<boolean>;
-  addMessageListener: (callback: (message: any) => void) => void;
-  removeMessageListener: (callback: (message: any) => void) => void;
-  userId: string;
+  sendMessage: (message: any, topic?: string) => Promise<boolean>;
+  sendToMultipleTopics: (message: any, topics: string[]) => Promise<boolean[]>;
+  broadcastMessage: (message: any, topic: string) => Promise<boolean>;
+  subscribeToTopic: (topic: string, callback: (message: MQTTMessage) => void) => void;
+  unsubscribeFromTopic: (topic: string, callback: (message: MQTTMessage) => void) => void;
+  addGlobalListener: (callback: (message: MQTTMessage) => void) => void;
+  removeGlobalListener: (callback: (message: MQTTMessage) => void) => void;
+  subscribedTopics: string[];
+  // Legacy support
+  addMessageListener: (callback: (message: MQTTMessage) => void) => void;
+  removeMessageListener: (callback: (message: MQTTMessage) => void) => void;
 }
-const MQTTContext = createContext<MQTTContextProps | null>(null);
 
-
-interface MQTTProviderProps {
-  children: ReactNode;
+export interface MultiSendHookReturn {
+  sendToMultipleTopics: (message: any, topics: string[]) => Promise<boolean[]>;
+  broadcastMessage: (message: any, topic: string) => Promise<boolean>;
+  queueMultiSend: (message: any, topics: string[]) => string;
+  isConnected: boolean;
+  queueLength: number;
+  isSending: boolean;
 }
 
+// ===== HOOK 1: Main MQTT Hook =====
+export function useMQTT(): MQTTHookReturn {
+  const context = useContext(MQTTContext);
+  if (!context) {
+    throw new Error('useMQTT must be used within an MQTTProvider');
+  }
 
+  const {
+    isConnected,
+    client,
+    subscribedTopics,
+    subscribeToTopic,
+    unsubscribeFromTopic,
+    addGlobalListener,
+    removeGlobalListener,
+    addMessageListener,
+    removeMessageListener
+  } = context;
 
-export function MQTTProvider({ children }: MQTTProviderProps) {
-  const broker = process.env.NEXT_PUBLIC_MQTT_BROKER;
-  const port = process.env.NEXT_PUBLIC_MQTT_PORT;
-  const username = process.env.NEXT_PUBLIC_MQTT_USERNAME;
-  const password = process.env.NEXT_PUBLIC_MQTT_PASSWORD;
-  const protocol = process.env.NEXT_PUBLIC_MQTT_PROTOCOL as MqttProtocol
-  const connectUrl = `ws://${broker}:${port}`;
-  // const connectUrl = `ws://${broker}:${port}/mqtt`;
+  // Send message to single topic (backward compatible)
+  const sendMessage = useCallback(async (message: any, topic: string = 'test/topic/local'): Promise<boolean> => {
+    if (!client || !isConnected) {
+      console.warn('MQTT client not connected');
+      return false;
+    }
 
-  const [isConnected, setIsConnected] = useState(false);
-  const clientRef = useRef<MqttClient | null>(null);
-  const userIdRef = useRef<string>('');
-  const topicsRef = useRef({
-    publisher: '',
-    subscriber: '',
-  });
-
-  const connectionAttemptsRef = useRef(0);
-  const maxConnectionAttempts = 3;
-  const messageListenersRef = useRef<Set<(message: any) => void>>(new Set());
-  
-  useEffect(() => {
-    let mqttClient: MqttClient | null = null;
-
-    const connect = () => {
-      console.log('MQTT connect URL:', connectUrl);
-
-
-
-      topicsRef.current = {
-        publisher: `test/topic/local`,
-        subscriber: `test/topic/local`,
-      };
-
-      mqttClient = mqtt.connect(connectUrl, {
-        clientId: `mqtt_${Math.random().toString(16).slice(3)}`,
-        clean: true,
-        connectTimeout: 300000,
-        reconnectPeriod: 5000,
-        username,
-        password,
-        keepalive: 30,
-        protocol: protocol,
-        rejectUnauthorized: false,
+    try {
+      const messageString = JSON.stringify(message);
+      await new Promise<void>((resolve, reject) => {
+        client.publish(topic, messageString, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
       });
+      return true;
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      return false;
+    }
+  }, [client, isConnected]);
 
+  // Send message to multiple topics simultaneously
+  const sendToMultipleTopics = useCallback(async (message: any, topics: string[]): Promise<boolean[]> => {
+    if (!client || !isConnected) {
+      console.warn('MQTT client not connected');
+      return new Array(topics.length).fill(false);
+    }
 
-      mqttClient.on('connect', () => {
-        console.log('Connected to MQTT broker');
-        setIsConnected(true);
-        connectionAttemptsRef.current = 0;
-
-        setTimeout(() => {
-          mqttClient?.subscribe(
-            topicsRef.current.subscriber,
-            { qos: 1 },
-            (err) => {
-              if (err) {
-                console.error('Subscription error:', err);
-              } else {
-                console.log(`Subscribed to ${topicsRef.current.subscriber}`);
-              }
-            }
-          );
-        }, 1000);
-      });
-
-      mqttClient.on('error', (err) => {
-        console.error('MQTT Connection error:', err);
-        setIsConnected(false);
-        connectionAttemptsRef.current++;
-        if (connectionAttemptsRef.current >= maxConnectionAttempts) {
-          console.error('Max connection attempts reached');
-          mqttClient?.end();
-        }
-      });
-
-      mqttClient.on('disconnect', () => {
-        console.log('Disconnected from MQTT broker');
-        setIsConnected(false);
-      });
-
-      mqttClient.on('offline', () => {
-        console.log('MQTT client is offline');
-        setIsConnected(false);
-      });
-
-      mqttClient.on('reconnect', () => {
-        console.log('Reconnecting to MQTT broker...');
-      });
-
-      clientRef.current = mqttClient;
-    };
-
-    connect();
-
-    return () => {
-      if (clientRef.current) {
-        console.log('Cleaning up MQTT connection');
-        clientRef.current.end(true);
-        clientRef.current = null;
-      }
-    };
-  }, [connectUrl, username, password]);
-
-  const sendMessage = useCallback(
-    (message: any, event?: string) => {
-      if (!clientRef.current || !isConnected) {
-        console.error('MQTT client is not connected');
-        return Promise.reject(new Error('MQTT client not connected'));
-      }
-
-      return new Promise<boolean>((resolve, reject) => {
-
-
-        clientRef.current!.publish(
-          topicsRef.current.publisher,
-          JSON.stringify(message),
-          { qos: 1 },
-          (err) => {
-            if (err) {
-              console.error('Publish error:', err);
-              reject(err);
-            } else {
-              console.log('Message sent successfully');
-              resolve(true);
-            }
-          }
-        );
-      });
-    },
-    [isConnected]
-  );
-
-   useEffect(() => {
-    const mqttClient = clientRef.current;
-    if (!mqttClient) return;
-
-    mqttClient.on('message', (topic, payload) => {
+    const sendPromises = topics.map(async (topic) => {
       try {
-        const message = JSON.parse(payload.toString());
-        messageListenersRef.current.forEach((cb) => cb(message));
-      } catch (err) {
-        console.error('Error parsing message:', err);
-        const fallback = { error: 'Failed to parse message', raw: payload.toString() };
-        messageListenersRef.current.forEach((cb) => cb(fallback));
+        const messageString = JSON.stringify(message);
+        await new Promise<void>((resolve, reject) => {
+          client.publish(topic, messageString, (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+        return true;
+      } catch (error) {
+        console.error(`Failed to send message to topic ${topic}:`, error);
+        return false;
       }
     });
 
-    return () => {
-      mqttClient?.removeAllListeners('message');
-      messageListenersRef.current.clear();
+    return Promise.all(sendPromises);
+  }, [client, isConnected]);
+
+  // Broadcast message with metadata
+  const broadcastMessage = useCallback(async (message: any, topic: string): Promise<boolean> => {
+    const broadcastPayload = {
+      ...message,
+      _broadcast: true,
+      _timestamp: Date.now(),
+      _source: 'broadcast'
     };
-  }, []);
+    
+    return sendMessage(broadcastPayload, topic);
+  }, [sendMessage]);
 
-  const addMessageListener = useCallback((callback: (message: any) => void) => {
-    messageListenersRef.current.add(callback);
-  }, []);
-
-  const removeMessageListener = useCallback((callback: (message: any) => void) => {
-    messageListenersRef.current.delete(callback);
-  }, []);
-
-
-
-  const contextValue: MQTTContextProps = {
+  return {
     isConnected,
     sendMessage,
+    sendToMultipleTopics,
+    broadcastMessage,
+    subscribeToTopic,
+    unsubscribeFromTopic,
+    addGlobalListener,
+    removeGlobalListener,
+    subscribedTopics,
+    // Legacy support
     addMessageListener,
-    removeMessageListener,
-    userId: userIdRef.current,
+    removeMessageListener
   };
-
-  return (
-    <MQTTContext.Provider value={contextValue}>
-      {children}
-    </MQTTContext.Provider>
-  );
 }
 
-export function useMQTT() {
-  const context = useContext(MQTTContext);
-  if (!context) {
-    throw new Error('useMQTT must be used within a MQTTProvider');
-  }
-  return context;
+// ===== HOOK 2: Topic-Specific Hook =====
+export function useMQTTTopic(
+  topic: string,
+  callback: (message: MQTTMessage) => void,
+  dependencies: any[] = []
+): void {
+  const { subscribeToTopic, unsubscribeFromTopic } = useMQTT();
+  
+
+  useEffect(() => {
+    subscribeToTopic(topic, callback);
+    
+    return () => {
+      unsubscribeFromTopic(topic, callback);
+    };
+  }, [topic, subscribeToTopic, unsubscribeFromTopic, ...dependencies]);
 }
+
+// ===== HOOK 3: Multi-Send Hook =====
+export function useMQTTMultiSend(): MultiSendHookReturn {
+  const { isConnected, sendToMultipleTopics, broadcastMessage } = useMQTT();
+  const [messageQueue, setMessageQueue] = useState<Array<{ id: string; message: any; topics: string[] }>>([]);
+  const [isSending, setIsSending] = useState(false);
+  const queueIdCounter = useRef(0);
+
+  // Queue message for sending when connected
+  const queueMultiSend = useCallback((message: any, topics: string[]): string => {
+    const id = `queue_${++queueIdCounter.current}`;
+    const queueItem = { id, message, topics };
+    
+    setMessageQueue(prev => [...prev, queueItem]);
+    return id;
+  }, []);
+
+  // Process queued messages when connection is established
+  useEffect(() => {
+    if (isConnected && messageQueue.length > 0 && !isSending) {
+      setIsSending(true);
+      
+      const processQueue = async () => {
+        const promises = messageQueue.map(async ({ message, topics }) => {
+          try {
+            await sendToMultipleTopics(message, topics);
+            return true;
+          } catch (error) {
+            console.error('Failed to send queued message:', error);
+            return false;
+          }
+        });
+
+        await Promise.all(promises);
+        setMessageQueue([]);
+        setIsSending(false);
+      };
+
+      processQueue();
+    }
+  }, [isConnected, messageQueue, isSending, sendToMultipleTopics]);
+
+  return {
+    sendToMultipleTopics,
+    broadcastMessage,
+    queueMultiSend,
+    isConnected,
+    queueLength: messageQueue.length,
+    isSending
+  };
+}
+
+
+
+
+
+// ///////////////////////////////////////////////////
+// ///////////////////////////////////////////////////
+// =====            UTILITY HOOKS             ===== //
+// ///////////////////////////////////////////////////
+// ///////////////////////////////////////////////////
+
+// Hook for managing connection status with callbacks
+export function useMQTTConnectionStatus(
+  onConnect?: () => void,
+  onDisconnect?: () => void
+): boolean {
+  const { isConnected } = useMQTT();
+  const prevConnected = useRef(isConnected);
+
+  useEffect(() => {
+    if (isConnected && !prevConnected.current) {
+      onConnect?.();
+    } else if (!isConnected && prevConnected.current) {
+      onDisconnect?.();
+    }
+    prevConnected.current = isConnected;
+  }, [isConnected, onConnect, onDisconnect]);
+
+  return isConnected;
+}
+
+// Hook for topic pattern matching
+export function useMQTTTopicPattern(
+  pattern: RegExp,
+  callback: (message: MQTTMessage) => void,
+  dependencies: any[] = []
+): void {
+  const { addGlobalListener, removeGlobalListener } = useMQTT();
+
+  useEffect(() => {
+    const patternCallback = (message: MQTTMessage) => {
+      if (pattern.test(message.topic)) {
+        callback(message);
+      }
+    };
+
+    addGlobalListener(patternCallback);
+    
+    return () => {
+      removeGlobalListener(patternCallback);
+    };
+  }, [pattern, addGlobalListener, removeGlobalListener, ...dependencies]);
+}
+
+// Export all hooks as default
+export default {
+  useMQTT,
+  useMQTTTopic,
+  useMQTTMultiSend,
+  useMQTTConnectionStatus,
+  useMQTTTopicPattern
+};
