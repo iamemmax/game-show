@@ -379,6 +379,7 @@ useEffect(() => {
           } else {
             setCurrentTurn(user?.contestant_id || null);
             setIsMyTurn(true);
+             refetch()
           }
         }, 600);
       }

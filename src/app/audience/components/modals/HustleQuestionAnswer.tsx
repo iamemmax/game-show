@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import CheckIcon from '@/app/icons/CheckIcon'
 import HustleBoardModal from './HustleBoardModal';
-import HustleRevealResult from './HustleRevealResult';
+import HustleRevealResult from '@/app/hustle-board/components/modals/HustleRevealResult';
+import { Datum } from '@/app/hustle-board/components/modals/HustleQuestionAnswer';
 
 
 interface BidData {
@@ -187,21 +188,6 @@ const QuizOption: React.FC<OptionProps> = ({ label, optionKey, isCorrect = false
 
 
 
-
-interface Datum {
-  contestant_id: number;
-  answered_in: number;
-  is_correct: boolean;
-  is_winner: boolean;
-  answer: string;
-  wallet_balance: number;
-  book_balance: number;
-  startup_balance: number;
-  stage_balance: number;
-  contestant_name: string;
-  contestant_attr: string;
-  profit_loss: Profitloss;
-}
 
 interface Profitloss {
   contestant_id: number;

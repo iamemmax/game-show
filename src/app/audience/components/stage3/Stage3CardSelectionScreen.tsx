@@ -304,7 +304,6 @@ const Stage3CardSelectionScreens = ({ onNext }: prop) => {
         removeCount={2}
         title="stage 3"
         activeState={3}
-        onNext={() => onNext}
       />
     );
   }

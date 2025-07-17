@@ -9,7 +9,7 @@ import {
   useRef,
   ReactNode,
 } from 'react';
-import mqtt, { MqttClient } from 'mqtt';
+import mqtt, { MqttClient, MqttProtocol } from 'mqtt';
 
 interface MQTTContextProps {
   isConnected: boolean;
@@ -32,8 +32,9 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
   const port = process.env.NEXT_PUBLIC_MQTT_PORT;
   const username = process.env.NEXT_PUBLIC_MQTT_USERNAME;
   const password = process.env.NEXT_PUBLIC_MQTT_PASSWORD;
-  // const connectUrl = `ws://${broker}:${port}`;
-  const connectUrl = `ws://${broker}:${port}/mqtt`;
+  const protocol = process.env.NEXT_PUBLIC_MQTT_PROTOCOL as MqttProtocol
+  const connectUrl = `ws://${broker}:${port}`;
+  // const connectUrl = `ws://${broker}:${port}/mqtt`;
 
   const [isConnected, setIsConnected] = useState(false);
   const clientRef = useRef<MqttClient | null>(null);
@@ -67,9 +68,8 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
         reconnectPeriod: 5000,
         username,
         password,
-        keepalive: 60,
-        protocol: 'wss',
-        // protocol: 'ws',
+        keepalive: 30,
+        protocol: protocol,
         rejectUnauthorized: false,
       });
 
@@ -161,37 +161,7 @@ export function MQTTProvider({ children }: MQTTProviderProps) {
     [isConnected]
   );
 
-  // const onMessage = useCallback(
-  //   (callback: ((message: any) => void) | null) => {
-  //     if (!clientRef.current) {
-  //       console.error('MQTT client not initialized');
-  //       return;
-  //     }
-
-  //     clientRef.current.removeAllListeners('message');
-
-  //     if (callback !== null) {
-  //       clientRef.current.on('message', (topic, payload) => {
-  //         // console.log(`Received message on topic: ${topic}`);
-  //         // console.log(`Received payload: ${payload.toString()}`);
-  //         try {
-  //           const message = JSON.parse(payload.toString());
-  //           callback(message);
-  //         } catch (err) {
-  //           console.error('Error parsing message:', err);
-  //           callback({
-  //             error: 'Failed to parse message',
-  //             raw: payload.toString(),
-  //           });
-  //         }
-  //       });
-  //     }
-  //   },
-  //   []
-  // );
-
-
-  useEffect(() => {
+   useEffect(() => {
     const mqttClient = clientRef.current;
     if (!mqttClient) return;
 
