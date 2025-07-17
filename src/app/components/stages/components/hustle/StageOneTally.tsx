@@ -390,9 +390,9 @@ const StageOneTally = ({
           </div>
 
           {/* Bottom Card (sticks to bottom) */}
-          <div className="w-full max-w-[35rem] lg:max-w-[46.5rem] 2xl:max-w-[80rem] mt-2">
+          {/* <div className="w-full max-w-[35rem] lg:max-w-[46.5rem] 2xl:max-w-[80rem] mt-2">
             <HustleBottomCard inline={true} />
-          </div>
+          </div> */}
         </div>
 
         {/* Right Sidebar */}

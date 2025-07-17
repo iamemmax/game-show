@@ -1,4 +1,5 @@
 "use client"
+
 import { useParams } from "next/navigation"
 import { useState, useEffect, useCallback } from "react"
 import { AlertCircle, Loader2 } from "lucide-react"
@@ -10,7 +11,7 @@ import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import Stage1Questions from "./Stage1"
 import Stage2Questions from "./Stage2"
 import Stage4 from "./Stage4"
-import { UNIVERSAL_GAME_STEPS, type UniversalGameStep } from "@/constants"
+import { UNIVERSAL_GAME_STEPS, UniversalGameStep } from "@/constants"
 import { GameSynchroniser } from "@/components/gameplay/Heartbeat"
 
 export default function HostPage() {

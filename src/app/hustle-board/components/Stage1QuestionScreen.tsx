@@ -232,7 +232,7 @@ const playOptionSelectedSound = () => {
         // 3. Set current index and question ID
         // setCurrentQuestionIndex(questionData.question_index || 1);
         const questionId =
-          questionData?.question?.questions?.question_id ||
+          questionData?.question?.question?.question_id ||
           payload?.question_id;
         if (questionId) {
           setCurrentQuestionId(questionId.toString());
@@ -747,11 +747,11 @@ if (receivedMessage?.event === "contestant_selected_option") {
                             transition={{ duration: 0.5 }}
                             ref={textRef}
                           >
-                            {mqttQuestionData?.question?.questions?.question ? (
+                            {mqttQuestionData?.question?.question?.question ? (
                               <>
                                 <AnimatedText
                                   text={
-                                    mqttQuestionData.question.questions.question 
+                                    mqttQuestionData.question.question.question 
 
                                   }
                                   // fontSize={fontSize}
@@ -779,7 +779,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
                                     "0px 2px 4px rgba(4, 218, 106, 0.5)",
                                 }}
                               >
-                                {mqttQuestionData?.question?.questions
+                                {mqttQuestionData?.question?.question
                                   ?.question_booster || "..."}{" "}
                                 <span
                                   className="text-4xl font-outfit font-normal text-[#04DA6A]"
@@ -821,7 +821,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
                               65 + index
                             );
                             const currentQuestions =
-                              mqttQuestionData?.question?.questions || {};
+                              mqttQuestionData?.question?.question || {};
                             const isCorrect = isCorrectOption(option);
                             const isSelected = selectedOption === option;
                             const showResult = isSubmitted && correctAnswer;
@@ -848,7 +848,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
 
                                   (isSubmitted ||
                                     !timerActive ||
-                                    !mqttQuestionData?.question?.questions) &&
+                                    !mqttQuestionData?.question?.question) &&
                                     "opacity-70 cursor-not-allowed"
                                 )}
                               >
@@ -1007,20 +1007,20 @@ if (receivedMessage?.event === "contestant_selected_option") {
                 {showResultModal && (
                   <HustleQuestionAnswerModal
                     booster={
-                      mqttQuestionData?.question?.questions?.question_booster
+                      mqttQuestionData?.question?.question?.question_booster
                     }
                     showBooster={true}
                     currentQuestionOptions={{
-                      option_a: mqttQuestionData?.question?.questions?.option_a,
-                      option_b: mqttQuestionData?.question?.questions?.option_b,
-                      option_c: mqttQuestionData?.question?.questions?.option_c,
-                      option_d: mqttQuestionData?.question?.questions?.option_d,
+                      option_a: mqttQuestionData?.question?.question?.option_a,
+                      option_b: mqttQuestionData?.question?.question?.option_b,
+                      option_c: mqttQuestionData?.question?.question?.option_c,
+                      option_d: mqttQuestionData?.question?.question?.option_d,
                     }}
                     questionIndex={mqttQuestionData?.question_index}
                     correctAnswer={
-                      mqttQuestionData?.question?.questions?.correct_option
+                      mqttQuestionData?.question?.question?.correct_option
                     }
-                    question={mqttQuestionData?.question?.questions?.question}
+                    question={mqttQuestionData?.question?.question?.question}
                     currentQuestionAnswerData={currentQuestionAnswerData}
                     currentQuestion={mqttQuestionData}
                     mqttAnswerData={mqttAnswerData}

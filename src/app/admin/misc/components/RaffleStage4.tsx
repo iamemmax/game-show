@@ -43,6 +43,12 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
       },
       onError: (error) => {
         console.error("Failed to initialize Stage Four:", error)
+        if((error as any)?.response?.data.data.includes("Unable to create Stage progress for contestant")){
+          sendMessage({
+            event: "game_s4_start",
+            payload: { episode: gameEpisode },
+          })
+        }
       },
     })
   }, [gameEpisode, initStage, sendMessage])
