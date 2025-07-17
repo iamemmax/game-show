@@ -660,7 +660,7 @@ if (receivedMessage?.event === "game_s2_timer_end") {
         key={`left-${contestant?.id}`}
         className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${
           hasSelected 
-            ? 'bg-[#04DA6A] text-white' 
+            ? 'bg-[#003218] text-white' 
             : 'bg-[#160036] text-white'
         }`}
       >
@@ -845,7 +845,7 @@ if (receivedMessage?.event === "game_s2_timer_end") {
                                   }}
                                   whileHover={
                                     timerActive &&
-                                    mqttQuestionData?.question?.questions
+                                    mqttQuestionData?.question?.question
                                       ? {
                                           scale: 1.03,
                                           y: -3,
@@ -855,7 +855,7 @@ if (receivedMessage?.event === "game_s2_timer_end") {
                                   }
                                   whileTap={
                                     timerActive &&
-                                    mqttQuestionData?.question?.questions
+                                    mqttQuestionData?.question?.question
                                       ? { scale: 0.98 }
                                       : {}
                                   }
@@ -897,7 +897,7 @@ if (receivedMessage?.event === "game_s2_timer_end") {
                                       ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
                                       : "",
                                     !timerActive ||
-                                      !mqttQuestionData?.question?.questions
+                                      !mqttQuestionData?.question?.question
                                       ? "opacity-70 cursor-not-allowed"
                                       : "hover:shadow-lg",
                                     mqttAnswerData &&
@@ -1039,7 +1039,9 @@ if (receivedMessage?.event === "game_s2_timer_end") {
                         currentQuestion={mqttQuestionData}
                         mqttAnswerData={mqttAnswerData}
                         showBid={false}
-                        // allocatedWinningAmount={mqttQuestionData?.allocated_winning_amount}
+                        showAllocatedAMount={false}
+                        
+                        allocatedWinningAmount={mqttQuestionData?.allocated_winning_amount}
                       />
                     )}
     
@@ -1073,7 +1075,7 @@ if (receivedMessage?.event === "game_s2_timer_end") {
         key={`left-${contestant?.id}`}
         className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${
           hasSelected 
-            ? 'bg-[#04DA6A] text-white' 
+            ? 'bg-[#003218] text-white' 
             : 'bg-[#160036] text-white'
         }`}
       >

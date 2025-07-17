@@ -883,7 +883,7 @@ export default function HostPage() {
             )}
 
             {/* Enhanced Heartbeat Component */}
-            <GameSynchroniser
+            {/* <GameSynchroniser
                 participantId={`host-${gameId}`}
                 participantType="host"
                 participantName="Game Host"
@@ -892,7 +892,7 @@ export default function HostPage() {
                 gameStage={gameState.currentStage || contestantsData?.game.stage || "STAGE_ONE"}
                 setCurrentUniversalStep={setCurrentUniversalStep}
                 updateGameStateFromUniversalStep={updateGameStateFromUniversalStep}
-            />
+            /> */}
         </div>
     )
 }

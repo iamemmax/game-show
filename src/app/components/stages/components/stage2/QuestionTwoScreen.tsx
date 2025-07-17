@@ -868,13 +868,13 @@ useEffect(() => {
                                         : "",
                                       isSubmitted ||
                                         !timerActive ||
-                                        !mqttQuestionData?.question?.questions
+                                        !mqttQuestionData?.question?.question
                                         ? "opacity-70 cursor-not-allowed"
                                         : "",
                                       mqttAnswerData &&
                                         mqttQuestionData?.correct_option ===
                                           convertOptionToLetter(option)
-                                        ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                                        ? "!bg-[#003218] !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
                                         : ""
                                     )}
                                     initial={{

@@ -19,6 +19,12 @@ import { Card, CARD_STYLES, PASS_CARD_STYLE } from "./CardStyles";
 import GameResultModal from "../ResultBalnceModal";
 import { useCardSelection } from "../../api/stage3/sendCardSelection";
 import StageThreeWinnerModal from "../StageThreeWinnerModal";
+import PickCard1 from "@/app/icons/cards/PickCard1";
+import PickCard2 from "@/app/icons/cards/PickCard2";
+import PickCard3 from "@/app/icons/cards/PickCard3";
+import PickCard4 from "@/app/icons/cards/PickCard4";
+import DudCards from "@/app/icons/cards/DudCard";
+import PassCard from "@/app/icons/cards/PassCard";
 
 const Stage3CardSelection = () => {
   const user = tokenStorage.getUser();
@@ -81,6 +87,7 @@ const Stage3CardSelection = () => {
   const [otherContestantName, setOtherContestantName] = useState<string>("");
 
   const { data: contestantsData, isLoading: isLoadingContestants, refetch } = useGetGameContestants(user?.game_episode as number);
+const cardIcons = [PickCard1, PickCard2, PickCard3];
 
 
   const getUserName = (id:number)=>{
@@ -478,6 +485,7 @@ useEffect(() => {
         setCurrentTurn(otherContestantId);
         setIsMyTurn(false);
       }
+      refetch()
     }, 600);
   };
 
@@ -579,7 +587,7 @@ useEffect(() => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                 </div>
               ) : (
-                <div className="mt-1 flex flex-wrap justify-center gap-y-1">
+                <div className="mt-1 grid grid-cols-6 justify-center gap-4">
                   {cards.map((card, index) => {
                     const isFlipping = flippingCards.includes(index);
                     const cardText = card.revealed ? card.type : "?";
@@ -598,14 +606,14 @@ useEffect(() => {
                         key={index} 
                         onClick={() => handleCardClick(index)}
                         className={cn(
-                          "relative transition-transform perspective-[1000px]",
+                          "relative transition-transform h-[98px]",
                           card.revealed ? "cursor-default pointer-events-none opacity-70" : 
                             isMyTurn ? "cursor-pointer hover:scale-105" : "cursor-not-allowed opacity-80",
                           (isSending || flippingCards.length > 0) ? "cursor-wait pointer-events-none" : "",
                           isRecentlyUpdated ? "animate-pulse" : "",
                           isRevealedPass ? "z-10 opacity-100" : ""
                         )}
-                        style={{ perspective: "1000px" }}
+                        // style={{ perspective: "1000px" }}
                       >
                         <AnimatePresence mode="wait">
                           <motion.div
@@ -616,7 +624,7 @@ useEffect(() => {
                                 ? { rotateY: 180, opacity: 0 } 
                                 : { rotateY: 0, opacity: 1 }
                             }
-                            transition={{ duration: isRevealedPass ? 0.5 : 0.3, ease: "easeInOut" }}
+                            transition={{ duration: isRevealedPass ? 0.3 : 0.3, ease: "easeInOut" }}
                             style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
                             className="relative"
                           >
@@ -625,64 +633,52 @@ useEffect(() => {
   {/* This div will sit on top of everything */}
   {card.revealed && (
     <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20">
-      <span className="font-bold text-white text-xs bg-[#D91FFF] px-4 py-1 rounded">
+      <span className="font-bold text-white text-xs  px-4 py-1 rounded">
         {displayName?.split(" ")[0]}
       </span>
     </div>
   )}
 
-  <PickCardContainer
-    backgroundColor={style.backgroundColor}
-    text={card.revealed ? "" : cardText}
-    width="108px"
-    height="100px"
-    rayColor={style.rayColor}
-    innerCircleColor={style.innerCircleColor}
-    textColor={style.textColor}
-    cornerColor={style.cornerColor}
-    fontFamily={style.fontFamily}
-    fontSize={style.fontSize}
-    textStrokeWidth={cardText === CARD_TYPES.PASS ? 1.5 : 2}
-    textStrokeColor={cardText === CARD_TYPES.PASS ? "#000000" : "#D91FFF"}
-    containerLabel="" // Don't render it here, handled above
-    className={cn(
-      "transition-transform p-0 duration-300 ease-in-out 2xl:w-[800px]",
-      isRecentlyUpdated ? "ring-2 ring-white" : "",
-      isFlipping ? "shadow-lg" : "",
-      isRevealedPass ? "ring-4 ring-yellow-400 shadow-xl shadow-yellow-400/50" : ""
-    )}
-    textClassName={cn(
-      "font-extrabold text-[2rem] font-gilroyBold relative z-20",
-      isRevealedPass ? "animate-pulse" : ""
-    )}
-    labelClassName="hidden"
-  />
+  
+ <div className="relative w-full h-full">
+              {/* Display contestant name */}
+              {card.revealed && (
+                <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-20">
+                  <span className="font-bold text-black text-xxs bg-[#fff] px-2 py-1 rounded">
+                    {displayName?.split(" ")[0]}
+                  </span>
+                </div>
+              )}
 
-  {/* Overlay should stay below the name */}
-  {card.revealed && (
-    <div className="absolute inset-0 bg-black bg-opacity-80 rounded-[.875rem] flex items-center justify-center z-10">
-      <div className="text-center">
-        <span className={cn(
-          "font-black text-[3rem] font-gilroyBold tracking-wider",
-          cardText === CARD_TYPES.PASS 
-            ? "text-yellow-300 drop-shadow-[0_0_12px_rgba(255,205,0,0.9)] animate-pulse" 
-            : "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
-          "filter drop-shadow-[3px_3px_6px_rgba(0,0,0,1)] text-stroke-2 text-stroke-black"
-        )}>
-          <GlowyStrokeText
-            strokeWidth={2}
-            strokeColor="#D91FFF"
-            glowColor="#13051E"
-            glowIntensity="low"
-            textclassName="text-[1.8rem] font-extrabold font-gilroyBold"
-            fillColor="#000"
-          >
-            {cardText}
-          </GlowyStrokeText>
-        </span>
-      </div>
-    </div>
-  )}
+              {/* Render revealed card OR default card */}
+              {card.revealed ? (
+                card.type === CARD_TYPES.DUD ? (
+                  <DudCards className="w-[103px]" />
+                ) : (
+                  <PassCard className="w-[103px] " />
+                )
+              ) : (
+                <PickCardContainer
+                  backgroundColor={"transparent"}
+                  text={React.createElement(cardIcons[index % 3], {
+                    className: "w-[103px] ",
+                  })}
+                  textColor={style.textColor}
+                  fontFamily={style.fontFamily}
+                  containerLabel=""
+                  className={cn(
+                    "transition-transform w-full h-full duration-300 ease-in-out p-0",
+                    isRecentlyUpdated ? "ring-2 ring-white" : "",
+                    isFlipping ? "shadow-md" : "",
+                    isRevealedPass
+                      ? "ring-2 ring-yellow-400 shadow-md shadow-yellow-400/50"
+                      : ""
+                  )}
+                  textClassName="font-bold text-[1.2rem]"
+                  labelClassName="hidden"
+                />
+              )}
+            </div>
 </div>
 
                             

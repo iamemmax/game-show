@@ -1,7 +1,7 @@
 export const CARD_STYLES = [
     // Row 1
     {
-      backgroundColor: "#0A2A0A", // Dark green
+      // backgroundColor: "#0A2A0A", // Dark green
       rayColor: "#00FF00", // Bright green
       innerCircleColor: "#0F3F0F",
       textColor: "#FFFFFF",
@@ -11,7 +11,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#0F3F0F"
     },
     {
-      backgroundColor: "#2A0A2A", // Dark purple
+      // backgroundColor: "#2A0A2A", // Dark purple
       rayColor: "#FF00FF", // Magenta
       innerCircleColor: "#3F0F3F",
       textColor: "#FFFFFF",
@@ -21,7 +21,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F0F3F"
     },
     {
-      backgroundColor: "#2A2A0A", // Dark yellow-green
+      // backgroundColor: "#2A2A0A", // Dark yellow-green
       rayColor: "#FFFF00", // Yellow
       innerCircleColor: "#3F3F0F",
       textColor: "#FFFFFF",
@@ -31,7 +31,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F3F0F"
     },
     {
-      backgroundColor: "#2A0A0A", // Dark red
+      // backgroundColor: "#2A0A0A", // Dark red
       rayColor: "#FF0000", // Red
       innerCircleColor: "#3F0F0F",
       textColor: "#FFFFFF",
@@ -41,7 +41,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F0F0F"
     },
     {
-      backgroundColor: "#0A2A0A", // Dark green (duplicate for visual balance)
+      // backgroundColor: "#0A2A0A", // Dark green (duplicate for visual balance)
       rayColor: "#00FF00", // Bright green
       innerCircleColor: "#0F3F0F",
       textColor: "#FFFFFF",
@@ -51,7 +51,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#0F3F0F"
     },
     {
-      backgroundColor: "#2A0A2A", // Dark purple (duplicate for visual balance)
+      // backgroundColor: "#2A0A2A", // Dark purple (duplicate for visual balance)
       rayColor: "#FF00FF", // Magenta
       innerCircleColor: "#3F0F3F",
       textColor: "#FFFFFF",
@@ -61,7 +61,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F0F3F"
     },
     {
-      backgroundColor: "#2A0A0A", // Dark red-orange
+      // backgroundColor: "#2A0A0A", // Dark red-orange
       rayColor: "#FF4500", // Orange-red
       innerCircleColor: "#3F0F0F",
       textColor: "#FFFFFF",
@@ -71,7 +71,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F0F0F"
     },
     {
-      backgroundColor: "#FF8C00", // Dark orange
+      // backgroundColor: "#FF8C00", // Dark orange
       rayColor: "#FF0000", // Red
       innerCircleColor: "#FF6600",
       textColor: "#FFFFFF",
@@ -83,7 +83,7 @@ export const CARD_STYLES = [
     
     // Row 2
     {
-      backgroundColor: "#2A2A0A", // Dark yellow-green
+      // backgroundColor: "#2A2A0A", // Dark yellow-green
       rayColor: "#AAFF00", // Lime
       innerCircleColor: "#3F3F0F",
       textColor: "#FFFFFF",
@@ -93,7 +93,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F3F0F"
     },
     {
-      backgroundColor: "#2A1A0A", // Dark amber
+      // backgroundColor: "#2A1A0A", // Dark amber
       rayColor: "#FFAA00", // Amber
       innerCircleColor: "#3F2F0F",
       textColor: "#FFFFFF",
@@ -103,7 +103,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F2F0F"
     },
     {
-      backgroundColor: "#2A1A0A", // Dark orange-brown
+      // backgroundColor: "#2A1A0A", // Dark orange-brown
       rayColor: "#FF7700", // Orange
       innerCircleColor: "#3F2F0F",
       textColor: "#FFFFFF",
@@ -113,7 +113,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F2F0F"
     },
     {
-      backgroundColor: "#2A0A1A", // Dark pink
+      // backgroundColor: "#2A0A1A", // Dark pink
       rayColor: "#FF00AA", // Pink
       innerCircleColor: "#3F0F2F",
       textColor: "#FFFFFF",
@@ -123,7 +123,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F0F2F"
     },
     {
-      backgroundColor: "#0A0A2A", // Dark blue
+      // backgroundColor: "#0A0A2A", // Dark blue
       rayColor: "#0000FF", // Blue
       innerCircleColor: "#0F0F3F",
       textColor: "#FFFFFF",
@@ -133,7 +133,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#0F0F3F"
     },
     {
-      backgroundColor: "#0A2A2A", // Dark teal
+      // backgroundColor: "#0A2A2A", // Dark teal
       rayColor: "#00FFFF", // Cyan
       innerCircleColor: "#0F3F3F",
       textColor: "#FFFFFF",
@@ -143,7 +143,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#0F3F3F"
     },
     {
-      backgroundColor: "#0A0A2A", // Dark indigo
+      // backgroundColor: "#0A0A2A", // Dark indigo
       rayColor: "#4400FF", // Indigo
       innerCircleColor: "#0F0F3F",
       textColor: "#FFFFFF",
@@ -153,7 +153,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#0F0F3F"
     },
     {
-      backgroundColor: "#1A0A2A", // Dark violet
+      // backgroundColor: "#1A0A2A", // Dark violet
       rayColor: "#AA00FF", // Violet
       innerCircleColor: "#2F0F3F",
       textColor: "#FFFFFF",
@@ -165,7 +165,7 @@ export const CARD_STYLES = [
     
     // Row 3
     {
-      backgroundColor: "#1A1A1A", // Dark gray
+      // backgroundColor: "#1A1A1A", // Dark gray
       rayColor: "#FFFFFF", // White
       innerCircleColor: "#2F2F2F",
       textColor: "#FFFFFF",
@@ -175,7 +175,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#2F2F2F"
     },
     {
-      backgroundColor: "#2A0A1A", // Dark pink
+      // backgroundColor: "#2A0A1A", // Dark pink
       rayColor: "#FF0077", // Hot pink
       innerCircleColor: "#3F0F2F",
       textColor: "#FFFFFF",
@@ -185,7 +185,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F0F2F"
     },
     {
-      backgroundColor: "#2A0A1A", // Dark magenta
+      // backgroundColor: "#2A0A1A", // Dark magenta
       rayColor: "#FF00AA", // Magenta
       innerCircleColor: "#3F0F2F",
       textColor: "#FFFFFF",
@@ -195,7 +195,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F0F2F"
     },
     {
-      backgroundColor: "#2A2A00", // Dark olive
+      // backgroundColor: "#2A2A00", // Dark olive
       rayColor: "#AAAA00", // Olive
       innerCircleColor: "#3F3F0F",
       textColor: "#FFFFFF",
@@ -205,7 +205,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F3F0F"
     },
     {
-      backgroundColor: "#2A0A1A", // Dark fuchsia
+      // backgroundColor: "#2A0A1A", // Dark fuchsia
       rayColor: "#FF00AA", // Fuchsia
       innerCircleColor: "#3F0F2F",
       textColor: "#FFFFFF",
@@ -215,7 +215,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F0F2F"
     },
     {
-      backgroundColor: "#2A2A00", // Dark yellow
+      // backgroundColor: "#2A2A00", // Dark yellow
       rayColor: "#FFFF00", // Yellow
       innerCircleColor: "#3F3F0F",
       textColor: "#FFFFFF",
@@ -225,7 +225,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#3F3F0F"
     },
     {
-      backgroundColor: "#0A2A2A", // Dark turquoise
+      // backgroundColor: "#0A2A2A", // Dark turquoise
       rayColor: "#00FFAA", // Turquoise
       innerCircleColor: "#0F3F3F",
       textColor: "#FFFFFF",
@@ -235,7 +235,7 @@ export const CARD_STYLES = [
       labelBackgroundColor: "#0F3F3F"
     },
     {
-      backgroundColor: "#0A2A2A", // Dark teal
+      // backgroundColor: "#0A2A2A", // Dark teal
       rayColor: "#00FFFF", // Cyan
       innerCircleColor: "#0F3F3F",
       textColor: "#FFFFFF",
@@ -264,7 +264,7 @@ export const CARD_STYLES = [
     type: string;
     revealed: boolean;
     style: {
-      backgroundColor: string;
+      // backgroundColor: string;
       rayColor: string;
       innerCircleColor: string;
       textColor: string;

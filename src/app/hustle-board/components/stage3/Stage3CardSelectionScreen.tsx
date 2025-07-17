@@ -15,12 +15,17 @@ import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideB
 import { useParams } from "next/navigation";
 import StageThreeWinnerModal from "@/app/components/stages/components/StageThreeWinnerModal";
 import HustleBoardStageTallyPage from "../HustleBoardStageTally";
+import PickCard1 from "@/app/icons/cards/PickCard1";
+import PickCard2 from "@/app/icons/cards/PickCard2";
+import PickCard3 from "@/app/icons/cards/PickCard3";
+import PickCard4 from "@/app/icons/cards/PickCard4";
+import PassCard from "@/app/icons/cards/PassCard";
+import DudCards from "@/app/icons/cards/DudCard";
 
 interface prop {
   onNext: () => void
 }
 const Stage3CardSelectionScreens = ({ onNext }: prop) => {
-  const user = tokenStorage.getUser();
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const [remainingContestants, setRemainingContestants] = useState<Array<{ id: number, name: string }>>([]);
 
@@ -66,6 +71,7 @@ const Stage3CardSelectionScreens = ({ onNext }: prop) => {
   const [currentTurnName, setCurrentTurnName] = useState<string>("");
   const [showStageResult, setShowStageResult] = useState(false);
   const { data: contestantsData, isLoading: isLoadingContestants, refetch } = useGetGameContestants(Number(params?.episodeId));
+const cardIcons = [PickCard1, PickCard2, PickCard3];
 
   // Helper function to get contestant name by ID
   const getContestantName = (contestantId: number): string => {
@@ -394,112 +400,104 @@ const Stage3CardSelectionScreens = ({ onNext }: prop) => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                 </div>
               ) : (
-                <div className=" flex flex-wrap justify-center ">
-                  {cards.map((card, index) => {
-                    const isFlipping = flippingCards.includes(index);
-                    const cardText = card.revealed ? card.type : "?";
-                    const style = card.revealed && card.type === CARD_TYPES.PASS ? PASS_CARD_STYLE : card.style;
-                    const isRecentlyUpdated = recentlyUpdated.includes(index);
-                    const isRevealedPass = card.revealed && card.type === CARD_TYPES.PASS;
+                <>
+       
 
-                    let displayName = "";
-                    if (card.revealed && card.contestant_id) {
-                      displayName = getContestantName(card.contestant_id);
-                    }
+<div className="grid grid-cols-6 gap-y-3 justify-center items-center">
+  {cards.map((card, index) => {
+    const isFlipping = flippingCards.includes(index);
+    const style =
+      card.revealed && card.type === CARD_TYPES.PASS
+        ? PASS_CARD_STYLE
+        : card.style;
+    const isRecentlyUpdated = recentlyUpdated.includes(index);
+    const isRevealedPass = card.revealed && card.type === CARD_TYPES.PASS;
 
-                    return (
-                      <div
-                        key={index}
-                        className={cn(
-                          "relative transition-transform perspective-[1000px] pointer-events-none",
-                          card.revealed ? "opacity-70" : "opacity-100",
-                          isRecentlyUpdated ? "animate-pulse" : "",
-                          isRevealedPass ? "z-10 opacity-100" : ""
-                        )}
-                        style={{ perspective: "1000px" }}
-                      >
-                        <AnimatePresence mode="wait">
-                          <motion.div
-                            key={`card-${index}-${card.revealed ? "revealed" : "hidden"}`}
-                            initial={isFlipping ? { rotateY: 0, opacity: 1 } : false}
-                            animate={
-                              isFlipping
-                                ? { rotateY: 180, opacity: 0 }
-                                : { rotateY: 0, opacity: 1 }
-                            }
-                            transition={{ duration: isRevealedPass ? 0.5 : 0.3, ease: "easeInOut" }}
-                            style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
-                            className="relative"
-                          >
-                            <div className="relative">
-                              {/* Contestant name overlay */}
-                              {card.revealed && (
-                                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20">
-                                  <span className="font-bold text-white text-base bg-[#D91FFF] px-4 py-1 rounded">
-                                    {displayName?.split(" ")[0]}
-                                  </span>
-                                </div>
-                              )}
+    let displayName = "";
+    if (card.revealed && card.contestant_id) {
+      displayName = getContestantName(card.contestant_id);
+    }
 
-                              <PickCardContainer
-                                backgroundColor={style.backgroundColor}
-                                text={card.revealed ? "" : cardText}
-                                width="190px"
-                                height="180px"
-                                rayColor={style.rayColor}
-                                innerCircleColor={style.innerCircleColor}
-                                textColor={style.textColor}
-                                cornerColor={style.cornerColor}
-                                fontFamily={style.fontFamily}
-                                fontSize={style.fontSize}
-                                textStrokeWidth={cardText === CARD_TYPES.PASS ? 1.5 : 2}
-                                textStrokeColor={cardText === CARD_TYPES.PASS ? "#000000" : "#D91FFF"}
-                                containerLabel=""
-                                className={cn(
-                                  "transition-transform p-0 duration-300 ease-in-out 2xl:w-[800px]",
-                                  isRecentlyUpdated ? "ring-2 ring-white" : "",
-                                  isFlipping ? "shadow-lg" : "",
-                                  isRevealedPass ? "ring-4 ring-yellow-400 shadow-xl shadow-yellow-400/50" : ""
-                                )}
-                                textClassName={cn(
-                                  "font-extrabold text-[2rem] font-gilroyBold relative z-20",
-                                  isRevealedPass ? "animate-pulse" : ""
-                                )}
-                                labelClassName="hidden"
-                              />
-
-                              {/* Card content overlay */}
-                              {card.revealed && (
-                                <div className="absolute inset-0 bg-black bg-opacity-80 rounded-[.875rem] flex items-center justify-center z-10">
-                                  <div className="text-center">
-                                    <span className={cn(
-                                      "font-black text-[3rem] font-gilroyBold tracking-wider",
-                                      cardText === CARD_TYPES.PASS
-                                        ? "text-yellow-300 drop-shadow-[0_0_12px_rgba(255,215,0,0.9)] animate-pulse"
-                                        : "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]",
-                                      "filter drop-shadow-[3px_3px_6px_rgba(0,0,0,1)] text-stroke-2 text-stroke-black"
-                                    )}>
-                                      <GlowyStrokeText
-                                        strokeWidth={2}
-                                        strokeColor="#D91FFF"
-                                        glowColor="#13051E"
-                                        glowIntensity="low"
-                                        textclassName="text-[1.8rem] font-extrabold font-gilroyBold"
-                                        fillColor="#000"
-                                      >
-                                        {cardText}
-                                      </GlowyStrokeText>
-                                    </span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </motion.div>
-                        </AnimatePresence>
-                      </div>
-                    );
-                  })}
+    return (
+      <div
+        key={index}
+        className={cn(
+          "relative pointer-events-none transition-transform h-[170px]",
+          card.revealed ? "opacity-70" : "opacity-100",
+          isRecentlyUpdated ? "animate-pulse" : "",
+          isRevealedPass ? "z-10 opacity-100" : ""
+        )}
+        style={{ perspective: "1000px" }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`card-${index}-${card.revealed ? "revealed" : "hidden"}`}
+            initial={isFlipping ? { rotateY: 0, opacity: 1 } : false}
+            animate={
+              isFlipping
+                ? { rotateY: 180, opacity: 0 }
+                : { rotateY: 0, opacity: 1 }
+            }
+            transition={{
+              duration: isRevealedPass ? 0.5 : 0.3,
+              ease: "easeInOut",
+            }}
+            style={{
+              transformStyle: "preserve-3d",
+              backfaceVisibility: "hidden",
+            }}
+            className="relative w-full h-full"
+          >
+            <div className="relative w-full h-full">
+              {/* Display contestant name */}
+              {card.revealed && (
+                <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-20">
+                  <span className="font-bold text-black text-xs bg-white px-2 py-1 rounded">
+                    {displayName?.split(" ")[0]}
+                  </span>
                 </div>
+              )}
+
+              {/* Render revealed card OR default card */}
+              {card.revealed ? (
+                card.type === CARD_TYPES.DUD ? (
+                  <DudCards className="w-full h-full" />
+                ) : (
+                  <PassCard className="w-full h-full" />
+                )
+              ) : (
+                <PickCardContainer
+                  backgroundColor={"transparent"}
+                  text={React.createElement(cardIcons[index % 3], {
+                    className: "w-[150px] h-full",
+                  })}
+                  textColor={style.textColor}
+                  fontFamily={style.fontFamily}
+                  containerLabel=""
+                  className={cn(
+                    "transition-transform w-full h-full duration-300 ease-in-out p-0",
+                    isRecentlyUpdated ? "ring-2 ring-white" : "",
+                    isFlipping ? "shadow-md" : "",
+                    isRevealedPass
+                      ? "ring-2 ring-yellow-400 shadow-md shadow-yellow-400/50"
+                      : ""
+                  )}
+                  textClassName="font-bold text-[1.2rem]"
+                  labelClassName="hidden"
+                />
+              )}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  })}
+</div>
+
+
+
+                </>
+              
               )}
             </div>
           </div>

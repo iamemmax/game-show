@@ -25,8 +25,15 @@ interface Datum {
   contestant_name: string | null;
   contestant_attr: string;
   contestant_photo_url:string | null
+  profit_loss:profitLoss
+  
 }
+interface profitLoss {
+  contestant_id: number;
+  contestant_photo_url: string |null;
 
+  
+}
 interface ContestantBid {
   contestant_id: string;
   contestant_name: string;
@@ -323,6 +330,8 @@ useEffect(() => {
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
   };
 
+  console.log(resultArray,"fatest");
+  
   return (
     <div className="h-full !z-[999999999999] flex items-center flex-col">
      
@@ -347,8 +356,7 @@ useEffect(() => {
                     username={contestantName}
                     amount={`${String(answerTime?.toFixed(2))}`}
                     avatarUrl={
-                      result?.contestant_photo_url ??
-                      contestantImages[index % contestantImages.length]
+                      result?.profit_loss?.contestant_photo_url??contestantImages[index]
                     }
                     isOnline={true}
                     isActive={result.is_winner && result?.is_correct}

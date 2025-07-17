@@ -63,7 +63,7 @@ const QuizOption: React.FC<OptionProps> = ({ label, optionKey, isCorrect = false
   }}
   className={`w-full rounded-xl px-6 py-3 font-bold text-2xl flex items-center justify-between transition-all duration-500 relative overflow-hidden ${
     isCorrect 
-      ? 'bg-[#04DA6A]/20 border-2 border-[#04DA6A] text-white' 
+      ? 'bg-[#003218] border-2 border-[#04DA6A] text-white' 
       : 'border border-[#7E3CE0] text-white'
   }`}
 >
@@ -218,6 +218,7 @@ interface prop {
   booster?: string;
   showBooster?: boolean;
   showBid?:boolean
+  showAllocatedAMount?:boolean
   questionIndex: number;
   currentQuestionOptions?: {
     option_a?: string;
@@ -230,7 +231,11 @@ interface prop {
     currentQuestionAnswerData: BidData[]
     currentQuestion:any
   mqttAnswerData: Datum[];
+  allocatedWinningAmount?:number
+  
+  
 }
+
 
 const HustleQuestionAnswerModal = ({
   booster,
@@ -242,7 +247,8 @@ const HustleQuestionAnswerModal = ({
   currentQuestionAnswerData,
   currentQuestion,
   mqttAnswerData,
-  showBid=true
+  showBid=true,
+  allocatedWinningAmount,showAllocatedAMount
 }: prop) => {
   
   // Helper function to convert option key to letter
@@ -294,7 +300,7 @@ const HustleQuestionAnswerModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50  flex items-center w-[103.25rem] justify-center bg-black/80">
+    <div className="fixed inset-0 z-50  flex items-center w-[103.25rem] mx-6 justify-center bg-black/80">
       <div className="px-8">
 
       <div className="bg-[#15052B] grid grid-cols-[1fr_1.5fr]  items-start gap-[2.1875rem] rounded-[30px] text-white w-full border border-[#7E3CE0] p-[1.875rem]">
@@ -333,6 +339,28 @@ const HustleQuestionAnswerModal = ({
                 </p>
               </div>
             )}
+            {showAllocatedAMount&&(
+              <div className="bg-[#011B0D] mt-5 rounded-[12px] py-2 px-8">
+                <p
+                  className="text-base text-white font-extrabold text-center"
+                  style={{
+                    WebkitTextStroke: "1px #04DA6A",
+                    textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
+                  }}
+                >
+                  {allocatedWinningAmount}
+                  <span
+                    className="text-base pl-1 font-outfit font-normal text-[#04DA6A]"
+                    style={{
+                      WebkitTextStroke: "0px",
+                      textShadow: "none",
+                    }}
+                  >
+                     Win amount
+                  </span>
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 mt-3">
@@ -347,6 +375,7 @@ const HustleQuestionAnswerModal = ({
         currentQuestion={currentQuestion}
         currentQuestionAnswerData={currentQuestionAnswerData}
         showBid={showBid}
+  
       />
     ) : (
       <HustleRevealResult

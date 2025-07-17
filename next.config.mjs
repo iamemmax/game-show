@@ -24,7 +24,18 @@ const nextConfig = {
       },
       {
         protocol: 'http',
-        hostname: '192.168.0.131',
+        hostname: '192.168.1.168',
+        pathname: '/**',
+      },
+      
+      {
+        protocol: 'http',
+        hostname: 'hustleback.libertydraw.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'hustleback.libertydraw.com',
         pathname: '/**',
       },
 
