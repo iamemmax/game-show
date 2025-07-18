@@ -37,7 +37,7 @@ export interface IGetHustleQuestionAPIResponse {
     message: string
     data: {
         question: {
-            questions: Stage1QuestionData
+            question: Stage1QuestionData
             hustle_reveal: HustleReveal
             contestant: Contestant
         }

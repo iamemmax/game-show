@@ -157,7 +157,7 @@ export function GameSynchroniser({
     `/game-sync/${gameId}`, // Subscribe to the specific game-sync topic
     useCallback(
       (message: MQTTMessage) => {
-        console.log(message, "GameSynchroniser received message")
+        console.log(message, participantId + " " + "GameSynchroniser received message")
         switch (message.event) {
           case "game_start":
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_INIT)
@@ -190,18 +190,18 @@ export function GameSynchroniser({
           case "game_s1_question_bids_reveal":
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL)
             updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL)
-            break
+            break         
           case "game_s1_results_reveal":
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_RESULTS)
             updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_RESULTS)
             break
           case "game_s2_init":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_INIT)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_INIT)
-            break
-          case "game_s2_prep":
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_PREP)
             updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_PREP)
+            break
+          case "game_s2_prep":
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS)
+            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS)
             break
           case "game_s2_question_reveal":
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_REVEAL)
@@ -216,12 +216,12 @@ export function GameSynchroniser({
             updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_RESULTS)
             break
           case "game_s3_init":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_INIT)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_INIT)
-            break
-          case "game_s3_prep":
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PREP)
             updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PREP)
+            break
+          case "game_s3_prep":
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START)
+            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START)
             break
           case "game_s3_start":
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START)
