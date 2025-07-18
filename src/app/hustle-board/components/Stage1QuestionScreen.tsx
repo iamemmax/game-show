@@ -201,7 +201,7 @@ const playOptionSelectedSound = () => {
     if (!isConnected) return;
 
     const handleMQTTMessage = (receivedMessage: any) => {
-
+console.log("📩 Received MQTT message:", receivedMessage);
       // Handle question reveal event
       if (receivedMessage?.event === "game_s1_question_reveal") {
         setShowPrepPage(false);
