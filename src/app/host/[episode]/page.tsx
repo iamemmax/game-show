@@ -4,7 +4,7 @@ import { useParams } from "next/navigation"
 import { useState, useEffect, useCallback } from "react"
 import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
-import { useMQTT } from "@/hooks/useMqttService"
+import { useMQTT } from "@/hooks/useMqttService" // Import useMQTTTopic
 import { useGetGameContestants, useHandleHustlePickTimeElapse } from "@/app/admin/misc/api"
 import { useEndStageThree, useInitStage2, useNotifyBackendStartQuestionTimer, useStartGame } from "../misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
@@ -18,7 +18,7 @@ export default function HostPage() {
     const params = useParams()
     const gameId = params.episode as string
     const { mutate: notifyBackendStartTimer } = useNotifyBackendStartQuestionTimer()
-    const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT()
+    const { isConnected, sendMessage } = useMQTT()
     const [activeStage, setActiveStage] = useState<string>("stage1")
     const [currentUniversalStep, setCurrentUniversalStep] = useState<UniversalGameStep>(UNIVERSAL_GAME_STEPS.GAME_SETUP)
     const [gameState, setGameState] = useState<{
@@ -36,11 +36,10 @@ export default function HostPage() {
         currentQuestion: 0,
         contestants: [],
         showQuestions: false,
-        currentStageStep: "init",
+        currentStageStep: "setup",
     })
     const [isSending, setIsSending] = useState(false)
     const [messageLog, setMessageLog] = useState<Array<{ type: string; message: string; timestamp: string }>>([])
-
 
     const {
         data: contestantsData,
@@ -48,6 +47,25 @@ export default function HostPage() {
         refetch: refetchContestants,
     } = useGetGameContestants(Number.parseInt(gameId))
 
+    // Add keyboard event listener for the remote
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            // Check for right arrow key or page down key
+            if (event.key === "ArrowRight" || event.key === "PageDown") {
+                event.preventDefault() // Prevent default scroll behavior
+                // Find the currently visible button that should respond to the remote
+                const targetButton = document.querySelector<HTMLButtonElement>('[data-remote-target="true"]')
+                if (targetButton) {
+                    targetButton.click() // Programmatically click the button
+                }
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown)
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown)
+        }
+    }, []) // Empty dependency array means this runs once on mount and cleans up on unmount
 
     // Update game state based on universal step
     const updateGameStateFromUniversalStep = (step: UniversalGameStep) => {
@@ -57,7 +75,7 @@ export default function HostPage() {
                     ...prev,
                     status: "IN_PROGRESS",
                     currentStage: "STAGE_ONE",
-                    currentStageStep: "init",
+                    currentStageStep: "setup",
                 }))
                 break
             case UNIVERSAL_GAME_STEPS.GAME_START:
@@ -136,7 +154,6 @@ export default function HostPage() {
                     ...prev,
                     currentStage: "STAGE_TWO",
                     currentStageStep: "init",
-
                 }))
                 setActiveStage("stage2")
                 break
@@ -175,7 +192,6 @@ export default function HostPage() {
         }
     }
 
-
     // Initialize game data when contestants data is loaded
     useEffect(() => {
         if (!isLoadingContestants && contestantsData) {
@@ -187,57 +203,27 @@ export default function HostPage() {
                 contestants: contestantsData.data,
             }))
 
+            // Set currentUniversalStep based on fetched data, or default to GAME_SETUP
+            const initialUniversalStep = UNIVERSAL_GAME_STEPS.GAME_SETUP
+            
             // Set active tab based on current stage
             if (contestantsData.game.stage?.includes("STAGE_ONE")) {
                 setActiveStage("stage1")
-                if (contestantsData.game.status == "IN_ACTIVE") {
-                    setGameState((prevState) => ({
-                        ...prevState,
-                        currentStageStep: "start",
-                    }))
-                    setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP)
-                }
+                setCurrentUniversalStep(initialUniversalStep) 
+                updateGameStateFromUniversalStep(initialUniversalStep)
             } else if (contestantsData.game.stage?.includes("STAGE_TWO")) {
                 setActiveStage("stage2")
                 setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_INIT)
+                updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_INIT)
+
             } else if (contestantsData.game.stage?.includes("STAGE_THREE")) {
                 setActiveStage("stage3")
                 setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_INIT)
+                updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_INIT)
             } else if (contestantsData.game.stage?.includes("STAGE_FOUR")) {
                 setActiveStage("stage4")
                 setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
-            }
-        }
-    }, [contestantsData, isLoadingContestants])
-  
-    // Initialize game data when contestants data is loaded
-    useEffect(() => {
-        if (!isLoadingContestants && contestantsData) {
-            console.log(contestantsData.game.stage, "game stage in contestantsData")
-            setGameState((prevState) => ({
-                ...prevState,
-                currentStage: contestantsData.game.stage || "STAGE_ONE",
-                status: contestantsData.game.status,
-                contestants: contestantsData.data,
-            }))
-
-            // Set active tab based on current stage
-            if (contestantsData.game.stage?.includes("STAGE_ONE")) {
-                setActiveStage("stage1")
-                if (contestantsData.game.status == "IN_ACTIVE") {
-                    setGameState((prevState) => ({
-                        ...prevState,
-                        currentStageStep: "start",
-                    }))
-                    setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP)
-                }
-            } else if (gameState.currentStage.includes("STAGE_TWO")) {
-                setActiveStage("stage2")               
-            } else if (contestantsData.game.stage?.includes("STAGE_THREE")) {
-                setActiveStage("stage3")
-            } else if (contestantsData.game.stage?.includes("STAGE_FOUR")) {
-                
-                setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
+                updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
             }
         }
     }, [contestantsData, isLoadingContestants])
@@ -261,7 +247,6 @@ export default function HostPage() {
                         ...data,
                     },
                 }
-
                 // Add to message log
                 setMessageLog((prev) => [
                     ...prev,
@@ -271,10 +256,7 @@ export default function HostPage() {
                         timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
                     },
                 ])
-
-                await sendMessage(message)
-                refetchContestants()
-
+                await sendMessage(message, `/game-sync/${gameId}`) // Specify topic for sending
                 // Update local game state and universal step based on action
                 updateLocalStateAfterAction(eventCode)
             } catch (error) {
@@ -284,12 +266,13 @@ export default function HostPage() {
                 setIsSending(false)
             }
         },
-        [isConnected, sendMessage, gameId, refetchContestants, currentUniversalStep],
+        [isConnected, sendMessage, gameId, refetchContestants, updateGameStateFromUniversalStep, setCurrentUniversalStep],
     )
 
     // Update local state after sending an action
     const updateLocalStateAfterAction = (eventCode: string) => {
         if (!eventCode) return
+
         if (eventCode === "game_start") {
             setGameState((prev) => ({
                 ...prev,
@@ -362,6 +345,13 @@ export default function HostPage() {
                 currentStageStep: "questions",
             }))
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL)
+        } else if (eventCode === "game_s1_question_answer") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: eventCode,
+                currentStageStep: "questions",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_RESULT_REVEAL)
         } else if (eventCode === "game_s1_results_reveal") {
             setGameState((prev) => ({
                 ...prev,
@@ -464,12 +454,20 @@ export default function HostPage() {
                 },
                 onError(error) {
                     console.error("Error starting game:", error)
+                    if ((error as any).response.data.message.includes("already in progress")) {
+                        setGameState((prev) => ({
+                            ...prev,
+                            status: "IN_PROGRESS",
+                            currentStage: "STAGE_ONE",
+                            currentStageStep: "init",
+                        }))
+                        refetchContestants()
+                    }
                     toast.error("Failed to start game")
                 },
             },
         )
     }
-
     const endGame = () => sendGameMessage("game_end")
 
     //////////////////////////////
@@ -477,8 +475,8 @@ export default function HostPage() {
     ////////    Stage 1 functions
     //////////////////////////////
     //////////////////////////////
-    const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
 
+    const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
     const { mutate: handleTimeElapse } = useHandleHustlePickTimeElapse()
     const endTimerHustlePick = () => {
         handleTimeElapse(
@@ -490,7 +488,6 @@ export default function HostPage() {
             },
         )
     }
-
     const revealHustles = () => sendGameMessage("game_s1_hustle_reveal")
     const prepStage1Questions = () => sendGameMessage("game_s1_questions_prep")
 
@@ -503,6 +500,7 @@ export default function HostPage() {
             ...prev,
             currentStageStep: "questions",
         }))
+
     }
 
     //////////////////////////////
@@ -510,6 +508,7 @@ export default function HostPage() {
     ////////    Stage 2 functions
     //////////////////////////////
     //////////////////////////////
+
     const { mutate: handleInitStage2 } = useInitStage2()
     const initStage2 = () => {
         handleInitStage2(
@@ -525,7 +524,6 @@ export default function HostPage() {
             },
         )
     }
-
     const prepStage2Questions = () => sendGameMessage("game_s2_prep")
 
     // Handle timer start
@@ -542,10 +540,10 @@ export default function HostPage() {
     ////////    Stage 3 functions
     //////////////////////////////
     //////////////////////////////
+
     const initStage3 = () => sendGameMessage("game_s3_init", { start_time: new Date().toISOString() })
     const prepStage3Picks = () => sendGameMessage("game_s3_prep")
     const startStage3Picks = () => sendGameMessage("game_s3_start")
-
     const { mutate: endStageThree, isLoading: isEndingStage3 } = useEndStageThree()
     const handleEndStageThree = () => {
         endStageThree(
@@ -589,14 +587,23 @@ export default function HostPage() {
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////                      STAGE ONE                     /////////////////////////
+        //////////////// Stage ONE
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
+
         if (currentStage.includes("STAGE_ONE")) {
-            if (currentStageStep === "start") {
+            if (currentStageStep === "setup") {
                 return (
                     <div className="flex justify-center">
-                        <TrapeziumButton onClick={startGame} color="green">
+                        <TrapeziumButton onClick={startGame} color="green" data-remote-target="true">
+                            START GAME
+                        </TrapeziumButton>
+                    </div>
+                )
+            } else if (currentStageStep === "start") {
+                return (
+                    <div className="flex justify-center">
+                        <TrapeziumButton onClick={startGame} color="green" data-remote-target="true">
                             START EPISODE
                             {isStartingGame && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
                         </TrapeziumButton>
@@ -605,7 +612,7 @@ export default function HostPage() {
             } else if (currentStageStep === "init") {
                 return (
                     <div className="flex justify-center">
-                        <TrapeziumButton onClick={initStage1} variant="green">
+                        <TrapeziumButton onClick={initStage1} variant="green" data-remote-target="true">
                             INITIALIZE HUSTLE PICK
                         </TrapeziumButton>
                     </div>
@@ -613,7 +620,7 @@ export default function HostPage() {
             } else if (currentStageStep === "hustle_pick") {
                 return (
                     <div className="flex justify-center">
-                        <TrapeziumButton onClick={endTimerHustlePick} variant="yellow">
+                        <TrapeziumButton onClick={endTimerHustlePick} variant="yellow" data-remote-target="true">
                             END HUSTLE PICK TIMER
                         </TrapeziumButton>
                     </div>
@@ -621,7 +628,7 @@ export default function HostPage() {
             } else if (currentStageStep === "hustle_reveal") {
                 return (
                     <div className="flex justify-center">
-                        <TrapeziumButton onClick={revealHustles} variant="blue">
+                        <TrapeziumButton onClick={revealHustles} variant="blue" data-remote-target="true">
                             REVEAL HUSTLE
                         </TrapeziumButton>
                     </div>
@@ -634,7 +641,7 @@ export default function HostPage() {
                                 <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
                             </div>
                             <p className="text-white mb-4">Prep Stage 1 Questions</p>
-                            <TrapeziumButton onClick={prepStage1Questions} variant="orange">
+                            <TrapeziumButton onClick={prepStage1Questions} variant="orange" data-remote-target="true">
                                 PREP QUESTIONS
                             </TrapeziumButton>
                         </div>
@@ -647,7 +654,7 @@ export default function HostPage() {
                             <img src="/images/trophy.png" alt="Trophy" className="w-20 h-20" />
                         </div>
                         <p className="text-white mb-4">Proceed to stage 2</p>
-                        <TrapeziumButton onClick={initStage2} color="orange">
+                        <TrapeziumButton onClick={initStage2} color="orange" data-remote-target="true">
                             INITIALIZE STAGE 2
                         </TrapeziumButton>
                     </div>
@@ -658,7 +665,7 @@ export default function HostPage() {
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////                      STAGE TWO                     /////////////////////////
+        //////////////// Stage TWO
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
         else if (currentStage.includes("STAGE_TWO")) {
@@ -670,7 +677,7 @@ export default function HostPage() {
                                 <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
                             </div>
                             <p className="text-white mb-4">Prep Stage 2 Questions</p>
-                            <TrapeziumButton onClick={initStage2} variant="orange">
+                            <TrapeziumButton onClick={initStage2} variant="orange" data-remote-target="true">
                                 INITIALIZE STAGE 2
                             </TrapeziumButton>
                         </div>
@@ -679,7 +686,7 @@ export default function HostPage() {
             } else if (currentStageStep === "prep_questions") {
                 return (
                     <div className="flex justify-center">
-                        <TrapeziumButton onClick={prepStage2Questions} variant="green">
+                        <TrapeziumButton onClick={prepStage2Questions} variant="green" data-remote-target="true">
                             PREP STAGE 2
                         </TrapeziumButton>
                     </div>
@@ -691,7 +698,7 @@ export default function HostPage() {
                             <img src="/images/trophy.png" alt="Trophy" className="w-20 h-20" />
                         </div>
                         <p className="text-white mb-4">Proceed to stage 3</p>
-                        <TrapeziumButton onClick={initStage3} color="orange">
+                        <TrapeziumButton onClick={initStage3} color="orange" data-remote-target="true">
                             INITIALIZE STAGE 3
                         </TrapeziumButton>
                     </div>
@@ -702,7 +709,7 @@ export default function HostPage() {
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////                      STAGE THREE                    /////////////////////////
+        //////////////// Stage THREE
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
         else if (currentStage.includes("STAGE_THREE")) {
@@ -714,7 +721,7 @@ export default function HostPage() {
                                 <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
                             </div>
                             <p className="text-white mb-4">Prep Stage 3 Questions</p>
-                            <TrapeziumButton onClick={initStage3} variant="orange">
+                            <TrapeziumButton onClick={initStage3} variant="orange" data-remote-target="true">
                                 INITIALIZE STAGE 3
                             </TrapeziumButton>
                         </div>
@@ -723,7 +730,7 @@ export default function HostPage() {
             } else if (currentStageStep === "prep_dud_opportunity_pick") {
                 return (
                     <div className="flex justify-center">
-                        <TrapeziumButton onClick={prepStage3Picks} variant="green">
+                        <TrapeziumButton onClick={prepStage3Picks} variant="green" data-remote-target="true">
                             PREP STAGE 3
                         </TrapeziumButton>
                     </div>
@@ -731,7 +738,7 @@ export default function HostPage() {
             } else if (currentStageStep === "start_dud_opportunity_pick") {
                 return (
                     <div className="flex justify-center">
-                        <TrapeziumButton onClick={startStage3Picks} variant="yellow">
+                        <TrapeziumButton onClick={startStage3Picks} variant="yellow" data-remote-target="true">
                             START DUD/PASS PICK
                         </TrapeziumButton>
                     </div>
@@ -739,7 +746,7 @@ export default function HostPage() {
             } else if (currentStageStep === "game_s3_end") {
                 return (
                     <div className="flex justify-center">
-                        <TrapeziumButton onClick={handleEndStageThree} variant="yellow">
+                        <TrapeziumButton onClick={handleEndStageThree} variant="yellow" data-remote-target="true">
                             END STAGE 3{isEndingStage3 && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
                         </TrapeziumButton>
                     </div>
@@ -750,7 +757,7 @@ export default function HostPage() {
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////                      STAGE FOUR                    /////////////////////////
+        //////////////// Stage FOUR
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
         else if (currentStage.includes("STAGE_FOUR")) {
@@ -763,8 +770,8 @@ export default function HostPage() {
                             </div>
                             <p className="text-white mb-4">Prep Stage 4 Questions</p>
                             {/* <TrapeziumButton onClick={initStage2} variant="orange">
-                                INITIALIZE STAGE 2
-                            </TrapeziumButton> */}
+                              INITIALIZE STAGE 2
+                          </TrapeziumButton> */}
                         </div>
                     </div>
                 )
@@ -774,13 +781,16 @@ export default function HostPage() {
         // Default - game not started
         return (
             <div className="flex justify-center">
-                <TrapeziumButton onClick={startGame} color="green">
+                <TrapeziumButton onClick={startGame} color="green" data-remote-target="true">
                     START GAME
                 </TrapeziumButton>
             </div>
         )
     }
+    console.log(gameState.currentStageStep, "current stage step in host page")
+    console.log(currentUniversalStep, "current universal step in host page")
 
+    
     return (
         <div className="min-h-screen bg-[#1a0b25] text-white bg-[url('/images/host-bg.png')] bg-no-repeat bg-contain bg-center">
             {isLoadingContestants ? (
@@ -847,7 +857,7 @@ export default function HostPage() {
                                     onTimerStart={handleTimerStart}
                                     sendGameMessage={sendGameMessage}
                                     currentStageStep={gameState.currentStageStep}
-                                    lastAction={gameState.lastAction}
+                                    lastAction={currentUniversalStep}
                                 />
                             )}
 
@@ -884,10 +894,11 @@ export default function HostPage() {
 
             {/* Enhanced Heartbeat Component */}
             <GameSynchroniser
+                gameId={gameId}
                 participantId={`host-${gameId}`}
                 participantType="host"
                 participantName="Game Host"
-                currentScreen={gameState.currentStageStep || "init"}
+                currentScreen={gameState.currentStageStep}
                 currentStep={currentUniversalStep}
                 gameStage={gameState.currentStage || contestantsData?.game.stage || "STAGE_ONE"}
                 setCurrentUniversalStep={setCurrentUniversalStep}

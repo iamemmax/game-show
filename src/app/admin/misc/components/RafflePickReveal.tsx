@@ -20,6 +20,7 @@ import LibertyLifeModal from "./RafflePickRevealLibertyLifeModal"
 import { useGetLastContestantPick } from "@/app/components/stages/api/stage4/getLastContestantPick"
 import { useGetGameContestants, useGetHustleMatches, useGetMatchedHustles } from "@/app/admin/misc/api"
 import { Ball } from "./RaffleBall"
+import { MQTTMessage } from "@/contexts/MQTTProvider"
 
 // Types for MQTT data
 interface ExtraBallDetails {
@@ -148,13 +149,14 @@ const RafflePickReveal = () => {
 
   // Handle MQTT messages
   useEffect(() => {
-    const handleMQTTMessage = (message: BallPickedResult) => {
-      if (message.event === "ball_picked") {
-        const { hustle_match } = message.payload
-        animateBallReveal(hustle_match.number_pick, message.payload)
+    const handleMQTTMessage = (message: MQTTMessage) => {
+      const ballPickedResult = message as BallPickedResult
+      if (ballPickedResult.event === "ball_picked") {
+        const { hustle_match } = ballPickedResult.payload
+        animateBallReveal(hustle_match.number_pick, ballPickedResult.payload)
       }
     }
- if (isConnected) {
+    if (isConnected) {
       addMessageListener(handleMQTTMessage);
     }
 
@@ -319,9 +321,9 @@ const RafflePickReveal = () => {
                         animate={
                           animatingBall === ballNumber
                             ? {
-                                scale: [1, 2, 1],
-                                y: [0, -20, 0],
-                              }
+                              scale: [1, 2, 1],
+                              y: [0, -20, 0],
+                            }
                             : {}
                         }
                         transition={{ duration: 1, ease: "easeOut" }}
@@ -344,7 +346,7 @@ const RafflePickReveal = () => {
                             <div className=" rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
                               <span className="text-2xl">{ballIndicator}</span>
                             </div>
-                            
+
                           </div>
                         )}
 
@@ -448,8 +450,8 @@ const RafflePickReveal = () => {
                   })}
                 </div>
                 {/* Match Counter */}
-                <div 
-                className="size-[6.8563rem]  bg-white rounded-full flex justify-center flex-col items-center font-display text-black font-black text-[2rem] ml-2">
+                <div
+                  className="size-[6.8563rem]  bg-white rounded-full flex justify-center flex-col items-center font-display text-black font-black text-[2rem] ml-2">
                   <p className="">
                     {displayCount}/5
                   </p>

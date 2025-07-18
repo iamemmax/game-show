@@ -664,6 +664,7 @@ import LibertyLifeBall from "@/app/icons/ball/LibertyLifeBall"
 import Stage4MatchAmountContainer from "@/app/shared/Stage4MatchAmountContainer"
 import Stage4ProfileCard from "./Stage4ProfileCard"
 import Image from "next/image"
+import { MQTTMessage } from "@/contexts/MQTTProvider"
 
 // Types for MQTT data
 interface ExtraBallDetails {
@@ -794,7 +795,8 @@ const RafflePickReveal = () => {
 
   // Handle MQTT messages
   useEffect(() => {
-    const handleMQTTMessage = (message: BallPickedResult) => {
+    const handleMQTTMessage = (message: MQTTMessage) => {
+      const result = message.payload as BallPickedPayload
       if(message.event === "game_s4_start"){
         setShowStage4Prep(false)
       }
@@ -802,8 +804,8 @@ const RafflePickReveal = () => {
         setShowModal(false)
       }
       if (message.event === "ball_picked") {
-        const { hustle_match } = message.payload
-        animateBallReveal(hustle_match.number_pick, message.payload)
+        const { hustle_match } = result
+        animateBallReveal(hustle_match.number_pick, result)
         refetch()
       }
     }
