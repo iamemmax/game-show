@@ -1222,19 +1222,19 @@ const RafflePickReveal = () => {
 
 
       {/* Modal Overlay - Positioned above the ball grid */}
-      {showModal && currentResult && (
+      {showModal && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm font-montserrat">
           <div className="relative max-w-4xl w-full px-4">
-            {currentResult.hustle_match.extra_ball_details?.name === "KILLER_BALL" && (
+            {currentResult?.hustle_match.extra_ball_details?.name === "KILLER_BALL" && (
               <KillerHustlePulledModal isOpen={true} data={currentResult} />
             )}
-            {currentResult.hustle_match.extra_ball_details?.name === "CRYSTAL_BALL" && (
+            {currentResult?.hustle_match.extra_ball_details?.name === "CRYSTAL_BALL" && (
               <CrystalModal isOpen={true} data={currentResult} />
             )}
-            {currentResult.hustle_match.extra_ball_details?.name === "LIBERTY_LIFE_BALL" && (
+            {currentResult?.hustle_match.extra_ball_details?.name === "LIBERTY_LIFE_BALL" && (
               <LibertyLifeModal isOpen={true} data={currentResult} />
             )}
-            {!currentResult.hustle_match.is_extra_ball && currentResult.hustle_match.is_match && (
+            {!currentResult?.hustle_match.is_extra_ball && currentResult?.hustle_match.is_match && (
               <WinnerBallModal
                 isOpen={true}
                 data={{
@@ -1246,13 +1246,13 @@ const RafflePickReveal = () => {
                 }}
               />
             )}
-            {!currentResult.hustle_match.is_extra_ball && !currentResult.hustle_match.is_match && (
+            {!currentResult?.hustle_match.is_extra_ball && !currentResult?.hustle_match.is_match && (
               <div className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-lg rounded-2xl p-8 border-2 border-gray-500/50 shadow-2xl max-w-2xl mx-auto">
                 <div className="flex flex-col items-center text-center text-white space-y-6">
                   <div className="text-6xl">😔</div>
                   <h2 className="text-4xl font-bold text-gray-300">No Match</h2>
                   <p className="text-lg text-white/80">
-                    Ball #{currentResult.hustle_match.number_pick} - Better luck next time!
+                    Ball #{currentResult?.hustle_match.number_pick} - Better luck next time!
                   </p>
                 </div>
               </div>

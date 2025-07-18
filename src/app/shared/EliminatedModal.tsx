@@ -23,8 +23,8 @@ const EliminatedModal = ({
           <Image
             src={image_url??"/images/userImage.png"}
             alt="Eliminated contestant"
-            width={100}
-            height={100}
+            width={190}
+            height={190}
             className="rounded-xl"
           />
         </div>
