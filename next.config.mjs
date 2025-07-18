@@ -35,6 +35,11 @@ const nextConfig = {
       
       {
         protocol: 'http',
+        hostname: process.env.NEXT_PUBLIC_MQTT_BROKER,
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
         hostname: 'hustleback.libertydraw.com',
         pathname: '/**',
       },
