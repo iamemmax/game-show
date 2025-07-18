@@ -58,7 +58,7 @@ interface Prop {
 // import typewriterSfx from "@/sounds/typewriter.mp3"; // Replace with your sound file
 
 const Stage1QuestionScreen = ({ onNext }: Prop) => {
-  const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
+  const { isConnected, addGlobalListener, removeGlobalListener } = useMQTT();
   const params = useParams();
 
   // Get user from storage
@@ -174,33 +174,30 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
     currentQuestionIdRef.current = currentQuestionId;
   }, [currentQuestionId]);
 
+  // sound
+  const playBidSelectedSound = () => {
+    try {
+      const audio = new Audio("/sounds/select-bid.mp3");
+      audio.volume = 0.7; // Adjust volume as needed
+      audio.play().catch(console.error);
+    } catch (error) {
+      console.error("Error playing bid selected sound:", error);
+    }
+  };
 
-// sound
-const playBidSelectedSound = () => {
-  try {
-    const audio = new Audio("/sounds/select-bid.mp3");
-    audio.volume = 0.7; // Adjust volume as needed
-    audio.play().catch(console.error);
-  } catch (error) {
-    console.error("Error playing bid selected sound:", error);
-  }
-};
-
-const playOptionSelectedSound = () => {
-  try {
-    const audio = new Audio("/sounds/select-option.mp3");
-    audio.volume = 0.7; // Adjust volume as needed
-    audio.play().catch(console.error);
-  } catch (error) {
-    console.error("Error playing option selected sound:", error);
-  }
-}
-
+  const playOptionSelectedSound = () => {
+    try {
+      const audio = new Audio("/sounds/select-option.mp3");
+      audio.volume = 0.7; // Adjust volume as needed
+      audio.play().catch(console.error);
+    } catch (error) {
+      console.error("Error playing option selected sound:", error);
+    }
+  };
 
   useEffect(() => {
-    if (!isConnected) return;
-
     const handleMQTTMessage = (receivedMessage: any) => {
+      console.log(receivedMessage);
 
       // Handle question reveal event
       if (receivedMessage?.event === "game_s1_question_reveal") {
@@ -220,7 +217,7 @@ const playOptionSelectedSound = () => {
         setSelectedOption(null);
         setIsSubmitted(false);
         resetTimerState();
-         setShowBidPrompt(true);
+        setShowBidPrompt(true);
         // setResultMessageSent(false);
         setMqttAnswerData(null);
         setShowResultModal(false);
@@ -232,8 +229,7 @@ const playOptionSelectedSound = () => {
         // 3. Set current index and question ID
         // setCurrentQuestionIndex(questionData.question_index || 1);
         const questionId =
-          questionData?.question?.question?.question_id ||
-          payload?.question_id;
+          questionData?.question?.question?.question_id || payload?.question_id;
         if (questionId) {
           setCurrentQuestionId(questionId.toString());
         }
@@ -256,86 +252,86 @@ const playOptionSelectedSound = () => {
               const firstAmount = parseFloat(bidKeys[0]);
               // setSelectedAmount(firstAmount);
             }
-          } 
+          }
         }
       }
 
-    
-if (receivedMessage?.event === "contestant_bid_selected") {
-  const payload = receivedMessage.payload || {};
-  const {
-    contestant_id,
-    contestant_name,
-    bid_amount,
-    timestamp,
-    question_id,
-    remaining_capital,
-    bid_percentage,
-  } = payload;
+      if (receivedMessage?.event === "contestant_bid_selected") {
+        console.log(receivedMessage.payload);
 
-  if (contestant_id && contestant_name && bid_amount !== undefined) {
-    // Only update bids for the current question
-    if (question_id === currentQuestionId) {
-      // Play sound effect for bid selection
-      playBidSelectedSound();
-      
-      setContestantBids((prevBids) => {
-        const updatedBids = {
-          ...prevBids,
-          [contestant_id]: {
-            contestant_id,
-            contestant_name,
-            bid_amount,
-            timestamp,
-            question_id,
-            remaining_capital,
-            bid_percentage,
-          },
-        };
+        const payload = receivedMessage.payload || {};
+        const {
+          contestant_id,
+          contestant_name,
+          bid_amount,
+          timestamp,
+          question_id,
+          remaining_capital,
+          bid_percentage,
+        } = payload;
 
-        return updatedBids;
-      });
-         setShowBidPrompt(false);
-    }
-  }
-}
+        if (contestant_id && contestant_name && bid_amount !== undefined) {
+          // Only update bids for the current question
+          if (question_id === currentQuestionId) {
+            // Play sound effect for bid selection
+            playBidSelectedSound();
 
-if (receivedMessage?.event === "contestant_selected_option") {
-  const payload = receivedMessage.payload || {};
-  const {
-    contestant_id,
-    contestant_name,
-    selected_option,
-    is_selected,
-    timestamp,
-    question_id,
-  } = payload;
+            setContestantBids((prevBids) => {
+              const updatedBids = {
+                ...prevBids,
+                [contestant_id]: {
+                  contestant_id,
+                  contestant_name,
+                  bid_amount,
+                  timestamp,
+                  question_id,
+                  remaining_capital,
+                  bid_percentage,
+                },
+              };
 
-  if (contestant_id && contestant_name && selected_option !== undefined) {
-    // Only update options for the current question
-    if (question_id === currentQuestionId) {
-      // Play sound effect for option selection
-      playOptionSelectedSound();
-      
-      setContestantOption((prevOpt) => {
-        const updatedBids = {
-          ...prevOpt,
-          [contestant_id]: {
-            contestant_id,
-            contestant_name,
-            selected_option,
-            is_selected,
-            timestamp,
-            question_id,
-          },
-        };
+              return updatedBids;
+            });
+            setShowBidPrompt(false);
+          }
+        }
+      }
 
-        return updatedBids;
-      });
-    }
-  }
-}
+      if (receivedMessage?.event === "contestant_selected_option") {
+        const payload = receivedMessage.payload || {};
+        const {
+          contestant_id,
+          contestant_name,
+          selected_option,
+          is_selected,
+          timestamp,
+          question_id,
+        } = payload;
 
+        if (contestant_id && contestant_name && selected_option !== undefined) {
+          // Only update options for the current question
+          if (question_id === currentQuestionId) {
+            // Play sound effect for option selection
+            playOptionSelectedSound();
+
+            setContestantOption((prevOpt) => {
+              const updatedBids = {
+                ...prevOpt,
+                [contestant_id]: {
+                  contestant_id,
+                  contestant_name,
+                  selected_option,
+                  is_selected,
+                  timestamp,
+                  question_id,
+                },
+              };
+
+              return updatedBids;
+            });
+          }
+        }
+      }
 
       if (receivedMessage?.event === "clear_all_bids") {
         setContestantOption({});
@@ -389,16 +385,20 @@ if (receivedMessage?.event === "contestant_selected_option") {
         setAllQuestionsCompleted(true);
       }
     };
- if (isConnected) {
-      addMessageListener(handleMQTTMessage);
+    if (isConnected) {
+      addGlobalListener(handleMQTTMessage);
     }
 
     return () => {
-      removeMessageListener(handleMQTTMessage);
+      removeGlobalListener(handleMQTTMessage);
     };
-
-
-  }, [isConnected, addMessageListener, removeMessageListener, user?.contestant_id, currentQuestionId]);
+  }, [
+    isConnected,
+    addGlobalListener,
+    removeGlobalListener,
+    user?.contestant_id,
+    currentQuestionId,
+  ]);
 
   // Cleanup timer on component unmount
   useEffect(() => {
@@ -414,8 +414,6 @@ if (receivedMessage?.event === "contestant_selected_option") {
     if (!correctAnswer) return false;
     return convertOptionToLetter(option) === correctAnswer;
   };
-
-
 
   // FIXED: Add this function to reset the timer state for the next question
   const resetTimerState = () => {
@@ -561,150 +559,170 @@ if (receivedMessage?.event === "contestant_selected_option") {
                     </h2>
                   </div>
 
-               {timerActive&&  <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
-        <span
-          className={`${
-            "text-[40px]"
-          } font-extrabold font-lucky text-white whitespace-nowrap`}
-          style={{
-            WebkitTextStroke: "1.5px #C76000",
-            textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
-          }}
-        >
-          
-            {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
-        </span>
-      </div>}
+                  {timerActive && (
+                    <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+                      <span
+                        className={`${"text-[40px]"} font-extrabold font-lucky text-white whitespace-nowrap`}
+                        style={{
+                          WebkitTextStroke: "1.5px #C76000",
+                          textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
+                        }}
+                      >
+                        {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
+                      </span>
+                    </div>
+                  )}
 
-               {  showBidPrompt&&  <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
-        <span
-          className={`${
-            "text-[40px]"
-          } font-extrabold font-lucky text-white whitespace-nowrap`}
-          style={{
-            WebkitTextStroke: "1.5px #C76000",
-            textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
-          }}
-        >
-          
-           Lock in Hustle
-        </span>
-      </div>}
-            
+                  {showBidPrompt && (
+                    <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+                      <span
+                        className={`${"text-[40px]"} font-extrabold font-lucky text-white whitespace-nowrap`}
+                        style={{
+                          WebkitTextStroke: "1.5px #C76000",
+                          textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
+                        }}
+                      >
+                        Lock in Hustle
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid mt-8 gap-6 items-start grid-cols-[1fr_2.5fr_1fr]">
-                 
+                  <div className="flex w-full  gap-4 mt-1">
+                    {/* Left Column: First 3 contestants */}
+                    <div className="flex flex-col gap-4 w-full">
+                      {mqttQuestionData?.spend_breakdown
+                        ?.slice(0, 3)
+                        .map((spend: ContestantSpend) => {
+                          const selectedBid =
+                            contestantBids?.[spend.contestant_id];
+                          const selectedOption =
+                            contestantOption?.[spend.contestant_id];
 
-                    <div className="flex w-full  gap-4 mt-1">
-  {/* Left Column: First 3 contestants */}
-<div className="flex flex-col gap-4 w-full">
-  {mqttQuestionData?.spend_breakdown?.slice(0, 3).map((spend: ContestantSpend) => {
-    const selectedBid = contestantBids?.[spend.contestant_id];
-    const selectedOption = contestantOption?.[spend.contestant_id];
+                          const matchingKey = selectedBid
+                            ? Object.keys(spend.spend_breakdown).find(
+                                (key) =>
+                                  Math.ceil(Number(key) / 100) * 100 ===
+                                  Math.ceil(
+                                    Number(selectedBid.bid_amount) / 100
+                                  ) *
+                                    100
+                              )
+                            : null;
 
-    console.log(selectedBid);
-    
+                          const potentialWinning = matchingKey
+                            ? Math.ceil(
+                                Number(spend.spend_breakdown[matchingKey]) / 100
+                              ) * 100
+                            : 0;
 
-    const matchingKey = selectedBid
-      ? Object.keys(spend.spend_breakdown).find(
-          (key) =>
-            Math.ceil(Number(key) / 100) * 100 ===
-            Math.ceil(Number(selectedBid.bid_amount) / 100) * 100
-        )
-      : null;
+                          const previousValue =
+                            previousWinnings[spend.contestant_id] || 0;
 
-    const potentialWinning = matchingKey
-      ? Math.ceil(Number(spend.spend_breakdown[matchingKey]) / 100) * 100
-      : 0;
+                          // Determine if answer option is selected
+                          const isAnswerOptionSelected = !!selectedOption;
 
-    const previousValue = previousWinnings[spend.contestant_id] || 0;
+                          // Determine if bid is selected but option is not
+                          const isBidSelectedButOptionNot =
+                            !!selectedBid && !selectedOption;
 
-    // Determine if answer option is selected
-    const isAnswerOptionSelected = !!selectedOption;
-    
-    // Determine if bid is selected but option is not
-    const isBidSelectedButOptionNot = !!selectedBid && !selectedOption;
+                          return (
+                            <div
+                              key={spend.contestant_id}
+                              className={`text-left py-4 px-3  w-full rounded-10 transition-all duration-300 ${
+                                isAnswerOptionSelected
+                                  ? "bg-[#011B0D]" // Green background when answer option is selected
+                                  : "bg-[#0F002E]" // Purple background default
+                              }`}
+                            >
+                              <div className="text-white text-base font-gilroyBold font-bold mb-1">
+                                {spend.contestant_name?.split(" ")[0]}
+                              </div>
 
-    return (
-      <div
-        key={spend.contestant_id}
-        className={`text-left py-4 px-3  w-full rounded-10 transition-all duration-300 ${
-          isAnswerOptionSelected 
-            ? "bg-[#011B0D]" // Green background when answer option is selected
-            : "bg-[#0F002E]" // Purple background default
-        }`}
-      >
-        <div className="text-white text-base font-gilroyBold font-bold mb-1">
-          {spend.contestant_name?.split(" ")[0]}
-        </div>
+                              <div className="grid grid-cols-2 w-full justify-center gap-2">
+                                {Object.entries(spend.spend_breakdown).map(
+                                  ([amount, value], index) => {
+                                    const parsedAmount =
+                                      Math.ceil(Number(amount) / 100) * 100;
+                                    const normalizedBidAmount = selectedBid
+                                      ? Math.ceil(
+                                          Number(selectedBid.bid_amount) / 100
+                                        ) * 100
+                                      : null;
 
-        <div className="grid grid-cols-2 w-full justify-center gap-2">
-          {Object.entries(spend.spend_breakdown).map(([amount, value], index) => {
-            const parsedAmount = Math.ceil(Number(amount) / 100) * 100;
-            const normalizedBidAmount = selectedBid
-              ? Math.ceil(Number(selectedBid.bid_amount) / 100) * 100
-              : null;
+                                    const isBidSelected =
+                                      parsedAmount === normalizedBidAmount;
 
-            const isBidSelected = parsedAmount === normalizedBidAmount;
+                                    return (
+                                      <div
+                                        key={`${spend.contestant_id}-${index}`}
+                                        className={`rounded-lg px-3 py-2 text-2xl font-gilroyHeavy transition-all ${
+                                          isBidSelected
+                                            ? isAnswerOptionSelected
+                                              ? "bg-[#00FF47] font-semibold text-black" // Green when both bid and option selected
+                                              : "bg-[#fff] font-semibold text-black" // White when only bid selected
+                                            : isAnswerOptionSelected
+                                              ? "bg-[#004D1A] text-white" // Darker green for unselected bids when option is selected
+                                              : "bg-[#26005F] text-[#E86FFF]" // Default purple for unselected bids
+                                        }`}
+                                      >
+                                        ₦{parsedAmount.toLocaleString()}
+                                      </div>
+                                    );
+                                  }
+                                )}
+                              </div>
 
-            return (
-              <div
-                key={`${spend.contestant_id}-${index}`}
-                className={`rounded-lg px-3 py-2 text-2xl font-gilroyHeavy transition-all ${
-                  isBidSelected
-                    ? isAnswerOptionSelected
-                      ? "bg-[#00FF47] font-semibold text-black" // Green when both bid and option selected
-                      : "bg-[#fff] font-semibold text-black" // White when only bid selected
-                    : isAnswerOptionSelected
-                      ? "bg-[#004D1A] text-white" // Darker green for unselected bids when option is selected
-                      : "bg-[#26005F] text-[#E86FFF]" // Default purple for unselected bids
-                }`}
-              >
-                ₦{parsedAmount.toLocaleString()}
-              </div>
-            );
-          })}
-        </div>
-
-        {selectedBid && potentialWinning > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-2 flex items-center gap-2"
-          >
-            <div
-              className={`text-lg font-gilroyMedium transition-all ${
-                isAnswerOptionSelected 
-                  ? "text-[#00FF47]" // Green text when answer option is selected
-                  : isBidSelectedButOptionNot
-                    ? "text-[#FFB800]" // Yellow/orange text when bid selected but option not
-                    : "text-white opacity-50" // Default white with opacity
-              }`}
-            >
-              {isAnswerOptionSelected ? "Winning:" : isBidSelectedButOptionNot && "Winning:"}
-            </div>
-            <div className={`text-lg font-gilroyHeavy font-bold transition-all ${
-              isAnswerOptionSelected 
-                ? "text-[#00FF47]" // Green amount when answer option is selected
-                : isBidSelectedButOptionNot
-                  ? "text-[#FFB800]" // Yellow/orange amount when bid selected but option not
-                  : "text-[#fff]" // Default white
-            }`}>
-              <AnimatedAmount
-                from={previousValue}
-                to={potentialWinning}
-                onStart={() => handleAmountStart(String(spend.contestant_id))}
-                onComplete={() => handleAmountComplete(String(spend.contestant_id))}
-              />
-            </div>
-          </motion.div>
-        )}
-      </div>
-    );
-  })}
-</div>
-
+                              {selectedBid && potentialWinning > 0 && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className="mt-2 flex items-center gap-2"
+                                >
+                                  <div
+                                    className={`text-lg font-gilroyMedium transition-all ${
+                                      isAnswerOptionSelected
+                                        ? "text-[#00FF47]" // Green text when answer option is selected
+                                        : isBidSelectedButOptionNot
+                                          ? "text-[#FFB800]" // Yellow/orange text when bid selected but option not
+                                          : "text-white opacity-50" // Default white with opacity
+                                    }`}
+                                  >
+                                    {isAnswerOptionSelected
+                                      ? "Winning:"
+                                      : isBidSelectedButOptionNot && "Winning:"}
+                                  </div>
+                                  <div
+                                    className={`text-lg font-gilroyHeavy font-bold transition-all ${
+                                      isAnswerOptionSelected
+                                        ? "text-[#00FF47]" // Green amount when answer option is selected
+                                        : isBidSelectedButOptionNot
+                                          ? "text-[#FFB800]" // Yellow/orange amount when bid selected but option not
+                                          : "text-[#fff]" // Default white
+                                    }`}
+                                  >
+                                    <AnimatedAmount
+                                      from={previousValue}
+                                      to={potentialWinning}
+                                      onStart={() =>
+                                        handleAmountStart(
+                                          String(spend.contestant_id)
+                                        )
+                                      }
+                                      onComplete={() =>
+                                        handleAmountComplete(
+                                          String(spend.contestant_id)
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                </motion.div>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
                   </div>
                   {isLoading ? (
                     <div className="flex justify-center items-center h-full ">
@@ -721,30 +739,32 @@ if (receivedMessage?.event === "contestant_selected_option") {
                           className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000]"
                         >
                           <div className="flex gap-x-4 items-center">
-                          <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4 }}
-                          >
-                            <p className="bg-[#011B0D] rounded-10 px-6 py-2 text-2xl text-[#04DA6A] font-outfit">
-                              Question{" "}
-                              {mqttQuestionData?.question_index || "..."}
-                            </p>
-                          </motion.div>
-                          <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4 }}
-                          >
-                            <p className="bg-[#011B0D] rounded-10 px-6 py-2 text-2xl text-[#04DA6A] font-outfit">
-                            Owner: {mqttQuestionData?.question?.contestant?.contestant_name?.split((" ")[0])}
-                            </p>
-                          </motion.div>
-
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.4 }}
+                            >
+                              <p className="bg-[#011B0D] rounded-10 px-6 py-2 text-2xl text-[#04DA6A] font-outfit">
+                                Question{" "}
+                                {mqttQuestionData?.question_index || "..."}
+                              </p>
+                            </motion.div>
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.4 }}
+                            >
+                              <p className="bg-[#011B0D] rounded-10 px-6 py-2 text-2xl text-[#04DA6A] font-outfit">
+                                Owner:{" "}
+                                {mqttQuestionData?.question?.contestant?.contestant_name?.split(
+                                  " "[0]
+                                )}
+                              </p>
+                            </motion.div>
                           </div>
 
                           <motion.div
-                          className="py-8"
+                            className="py-8"
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5 }}
@@ -754,8 +774,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
                               <>
                                 <AnimatedText
                                   text={
-                                    mqttQuestionData.question.question.question 
-
+                                    mqttQuestionData.question.question.question
                                   }
                                   // fontSize={fontSize}
                                 />
@@ -901,142 +920,174 @@ if (receivedMessage?.event === "contestant_selected_option") {
                     </>
                   )}
 
-              
+                  {/* Right Column: Last 3 contestants */}
+                  <div className="flex flex-col gap-4 w-full">
+                    {mqttQuestionData?.spend_breakdown
+                      ?.slice(3)
+                      .map((spend: ContestantSpend) => {
+                        const selectedBid =
+                          contestantBids?.[spend.contestant_id];
+                        const selectedOption =
+                          contestantOption?.[spend.contestant_id];
 
- {/* Right Column: Last 3 contestants */}
- <div className="flex flex-col gap-4 w-full">
-  {mqttQuestionData?.spend_breakdown?.slice(3).map((spend: ContestantSpend) => {
-    const selectedBid = contestantBids?.[spend.contestant_id];
-    const selectedOption = contestantOption?.[spend.contestant_id];
+                        const matchingKey = selectedBid
+                          ? Object.keys(spend.spend_breakdown).find(
+                              (key) =>
+                                Math.ceil(Number(key) / 100) * 100 ===
+                                Math.ceil(
+                                  Number(selectedBid.bid_amount) / 100
+                                ) *
+                                  100
+                            )
+                          : null;
 
-    const matchingKey = selectedBid
-      ? Object.keys(spend.spend_breakdown).find(
-          (key) =>
-            Math.ceil(Number(key) / 100) * 100 ===
-            Math.ceil(Number(selectedBid.bid_amount) / 100) * 100
-        )
-      : null;
+                        const potentialWinning = matchingKey
+                          ? Math.ceil(
+                              Number(spend.spend_breakdown[matchingKey]) / 100
+                            ) * 100
+                          : 0;
 
-    const potentialWinning = matchingKey
-      ? Math.ceil(Number(spend.spend_breakdown[matchingKey]) / 100) * 100
-      : 0;
+                        const previousValue =
+                          previousWinnings[spend.contestant_id] || 0;
 
-    const previousValue = previousWinnings[spend.contestant_id] || 0;
+                        // Determine if answer option is selected
+                        const isAnswerOptionSelected = !!selectedOption;
 
-    // Determine if answer option is selected
-    const isAnswerOptionSelected = !!selectedOption;
-    
-    // Determine if bid is selected but option is not
-    const isBidSelectedButOptionNot = !!selectedBid && !selectedOption;
+                        // Determine if bid is selected but option is not
+                        const isBidSelectedButOptionNot =
+                          !!selectedBid && !selectedOption;
 
-    return (
-      <div
-        key={spend.contestant_id}
-        className={`text-left py-4 px-3  w-full rounded-10 transition-all duration-300 ${
-          isAnswerOptionSelected 
-            ? "bg-[#011B0D]" // Green background when answer option is selected
-            : "bg-[#0F002E]" // Purple background default
-        }`}
-      >
-        <div className="text-white text-base font-gilroyBold font-bold mb-1">
-          {spend.contestant_name?.split(" ")[0]}
-        </div>
+                        return (
+                          <div
+                            key={spend.contestant_id}
+                            className={`text-left py-4 px-3  w-full rounded-10 transition-all duration-300 ${
+                              isAnswerOptionSelected
+                                ? "bg-[#011B0D]" // Green background when answer option is selected
+                                : "bg-[#0F002E]" // Purple background default
+                            }`}
+                          >
+                            <div className="text-white text-base font-gilroyBold font-bold mb-1">
+                              {spend.contestant_name?.split(" ")[0]}
+                            </div>
 
-        <div className="grid grid-cols-2 w-full justify-center gap-2">
-          {Object.entries(spend.spend_breakdown).map(([amount, value], index) => {
-            const parsedAmount = Math.ceil(Number(amount) / 100) * 100;
-            const normalizedBidAmount = selectedBid
-              ? Math.ceil(Number(selectedBid.bid_amount) / 100) * 100
-              : null;
+                            <div className="grid grid-cols-2 w-full justify-center gap-2">
+                              {Object.entries(spend.spend_breakdown).map(
+                                ([amount, value], index) => {
+                                  const parsedAmount =
+                                    Math.ceil(Number(amount) / 100) * 100;
+                                  const normalizedBidAmount = selectedBid
+                                    ? Math.ceil(
+                                        Number(selectedBid.bid_amount) / 100
+                                      ) * 100
+                                    : null;
 
-            const isBidSelected = parsedAmount === normalizedBidAmount;
+                                  const isBidSelected =
+                                    parsedAmount === normalizedBidAmount;
 
-            return (
-              <div
-                key={`${spend.contestant_id}-${index}`}
-                className={`rounded-lg px-3 py-2 text-2xl font-gilroyHeavy transition-all ${
-                  isBidSelected
-                    ? isAnswerOptionSelected
-                      ? "bg-[#00FF47] font-semibold text-black" // Green when both bid and option selected
-                      : "bg-[#fff] font-semibold text-black" // White when only bid selected
-                    : isAnswerOptionSelected
-                      ? "bg-[#004D1A] text-white" // Darker green for unselected bids when option is selected
-                      : "bg-[#26005F] text-[#E86FFF]" // Default purple for unselected bids
-                }`}
-              >
-                ₦{parsedAmount.toLocaleString()}
-              </div>
-            );
-          })}
-        </div>
+                                  return (
+                                    <div
+                                      key={`${spend.contestant_id}-${index}`}
+                                      className={`rounded-lg px-3 py-2 text-2xl font-gilroyHeavy transition-all ${
+                                        isBidSelected
+                                          ? isAnswerOptionSelected
+                                            ? "bg-[#00FF47] font-semibold text-black" // Green when both bid and option selected
+                                            : "bg-[#fff] font-semibold text-black" // White when only bid selected
+                                          : isAnswerOptionSelected
+                                            ? "bg-[#004D1A] text-white" // Darker green for unselected bids when option is selected
+                                            : "bg-[#26005F] text-[#E86FFF]" // Default purple for unselected bids
+                                      }`}
+                                    >
+                                      ₦{parsedAmount.toLocaleString()}
+                                    </div>
+                                  );
+                                }
+                              )}
+                            </div>
 
-        {selectedBid && potentialWinning > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-2 flex items-center gap-2"
-          >
-            <div
-              className={`text-lg font-gilroyMedium transition-all ${
-                isAnswerOptionSelected 
-                  ? "text-[#00FF47]" // Green text when answer option is selected
-                  : isBidSelectedButOptionNot
-                    ? "text-[#FFB800]" // Yellow/orange text when bid selected but option not
-                    : "text-white opacity-50" // Default white with opacity
-              }`}
-            >
-              {isAnswerOptionSelected ? "Winning:" : isBidSelectedButOptionNot && "Winning:"}
-            </div>
-            <div className={`text-lg font-gilroyHeavy font-bold transition-all ${
-              isAnswerOptionSelected 
-                ? "text-[#00FF47]" // Green amount when answer option is selected
-                : isBidSelectedButOptionNot
-                  ? "text-[#FFB800]" // Yellow/orange amount when bid selected but option not
-                  : "text-[#fff]" // Default white
-            }`}>
-              <AnimatedAmount
-                from={previousValue}
-                to={potentialWinning}
-                onStart={() => handleAmountStart(String(spend.contestant_id))}
-                onComplete={() => handleAmountComplete(String(spend.contestant_id))}
-              />
-            </div>
-          </motion.div>
-        )}
-      </div>
-    );
-  })}
-</div>
-                {showResultModal && (
-                  <HustleQuestionAnswerModal
-                    booster={
-                      mqttQuestionData?.question?.question?.question_booster
-                    }
-                    showBooster={true}
-                    currentQuestionOptions={{
-                      option_a: mqttQuestionData?.question?.question?.option_a,
-                      option_b: mqttQuestionData?.question?.question?.option_b,
-                      option_c: mqttQuestionData?.question?.question?.option_c,
-                      option_d: mqttQuestionData?.question?.question?.option_d,
-                    }}
-                    questionIndex={mqttQuestionData?.question_index}
-                    correctAnswer={
-                      mqttQuestionData?.question?.question?.correct_option
-                    }
-                    question={mqttQuestionData?.question?.question?.question}
-                    currentQuestionAnswerData={currentQuestionAnswerData}
-                    currentQuestion={mqttQuestionData}
-                    mqttAnswerData={mqttAnswerData}
-                  />
-                )}
+                            {selectedBid && potentialWinning > 0 && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mt-2 flex items-center gap-2"
+                              >
+                                <div
+                                  className={`text-lg font-gilroyMedium transition-all ${
+                                    isAnswerOptionSelected
+                                      ? "text-[#00FF47]" // Green text when answer option is selected
+                                      : isBidSelectedButOptionNot
+                                        ? "text-[#FFB800]" // Yellow/orange text when bid selected but option not
+                                        : "text-white opacity-50" // Default white with opacity
+                                  }`}
+                                >
+                                  {isAnswerOptionSelected
+                                    ? "Winning:"
+                                    : isBidSelectedButOptionNot && "Winning:"}
+                                </div>
+                                <div
+                                  className={`text-lg font-gilroyHeavy font-bold transition-all ${
+                                    isAnswerOptionSelected
+                                      ? "text-[#00FF47]" // Green amount when answer option is selected
+                                      : isBidSelectedButOptionNot
+                                        ? "text-[#FFB800]" // Yellow/orange amount when bid selected but option not
+                                        : "text-[#fff]" // Default white
+                                  }`}
+                                >
+                                  <AnimatedAmount
+                                    from={previousValue}
+                                    to={potentialWinning}
+                                    onStart={() =>
+                                      handleAmountStart(
+                                        String(spend.contestant_id)
+                                      )
+                                    }
+                                    onComplete={() =>
+                                      handleAmountComplete(
+                                        String(spend.contestant_id)
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </motion.div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                  {showResultModal && (
+                    <HustleQuestionAnswerModal
+                      booster={
+                        mqttQuestionData?.question?.question?.question_booster
+                      }
+                      showBooster={true}
+                      currentQuestionOptions={{
+                        option_a:
+                          mqttQuestionData?.question?.question?.option_a,
+                        option_b:
+                          mqttQuestionData?.question?.question?.option_b,
+                        option_c:
+                          mqttQuestionData?.question?.question?.option_c,
+                        option_d:
+                          mqttQuestionData?.question?.question?.option_d,
+                      }}
+                      questionIndex={mqttQuestionData?.question_index}
+                      correctAnswer={
+                        mqttQuestionData?.question?.question?.correct_option
+                      }
+                      question={mqttQuestionData?.question?.question?.question}
+                      currentQuestionAnswerData={currentQuestionAnswerData}
+                      currentQuestion={mqttQuestionData}
+                      mqttAnswerData={mqttAnswerData}
+                    />
+                  )}
+                </div>
 
-             
-              </div>
-
-<div className="">
-              <div className="flex items-center gap-x-12 mt-8">
- {questionData?.map((contestant, idx: number) => (
-                      <div className="flex flex-col gap-2 items-center" key={idx}>
+                <div className="">
+                  <div className="flex items-center gap-x-12 mt-8">
+                    {questionData?.map((contestant, idx: number) => (
+                      <div
+                        className="flex flex-col gap-2 items-center"
+                        key={idx}
+                      >
                         <div className="select-none">
                           <NumberCardContainer
                             text={
@@ -1085,10 +1136,8 @@ if (receivedMessage?.event === "contestant_selected_option") {
                             </GlowyStrokeText> */}
                       </div>
                     ))}
-              </div>
-              
-
-</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

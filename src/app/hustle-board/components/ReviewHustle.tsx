@@ -23,7 +23,7 @@ import Stage1QuestionScreen from "./Stage1QuestionScreen";
 interface Props {
   onNext: () => void;
 }
-const ReviewHustle = ({onNext}:Props) => {
+const ReviewHustle = ({ onNext }: Props) => {
   const params = useParams();
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   // const [ShowQuestionScreen, setShowQuestionScreen] = useState(false);
@@ -33,41 +33,36 @@ const ReviewHustle = ({onNext}:Props) => {
   const { data, isLoading } = useGetHustleReveal(Number(params?.episodeId));
 
   useEffect(() => {
-    if (isConnected) {
-      const handleMQTTMessage = (receivedMessage: any) => {
-        console.log("Main page received message:", receivedMessage);
+    const handleMQTTMessage = (receivedMessage: any) => {
+      console.log("Main page received message:", receivedMessage);
 
-        // Handle stage transition events
+      // Handle stage transition events
 
-        if (receivedMessage?.event === "game_s1_questions_prep") {
-          // Proceed to the next stage
-          // setShowQuestionScreen(true);
-          onNext()
-        }
+      if (receivedMessage?.event === "game_s1_questions_prep") {
+        // Proceed to the next stage
+        // setShowQuestionScreen(true);
+        onNext();
+      }
+
+      if (isConnected) {
+        addMessageListener(handleMQTTMessage);
+      }
+
+      return () => {
+        removeMessageListener(handleMQTTMessage);
       };
-
-     if (isConnected) {
-      addMessageListener(handleMQTTMessage);
-    }
-
-    return () => {
-      removeMessageListener(handleMQTTMessage);
     };
-
-
-    }
   }, [isConnected, addMessageListener, removeMessageListener, onNext]);
 
   const contestant = data?.data?.find(
     (contestant) => contestant.contestant_id === user?.contestant_id
   );
-    // if (ShowQuestionScreen) {
-    //   return <Stage1QuestionScreen />;
-    // }
+  // if (ShowQuestionScreen) {
+  //   return <Stage1QuestionScreen />;
+  // }
   return (
     <>
       {/* Elimination Modal */}
-      
 
       {/* Main Component */}
       <div className="grid grid-cols-[1fr_5fr_1fr] h-full w-full overflow-x-hidden ">
@@ -103,7 +98,6 @@ const ReviewHustle = ({onNext}:Props) => {
                 textStrokeWidth={4.4}
               />
             </div>
-            
 
             <div className="relative w-full py-[1.5rem]  h-full   px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
               {/* Animated border */}
@@ -169,7 +163,11 @@ const ReviewHustle = ({onNext}:Props) => {
 
         {/* Right Sidebar */}
         <div>
-          <HustleSideBar showEmptyCard={false} showHustlerCard={true} showHustleCardAmt={true} />
+          <HustleSideBar
+            showEmptyCard={false}
+            showHustlerCard={true}
+            showHustleCardAmt={true}
+          />
         </div>
       </div>
     </>
