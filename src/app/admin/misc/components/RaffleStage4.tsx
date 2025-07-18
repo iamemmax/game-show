@@ -53,7 +53,6 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
     })
   }, [gameEpisode, initStage, sendMessage])
 
-
   const handleBallClick = useCallback(
     async (ballNumber: number) => {
       if (isSubmitting || revealedBalls.has(ballNumber)) return

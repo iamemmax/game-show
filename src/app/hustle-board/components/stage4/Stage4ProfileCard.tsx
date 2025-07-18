@@ -89,7 +89,7 @@ const Stage4ProfileCard = ({contestantsData}:prop) => {
             <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-orange-400 to-red-500">
               <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
                 <img 
-                  src={contestantImages[0]}
+                  src={lastContestantId?.contestant_photo_url ?? "/images/userImage.png"}
                   alt="Demola" 
                   className="w-full h-full rounded-full object-cover"
                 />

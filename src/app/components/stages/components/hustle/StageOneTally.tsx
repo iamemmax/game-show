@@ -26,6 +26,7 @@ import Stage3BoardGetReadyPage from "@/app/hustle-board/components/stage3/Stage3
 import { formatAmount } from "@/utils/currency";
 import Stage3HustleBoardGetReadyPage from "@/app/hustle-board/components/stage3/Stage3GetReadyScreen";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
+import EliminatedModal from "@/app/shared/EliminatedModal";
 
 interface StageOneTallyProps {
   eliminationCount?: number;
@@ -172,40 +173,21 @@ const StageOneTally = ({
     );
   }
 
+  
+  const getContestantInfo = (id: number) => {
+    const allconstestant = allContestsant?.data?.find(
+      (contestant) => contestant.id === id
+    );
+    return allconstestant;
+  };
   return (
     <div key={`stage-one-tally-${episodeId || 'default'}`}>
       {/* Elimination Modal */}
       {showEliminationModal && (
-        <Dialog
-          open={showEliminationModal}
-          onOpenChange={setShowEliminationModal}
-        >
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-            <div className="bg-gradient-to-b from-[#980306] to-[#FE8E8E] p-1 rounded-xl max-w-md w-full">
-              <div className="bg-[#13051E] rounded-lg p-6 flex flex-col items-center">
-                <h2 className="text-2xl font-bold text-white mb-4">
-                  You've Been Eliminated!
-                </h2>
-                <div className="mb-4">
-                  <Trophy height={80} width={80} />
-                </div>
-                <p className="text-white text-center mb-6">
-                  Unfortunately, your journey ends here. Thank you for
-                  participating!
-                </p>
-                <Button
-                  onClick={() => {
-                    router.push("/login");
-                    setShowEliminationModal(false);
-                  }}
-                  className="bg-[#D91FFF] hover:bg-[#b01ad3] text-white"
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Dialog>
+      <EliminatedModal
+      setShowEliminationModal={setShowEliminationModal} 
+      showEliminationModal={showEliminationModal}
+      balance={Number(getContestantInfo(Number(user?.contestant_id))?.wallet_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url)}/>
       )}
 
       <div

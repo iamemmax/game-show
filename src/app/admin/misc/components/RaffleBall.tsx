@@ -94,12 +94,11 @@ export function Ball({
             </defs>
           </svg>
           {number && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className={cn("text-white font-montserrat font-semibold ", textClassName, extraTextClass)}>
-                {number}
-              </span>
-            </div>
-          )}
+  <div className="absolute inset-0 flex items-center justify-center">
+    <span className={cn("text-white text-center", textClassName, extraTextClass)}>{number}</span>
+  </div>
+)}
+
         </>
       ) : variant === "mismatched" ? (
         <>

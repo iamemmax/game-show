@@ -377,27 +377,27 @@ const QuestionTwoScreen = ({onNext}:prop) => {
   // Automatically refetch answer data when shouldFetchAnswer is true
 
 
-const publishOption = async (option: string) => {
-  if (!user?.contestant_id || !user?.name) return;
+// const publishOption = async (option: string) => {
+//   if (!user?.contestant_id || !user?.name) return;
 
-  const optionData = {
-    event: "contestant_selected_option",
-    payload: {
-      contestant_id: user.contestant_id,
-      contestant_name: user.name,
-      is_selected:true,
-      selected_option: option, // Added the actual selected option
-      timestamp: new Date().toISOString(),
-      question_id: currentQuestionId,
-      game_episode: user.game_episode,
-    },
-  };
+//   const optionData = {
+//     event: "contestant_selected_option",
+//     payload: {
+//       contestant_id: user.contestant_id,
+//       contestant_name: user.name,
+//       is_selected:true,
+//       selected_option: option, // Added the actual selected option
+//       timestamp: new Date().toISOString(),
+//       question_id: currentQuestionId,
+//       game_episode: user.game_episode,
+//     },
+//   };
 
-  console.log("Publishing selected option:", optionData);
+//   console.log("Publishing selected option:", optionData);
 
-  // Publish to MQTT for leaderboard screen to listen
-  await sendMessage(optionData);
-};
+//   // Publish to MQTT for leaderboard screen to listen
+//   await sendMessage(optionData);
+// };
 
  // Handle option selection - now just selects without checking correctness
   const handleOptionSelect = (option: OptionKey) => {
@@ -405,7 +405,7 @@ const publishOption = async (option: string) => {
     if (timerActive && !isSubmitted) {
       setSelectedOption(option);
 const answerLetter = convertOptionToLetter(option);
-    publishOption(answerLetter);
+    // publishOption(answerLetter);
       // Auto-submit immediately after selection
     }
   };

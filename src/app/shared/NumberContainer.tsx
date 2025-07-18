@@ -58,7 +58,7 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
         secondaryGradientEndColor: "#04DA6A",
         bgBlurColor: "#000000",
         centerBackgroundColor: "transparent",
-        textColor: "#04DA6A",
+        textColor: "#fff",
         active:true
       };
     } else if (status === "error") {
@@ -70,7 +70,7 @@ const NumberCardContainer: React.FC<ZtCardProps> = ({
         secondaryGradientEndColor: "#EB001B",
         bgBlurColor: "#000000",
         centerBackgroundColor: "transparent",
-        textColor: "#FFC125",
+        textColor: "#fff",
          active:true
       };
     }

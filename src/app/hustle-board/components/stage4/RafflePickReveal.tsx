@@ -65,7 +65,7 @@
 // }
 
 // const RafflePickReveal = () => {
-//   const { isConnected } = useMQTT()
+//   const { isConnected, addMessageListener, removeMessageListener } = useMQTT()
 //   const params = useParams()
 //   const episodeId = Number(params?.episodeId || params?.episode)
 
@@ -152,15 +152,12 @@
 //     // Show appropriate modal
 //     setShowModal(true)
 
-//     // Auto-hide modal after some time
-//     // setTimeout(() => {
-//     //   setShowModal(false)
-//     // }, 8000) // Increased time for better UX
+    
 //   }, [])
 
 //   // Handle MQTT messages
 //   useEffect(() => {
-//     const handleMessage = (message: BallPickedResult) => {
+//     const handleMQTTMessage = (message: BallPickedResult) => {
 //       if(message.event === "game_s4_start"){
 //         setShowStage4Prep(false)
 //       }
@@ -173,17 +170,15 @@
 //         refetch()
 //       }
 //     }
-
-//     if (isConnected) {
-//       onMessage(handleMessage)
+//  if (isConnected) {
+//       addMessageListener(handleMQTTMessage);
 //     }
 
 //     return () => {
-//       if (isConnected) {
-//         onMessage(null)
-//       }
-//     }
-//   }, [isConnected, onMessage, animateBallReveal])
+//       removeMessageListener(handleMQTTMessage);
+//     };
+
+//   }, [isConnected, addMessageListener, removeMessageListener, animateBallReveal])
 
 //   // Get ball variant based on state and pre-loaded data
 //   const getBallVariant = (ballNumber: number): "regular" | "matched" | "mismatched" | "selected" => {
@@ -238,11 +233,59 @@
 //         return "⭐"
 //     }
 //   }
+
+
+
+//  const getEffectLabel = (ballData:any) => {
+//     if (!ballData?.is_extra_ball) return null;
+    
+//     switch (ballData?.extra_ball_effect_action) {
+//       case "GIVE_IVY_PLAN":
+//         return "LIBERTY LIFE";
+//       case "MINUS_30_PERCENT":
+//         return "30% LOSE";
+//       case "MINUS_50_PERCENT":
+//         return "50% LOSE";
+//       case "MINUS_70_PERCENT":
+//         return "70% LOSE";
+//       case "PLUS_30_PERCENT":
+//         return "30% CRYSTAL";
+//       case "PLUS_50_PERCENT":
+//         return "50% CRYSTAL";
+//       case "EXTRA_PICK_OPPORTUNITY":
+//         return "1 EXTRA PICK";
+//       default:
+//         return null;
+//     }
+//   };
+
+//   // Function to get label color
+//   const getLabelColor = (ballData:any) => {
+//     if (!ballData.is_extra_ball) return "bg-purple-600";
+    
+//     switch (ballData.extra_ball_type) {
+//       case "LIBERTY_LIFE":
+//         return "bg-[#053F20] border-[#04DA6A] text-[#1FCC3C]";
+//       case "WEAK_KILLER":
+//       case "STRONG_KILLER":
+//       case "SWEEPER":
+//       return "bg-[#38040A] border-[#EB001B] text-[#EB001B]";
+//       case "HIGH_CRYSTAL":
+//       case "LOW_CRYSTAL":
+//        return "bg-[#2A2000] border-[#FFC125] text-[#FFC125]";
+//       case "EXTRA_PICK":
+//         return "bg-[#1B0040] border-[#7E3CE0] text-[#E566FF]";
+//       default:
+//         return "bg-purple-600";
+//     }
+//   }
+
+
 //   if (ShowStage4Prep) {
 //     return <Stage4BoardGetReadyPage />;
 //   }
 //   return (
-//     <div className="min-h-screen grid grid-cols-[1fr_5fr_1fr] h-full relative">
+//     <div className="min-h-screen grid grid-cols-[1fr_4fr_1fr] h-full relative">
 //       {/* Left Sidebar */}
 //       <div className="flex flex-col justify-between">
 //         <div className="flex justify-center items-center h-3.5 w-full mt-8">
@@ -258,6 +301,7 @@
 
 //       {/* Center Content */}
 //       <div className="flex flex-col justify-between items-center min-h-full">
+   
 //         {/* Top section */}
 //         <div className="flex flex-col w-full items-center">
 //           <div className="w-full h-[100px] flex items-center justify-center">
@@ -313,15 +357,29 @@
 //             </div>
 
 //             {/* Content Container */}
-//             <div className="absolute inset-[8px] py-[3.75rem] bg-[#13051E] bg-[url('/images/host-bg.png')] bg-no-repeat bg-cover rounded-[.675rem]" />
+//             <div className="absolute inset-[8px] py-[2.75rem] bg-[#13051E] bg-[url('/images/host-bg.png')] bg-no-repeat bg-cover rounded-[.675rem]" />
 
 //             {/* Actual Content */}
 //             <div className="relative z-10 flex flex-col justify-between h-full w-full">
               
+//    <div className="flex justify-center items-center">
+//       <GlowyStrokeText
+//                             strokeWidth={2}
+//                             strokeColor="#D91FFF"
+//                             glowColor="#13051E"
+//                             glowIntensity="low"
+//                             textclassName="text-[3.125rem] font-extrabold font-lucky [@media(min-width:2000px)]:text-[5rem]"
+//                             fillColor="#000"
+//                           >
+//                             Golden Hustle Match
+//                           </GlowyStrokeText>
 
+//       </div>
 //                  {/* Top: Hustle Picks */}
-//               <div className="flex justify-center mt-8">
-//                 <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[10.35px] px-3 border-[#CE64FF]">
+//               <div className="flex justify-center items-center gap-6 mt-4">
+//                 <div className="flex items-center justify-center flex-col">
+// <h3 className="text-white text-xl font-gilroyMedium mb-2">Your pick</h3>
+//                 <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[5.35px] px-3 border-[#CE64FF]">
 //                   {mynumbers?.map((num) => {
 //                     const { matched, showRed } = getNumberMatchStatus(num, revealedNumbers?.length === 5)
 //                     return (
@@ -329,26 +387,63 @@
 //                         <NumberCardContainer
 //                           text={String(num)}
 //                           textColor={matched ? "#fff" : showRed ? "#fff" : "#F2C94C"}
-//                           backgroundColor={matched ? "#04DA6A" : showRed ? "#EB001B" : ""}
+                       
 //                           active={matched || showRed}
-//                           width={60}
-//                           height={65}
+//                           width={40}
+//                           height={45}
 //                           className="cursor-pointer transition-transform hover:scale-105"
 //                         />
 //                       </div>
 //                     )
 //                   })}
 //                 </div>
+//                 </div>
+//                  {matchedHustlesData&&matchedHustlesData?.data?.length>0&& 
+//                  <div 
+//                 className="size-[3.5rem] shrink-0 py-1  bg-white rounded-full flex mt-10 justify-center flex-col items-center font-display text-black">
+//                   <p className="text-base font-extrabold font-display">
+//                     {displayCount}/5
+//                   </p>
+//                   <p className="block text-xxs font-display font-bold uppercase text-black">match</p>
+//                 </div>}
+//                    <div className="flex justify-center items-center flex-col">
+//                     <h3 className="text-white text-xl font-gilroyMedium  mb-2">Match</h3>
+//                <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[5.35px] px-3 border-[#CE64FF]">
+
+//                   {matchedHustlesData?.data?.map((x, idx:number) => {
+//                   {/* {[30,3,10,56,5]?.map((x, idx) => { */}
+//                     const isRevealed = x !== null
+                    
+//                     const isMatched = isRevealed && mynumbers?.includes(x?.number_pick)
+//                     // const status = !isRevealed ? "default" : isMatched ? "correct" : "error"
+//                     return (
+//                       <div key={idx} className="px-4 flex items-center flex-col justify-center">
+//                         <NumberCardContainer
+//                           text={isRevealed ? String(x?.number_pick) : ""}
+//                           textColor="#fff"
+//                              backgroundColor={isMatched ? "#04DA6A" : !isMatched ? "#EB001B" : ""}
+//                            width={40}
+//                           height={45}
+//                           active={isMatched || !isMatched}
+//                           className="cursor-pointer transition-transform hover:scale-105"
+//                           // status={status}
+//                         />
+                       
+//                       </div>
+//                     )
+//                   })}
+//                 </div>
+              
+              
+//               </div>
 //               </div>
 
-// <div className="">
-//   <Stage4ProfileCard contestantsData={contestantsData}/>
-// </div>
+
 
 //               {/* 60 Ball Grid - Much Bigger */}
-//               <div className="flex justify-center mt-6">
-//                 <div className="grid grid-cols-12 gap-6 max-w-7xl">
-//                   {Array.from({ length: 60 }, (_, i) => i + 1).map((ballNumber) => {
+//               <div className="flex justify-center mt-6 w-full ">
+//                 <div className="flex items-center flex-wrap justify-center gap-6  w-full max-w-[950px] ">
+//                   {Array.from({ length: 49 }, (_, i) => i + 1).map((ballNumber) => {
 //                     const ballIndicator = getBallIndicator(ballNumber)
 //                     const isExtraBall = ballNumber >= 50 && ballNumber <= 60
 //                     const ballInfo = getBallInfo(ballNumber)
@@ -372,7 +467,7 @@
 //                           variant={getBallVariant(ballNumber)}
 //                           size="md"
 //                           className={cn(
-//                             "transition-all duration-300 w-14 h-14", // Even bigger balls
+//                             "transition-all duration-300 w-12 h-12", // Even bigger balls
 //                             animatingBall === ballNumber && "z-50",
 //                             isExtraBall && ballInfo?.is_extra_ball && "",
 //                           )}
@@ -400,92 +495,50 @@
 //                   })}
 //                 </div>
 //               </div>
-
-//               {/* Ball Legend */}
-      
-// <div className="flex justify-center mt-6">
-//   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-white/80 bg-black/40 rounded-lg px-6 py-4">
-//     <div className="flex items-center gap-2">
-//       <span className="text-xl">💎</span>
-//       <div>
-//         <div className="font-semibold">Crystal Ball</div>
-//         <div className="text-xs text-white/60">Big Gains</div>
-//       </div>
-//     </div>
-//     <div className="flex items-center gap-2">
-//       <span className="text-xl">💀</span>
-//       <div>
-//         <div className="font-semibold">Killer Ball</div>
-//         <div className="text-xs text-white/60">Balance Loss</div>
-//       </div>
-//     </div>
-//     <div className="flex items-center gap-2">
-//       <span className="text-xl">🎯</span>
-//       <div>
-//         <div className="font-semibold">Extra Pick</div>
-//         <div className="text-xs text-white/60">Bonus Draw</div>
-//       </div>
-//     </div>
-//     <div className="flex items-center gap-2">
-//       <div className="w-5 h-5 relative">
-//         <Image 
-//           src="/images/liberty-life.png" 
-//           width={20} 
-//           height={20} 
-//           alt="Liberty Life Logo"
-//           className="object-contain"
-//         />
-//       </div>
-//       <div>
-//         <div className="font-semibold">Liberty Life</div>
-//         <div className="text-xs text-white/60">Health Plan</div>
-//       </div>
-//     </div>
-//   </div>
-// </div>
+//   <div className="grid grid-cols-5 max-w-[1000px] w-full mt-8 gap-5 mx-auto justify-center items-center">
+//           {hustleMatchesData?.data?.slice(-11)?.map((item, idx) => (
+//             <div className="flex flex-col items-center gap-2" key={item?.number_pick + idx}>
+//               <motion.div
+//                 className="flex justify-center relative"
+//                 animate={
+//                   animatingBall === item?.number_pick
+//                     ? {
+//                         scale: [1, 2, 1],
+//                         y: [0, -20, 0],
+//                       }
+//                     : {}
+//                 }
+//                 transition={{ duration: 1, ease: "easeOut" }}
+//               >
+//                 <Ball
+//                           number={item?.number_pick}
+//                           variant={getBallVariant(item?.number_pick)}
+//                           size="md"
+//                           className={cn(
+//                             "transition-all duration-300 w-12 h-12", // Even bigger balls
+//                             animatingBall === item?.number_pick && "z-50",
+                           
+//                           )}
+//                           textClassName="text-xl font-black" // Much bigger text
+//                         />
+//               </motion.div>
+              
+//               {/* Effect Label */}
+//               {getEffectLabel(item) && (
+//                 <div className={`px-4 py-[.4375rem] rounded-[3.125rem] flex items-center border justify-center text-xs font-extrabold font-display  ${getLabelColor(item)}`}>
+//                   {getEffectLabel(item)}
+//                 </div>
+//               )}
+//             </div>
+//           ))}
+          
+//           <div className="col-span-4">
+//             <Stage4ProfileCard contestantsData={contestantsData} />
+//           </div>
+//         </div>
 
            
-//               {/* Bottom: Picked Numbers */}
-//               <div className="flex justify-center items-center mt-10 mb-6">
-//                 <div className="flex items-center justify-center">
-//                   {/* {currentResult?.number_revealed?.map((x, idx) => { */}
-//                   {[30,3,10,3,6]?.map((x, idx) => {
-//                     const isRevealed = x !== null
-//                     const isMatched = isRevealed && mynumbers?.includes(x)
-//                     const status = !isRevealed ? "default" : isMatched ? "correct" : "error"
-//                     return (
-//                       <div key={idx} className="px-4 flex items-center flex-col justify-center">
-//                         <NumberCardContainer
-//                           text={isRevealed ? String(x) : ""}
-//                           textColor="#F2C94C"
-//                           width={isRevealed ? 80 : 120}
-//                           height={isRevealed ? 85 : 125}
-//                           className="cursor-pointer transition-transform hover:scale-105"
-//                           status={status}
-//                         />
-//                         {isRevealed &&
-//                           (isMatched ? (
-//                             <div className="w-[2.6519rem] h-[2.212rem] flex justify-center items-center rounded-[.4006rem] bg-[#10A151] mt-2">
-//                               <CheckIcon size={20} />
-//                             </div>
-//                           ) : (
-//                             <div className="w-[2.6519rem] h-[2.52512rem] flex justify-center items-center rounded-[.4006rem] bg-[#eb001b] mt-2">
-//                               <ErrorIcon height={17} width={17} color="#bc061b" />
-//                             </div>
-//                           ))}
-//                       </div>
-//                     )
-//                   })}
-//                 </div>
-//                 {/* Match Counter */}
-//                 <div 
-//                 className="size-[6.8563rem]  bg-white rounded-full flex justify-center flex-col items-center font-display text-black font-black text-[1.5rem] ml-2">
-//                   <p className="">
-//                     {displayCount}/5
-//                   </p>
-//                   <p className="block text-base font-display font-bold uppercase text-black">match</p>
-//                 </div>
-//               </div>
+           
 //             </div>
 //           </div>
 //         </div>
@@ -522,6 +575,7 @@
 //     <div><LibertyLifeBall /></div>
 //   </div>
 // </div>
+
 
 
 //       {/* Modal Overlay - Positioned above the ball grid */}
@@ -563,7 +617,6 @@
 //           </div>
 //         </div>
 //       )}
-
 //       {/* Loading Overlay */}
 //       {(isLoadingMatches || isLoadingMatched) && (
 //         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 !font-montserrat">
@@ -578,9 +631,6 @@
 // }
 
 // export default RafflePickReveal
-
-
-
 
 
 
@@ -685,9 +735,7 @@ const RafflePickReveal = () => {
   })
 
   const mynumbers = lastPickData && lastPickData[0]?.picks
-  const revealedNumbers = currentResult?.number_revealed?.filter((x) => x !== null) ?? []
-
-
+  const revealedNumbers = matchedHustlesData?.data?.map((hustle) => hustle.number_pick) || []
 
   // Initialize revealed balls from matched hustles data
   useEffect(() => {
@@ -697,8 +745,11 @@ const RafflePickReveal = () => {
     }
   }, [matchedHustlesData])
 
-  // Check how many numbers match
-  const matchedCount = revealedNumbers?.filter((num) => mynumbers?.includes(num)).length
+  // Check how many numbers match - Fixed to use mynumbers and revealedNumbers correctly
+  const matchedCount = useMemo(() => {
+    if (!mynumbers || !revealedNumbers.length) return 0
+    return revealedNumbers.filter((num) => mynumbers.includes(num)).length
+  }, [mynumbers, revealedNumbers])
 
   // If all numbers matched
   const isWinner = matchedCount === mynumbers?.length
@@ -738,10 +789,7 @@ const RafflePickReveal = () => {
     // Show appropriate modal
     setShowModal(true)
 
-    // Auto-hide modal after some time
-    // setTimeout(() => {
-    //   setShowModal(false)
-    // }, 8000) // Increased time for better UX
+    
   }, [])
 
   // Handle MQTT messages
@@ -822,11 +870,59 @@ const RafflePickReveal = () => {
         return "⭐"
     }
   }
+
+
+
+ const getEffectLabel = (ballData:any) => {
+    if (!ballData?.is_extra_ball) return null;
+    
+    switch (ballData?.extra_ball_effect_action) {
+      case "GIVE_IVY_PLAN":
+        return "LIBERTY LIFE";
+      case "MINUS_30_PERCENT":
+        return "30% LOSE";
+      case "MINUS_50_PERCENT":
+        return "50% LOSE";
+      case "MINUS_70_PERCENT":
+        return "70% LOSE";
+      case "PLUS_30_PERCENT":
+        return "30% CRYSTAL";
+      case "PLUS_50_PERCENT":
+        return "50% CRYSTAL";
+      case "EXTRA_PICK_OPPORTUNITY":
+        return "1 EXTRA PICK";
+      default:
+        return null;
+    }
+  };
+
+  // Function to get label color
+  const getLabelColor = (ballData:any) => {
+    if (!ballData.is_extra_ball) return "bg-purple-600";
+    
+    switch (ballData.extra_ball_type) {
+      case "LIBERTY_LIFE":
+        return "bg-[#053F20] border-[#04DA6A] text-[#1FCC3C]";
+      case "WEAK_KILLER":
+      case "STRONG_KILLER":
+      case "SWEEPER":
+      return "bg-[#38040A] border-[#EB001B] text-[#EB001B]";
+      case "HIGH_CRYSTAL":
+      case "LOW_CRYSTAL":
+       return "bg-[#2A2000] border-[#FFC125] text-[#FFC125]";
+      case "EXTRA_PICK":
+        return "bg-[#1B0040] border-[#7E3CE0] text-[#E566FF]";
+      default:
+        return "bg-purple-600";
+    }
+  }
+
+
   if (ShowStage4Prep) {
     return <Stage4BoardGetReadyPage />;
   }
   return (
-    <div className="min-h-screen grid grid-cols-[1fr_5fr_1fr] h-full relative">
+    <div className="min-h-screen grid grid-cols-[1fr_4fr_1fr] h-full relative">
       {/* Left Sidebar */}
       <div className="flex flex-col justify-between">
         <div className="flex justify-center items-center h-3.5 w-full mt-8">
@@ -842,6 +938,7 @@ const RafflePickReveal = () => {
 
       {/* Center Content */}
       <div className="flex flex-col justify-between items-center min-h-full">
+   
         {/* Top section */}
         <div className="flex flex-col w-full items-center">
           <div className="w-full h-[100px] flex items-center justify-center">
@@ -897,15 +994,29 @@ const RafflePickReveal = () => {
             </div>
 
             {/* Content Container */}
-            <div className="absolute inset-[8px] py-[3.75rem] bg-[#13051E] bg-[url('/images/host-bg.png')] bg-no-repeat bg-cover rounded-[.675rem]" />
+            <div className="absolute inset-[8px] py-[2.75rem] bg-[#13051E] bg-[url('/images/host-bg.png')] bg-no-repeat bg-cover rounded-[.675rem]" />
 
             {/* Actual Content */}
             <div className="relative z-10 flex flex-col justify-between h-full w-full">
               
+   <div className="flex justify-center items-center">
+      <GlowyStrokeText
+                            strokeWidth={2}
+                            strokeColor="#D91FFF"
+                            glowColor="#13051E"
+                            glowIntensity="low"
+                            textclassName="text-[3.125rem] font-extrabold font-lucky [@media(min-width:2000px)]:text-[5rem]"
+                            fillColor="#000"
+                          >
+                            Golden Hustle Match
+                          </GlowyStrokeText>
 
+      </div>
                  {/* Top: Hustle Picks */}
-              <div className="flex justify-center mt-8">
-                <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[10.35px] px-3 border-[#CE64FF]">
+              <div className="flex justify-center items-center gap-6 mt-4">
+                <div className="flex items-center justify-center flex-col">
+<h3 className="text-white text-xl font-gilroyMedium mb-2">Your pick</h3>
+                <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[5.35px] px-3 border-[#CE64FF]">
                   {mynumbers?.map((num) => {
                     const { matched, showRed } = getNumberMatchStatus(num, revealedNumbers?.length === 5)
                     return (
@@ -913,29 +1024,67 @@ const RafflePickReveal = () => {
                         <NumberCardContainer
                           text={String(num)}
                           textColor={matched ? "#fff" : showRed ? "#fff" : "#F2C94C"}
-                          backgroundColor={matched ? "#04DA6A" : showRed ? "#EB001B" : ""}
+                       
                           active={matched || showRed}
-                          width={60}
-                          height={65}
+                          width={40}
+                          height={45}
                           className="cursor-pointer transition-transform hover:scale-105"
                         />
                       </div>
                     )
                   })}
                 </div>
+                </div>
+                 {matchedHustlesData&&matchedHustlesData?.data?.length>0&& 
+                 <div 
+                className="size-[3.5rem] shrink-0 py-1  bg-white rounded-full flex mt-10 justify-center flex-col items-center font-display text-black">
+                  <p className="text-base font-extrabold font-display">
+                    {displayCount}/5
+                  </p>
+                  <p className="block text-xxs font-display font-bold uppercase text-black">match</p>
+                </div>}
+                   <div className="flex justify-center items-center flex-col">
+                    <h3 className="text-white text-xl font-gilroyMedium  mb-2">Match</h3>
+               <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[5.35px] px-3 border-[#CE64FF]">
+
+                  {matchedHustlesData?.data?.map((x, idx:number) => {
+                  {/* {[30,3,10,56,5]?.map((x, idx) => { */}
+                    const isRevealed = x !== null
+                    
+                    const isMatched = isRevealed && mynumbers?.includes(x?.number_pick)
+                    // const status = !isRevealed ? "default" : isMatched ? "correct" : "error"
+                    return (
+                      <div key={idx} className="px-4 flex items-center flex-col justify-center">
+                        <NumberCardContainer
+                          text={isRevealed ? String(x?.number_pick) : ""}
+                          textColor="#fff"
+                             backgroundColor={isMatched ? "#04DA6A" : !isMatched ? "#EB001B" : ""}
+                           width={40}
+                          height={45}
+                          active={isMatched || !isMatched}
+                          className="cursor-pointer transition-transform hover:scale-105"
+                          // status={status}
+                        />
+                       
+                      </div>
+                    )
+                  })}
+                </div>
+              
+              
+              </div>
               </div>
 
-<div className="">
-  <Stage4ProfileCard contestantsData={contestantsData}/>
-</div>
+
 
               {/* 60 Ball Grid - Much Bigger */}
-              <div className="flex justify-center mt-6">
-                <div className="grid grid-cols-12 gap-6 max-w-7xl">
-                  {Array.from({ length: 60 }, (_, i) => i + 1).map((ballNumber) => {
+              <div className="flex justify-center mt-6 w-full ">
+                <div className="flex items-center flex-wrap justify-center gap-6  w-full max-w-[950px] ">
+                  {Array.from({ length: 49 }, (_, i) => i + 1).map((ballNumber) => {
                     const ballIndicator = getBallIndicator(ballNumber)
                     const isExtraBall = ballNumber >= 50 && ballNumber <= 60
                     const ballInfo = getBallInfo(ballNumber)
+                    const isRevealed = revealedBalls.has(ballNumber)
 
                     return (
                       <motion.div
@@ -956,7 +1105,7 @@ const RafflePickReveal = () => {
                           variant={getBallVariant(ballNumber)}
                           size="md"
                           className={cn(
-                            "transition-all duration-300 w-14 h-14", // Even bigger balls
+                            "transition-all duration-300 w-12 h-12", // Even bigger balls
                             animatingBall === ballNumber && "z-50",
                             isExtraBall && ballInfo?.is_extra_ball && "",
                           )}
@@ -964,7 +1113,7 @@ const RafflePickReveal = () => {
                         />
 
                         {/* Enhanced Ball Type Indicator for balls 50-60 */}
-                        {isExtraBall && ballInfo?.is_extra_ball && (
+                        {isExtraBall && ballInfo?.is_extra_ball && !isRevealed && (
                           <div className="absolute -top-2 -right-2 z-10">
                             <div className=" rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
                               <span className="text-2xl">{ballIndicator}</span>
@@ -974,7 +1123,7 @@ const RafflePickReveal = () => {
                         )}
 
                         {/* Regular indicator for other balls */}
-                        {!isExtraBall && ballIndicator && !revealedBalls.has(ballNumber) && (
+                        {!isExtraBall && ballIndicator && !isRevealed && (
                           <div className="absolute -top-1 -right-1 text-sm bg-black/80 rounded-full w-6 h-6 flex items-center justify-center border border-white/20">
                             {ballIndicator}
                           </div>
@@ -984,92 +1133,53 @@ const RafflePickReveal = () => {
                   })}
                 </div>
               </div>
-
-              {/* Ball Legend */}
-      
-<div className="flex justify-center mt-6">
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-white/80 bg-black/40 rounded-lg px-6 py-4">
-    <div className="flex items-center gap-2">
-      <span className="text-xl">💎</span>
-      <div>
-        <div className="font-semibold">Crystal Ball</div>
-        <div className="text-xs text-white/60">Big Gains</div>
-      </div>
-    </div>
-    <div className="flex items-center gap-2">
-      <span className="text-xl">💀</span>
-      <div>
-        <div className="font-semibold">Killer Ball</div>
-        <div className="text-xs text-white/60">Balance Loss</div>
-      </div>
-    </div>
-    <div className="flex items-center gap-2">
-      <span className="text-xl">🎯</span>
-      <div>
-        <div className="font-semibold">Extra Pick</div>
-        <div className="text-xs text-white/60">Bonus Draw</div>
-      </div>
-    </div>
-    <div className="flex items-center gap-2">
-      <div className="w-5 h-5 relative">
-        <Image 
-          src="/images/liberty-life.png" 
-          width={20} 
-          height={20} 
-          alt="Liberty Life Logo"
-          className="object-contain"
-        />
-      </div>
-      <div>
-        <div className="font-semibold">Liberty Life</div>
-        <div className="text-xs text-white/60">Health Plan</div>
-      </div>
-    </div>
-  </div>
-</div>
+  <div className="grid grid-cols-5 max-w-[1000px] w-full mt-8 gap-5 mx-auto justify-center items-center">
+          {hustleMatchesData?.data?.slice(-11)?.map((item, idx) => {
+            const isRevealed = revealedBalls.has(item?.number_pick)
+            return (
+              <div className="flex flex-col items-center gap-2" key={item?.number_pick + idx}>
+                <motion.div
+                  className="flex justify-center relative"
+                  animate={
+                    animatingBall === item?.number_pick
+                      ? {
+                          scale: [1, 2, 1],
+                          y: [0, -20, 0],
+                        }
+                      : {}
+                  }
+                  transition={{ duration: 1, ease: "easeOut" }}
+                >
+                  <Ball
+                            number={item?.number_pick}
+                            variant={getBallVariant(item?.number_pick)}
+                            size="md"
+                            className={cn(
+                              "transition-all duration-300 w-12 h-12", // Even bigger balls
+                              animatingBall === item?.number_pick && "z-50",
+                             
+                            )}
+                            textClassName="text-xl font-black" // Much bigger text
+                          />
+                </motion.div>
+                
+                {/* Effect Label - Only show if not revealed */}
+                {getEffectLabel(item) && (
+                  <div className={`px-4 py-[.4375rem] ${isRevealed ? "opacity-40" : ""} rounded-[3.125rem] flex items-center border justify-center text-xs font-extrabold font-display  ${getLabelColor(item)}`}>
+                    {getEffectLabel(item)}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+          
+          <div className="col-span-4">
+            <Stage4ProfileCard contestantsData={contestantsData} />
+          </div>
+        </div>
 
            
-              {/* Bottom: Picked Numbers */}
-              <div className="flex justify-center items-center mt-10 mb-6">
-                <div className="flex items-center justify-center">
-                  {currentResult?.number_revealed?.map((x, idx) => {
-                  {/* {[30,3,10,56,5]?.map((x, idx) => { */}
-                    const isRevealed = x !== null
-                    const isMatched = isRevealed && mynumbers?.includes(x)
-                    const status = !isRevealed ? "default" : isMatched ? "correct" : "error"
-                    return (
-                      <div key={idx} className="px-4 flex items-center flex-col justify-center">
-                        <NumberCardContainer
-                          text={isRevealed ? String(x) : ""}
-                          textColor="#F2C94C"
-                          width={isRevealed ? 80 : 120}
-                          height={isRevealed ? 85 : 125}
-                          className="cursor-pointer transition-transform hover:scale-105"
-                          status={status}
-                        />
-                        {isRevealed &&
-                          (isMatched ? (
-                            <div className="w-[2.6519rem] h-[2.212rem] flex justify-center items-center rounded-[.4006rem] bg-[#10A151] mt-2">
-                              <CheckIcon size={20} />
-                            </div>
-                          ) : (
-                            <div className="w-[2.6519rem] h-[2.52512rem] flex justify-center items-center rounded-[.4006rem] bg-[#eb001b] mt-2">
-                              <ErrorIcon height={17} width={17} color="#bc061b" />
-                            </div>
-                          ))}
-                      </div>
-                    )
-                  })}
-                </div>
-                {/* Match Counter */}
-               {currentResult&&currentResult?.number_revealed?.length>0&& <div 
-                className="size-[6.8563rem]  bg-white rounded-full flex justify-center flex-col items-center font-display text-black font-black text-[1.5rem] ml-2">
-                  <p className="">
-                    {displayCount}/5
-                  </p>
-                  <p className="block text-base font-display font-bold uppercase text-black">match</p>
-                </div>}
-              </div>
+           
             </div>
           </div>
         </div>
@@ -1106,6 +1216,7 @@ const RafflePickReveal = () => {
     <div><LibertyLifeBall /></div>
   </div>
 </div>
+
 
 
       {/* Modal Overlay - Positioned above the ball grid */}
@@ -1147,7 +1258,6 @@ const RafflePickReveal = () => {
           </div>
         </div>
       )}
-
       {/* Loading Overlay */}
       {(isLoadingMatches || isLoadingMatched) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 !font-montserrat">

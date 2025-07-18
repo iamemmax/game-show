@@ -25,6 +25,7 @@ import PickCard3 from "@/app/icons/cards/PickCard3";
 import PickCard4 from "@/app/icons/cards/PickCard4";
 import DudCards from "@/app/icons/cards/DudCard";
 import PassCard from "@/app/icons/cards/PassCard";
+import EliminatedModal from "@/app/shared/EliminatedModal";
 
 const Stage3CardSelection = () => {
   const user = tokenStorage.getUser();
@@ -138,10 +139,10 @@ useEffect(() => {
   
   // Get remaining contestants (not eliminated)
   const remaining = contestantsData.data
-    .filter((contestant: any) => 
+    .filter((contestant) => 
       contestant.eliminated_stage === null && !contestant.is_eliminated
     )
-    .map((contestant: any) => ({
+    .map((contestant) => ({
       id: contestant.id,
       name: contestant?.name || ` ${contestant.name}`
     }));
@@ -183,7 +184,12 @@ useEffect(() => {
       setIsMyTurn(firstTurnId === user.contestant_id);
     }
   }, [contestantsData?.data, user?.contestant_id, isEliminated]);
-
+const getContestantInfo = (id: number) => {
+    const allconstestant = contestantsData?.data?.find(
+      (contestant) => contestant.id === id
+    );
+    return allconstestant;
+  };
 
 
 
@@ -222,47 +228,7 @@ useEffect(() => {
   );
 };
   // Elimination Modal Component
-  const EliminationModal = () => {
-    if (!isEliminated) return null;
-    
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-        <div className="bg-[#13051E] border-4 border-red-500 p-8 rounded-lg max-w-lg mx-4">
-          <div className="text-center">
-            <div className="text-6xl mb-4">😔</div>
-            <h2 className="text-red-400 text-3xl font-bold mb-4 font-gilroyBold">
-              You've Been Eliminated!
-            </h2>
-            <p className="text-white text-lg mb-6">
-              Unfortunately, you were eliminated in a previous stage and cannot participate in the showdown.
-            </p>
-            
-            {remainingContestants.length === 2 && (
-              <div className="mb-6">
-                <h3 className="text-yellow-400 text-xl font-bold mb-3">
-                  Final Showdown Contestants:
-                </h3>
-                <div className="flex justify-center gap-4">
-                  {remainingContestants.map((contestant) => (
-                    <div key={contestant.id} className="bg-purple-900 p-3 rounded-lg border border-purple-500">
-                      <span className="text-white font-semibold">{contestant.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <Button 
-              onClick={() => window.location.href = '/'}
-              className="bg-red-500 text-white hover:bg-red-600 px-6 py-2"
-            >
-              Return to Main Menu
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+
 
   // Celebration Animation Component
   const CelebrationAnimation = ({ isVisible, finderName }: { isVisible: boolean, finderName?: string }) => {
@@ -270,23 +236,7 @@ useEffect(() => {
 
     return (
       <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
-        {/* Ribbons falling from top */}
-        <div className="absolute inset-0 !z-[999999999999999999]" key={""}>
-          {Array.from({ length: 40 }).map((_, i) => {
-            const width = Math.random() * 8 + 4;
-            const height = Math.random() * 200 + 100;
-            const color = ["#FFD700", "#FF6B6B", "#4ECDC4", "#FF8C42", "#A78BFA", "#34D399", "#F472B6"][
-              Math.floor(Math.random() * 7)
-            ];
-            const startX = Math.random() * 100;
-            const waveAmplitude = Math.random() * 100 + 50;
-            const waveSpeed = Math.random() * 2 + 1;
-            
-            return (
-             <EliminationModal/>
-            );
-          })}
-        </div>
+       
         
         {/* Celebration content */}
     {passFinderIsCurrentUser && <StageThreeWinnerModal/>
@@ -494,7 +444,12 @@ useEffect(() => {
 
   // Show elimination modal if user is eliminated
   if (isEliminated) {
-    return <EliminationModal />;
+    return <EliminatedModal
+      setShowEliminationModal={()=>setIsEliminated(true)} 
+      showEliminationModal={true}
+      balance={Number(getContestantInfo(Number(user?.contestant_id))?.wallet_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url)}/>
+      
+      ;
   }
 
 
