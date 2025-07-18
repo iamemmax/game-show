@@ -41,7 +41,7 @@ interface prop {
   onNext: () => void;
 }
 const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
-  const { isConnected, addMessageListener,removeMessageListener,sendMessage } = useMQTT();
+  const { isConnected, addMessageListener, removeMessageListener, sendMessage } = useMQTT();
   const params = useParams();
 
   // Get wallet balances for display
@@ -62,7 +62,7 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
   const [mqttQuestionData, setMqttQuestionData] = useState<any>(null);
   const [mqttAnswerData, setMqttAnswerData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
- 
+
   const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(
     new Set()
   );
@@ -71,99 +71,99 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
   const [currentQuestionAnswerData, setCurrentQuestionAnswerData] = useState<
     any | null
   >(null);
-  
-// Add these new state variables after the existing state declarations
-const [questionStartTime, setQuestionStartTime] = useState<number | null>(null);
-const [contestantTimestamps, setContestantTimestamps] = useState<{[contestantId: string]: number}>({});
-const [currentTimestamp, setCurrentTimestamp] = useState<number>(0);
+
+  // Add these new state variables after the existing state declarations
+  const [questionStartTime, setQuestionStartTime] = useState<number | null>(null);
+  const [contestantTimestamps, setContestantTimestamps] = useState<{ [contestantId: string]: number }>({});
+  const [currentTimestamp, setCurrentTimestamp] = useState<number>(0);
 
 
-  const { refetch, data:contestantData } = useGetGameContestants(Number(params?.episodeId));
+  const { refetch, data: contestantData } = useGetGameContestants(Number(params?.episodeId));
   const [mqttAnswerResultData, setMqttAnsweResultData] =
     useState<any>(mqttAnswerData);
-     const [contestantOption, setContestantOption] = useState<{
-        [contestantId: string]: {
-          contestant_id: string;
-          contestant_name: string;
-          selected_option: string;
-          is_selected: boolean;
-          timestamp: string;
-          question_id?: string;
-        };
-      }>({});
+  const [contestantOption, setContestantOption] = useState<{
+    [contestantId: string]: {
+      contestant_id: string;
+      contestant_name: string;
+      selected_option: string;
+      is_selected: boolean;
+      timestamp: string;
+      question_id?: string;
+    };
+  }>({});
 
   // Timer effect - for display only
 
   const playOptionSelectedSound = () => {
-  try {
-    const audio = new Audio("/sounds/select-option.mp3");
-    audio.volume = 0.7; // Adjust volume as needed
-    audio.play().catch(console.error);
-  } catch (error) {
-    console.error("Error playing option selected sound:", error);
+    try {
+      const audio = new Audio("/sounds/select-option.mp3");
+      audio.volume = 0.7; // Adjust volume as needed
+      audio.play().catch(console.error);
+    } catch (error) {
+      console.error("Error playing option selected sound:", error);
+    }
   }
-}
-useEffect(() => {
-  let interval: NodeJS.Timeout;
-  
-  if (timerActive && timeLeft > 0) {
-    interval = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          setTimerActive(false);
-          // Mark current question as attempted when timer ends
-          setAttemptedQuestions(prevAttempted => new Set([...prevAttempted, currentQuestionIndex]));
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }
-  
-  return () => {
-    if (interval) clearInterval(interval);
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (timerActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            setTimerActive(false);
+            // Mark current question as attempted when timer ends
+            setAttemptedQuestions(prevAttempted => new Set([...prevAttempted, currentQuestionIndex]));
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerActive, timeLeft, currentQuestionIndex]);
+
+  // 2. Timer start handler - Records when question timer begins
+  const handleStartTimer = () => {
+    setTimerActive(true);
+    setTimeLeft(10); // Start countdown from 10
+    const startTime = Date.now(); // Record exact start time
+    setQuestionStartTime(startTime);
+    setCurrentTimestamp(0);
+    // Clear previous timestamps when new question starts
+    setContestantTimestamps({});
   };
-}, [timerActive, timeLeft, currentQuestionIndex]);
 
-// 2. Timer start handler - Records when question timer begins
-const handleStartTimer = () => {
-  setTimerActive(true);
-  setTimeLeft(10); // Start countdown from 10
-  const startTime = Date.now(); // Record exact start time
-  setQuestionStartTime(startTime);
-  setCurrentTimestamp(0);
-  // Clear previous timestamps when new question starts
-  setContestantTimestamps({});
-};
+  // 3. Real-time timestamp tracking - Updates every 100ms
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
 
-// 3. Real-time timestamp tracking - Updates every 100ms
-useEffect(() => {
-  let interval: NodeJS.Timeout;
-  
-  if (timerActive && questionStartTime) {
-    interval = setInterval(() => {
-      const now = Date.now();
-      const elapsed = (now - questionStartTime) / 1000; // Convert to seconds
-      setCurrentTimestamp(Math.min(elapsed, 10)); // Cap at 10 seconds max
-    }, 100); // Update every 100ms for smooth counting
-  }
-  
-  return () => {
-    if (interval) clearInterval(interval);
+    if (timerActive && questionStartTime) {
+      interval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = (now - questionStartTime) / 1000; // Convert to seconds
+        setCurrentTimestamp(Math.min(elapsed, 10)); // Cap at 10 seconds max
+      }, 100); // Update every 100ms for smooth counting
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerActive, questionStartTime]);
+
+
+  // Update the resetTimerState function
+  const resetTimerState = () => {
+    setTimerActive(false);
+    setTimeLeft(10); // Reset to 10 seconds
+    setQuestionStartTime(null);
+    setContestantTimestamps({});
+    setCurrentTimestamp(0);
   };
-}, [timerActive, questionStartTime]);
 
-
-// Update the resetTimerState function
-const resetTimerState = () => {
-  setTimerActive(false);
-  setTimeLeft(10); // Reset to 10 seconds
-  setQuestionStartTime(null);
-  setContestantTimestamps({});
-  setCurrentTimestamp(0);
-};
-
-const isQuestionAttempted = (idx: number) => {
+  const isQuestionAttempted = (idx: number) => {
     return idx < currentQuestionIndex;
   };
 
@@ -181,8 +181,8 @@ const isQuestionAttempted = (idx: number) => {
   useEffect(() => {
     if (!isConnected) return;
 
-    const handler = ( receivedMessage: any) => {
-      // console.log("📡 Received MQTT message:", receivedMessage);
+    const handler = (receivedMessage: any) => {
+      console.log("📡 Received MQTT message on STage 2 Question Screen:", receivedMessage);
 
       // Handle prep page event
       if (receivedMessage?.event === "game_s2_question_reveal") {
@@ -200,7 +200,7 @@ const isQuestionAttempted = (idx: number) => {
         setMqttAnswerData(null);
         setShowResultModal(false);
         setCurrentQuestionAnswerData(null);
-          setContestantOption({});
+        setContestantOption({});
         // Set current index and question ID
         setCurrentQuestionIndex(questionData?.index);
 
@@ -235,7 +235,7 @@ const isQuestionAttempted = (idx: number) => {
 
         if (receivedQuestionIdStr === currentQuestionIdStr) {
           const answersData = payload?.data?.answers;
-          
+
 
           // Update answer data for all questions
           setMqttAnswerData(answersData);
@@ -271,43 +271,43 @@ const isQuestionAttempted = (idx: number) => {
       }
 
       // Handle timer end event - mark question as attempted when time elapses
-// Also update the timer end handler for non-answered contestants
-if (receivedMessage?.event === "game_s2_timer_end") {
-  console.log("✅ Processing game_s2_timer_end");
-  setTimerActive(false);
-  setTimeLeft(0); // Set timer to 0 when it ends
-  
-  // Mark current question as attempted when timer ends
-  setAttemptedQuestions(
-    (prev) => new Set([...prev, currentQuestionIndex])
-  );
-  
-  // Set timestamp to 10.000 for contestants who didn't answer
-  setContestantOption(prevOpt => {
-    const updatedOpt = { ...prevOpt };
-    
-    // Get remaining contestants for current question
-    remainingContestants?.forEach(contestant => {
-      const contestantId = contestant.id;
-      const existingOption = updatedOpt[contestantId];
-      
-      // If contestant didn't answer or didn't select an option
-      if (!existingOption || !existingOption.is_selected) {
-        updatedOpt[contestantId] = {
-          contestant_id: String(contestantId),
-          contestant_name: String(contestant.name),
-          selected_option: existingOption?.selected_option || '',
-          is_selected: false,
-          timestamp: "10.000", // 10 seconds for non-answered (properly formatted)
-          question_id: String(currentQuestionId),
-        };
+      // Also update the timer end handler for non-answered contestants
+      if (receivedMessage?.event === "game_s2_timer_end") {
+        console.log("✅ Processing game_s2_timer_end");
+        setTimerActive(false);
+        setTimeLeft(0); // Set timer to 0 when it ends
+
+        // Mark current question as attempted when timer ends
+        setAttemptedQuestions(
+          (prev) => new Set([...prev, currentQuestionIndex])
+        );
+
+        // Set timestamp to 10.000 for contestants who didn't answer
+        setContestantOption(prevOpt => {
+          const updatedOpt = { ...prevOpt };
+
+          // Get remaining contestants for current question
+          remainingContestants?.forEach(contestant => {
+            const contestantId = contestant.id;
+            const existingOption = updatedOpt[contestantId];
+
+            // If contestant didn't answer or didn't select an option
+            if (!existingOption || !existingOption.is_selected) {
+              updatedOpt[contestantId] = {
+                contestant_id: String(contestantId),
+                contestant_name: String(contestant.name),
+                selected_option: existingOption?.selected_option || '',
+                is_selected: false,
+                timestamp: "10.000", // 10 seconds for non-answered (properly formatted)
+                question_id: String(currentQuestionId),
+              };
+            }
+          });
+
+          console.log("📊 Updated non-answered contestants timestamps:", updatedOpt);
+          return updatedOpt;
+        });
       }
-    });
-    
-    console.log("📊 Updated non-answered contestants timestamps:", updatedOpt);
-    return updatedOpt;
-  });
-}
 
       // Handle results reveal event
       if (receivedMessage?.event === "game_s2_results_reveal") {
@@ -318,69 +318,81 @@ if (receivedMessage?.event === "game_s2_timer_end") {
       if (receivedMessage?.event === "game_s2_debit_wallet") {
         refetch();
       }
- if (receivedMessage?.event === "contestant_selected_option") {
-  const payload = receivedMessage.payload || {};
-  const {
-    contestant_id,
-    contestant_name,
-    selected_option,
-    is_selected,
-    timestamp,
-    question_id,
-  } = payload;
-
-  if (contestant_id && contestant_name && selected_option !== undefined) {
-    // Only update options for the current question
-    if (question_id === currentQuestionId) {
-      // Play sound effect for option selection
-      playOptionSelectedSound();
-      
-      // ✅ CALCULATE AND RECORD THE ANSWER TIME
-      let calculatedTimestamp = 0;
-      let formattedTimestamp = "0.000";
-      
-      if (questionStartTime && is_selected) {
-        const answerTime = Date.now(); // Get exact time when answer was submitted
-        calculatedTimestamp = Math.min((answerTime - questionStartTime) / 1000, 10); // Calculate elapsed time in seconds, cap at 10
-        formattedTimestamp = calculatedTimestamp.toFixed(3); // Format to 3 decimal places
-        
-        // Store the timestamp for this contestant
-        setContestantTimestamps(prev => ({
-          ...prev,
-          [contestant_id]: calculatedTimestamp
-        }));
-      } else if (!is_selected) {
-        // If contestant didn't select an option, set to 0
-        formattedTimestamp = "0.000";
-      }
-      
-      // Update contestant option with their answer time
-      setContestantOption((prevOpt) => {
-        const updatedBids = {
-          ...prevOpt,
-          [contestant_id]: {
-            contestant_id,
-            contestant_name,
-            selected_option,
-            is_selected,
-            timestamp: formattedTimestamp, // Use the properly formatted timestamp
-            question_id,
-          },
-        };
-
-        console.log(`📊 Updated contestant ${contestant_name} option:`, {
+      if (receivedMessage?.event === "contestant_selected_option") {
+        console.log("✅ Processing contestant_selected_option");
+        const payload = receivedMessage.payload || {};
+//         contestant_id: 13
+// ​​
+// contestant_name: "Emmanuel"
+// ​​
+// game_episode: 2
+// ​​
+// is_selected: true
+// ​​
+// question_id: 15
+// ​​
+// selected_option: "D"
+        const {
+          contestant_id,
+          contestant_name,
           selected_option,
           is_selected,
-          timestamp: formattedTimestamp,
-          calculatedTime: calculatedTimestamp
-        });
+          
+          question_id,
+        } = payload;
 
-        return updatedBids;
-      });
-    }
-  }
-}
- if (receivedMessage?.event === "clear_all_options") {
+        if (contestant_id && contestant_name && selected_option !== undefined) {
+          // Only update options for the current question
+          if (question_id === currentQuestionId) {
+            // Play sound effect for option selection
+            playOptionSelectedSound();
+
+            // ✅ CALCULATE AND RECORD THE ANSWER TIME
+            let calculatedTimestamp = 0;
+            let formattedTimestamp = "0.000";
+
+            if (questionStartTime && is_selected) {
+              const answerTime = Date.now(); // Get exact time when answer was submitted
+              calculatedTimestamp = Math.min((answerTime - questionStartTime) / 1000, 10); // Calculate elapsed time in seconds, cap at 10
+              formattedTimestamp = calculatedTimestamp.toFixed(3); // Format to 3 decimal places
+
+              // Store the timestamp for this contestant
+              setContestantTimestamps(prev => ({
+                ...prev,
+                [contestant_id]: calculatedTimestamp
+              }));
+            } else if (!is_selected) {
+              // If contestant didn't select an option, set to 0
+              formattedTimestamp = "0.000";
+            }
+
+            // Update contestant option with their answer time
+            setContestantOption((prevOpt) => {
+              const updatedBids = {
+                ...prevOpt,
+                [contestant_id]: {
+                  contestant_id,
+                  contestant_name,
+                  selected_option,
+                  is_selected,
+                  timestamp: formattedTimestamp, // Use the properly formatted timestamp
+                  question_id,
+                },
+              };
+
+              console.log(`📊 Updated contestant ${contestant_name} option:`, {
+                selected_option,
+                is_selected,
+                timestamp: formattedTimestamp,
+                calculatedTime: calculatedTimestamp
+              });
+
+              return updatedBids;
+            });
+          }
+        }
+      }
+      if (receivedMessage?.event === "clear_all_options") {
         setContestantOption({});
       }
     };
@@ -443,7 +455,7 @@ if (receivedMessage?.event === "game_s2_timer_end") {
     );
   }
 
-  const  remainingContestants = contestantData?.data?.filter(
+  const remainingContestants = contestantData?.data?.filter(
     (contestant) => contestant.eliminated_stage === null
   );
 
@@ -635,93 +647,91 @@ if (receivedMessage?.event === "game_s2_timer_end") {
 
               <div className="grid mt-5 gap-14 grid-cols-[1fr_3fr_1fr] items-start">
                 {/* Question numbers sidebar - Updated to show attempted questions */}
-               
-            <div className="flex flex-col gap-4 w-full">
-  {remainingContestants?.slice(0,2)?.map((contestant, index: number) => {
-  const contestantSelection = contestantOption[contestant?.id];
-  const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
-  
-  // Calculate display timestamp
-  let displayTimestamp = "0.000";
-  
-  if (hasSelected && contestantSelection?.timestamp) {
-    // Contestant has answered - show their frozen timestamp
-    displayTimestamp = contestantSelection.timestamp;
-  } else if (timerActive && questionStartTime) {
-    // Timer is active and contestant hasn't answered - show live counting
-    displayTimestamp = currentTimestamp.toFixed(3);
-  } else if (!timerActive && !hasSelected) {
-    // Timer ended and contestant didn't answer
-    displayTimestamp = "0.00";
-  }
-    
-    return (
-      <div
-        key={`left-${contestant?.id}`}
-        className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${
-          hasSelected 
-            ? 'bg-[#003218] text-white' 
-            : 'bg-[#160036] text-white'
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          <p className="text-2xl">{contestant.name?.split(" ")[0]} </p>
-          {hasSelected && (
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ 
-                scale: 1, 
-                rotate: 0,
-                transition: {
-                  type: "spring",
-                  stiffness: 200,
-                  damping: 10
-                }
-              }}
-              className="ml-auto"
-            >
-              <CheckIcon size={24} />
-            </motion.div>
-          )}
-        </div>
-       
-        <p className="text-white text-opacity-70 text-base">
-          Status:
-          <span className="text-white text-opacity-100">
-            {hasSelected ? " answered" : " "}
-          </span>
-        </p>
-        {/* <p className="text-white text-opacity-70 text-base">
+
+                <div className="flex flex-col gap-4 w-full">
+                  {remainingContestants?.slice(0, 2)?.map((contestant, index: number) => {
+                    const contestantSelection = contestantOption[contestant?.id];
+                    const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
+
+                    // Calculate display timestamp
+                    // let displayTimestamp = "0.000";
+
+                    // if (hasSelected && contestantSelection?.contestant_id) {
+                    //   // Contestant has answered - show their frozen timestamp
+                    //   displayTimestamp = contestantSelection.timestamp;
+                    // } else if (timerActive && questionStartTime) {
+                    //   // Timer is active and contestant hasn't answered - show live counting
+                    //   displayTimestamp = currentTimestamp.toFixed(3);
+                    // } else if (!timerActive && !hasSelected) {
+                    //   // Timer ended and contestant didn't answer
+                    //   displayTimestamp = "0.00";
+                    // }
+
+                    return (
+                      <div
+                        key={`left-${contestant?.id}`}
+                        className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${hasSelected
+                            ? 'bg-[#003218] text-white'
+                            : 'bg-[#160036] text-white'
+                          }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <p className="text-2xl">{contestant.name?.split(" ")[0]} </p>
+                          {hasSelected && (
+                            <motion.div
+                              initial={{ scale: 0, rotate: -180 }}
+                              animate={{
+                                scale: 1,
+                                rotate: 0,
+                                transition: {
+                                  type: "spring",
+                                  stiffness: 200,
+                                  damping: 10
+                                }
+                              }}
+                              className="ml-auto"
+                            >
+                              <CheckIcon size={24} />
+                            </motion.div>
+                          )}
+                        </div>
+
+                        <p className="text-white text-opacity-70 text-base">
+                          Status:
+                          <span className="text-white text-opacity-100">
+                            {hasSelected ? " answered" : " "}
+                          </span>
+                        </p>
+                        {/* <p className="text-white text-opacity-70 text-base">
           Timestamp:
           <span className="text-white text-opacity-100">
             {displayTimestamp}s
           </span>
         </p> */}
-      </div>
-    );
-  })}
-</div>
-               
+                      </div>
+                    );
+                  })}
+                </div>
 
-<>
 
-                {isLoading ? (
-                  <div className="flex justify-center items-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="relative">
-                      {/* Question display section */}
-                      <motion.div
-                        className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000] ${
-                          currentQuestionIndex > 4
-                            ? "border-red-500"
-                            : "border-[#D71BFA]"
-                        }`}
-                        animate={
-                          currentQuestionIndex > 4
-                            ? {
+                <>
+
+                  {isLoading ? (
+                    <div className="flex justify-center items-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative">
+                        {/* Question display section */}
+                        <motion.div
+                          className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000] ${currentQuestionIndex > 4
+                              ? "border-red-500"
+                              : "border-[#D71BFA]"
+                            }`}
+                          animate={
+                            currentQuestionIndex > 4
+                              ? {
                                 borderColor: [
                                   "#ff0000",
                                   "#ff4444",
@@ -742,134 +752,134 @@ if (receivedMessage?.event === "game_s2_timer_end") {
                                 ],
                                 scale: [1, 1.02, 1, 1.01, 1],
                               }
-                            : {}
-                        }
-                        transition={
-                          currentQuestionIndex > 4
-                            ? {
+                              : {}
+                          }
+                          transition={
+                            currentQuestionIndex > 4
+                              ? {
                                 duration: 0.5,
                                 ease: "easeInOut",
                                 repeat: Infinity,
                                 repeatType: "loop",
                               }
-                            : {}
-                        }
-                      >
-                        <div>
-                          <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-2xl text-[#04DA6A] font-outfit">
-                            Question {currentQuestionIndex}
-                          </p>
-                        </div>
+                              : {}
+                          }
+                        >
+                          <div>
+                            <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-2xl text-[#04DA6A] font-outfit">
+                              Question {currentQuestionIndex}
+                            </p>
+                          </div>
+
+                          <AnimatePresence mode="wait">
+                            <div className="py-4 pb-8">
+                              <AnimatedText text={mqttQuestionData?.question ||
+                                "Waiting for question..."}
+                              />
+                            </div>
+
+                          </AnimatePresence>
+
+                          <div className="flex absolute -bottom-11 justify-center items-center w-full gap-4">
+                            <div className="bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] flex justify-center gap-y-0 space-y-0 items-center flex-col rounded-[12px] py-2 px-[5rem]">
+                              <p className="text-xl block font-outfit font-normal text-[#1E1E1E]">
+                                Win amount
+                              </p>
+                              <GlowyStrokeText
+                                strokeWidth={2}
+                                strokeColor="#C76000"
+                                glowColor="#C76000"
+                                textclassName="text-[40px] block -my-2 text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
+                                fillColor="#1E1E1E"
+                                glowIntensity={"none"}
+                              >
+                                ₦
+                                {formatAmount(
+                                  Number(
+                                    mqttQuestionData?.allocated_winning_amount ||
+                                    0
+                                  )
+                                )}
+                              </GlowyStrokeText>
+                            </div>
+                          </div>
+                        </motion.div>
 
                         <AnimatePresence mode="wait">
-                          <div className="py-4 pb-8">
-                          <AnimatedText text={mqttQuestionData?.question ||
-                              "Waiting for question..."}
-                              />
-                          </div>
-                          
-                        </AnimatePresence>
-
-                        <div className="flex absolute -bottom-11 justify-center items-center w-full gap-4">
-                          <div className="bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] flex justify-center gap-y-0 space-y-0 items-center flex-col rounded-[12px] py-2 px-[5rem]">
-                            <p className="text-xl block font-outfit font-normal text-[#1E1E1E]">
-                              Win amount
-                            </p>
-                            <GlowyStrokeText
-                              strokeWidth={2}
-                              strokeColor="#C76000"
-                              glowColor="#C76000"
-                              textclassName="text-[40px] block -my-2 text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
-                              fillColor="#1E1E1E"
-                              glowIntensity={"none"}
+                          {mqttQuestionData ? (
+                            <motion.div
+                              key={`options-${currentQuestionIndex}-${mqttQuestionData?.question_id}`}
+                              className="grid grid-cols-2 gap-[1.625rem] mt-[5.625rem]"
+                              initial={{ opacity: 0, y: 30 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -30 }}
+                              transition={{ delay: 0.5, duration: 0.5 }}
                             >
-                              ₦
-                              {formatAmount(
-                                Number(
-                                  mqttQuestionData?.allocated_winning_amount ||
-                                    0
-                                )
-                              )}
-                            </GlowyStrokeText>
-                          </div>
-                        </div>
-                      </motion.div>
+                              {(
+                                [
+                                  "option_a",
+                                  "option_b",
+                                  "option_c",
+                                  "option_d",
+                                ] as OptionKey[]
+                              ).map((option, index) => {
+                                const optionLetter = String.fromCharCode(
+                                  65 + index
+                                ); // A, B, C, D
+                                const isCorrect = isCorrectOption(option);
+                                const isSelected = selectedOption === option;
+                                const showResult = correctAnswer;
 
-                      <AnimatePresence mode="wait">
-                        {mqttQuestionData ? (
-                          <motion.div
-                            key={`options-${currentQuestionIndex}-${mqttQuestionData?.question_id}`}
-                            className="grid grid-cols-2 gap-[1.625rem] mt-[5.625rem]"
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -30 }}
-                            transition={{ delay: 0.5, duration: 0.5 }}
-                          >
-                            {(
-                              [
-                                "option_a",
-                                "option_b",
-                                "option_c",
-                                "option_d",
-                              ] as OptionKey[]
-                            ).map((option, index) => {
-                              const optionLetter = String.fromCharCode(
-                                65 + index
-                              ); // A, B, C, D
-                              const isCorrect = isCorrectOption(option);
-                              const isSelected = selectedOption === option;
-                              const showResult = correctAnswer;
-
-                              return (
-                                <motion.button
-                                  key={option}
-                                  variants={{
-                                    hidden: {
-                                      opacity: 0,
-                                      y: 50,
-                                      scale: 0.8,
-                                      rotateX: -15,
-                                    },
-                                    visible: {
-                                      opacity: 1,
-                                      y: 0,
-                                      scale: 1,
-                                      rotateX: 0,
-                                      transition: {
-                                        type: "spring",
-                                        stiffness: 100,
-                                        damping: 15,
-                                        duration: 0.6,
+                                return (
+                                  <motion.button
+                                    key={option}
+                                    variants={{
+                                      hidden: {
+                                        opacity: 0,
+                                        y: 50,
+                                        scale: 0.8,
+                                        rotateX: -15,
                                       },
-                                    },
-                                  }}
-                                  whileHover={
-                                    timerActive &&
-                                    mqttQuestionData?.question?.question
-                                      ? {
+                                      visible: {
+                                        opacity: 1,
+                                        y: 0,
+                                        scale: 1,
+                                        rotateX: 0,
+                                        transition: {
+                                          type: "spring",
+                                          stiffness: 100,
+                                          damping: 15,
+                                          duration: 0.6,
+                                        },
+                                      },
+                                    }}
+                                    whileHover={
+                                      timerActive &&
+                                        mqttQuestionData?.question?.question
+                                        ? {
                                           scale: 1.03,
                                           y: -3,
                                           transition: { duration: 0.2 },
                                         }
-                                      : {}
-                                  }
-                                  whileTap={
-                                    timerActive &&
-                                    mqttQuestionData?.question?.question
-                                      ? { scale: 0.98 }
-                                      : {}
-                                  }
-                                  animate={
-                                    isSelected && !showResult
-                                      ? {
+                                        : {}
+                                    }
+                                    whileTap={
+                                      timerActive &&
+                                        mqttQuestionData?.question?.question
+                                        ? { scale: 0.98 }
+                                        : {}
+                                    }
+                                    animate={
+                                      isSelected && !showResult
+                                        ? {
                                           scale: [1, 1.05, 1],
                                           transition: {
                                             duration: 0.3,
                                             ease: "easeInOut",
                                           },
                                         }
-                                      : showResult && isCorrect
-                                        ? {
+                                        : showResult && isCorrect
+                                          ? {
                                             scale: [1, 1.08, 1.02],
                                             backgroundColor: [
                                               "#04DA6A20",
@@ -881,279 +891,278 @@ if (receivedMessage?.event === "game_s2_timer_end") {
                                               ease: "easeInOut",
                                             },
                                           }
-                                        : showResult && isSelected && !isCorrect
-                                          ? {
+                                          : showResult && isSelected && !isCorrect
+                                            ? {
                                               x: [-2, 2, -2, 2, 0],
                                               transition: {
                                                 duration: 0.5,
                                                 ease: "easeInOut",
                                               },
                                             }
-                                          : {}
-                                  }
-                                  className={cn(
-                                    "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative transition-all duration-300 transform-gpu",
-                                    !showResult && isSelected
-                                      ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
-                                      : "",
-                                    !timerActive ||
-                                      !mqttQuestionData?.question?.question
-                                      ? "opacity-70 cursor-not-allowed"
-                                      : "hover:shadow-lg",
-                                    mqttAnswerData &&
-                                      mqttQuestionData?.correct_option ===
-                                        convertOptionToLetter(option)
-                                      ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
-                                      : ""
-                                  )}
-                                >
-                                  <motion.span
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{
-                                      delay: 0.2 + index * 0.1,
-                                      duration: 0.4,
-                                    }}
-                                    className="text-current"
-                                  >
-                                    {optionLetter}:
-                                  </motion.span>
-
-                                  <motion.span
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{
-                                      delay: 0.3 + index * 0.1,
-                                      duration: 0.5,
-                                      type: "spring",
-                                      stiffness: 80,
-                                    }}
+                                            : {}
+                                    }
                                     className={cn(
-                                      "ml-2",
-                                      selectedOption === option && !showResult
-                                        ? "text-white font-bold"
+                                      "bg-[#000000] border-2 border-[#D71BFA] rounded-[.75rem] font-bold text-2xl font-gilroyBold px-4 py-[1.5625rem] text-white text-left relative transition-all duration-300 transform-gpu",
+                                      !showResult && isSelected
+                                        ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
                                         : "",
-                                      isCorrect && showResult
-                                        ? "text-[#04DA6A] font-bold"
-                                        : "",
-                                      isSelected && !isCorrect && showResult
-                                        ? "text-[#FF3B30] font-bold"
+                                      !timerActive ||
+                                        !mqttQuestionData?.question?.question
+                                        ? "opacity-70 cursor-not-allowed"
+                                        : "hover:shadow-lg",
+                                      mqttAnswerData &&
+                                        mqttQuestionData?.correct_option ===
+                                        convertOptionToLetter(option)
+                                        ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
                                         : ""
                                     )}
-                                    style={{
-                                      WebkitTextStroke:
-                                        selectedOption === option && !showResult
-                                          ? "1px #C76000"
-                                          : "",
-                                    }}
                                   >
-                                    {mqttQuestionData?.[option] || "..."}
-                                  </motion.span>
+                                    <motion.span
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      transition={{
+                                        delay: 0.2 + index * 0.1,
+                                        duration: 0.4,
+                                      }}
+                                      className="text-current"
+                                    >
+                                      {optionLetter}:
+                                    </motion.span>
 
-                                  {/* Correct answer indicator */}
-                                  <AnimatePresence>
-                                    {isCorrect && showResult && (
-                                      <motion.div
-                                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                        initial={{ scale: 0, rotate: -180 }}
-                                        animate={{
-                                          scale: 1,
-                                          rotate: 0,
-                                          transition: {
-                                            type: "spring",
-                                            stiffness: 200,
-                                            damping: 10,
-                                            delay: 0.2,
-                                          },
-                                        }}
-                                        exit={{ scale: 0, opacity: 0 }}
-                                      >
-                                        <div className="bg-[#04DA6A] rounded-full p-1">
-                                          <CheckIcon size={16} />
-                                        </div>
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
+                                    <motion.span
+                                      initial={{ opacity: 0, x: -10 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{
+                                        delay: 0.3 + index * 0.1,
+                                        duration: 0.5,
+                                        type: "spring",
+                                        stiffness: 80,
+                                      }}
+                                      className={cn(
+                                        "ml-2",
+                                        selectedOption === option && !showResult
+                                          ? "text-white font-bold"
+                                          : "",
+                                        isCorrect && showResult
+                                          ? "text-[#04DA6A] font-bold"
+                                          : "",
+                                        isSelected && !isCorrect && showResult
+                                          ? "text-[#FF3B30] font-bold"
+                                          : ""
+                                      )}
+                                      style={{
+                                        WebkitTextStroke:
+                                          selectedOption === option && !showResult
+                                            ? "1px #C76000"
+                                            : "",
+                                      }}
+                                    >
+                                      {mqttQuestionData?.[option] || "..."}
+                                    </motion.span>
 
-                                  {/* Incorrect answer indicator */}
-                                  <AnimatePresence>
-                                    {!isCorrect && showResult && (
-                                      <motion.div
-                                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                        initial={{ scale: 0, rotate: 180 }}
-                                        animate={{
-                                          scale: 1,
-                                          rotate: 0,
-                                          transition: {
-                                            type: "spring",
-                                            stiffness: 200,
-                                            damping: 10,
-                                            delay: 0.2,
-                                          },
-                                        }}
-                                        exit={{ scale: 0, opacity: 0 }}
-                                      >
-                                        <div className="bg-[#FF3B30] rounded-full p-1">
-                                          <ErrorIcon />
-                                        </div>
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                </motion.button>
-                              );
-                            })}
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="loading"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex justify-center items-center h-full mt-4"
-                          >
-                            <div className="text-[#D5B9FF] text-lg">
-                              {isConnected
-                                ? "Waiting for next question..."
-                                : "Connecting..."}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    {showResultModal && (
-                      <HustleQuestionAnswerModal
-                        booster={mqttQuestionData?.question_booster}
-                        showBooster={false}
-                        currentQuestionOptions={{
-                          option_a: mqttQuestionData?.option_a,
-                          option_b: mqttQuestionData?.option_b,
-                          option_c: mqttQuestionData?.option_c,
-                          option_d: mqttQuestionData?.option_d,
-                        }}
-                        questionIndex={currentQuestionIndex}
-                        correctAnswer={
-                          correctAnswer || mqttQuestionData?.correct_option
-                        }
-                        question={mqttQuestionData?.question}
-                        currentQuestionAnswerData={currentQuestionAnswerData}
-                        currentQuestion={mqttQuestionData}
-                        mqttAnswerData={mqttAnswerData}
-                        showBid={false}
-                        showAllocatedAMount={false}
-                        
-                        allocatedWinningAmount={mqttQuestionData?.allocated_winning_amount}
-                      />
-                    )}
-    
-                   
-                  </>
-                )}
-</>
-  
+                                    {/* Correct answer indicator */}
+                                    <AnimatePresence>
+                                      {isCorrect && showResult && (
+                                        <motion.div
+                                          className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                          initial={{ scale: 0, rotate: -180 }}
+                                          animate={{
+                                            scale: 1,
+                                            rotate: 0,
+                                            transition: {
+                                              type: "spring",
+                                              stiffness: 200,
+                                              damping: 10,
+                                              delay: 0.2,
+                                            },
+                                          }}
+                                          exit={{ scale: 0, opacity: 0 }}
+                                        >
+                                          <div className="bg-[#04DA6A] rounded-full p-1">
+                                            <CheckIcon size={16} />
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
 
- <div className="flex flex-col gap-4 w-full">
-  {remainingContestants?.slice(-2)?.map((contestant, index: number) => {
-  const contestantSelection = contestantOption[contestant?.id];
-  const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
-  
-  // Calculate display timestamp
-  let displayTimestamp = "0.000";
-  
-  if (hasSelected && contestantSelection?.timestamp) {
-    // Contestant has answered - show their frozen timestamp
-    displayTimestamp = contestantSelection.timestamp;
-  } else if (timerActive && questionStartTime) {
-    // Timer is active and contestant hasn't answered - show live counting
-    displayTimestamp = currentTimestamp.toFixed(3);
-  } else if (!timerActive && !hasSelected) {
-    // Timer ended and contestant didn't answer
-    displayTimestamp = "0.000";
-  }
-    
-    return (
-      <div
-        key={`left-${contestant?.id}`}
-        className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${
-          hasSelected 
-            ? 'bg-[#003218] text-white' 
-            : 'bg-[#160036] text-white'
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          <p className="text-2xl">{contestant.name?.split(" ")[0]} </p>
-          {hasSelected && (
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ 
-                scale: 1, 
-                rotate: 0,
-                transition: {
-                  type: "spring",
-                  stiffness: 200,
-                  damping: 10
-                }
-              }}
-              className="ml-auto"
-            >
-              <CheckIcon size={24} />
-            </motion.div>
-          )}
-        </div>
-       
-        <p className="text-white text-opacity-70 text-base">
-          Status:
-          <span className="text-white text-opacity-100">
-            {hasSelected ? " answered" : " "}
-          </span>
-        </p>
-        {/* <p className="text-white text-opacity-70 text-base">
+                                    {/* Incorrect answer indicator */}
+                                    <AnimatePresence>
+                                      {!isCorrect && showResult && (
+                                        <motion.div
+                                          className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                          initial={{ scale: 0, rotate: 180 }}
+                                          animate={{
+                                            scale: 1,
+                                            rotate: 0,
+                                            transition: {
+                                              type: "spring",
+                                              stiffness: 200,
+                                              damping: 10,
+                                              delay: 0.2,
+                                            },
+                                          }}
+                                          exit={{ scale: 0, opacity: 0 }}
+                                        >
+                                          <div className="bg-[#FF3B30] rounded-full p-1">
+                                            <ErrorIcon />
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </motion.button>
+                                );
+                              })}
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="loading"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="flex justify-center items-center h-full mt-4"
+                            >
+                              <div className="text-[#D5B9FF] text-lg">
+                                {isConnected
+                                  ? "Waiting for next question..."
+                                  : "Connecting..."}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                      {showResultModal && (
+                        <HustleQuestionAnswerModal
+                          booster={mqttQuestionData?.question_booster}
+                          showBooster={false}
+                          currentQuestionOptions={{
+                            option_a: mqttQuestionData?.option_a,
+                            option_b: mqttQuestionData?.option_b,
+                            option_c: mqttQuestionData?.option_c,
+                            option_d: mqttQuestionData?.option_d,
+                          }}
+                          questionIndex={currentQuestionIndex}
+                          correctAnswer={
+                            correctAnswer || mqttQuestionData?.correct_option
+                          }
+                          question={mqttQuestionData?.question}
+                          currentQuestionAnswerData={currentQuestionAnswerData}
+                          currentQuestion={mqttQuestionData}
+                          mqttAnswerData={mqttAnswerData}
+                          showBid={false}
+                          showAllocatedAMount={false}
+
+                          allocatedWinningAmount={mqttQuestionData?.allocated_winning_amount}
+                        />
+                      )}
+
+
+                    </>
+                  )}
+                </>
+
+
+                <div className="flex flex-col gap-4 w-full">
+                  {remainingContestants?.slice(-2)?.map((contestant, index: number) => {
+                    const contestantSelection = contestantOption[contestant?.id];
+                    const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
+
+                    // Calculate display timestamp
+                    let displayTimestamp = "0.000";
+
+                    if (hasSelected && contestantSelection?.timestamp) {
+                      // Contestant has answered - show their frozen timestamp
+                      displayTimestamp = contestantSelection.timestamp;
+                    } else if (timerActive && questionStartTime) {
+                      // Timer is active and contestant hasn't answered - show live counting
+                      displayTimestamp = currentTimestamp.toFixed(3);
+                    } else if (!timerActive && !hasSelected) {
+                      // Timer ended and contestant didn't answer
+                      displayTimestamp = "0.000";
+                    }
+
+                    return (
+                      <div
+                        key={`left-${contestant?.id}`}
+                        className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${hasSelected
+                            ? 'bg-[#003218] text-white'
+                            : 'bg-[#160036] text-white'
+                          }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <p className="text-2xl">{contestant.name?.split(" ")[0]} </p>
+                          {hasSelected && (
+                            <motion.div
+                              initial={{ scale: 0, rotate: -180 }}
+                              animate={{
+                                scale: 1,
+                                rotate: 0,
+                                transition: {
+                                  type: "spring",
+                                  stiffness: 200,
+                                  damping: 10
+                                }
+                              }}
+                              className="ml-auto"
+                            >
+                              <CheckIcon size={24} />
+                            </motion.div>
+                          )}
+                        </div>
+
+                        <p className="text-white text-opacity-70 text-base">
+                          Status:
+                          <span className="text-white text-opacity-100">
+                            {hasSelected ? " answered" : " "}
+                          </span>
+                        </p>
+                        {/* <p className="text-white text-opacity-70 text-base">
           Timestamp:
           <span className="text-white text-opacity-100">
             {displayTimestamp}s
           </span>
         </p> */}
-      </div>
-    );
-  })}
-</div>
-
-  {/*  */}
-              </div>
-               <div className="flex w-full justify-center items-center mt-10 gap-[2rem]  ">
-                  {Array.from({ length: 8 }, (_, index) => (
-                    <div className="" key={index}>
-                      <NumberCardContainer
-                        // text={index + 1}
-                        text={
-                          isQuestionAttempted(index + 1) ? (
-                            <CheckIcon size={160} />
-                          ) : (
-                            index + 1
-                          )
-                        }
-                        textColor={
-                          currentQuestionIndex === index + 1
-                            ? "#FFFFFF"
-                            : isQuestionAttempted(index + 1)
-                              ? "#fff"
-                              : "#F2C94C"
-                        }
-                        backgroundColor={
-                          currentQuestionIndex === index + 1
-                            ? "#FEC124"
-                            : isQuestionAttempted(index + 1)
-                              ? "#04DA6A"
-                              : "black"
-                        }
-                        width={65}
-                        height={65}
-                        active={currentQuestionIndex > index + 1}
-                        iconPosition={{ y: 33 }}
-                        iconSize={30}
-                      />
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
+
+                {/*  */}
+              </div>
+              <div className="flex w-full justify-center items-center mt-10 gap-[2rem]  ">
+                {Array.from({ length: 8 }, (_, index) => (
+                  <div className="" key={index}>
+                    <NumberCardContainer
+                      // text={index + 1}
+                      text={
+                        isQuestionAttempted(index + 1) ? (
+                          <CheckIcon size={160} />
+                        ) : (
+                          index + 1
+                        )
+                      }
+                      textColor={
+                        currentQuestionIndex === index + 1
+                          ? "#FFFFFF"
+                          : isQuestionAttempted(index + 1)
+                            ? "#fff"
+                            : "#F2C94C"
+                      }
+                      backgroundColor={
+                        currentQuestionIndex === index + 1
+                          ? "#FEC124"
+                          : isQuestionAttempted(index + 1)
+                            ? "#04DA6A"
+                            : "black"
+                      }
+                      width={65}
+                      height={65}
+                      active={currentQuestionIndex > index + 1}
+                      iconPosition={{ y: 33 }}
+                      iconSize={30}
+                    />
+                  </div>
+                ))}
+              </div>
 
 
             </div>

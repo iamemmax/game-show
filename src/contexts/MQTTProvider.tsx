@@ -1,61 +1,88 @@
-'use client';
-import { createContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import mqtt, { MqttClient, MqttProtocol } from 'mqtt';
+"use client"
+import { createContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react"
+import mqtt, { type MqttClient, type MqttProtocol } from "mqtt"
 
 export interface MQTTMessage {
-  topic: string;
-  event?: string;
-  payload: any;
-  timestamp: number;
+  topic: string
+  event?: string
+  payload: any
+  timestamp: number
 }
 
 export interface MQTTContextProps {
-  isConnected: boolean;
-  client: MqttClient | null;
-  topicListeners: { [topic: string]: Array<(message: MQTTMessage) => void> };
-  globalListeners: Array<(message: MQTTMessage) => void>;
-  subscribedTopics: string[];
-  subscribeToTopic: (topic: string, callback: (message: MQTTMessage) => void) => void;
-  unsubscribeFromTopic: (topic: string, callback: (message: MQTTMessage) => void) => void;
-  addGlobalListener: (callback: (message: MQTTMessage) => void) => void;
-  removeGlobalListener: (callback: (message: MQTTMessage) => void) => void;
+  isConnected: boolean
+  client: MqttClient | null
+  topicListeners: { [topic: string]: Array<(message: MQTTMessage) => void> }
+  globalListeners: Array<(message: MQTTMessage) => void>
+  subscribedTopics: string[]
+  subscribeToTopic: (topic: string, callback: (message: MQTTMessage) => void) => void
+  unsubscribeFromTopic: (topic: string, callback: (message: MQTTMessage) => void) => void
+  addGlobalListener: (callback: (message: MQTTMessage) => void) => void
+  removeGlobalListener: (callback: (message: MQTTMessage) => void) => void
   // Legacy support
-  addMessageListener: (callback: (message: MQTTMessage) => void) => void;
-  removeMessageListener: (callback: (message: MQTTMessage) => void) => void;
+  addMessageListener: (callback: (message: MQTTMessage) => void) => void
+  removeMessageListener: (callback: (message: MQTTMessage) => void) => void
 }
 
-export const MQTTContext = createContext<MQTTContextProps | null>(null);
+export const MQTTContext = createContext<MQTTContextProps | null>(null)
 
 interface MQTTProviderProps {
-  children: ReactNode;
-  enableGlobalWildcard?: boolean;
+  children: ReactNode
+  enableGlobalWildcard?: boolean
 }
 
 export function MQTTProvider({ children, enableGlobalWildcard = true }: MQTTProviderProps) {
-  const broker = process.env.NEXT_PUBLIC_MQTT_BROKER;
-  const port = process.env.NEXT_PUBLIC_MQTT_PORT;
-  const username = process.env.NEXT_PUBLIC_MQTT_USERNAME;
-  const password = process.env.NEXT_PUBLIC_MQTT_PASSWORD;
-  const protocol = process.env.NEXT_PUBLIC_MQTT_PROTOCOL as MqttProtocol;
-  const connectUrl = `ws://${broker}:${port}`;
+  const broker = process.env.NEXT_PUBLIC_MQTT_BROKER
+  const port = process.env.NEXT_PUBLIC_MQTT_PORT
+  const username = process.env.NEXT_PUBLIC_MQTT_USERNAME
+  const password = process.env.NEXT_PUBLIC_MQTT_PASSWORD
+  const protocol = process.env.NEXT_PUBLIC_MQTT_PROTOCOL as MqttProtocol
+  const connectUrl = `ws://${broker}:${port}`
 
-  const [isConnected, setIsConnected] = useState(false);
-  const clientRef = useRef<MqttClient | null>(null);
-  const connectionAttemptsRef = useRef(0);
-  const maxConnectionAttempts = 3;
+  const [isConnected, setIsConnected] = useState(false)
+  const clientRef = useRef<MqttClient | null>(null)
+  const connectionAttemptsRef = useRef(0)
+  const maxConnectionAttempts = 3
 
   // State for topic management
-  const topicListenersRef = useRef<{ [topic: string]: Array<(message: MQTTMessage) => void> }>({});
-  const globalListenersRef = useRef<Array<(message: MQTTMessage) => void>>([]);
-  const subscribedTopicsRef = useRef<string[]>([]);
-  const wildcardSubscribedRef = useRef<boolean>(false);
+  const topicListenersRef = useRef<{ [topic: string]: Array<(message: MQTTMessage) => void> }>({})
+  const globalListenersRef = useRef<Array<(message: MQTTMessage) => void>>([])
+  const subscribedTopicsRef = useRef<string[]>([])
+  const wildcardSubscribedRef = useRef<boolean>(false)
+
+  // Function to subscribe to wildcard
+  const subscribeToWildcard = useCallback(() => {
+    if (clientRef.current && !wildcardSubscribedRef.current) {
+      clientRef.current.subscribe("#", { qos: 1 }, (err) => {
+        if (err) {
+          console.error("Wildcard subscription error:", err)
+        } else {
+          console.log("Subscribed to wildcard (#) - global listeners will receive all messages")
+          wildcardSubscribedRef.current = true
+        }
+      })
+    }
+  }, []) // No dependencies needed as it uses refs
+
+  // Function to unsubscribe from wildcard (kept for cleanup, not used by removeGlobalListener)
+  const unsubscribeFromWildcard = useCallback(() => {
+    if (clientRef.current && wildcardSubscribedRef.current) {
+      clientRef.current.unsubscribe("#", (err) => {
+        if (err) {
+          console.error("Wildcard unsubscription error:", err)
+        } else {
+          console.log("Unsubscribed from wildcard (#)")
+          wildcardSubscribedRef.current = false
+        }
+      })
+    }
+  }, []) // No dependencies needed as it uses refs
 
   useEffect(() => {
-    let mqttClient: MqttClient | null = null;
+    let mqttClient: MqttClient | null = null
 
     const connect = () => {
-      console.log('MQTT connect URL:', connectUrl);
-
+      console.log("MQTT connect URL:", connectUrl)
       mqttClient = mqtt.connect(connectUrl, {
         clientId: `mqtt_${Math.random().toString(16).slice(3)}`,
         clean: true,
@@ -63,196 +90,167 @@ export function MQTTProvider({ children, enableGlobalWildcard = true }: MQTTProv
         reconnectPeriod: 5000,
         username,
         password,
-        keepalive: 30,
+        keepalive: 60000,
         protocol: protocol,
         rejectUnauthorized: false,
-      });
+      })
 
-      mqttClient.on('connect', () => {
-        console.log('Connected to MQTT broker');
-        setIsConnected(true);
-        connectionAttemptsRef.current = 0;
-
-        // Subscribe to wildcard if enabled and there are global listeners
-        if (enableGlobalWildcard && globalListenersRef.current.length > 0 && !wildcardSubscribedRef.current) {
-          subscribeToWildcard();
+      mqttClient.on("connect", () => {
+        console.log("Connected to MQTT broker")
+        setIsConnected(true)
+        connectionAttemptsRef.current = 0
+        // Subscribe to wildcard if enabled and not already subscribed
+        if (enableGlobalWildcard && !wildcardSubscribedRef.current) {
+          subscribeToWildcard()
         }
-      });
+      })
 
-      mqttClient.on('error', (err) => {
-        console.error('MQTT Connection error:', err);
-        setIsConnected(false);
-        connectionAttemptsRef.current++;
+      mqttClient.on("error", (err) => {
+        console.error("MQTT Connection error:", err)
+        setIsConnected(false)
+        connectionAttemptsRef.current++
         if (connectionAttemptsRef.current >= maxConnectionAttempts) {
-          console.error('Max connection attempts reached');
-          mqttClient?.end();
+          console.error("Max connection attempts reached")
+          mqttClient?.end()
         }
-      });
+      })
 
-      mqttClient.on('disconnect', () => {
-        console.log('Disconnected from MQTT broker');
-        setIsConnected(false);
-        wildcardSubscribedRef.current = false;
-      });
+      mqttClient.on("disconnect", () => {
+        console.log("Disconnected from MQTT broker")
+        setIsConnected(false)
+        wildcardSubscribedRef.current = false // Reset wildcard status on disconnect
+      })
 
-      mqttClient.on('offline', () => {
-        console.log('MQTT client is offline');
-        setIsConnected(false);
-      });
+      mqttClient.on("offline", () => {
+        console.log("MQTT client is offline")
+        setIsConnected(false)
+      })
 
-      mqttClient.on('reconnect', () => {
-        console.log('Reconnecting to MQTT broker...');
-      });
+      mqttClient.on("reconnect", () => {
+        console.log("Reconnecting to MQTT broker...")
+      })
 
       // Handle incoming messages
-      mqttClient.on('message', (topic, payload) => {
+      mqttClient.on("message", (topic, payload) => {
         try {
+          let parsedPayload
+          try {
+            parsedPayload = JSON.parse(payload.toString())
+          } catch (parseError) {
+            // If parsing fails, use the raw string as payload
+            parsedPayload = payload.toString()
+          }
+
           const message: MQTTMessage = {
             topic,
-            event: payload.toString().includes('event') ? JSON.parse(payload.toString()).event : undefined,
-            payload: payload.toString().includes('payload') ? JSON.parse(payload.toString()).payload : payload.toString(),
-            // payload: JSON.parse(payload.toString()),
-            timestamp: Date.now()
-          };
+            event:
+              typeof parsedPayload === "object" && parsedPayload !== null && "event" in parsedPayload
+                ? parsedPayload.event
+                : undefined,
+            payload:
+              typeof parsedPayload === "object" && parsedPayload !== null && "payload" in parsedPayload
+                ? parsedPayload.payload
+                : parsedPayload,
+            timestamp: Date.now(),
+          }
 
           // Call topic-specific listeners
-          const topicCallbacks = topicListenersRef.current[topic] || [];
-          topicCallbacks.forEach(callback => callback(message));
+          const topicCallbacks = topicListenersRef.current[topic] || []
+          topicCallbacks.forEach((callback) => callback(message))
 
-          // Call global listeners (now receives from all topics if wildcard is enabled)
-          globalListenersRef.current.forEach(callback => callback(message));
+          // Call global listeners
+          globalListenersRef.current.forEach((callback) => callback(message))
         } catch (err) {
-          console.error('Error parsing message:', err);
+          console.error("Error processing message:", err)
           const fallbackMessage: MQTTMessage = {
             topic,
-            payload: { error: 'Failed to parse message', raw: payload.toString() },
-            timestamp: Date.now()
-          };
-          globalListenersRef.current.forEach(callback => callback(fallbackMessage));
+            payload: { error: "Failed to process message", raw: payload.toString() },
+            timestamp: Date.now(),
+          }
+          globalListenersRef.current.forEach((callback) => callback(fallbackMessage))
         }
-      });
+      })
+      clientRef.current = mqttClient
+    }
 
-      clientRef.current = mqttClient;
-    };
-
-    // Function to subscribe to wildcard
-    const subscribeToWildcard = () => {
-      if (clientRef.current && !wildcardSubscribedRef.current) {
-        clientRef.current.subscribe('#', { qos: 1 }, (err) => {
-          if (err) {
-            console.error('Wildcard subscription error:', err);
-          } else {
-            console.log('Subscribed to wildcard (#) - global listeners will receive all messages');
-            wildcardSubscribedRef.current = true;
-          }
-        });
-      }
-    };
-
-    // Function to unsubscribe from wildcard
-    const unsubscribeFromWildcard = () => {
-      if (clientRef.current && wildcardSubscribedRef.current) {
-        clientRef.current.unsubscribe('#', (err) => {
-          if (err) {
-            console.error('Wildcard unsubscription error:', err);
-          } else {
-            console.log('Unsubscribed from wildcard (#)');
-            wildcardSubscribedRef.current = false;
-          }
-        });
-      }
-    };
-
-    connect();
+    connect()
 
     return () => {
       if (clientRef.current) {
-        console.log('Cleaning up MQTT connection');
-        clientRef.current.end(true);
-        clientRef.current = null;
+        console.log("Cleaning up MQTT connection")
+        clientRef.current.end(true) // End the client, which will unsubscribe from all topics
+        clientRef.current = null
       }
-    };
-  }, [connectUrl, username, password, enableGlobalWildcard]);
+    }
+  }, [connectUrl, username, password, enableGlobalWildcard, subscribeToWildcard]) // Added subscribeToWildcard to dependencies
 
   const subscribeToTopic = useCallback((topic: string, callback: (message: MQTTMessage) => void) => {
     if (!topicListenersRef.current[topic]) {
-      topicListenersRef.current[topic] = [];
+      topicListenersRef.current[topic] = []
     }
-    topicListenersRef.current[topic].push(callback);
-
-
+    topicListenersRef.current[topic].push(callback)
 
     if (!subscribedTopicsRef.current.includes(topic)) {
       clientRef.current?.subscribe(topic, { qos: 1 }, (err) => {
         if (err) {
-          console.error(`Subscription error for topic ${topic}:`, err);
+          console.error(`Subscription error for topic ${topic}:`, err)
         } else {
-          console.log(`Subscribed to ${topic}`);
-          subscribedTopicsRef.current.push(topic);
+          console.log(`Subscribed to ${topic}`)
+          subscribedTopicsRef.current.push(topic)
         }
-      });
+      })
     }
-  }, []);
+  }, []) // Empty dependency array as it uses refs
 
   const unsubscribeFromTopic = useCallback((topic: string, callback: (message: MQTTMessage) => void) => {
     if (topicListenersRef.current[topic]) {
-      const index = topicListenersRef.current[topic].indexOf(callback);
+      const index = topicListenersRef.current[topic].indexOf(callback)
       if (index > -1) {
-        topicListenersRef.current[topic].splice(index, 1);
+        topicListenersRef.current[topic].splice(index, 1)
       }
-
       // If no more listeners for this topic, unsubscribe
       if (topicListenersRef.current[topic].length === 0) {
-        clientRef.current?.unsubscribe(topic);
-        subscribedTopicsRef.current = subscribedTopicsRef.current.filter(t => t !== topic);
-        delete topicListenersRef.current[topic];
+        clientRef.current?.unsubscribe(topic)
+        subscribedTopicsRef.current = subscribedTopicsRef.current.filter((t) => t !== topic)
+        delete topicListenersRef.current[topic]
       }
     }
-  }, []);
+  }, []) // Empty dependency array as it uses refs
 
-  const addGlobalListener = useCallback((callback: (message: MQTTMessage) => void) => {
-    globalListenersRef.current.push(callback);
-
-    // Subscribe to wildcard if enabled and connected
-    if (enableGlobalWildcard && isConnected && !wildcardSubscribedRef.current) {
-      clientRef.current?.subscribe('#', { qos: 1 }, (err) => {
-        if (err) {
-          console.error('Wildcard subscription error:', err);
-        } else {
-          console.log('Subscribed to wildcard (#) - global listeners will receive all messages');
-          wildcardSubscribedRef.current = true;
-        }
-      });
-    }
-  }, [enableGlobalWildcard, isConnected]);
+  const addGlobalListener = useCallback(
+    (callback: (message: MQTTMessage) => void) => {
+      globalListenersRef.current.push(callback)
+      // Subscribe to wildcard if enabled, connected, and not already subscribed
+      if (enableGlobalWildcard && isConnected && !wildcardSubscribedRef.current) {
+        subscribeToWildcard()
+      }
+    },
+    [enableGlobalWildcard, isConnected, subscribeToWildcard],
+  ) // Added subscribeToWildcard to dependencies
 
   const removeGlobalListener = useCallback((callback: (message: MQTTMessage) => void) => {
-    const index = globalListenersRef.current.indexOf(callback);
+    const index = globalListenersRef.current.indexOf(callback)
     if (index > -1) {
-      globalListenersRef.current.splice(index, 1);
+      globalListenersRef.current.splice(index, 1)
     }
-
-    // Unsubscribe from wildcard if no more global listeners
-    if (enableGlobalWildcard && globalListenersRef.current.length === 0 && wildcardSubscribedRef.current) {
-      clientRef.current?.unsubscribe('#', (err) => {
-        if (err) {
-          console.error('Wildcard unsubscription error:', err);
-        } else {
-          console.log('Unsubscribed from wildcard (#)');
-          wildcardSubscribedRef.current = false;
-        }
-      });
-    }
-  }, [enableGlobalWildcard]);
+    // Removed: Unsubscribe from wildcard if no more global listeners.
+    // The wildcard subscription will now persist as long as the provider is mounted.
+  }, []) // Empty dependency array as it only modifies ref
 
   // Legacy support methods
-  const addMessageListener = useCallback((callback: (message: MQTTMessage) => void) => {
-    addGlobalListener(callback);
-  }, [addGlobalListener]);
+  const addMessageListener = useCallback(
+    (callback: (message: MQTTMessage) => void) => {
+      addGlobalListener(callback)
+    },
+    [addGlobalListener],
+  )
 
-  const removeMessageListener = useCallback((callback: (message: MQTTMessage) => void) => {
-    removeGlobalListener(callback);
-  }, [removeGlobalListener]);
+  const removeMessageListener = useCallback(
+    (callback: (message: MQTTMessage) => void) => {
+      removeGlobalListener(callback)
+    },
+    [removeGlobalListener],
+  )
 
   const contextValue: MQTTContextProps = {
     isConnected,
@@ -267,11 +265,7 @@ export function MQTTProvider({ children, enableGlobalWildcard = true }: MQTTProv
     // Legacy support
     addMessageListener,
     removeMessageListener,
-  };
+  }
 
-  return (
-    <MQTTContext.Provider value={contextValue}>
-      {children}
-    </MQTTContext.Provider>
-  );
+  return <MQTTContext.Provider value={contextValue}>{children}</MQTTContext.Provider>
 }

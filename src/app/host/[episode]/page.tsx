@@ -257,10 +257,8 @@ export default function HostPage() {
                         timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
                     },
                 ])
-                await sendToMultipleTopics(message, [
-                    `/game-sync/${gameId}`,
-                    `/test/topic/local`,
-                ])
+              
+                sendMessage(message)
             
                 // Update local game state and universal step based on action
                 updateLocalStateAfterAction(eventCode)
