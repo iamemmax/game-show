@@ -27,7 +27,17 @@ const nextConfig = {
         hostname: '192.168.1.168',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: '192.168.1.131',
+        pathname: '/**',
+      },
       
+      {
+        protocol: 'http',
+        hostname: process.env.NEXT_PUBLIC_MQTT_BROKER,
+        pathname: '/**',
+      },
       {
         protocol: 'http',
         hostname: 'hustleback.libertydraw.com',

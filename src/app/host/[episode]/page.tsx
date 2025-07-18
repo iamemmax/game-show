@@ -4,7 +4,7 @@ import { useParams } from "next/navigation"
 import { useState, useEffect, useCallback } from "react"
 import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
-import { useMQTT } from "@/hooks/useMqttService" // Import useMQTTTopic
+import { useMQTT, useMQTTMultiSend } from "@/hooks/useMqttService" // Import useMQTTTopic
 import { useGetGameContestants, useHandleHustlePickTimeElapse } from "@/app/admin/misc/api"
 import { useEndStageThree, useInitStage2, useNotifyBackendStartQuestionTimer, useStartGame } from "../misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
@@ -19,6 +19,7 @@ export default function HostPage() {
     const gameId = params.episode as string
     const { mutate: notifyBackendStartTimer } = useNotifyBackendStartQuestionTimer()
     const { isConnected, sendMessage } = useMQTT()
+    const { sendToMultipleTopics } = useMQTTMultiSend()
     const [activeStage, setActiveStage] = useState<string>("stage1")
     const [currentUniversalStep, setCurrentUniversalStep] = useState<UniversalGameStep>(UNIVERSAL_GAME_STEPS.GAME_SETUP)
     const [gameState, setGameState] = useState<{
@@ -256,7 +257,11 @@ export default function HostPage() {
                         timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
                     },
                 ])
-                await sendMessage(message, `/game-sync/${gameId}`) // Specify topic for sending
+                await sendToMultipleTopics(message, [
+                    `/game-sync/${gameId}`,
+                    `/test/topic/local`,
+                ])
+            
                 // Update local game state and universal step based on action
                 updateLocalStateAfterAction(eventCode)
             } catch (error) {
@@ -790,7 +795,7 @@ export default function HostPage() {
     console.log(gameState.currentStageStep, "current stage step in host page")
     console.log(currentUniversalStep, "current universal step in host page")
 
-    
+
     return (
         <div className="min-h-screen bg-[#1a0b25] text-white bg-[url('/images/host-bg.png')] bg-no-repeat bg-contain bg-center">
             {isLoadingContestants ? (
