@@ -603,6 +603,9 @@ if (receivedMessage?.event === "contestant_selected_option") {
     const selectedBid = contestantBids?.[spend.contestant_id];
     const selectedOption = contestantOption?.[spend.contestant_id];
 
+    console.log(selectedBid);
+    
+
     const matchingKey = selectedBid
       ? Object.keys(spend.spend_breakdown).find(
           (key) =>

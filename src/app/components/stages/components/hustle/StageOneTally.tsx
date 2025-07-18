@@ -187,7 +187,7 @@ const StageOneTally = ({
       <EliminatedModal
       setShowEliminationModal={setShowEliminationModal} 
       showEliminationModal={showEliminationModal}
-      balance={Number(getContestantInfo(Number(user?.contestant_id))?.wallet_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url)}/>
+      balance={Number(getContestantInfo(Number(user?.contestant_id))?.wallet_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ?? "/")}/>
       )}
 
       <div

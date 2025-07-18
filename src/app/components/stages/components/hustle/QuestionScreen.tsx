@@ -536,27 +536,27 @@ const QuestionScreen = ({ onNext }: Prop) => {
     await sendMessage(bidData);
   };
   // Updated publishOption function (around line 390)
-  // const publishOption = async (option: string) => {
-  //   if (!user?.contestant_id || !user?.name) return;
+  const publishOption = async (option: string) => {
+    if (!user?.contestant_id || !user?.name) return;
 
-  //   const optionData = {
-  //     event: "contestant_selected_option",
-  //     payload: {
-  //       contestant_id: user.contestant_id,
-  //       contestant_name: user.name,
-  //       is_selected: true,
-  //       selected_option: option, // Added the actual selected option
-  //       timestamp: new Date().toISOString(),
-  //       question_id: currentQuestionId,
-  //       game_episode: user.game_episode,
-  //     },
-  //   };
+    const optionData = {
+      event: "contestant_selected_option",
+      payload: {
+        contestant_id: user.contestant_id,
+        contestant_name: user.name,
+        is_selected: true,
+        selected_option: option, // Added the actual selected option
+        timestamp: new Date().toISOString(),
+        question_id: currentQuestionId,
+        game_episode: user.game_episode,
+      },
+    };
 
-  //   console.log("Publishing selected option:", optionData);
+    console.log("Publishing selected option:", optionData);
 
-  //   // Publish to MQTT for leaderboard screen to listen
-  //   await sendMessage(optionData);
-  // };
+    // Publish to MQTT for leaderboard screen to listen
+    await sendMessage(optionData);
+  };
 
   // Updated handleOptionSelect function (around line 410)
   const handleOptionSelect = (option: OptionKey) => {
@@ -565,7 +565,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
 
       // Publish the selected option immediately when user selects it
       const answerLetter = convertOptionToLetter(option);
-      // publishOption(answerLetter);
+      publishOption(answerLetter);
     }
   };
 
@@ -574,7 +574,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
       return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
-    // publishOption(answerLetter);
+    publishOption(answerLetter);
     const formattedTimestamp = new Date().toISOString();
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
@@ -874,7 +874,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
                             <div className="h-[1.2rem] w-[1.2rem]  relative">
                               <Image
                                 alt="User avatar"
-                                src={contestant?.contestant_photo_url ?? "/"}
+                                src={contestant?.contestant_photo_url ?? "/images/userImage.png"}
                                 fill
                                 className="object-cover rounded-full"
                               />

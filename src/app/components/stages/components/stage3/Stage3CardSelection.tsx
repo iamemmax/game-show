@@ -447,7 +447,7 @@ const getContestantInfo = (id: number) => {
     return <EliminatedModal
       setShowEliminationModal={()=>setIsEliminated(true)} 
       showEliminationModal={true}
-      balance={Number(getContestantInfo(Number(user?.contestant_id))?.wallet_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url)}/>
+      balance={Number(getContestantInfo(Number(user?.contestant_id))?.wallet_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ??"/")}/>
       
       ;
   }
