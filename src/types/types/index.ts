@@ -51,4 +51,5 @@ export interface ContestantDetails {
   name: string;
   contestant_id: number;
   contestant_attr: string;
+  contestant_photo_url:string
 }

@@ -7,7 +7,11 @@ import Logo from "@/app/icons/Logo";
 import PassCard from "./stage3/PassCard";
 import YouWonText from "./stage3/YouWonText";
 
-export default function StageThreeWinnerModal() {
+
+interface prop{
+  name: string
+}
+export default function StageThreeWinnerModal({name}:prop) {
   useEffect(() => {
     const audio = new Audio("/sounds/success-sound.wav");
     audio.play().catch((e) => {
@@ -48,7 +52,8 @@ export default function StageThreeWinnerModal() {
           animate={{ y: 0, scale: 1 }}
           transition={{ type: "spring", stiffness: 200 }}
         >
-          <YouWonText />
+       
+       <h2>{name}</h2>
         </motion.div>
       </div>
     </div>

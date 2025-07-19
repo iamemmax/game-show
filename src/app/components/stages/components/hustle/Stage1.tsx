@@ -9,12 +9,12 @@ import { tokenStorage } from "@/utils/auth";
 import { useErrorModalState } from "@/hooks";
 import { formatAxiosErrorMessage } from "@/utils";
 import { AxiosError } from "axios";
-import HustleSideBar from "./components/hustle/HustleSideBar";
 import Logo from "@/app/icons/Logo";
-import HustleStages from "./components/hustle/HustleStages";
 import { ContestantDetails } from "@/types/types";
 import { useMQTT } from "@/hooks/useMqttService";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
+import HustleSideBar from "./HustleSideBar";
+import HustleStages from "./HustleStages";
 
 interface RootObject {
   event: string;
@@ -146,7 +146,7 @@ const Stage1 = ({ onNext }: Props) => {
         };
 
         // Send the message
-        await sendMessage(payload, "pick_hustle_number");
+        await sendMessage(payload);
       }
     } catch (error) {
       console.error("Failed to publish message to MQTT:", error);
@@ -477,10 +477,10 @@ const Stage1 = ({ onNext }: Props) => {
                       //     <div className="flex items-center justify-center bg-gradient-to-r from-green-500 to-green-600 border-[2px] border-[#035D2E] rounded-xl px-3 py-2 shadow-md">
                       //       <span
                       //         className="text-[16px] font-extrabold font-verdana text-white"
-                      //         style={{
-                      //           WebkitTextStroke: "1px #035D2E",
-                      //           textShadow: "0px 1px 2px rgba(3, 93, 46, 0.5)"
-                      //         }}
+                              // style={{
+                              //   WebkitTextStroke: "1px #035D2E",
+                              //   textShadow: "0px 1px 2px rgba(3, 93, 46, 0.5)"
+                              // }}
                       //       >
                       //         Start Timer
                       //       </span>
@@ -545,10 +545,10 @@ const Stage1 = ({ onNext }: Props) => {
                 py-[1rem] 2xl:px-[2.6875rem] max-w-[38.5rem] rounded-[.875rem] px-[2rem] bg-[#13051E] mt-2 xl:mt-7"
               >
                 <div className="flex gap-x-3 items-center">
-                  <div className="relative h-[3rem] w-[3rem] bg-[#bf7222] border-[5px] border-[#dba531] rounded-full overflow-hidden">
+                  <div className="relative h-[3rem] w-[3rem] bg-[#bf7222] border-[3px] border-[#dba531] rounded-full overflow-hidden">
                     <Image
                       alt="User avatar"
-                      src="/images/userImage.png"
+                      src={user?.contestant_photo_url ?? "/images/userImage.png"}
                       fill
                       className="object-cover"
                     />

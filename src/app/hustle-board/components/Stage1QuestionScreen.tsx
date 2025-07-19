@@ -139,16 +139,13 @@ const Stage1QuestionScreen = ({ onNext }: Prop) => {
 
     // Start countdown if timer is active
     if (timerActive && timeLeft > 0) {
-      console.log(`⏱️ Starting timer countdown from ${timeLeft} seconds`);
 
       timerIntervalRef.current = setInterval(() => {
         setTimeLeft((prevTime) => {
           const newTime = prevTime - 1;
-          console.log(`⏱️ Timer countdown: ${newTime} seconds remaining`);
 
           // Auto-submit when timer reaches 0
           if (newTime <= 0) {
-            console.log("⏱️ Timer expired, auto-submitting");
             setTimerActive(false);
             setIsSubmitted(true);
             // setShouldFetchAnswer(true);
@@ -201,7 +198,6 @@ const playOptionSelectedSound = () => {
     if (!isConnected) return;
 
     const handleMQTTMessage = (receivedMessage: any) => {
-console.log("📩 Received MQTT message:", receivedMessage);
       // Handle question reveal event
       if (receivedMessage?.event === "game_s1_question_reveal") {
         setShowPrepPage(false);
@@ -301,19 +297,23 @@ if (receivedMessage?.event === "contestant_bid_selected") {
 }
 
 if (receivedMessage?.event === "contestant_selected_option") {
+  
   const payload = receivedMessage.payload || {};
+  
   const {
     contestant_id,
     contestant_name,
     selected_option,
     is_selected,
-    timestamp,
     question_id,
   } = payload;
 
-  if (contestant_id && contestant_name && selected_option !== undefined) {
+  
+
+
+  if (contestant_id && contestant_name) {
     // Only update options for the current question
-    if (question_id === currentQuestionId) {
+    if (Number(question_id) === Number(currentQuestionId)) {
       // Play sound effect for option selection
       playOptionSelectedSound();
       
@@ -325,7 +325,6 @@ if (receivedMessage?.event === "contestant_selected_option") {
             contestant_name,
             selected_option,
             is_selected,
-            timestamp,
             question_id,
           },
         };
@@ -353,7 +352,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
         ) {
           const answersData = payload?.answers_data?.answers;
           setCurrentQuestionAnswerData(answersData);
-          setShowResultModal(true);
+      
         }
       }
 
@@ -361,7 +360,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
       if (receivedMessage?.event === "game_s1_question_answer") {
         const payload = receivedMessage.payload || {};
         // console.log(payload);
-
+    setShowResultModal(true);
         const questionId = payload?.data?.question?.question_id;
 
         if (
@@ -602,6 +601,9 @@ if (receivedMessage?.event === "contestant_selected_option") {
   {mqttQuestionData?.spend_breakdown?.slice(0, 3).map((spend: ContestantSpend) => {
     const selectedBid = contestantBids?.[spend.contestant_id];
     const selectedOption = contestantOption?.[spend.contestant_id];
+
+    console.log(selectedBid);
+    
 
     const matchingKey = selectedBid
       ? Object.keys(spend.spend_breakdown).find(

@@ -180,15 +180,18 @@ const StageOneTally = ({
     );
     return allconstestant;
   };
-  return (
-    <div key={`stage-one-tally-${episodeId || 'default'}`}>
-      {/* Elimination Modal */}
-      {showEliminationModal && (
+
+   {showEliminationModal && (
       <EliminatedModal
       setShowEliminationModal={setShowEliminationModal} 
       showEliminationModal={showEliminationModal}
-      balance={Number(getContestantInfo(Number(user?.contestant_id))?.wallet_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url)}/>
+      balance={Number(getContestantInfo(Number(user?.contestant_id))?.actual_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ?? "/")}/>
       )}
+
+  return (
+    <div key={`stage-one-tally-${episodeId || 'default'}`}>
+      {/* Elimination Modal */}
+     
 
       <div
         className={`grid ${episodeId ? "grid-cols-[1fr_4fr_1fr] " : "grid-cols-[1fr_2.5fr_1fr] 2xl:grid-cols-[1fr_1.5fr_1fr]"} h-full `}
@@ -201,16 +204,8 @@ const StageOneTally = ({
           <div>
             <HustleStages activeStage={activeState} />
           </div>
-          <div className="w-full p-[1.4375rem] flex-col rounded-t-[1.75rem] flex justify-center items-center bg-[linear-gradient(to_right,_#2D0304,_#EE24B8,_#1E0227)] text-white">
-            <Salary4LifeTrophy height={50} width={50} />
-            <div className="flex flex-col justify-center pt-1 items-center">
-              <p className="uppercase font-bold text-xs font-verdana text-white">
-                Stage 1 of 6
-              </p>
-              <p className="max-w-[100px] text-center mt-1 font-display font-bold text-xs text-white">
-                Hustle: Fashion Designer
-              </p>
-            </div>
+        <div className="pb-4 ">
+            <Salary4LifeTrophy className="max-xl:h-[13.25rem] " />
           </div>
         </div>
 
@@ -333,7 +328,7 @@ const StageOneTally = ({
                               {tally.name?.split(" ")[0]}
                             </p>
                             <p className="text-xs 2xl:text-sm font-gilroyMedium font-normal text-white">
-                              {`₦${addCommasToNumber(Number(tally?.actual_balance || 0))}`}
+                              {`₦${ (Number(tally?.actual_balance || 0))}`}
                             </p>
                           </div>
                         </div>
@@ -382,6 +377,7 @@ const StageOneTally = ({
           <HustleSideBar showHustlerCard={true} eliminated={eliminationCount} />
         </div>
       </div>
+
     </div>
   );
 };

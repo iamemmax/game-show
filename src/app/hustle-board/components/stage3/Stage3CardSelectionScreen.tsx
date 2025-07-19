@@ -21,6 +21,8 @@ import PickCard3 from "@/app/icons/cards/PickCard3";
 import PickCard4 from "@/app/icons/cards/PickCard4";
 import PassCard from "@/app/icons/cards/PassCard";
 import DudCards from "@/app/icons/cards/DudCard";
+import VersusIcon from "@/app/icons/Versus";
+import Stage3Reward from "./Stage3Reward";
 
 interface prop {
   onNext: () => void
@@ -126,51 +128,58 @@ const cardIcons = [PickCard1, PickCard2, PickCard3];
     }
   }, [currentTurn, contestantNames, contestantsData?.data]);
 
-  const TurnIndicator = () => {
-    if (passFound || remainingContestants.length !== 2) return null;
 
-    return (
-      <div className="mb-4 flex items-center gap-4">
-        <div className="flex items-center justify-between bg-[#13051E] border-2 border-[#D91FFF] rounded-lg p-3">
-          {/* Contestants */}
-          {remainingContestants?.map((contestant, index) => (
-            <React.Fragment key={contestant.id}>
-              <div className={cn(
-                "flex items-center px-4 py-2 rounded border-2 min-w-[120px] justify-center",
-                currentTurn === contestant.id
-                  ? "bg-blue-600 border-blue-400 text-white"
-                  : "bg-gray-700 border-gray-500 text-gray-300"
-              )}>
-                <span className="font-gilroyBold text-sm uppercase tracking-wide">
-                  {contestant.name}
+
+const TurnIndicator = () => {
+   if (passFound || remainingContestants.length !== 2) return null;
+  return (
+    <div className="flex items-center justify-center gap-6 p-4">
+      {/* Main container with contestants */}
+      <div className="flex items-center w-full">
+        {remainingContestants?.map((contestant, index) => (
+          <React.Fragment key={contestant.id}>
+            {/* Contestant card */}
+            <div className={`
+              flex items-center border-[0.5px] border-opacity-70 bg-transparent justify-center gap-4 px-4 py-3 rounded-lg 
+              ${currentTurn === contestant?.id 
+                ? ' border-[#04DA6A]' 
+                : ' border-[#EB001B]'
+              }
+            `}>
+              <div className="flex items-center gap-6">
+                <span className={`
+                  font-bold text-sm capitalize tracking-wide
+                  ${currentTurn === contestant.id ? 'text-white' : 'text-gray-300'}
+                `}>
+                  {contestant.name?.split(" ")[0]}
                 </span>
+                {currentTurn === contestant.id && (
+                  <div className="flex items-center gap-3 bg-[#053F20] py-[7px] px-4 rounded-xl border border-[#04DA6A]">
+                    <span className="text-sm font-semibold font-gilroyBold text-[#04DA6A]">Your turn</span>
+                    <div className="w-3 h-3 rounded-full bg-[#04DA6A] animate-pulse"></div>
+                  </div>
+                )}
+                {currentTurn !== contestant.id && (
+                  <div className="flex items-center gap-3 bg-[#38040A] py-[7px] px-4 rounded-xl">
+                    <span className="text-sm font-semibold font-gilroyBold text-[#FF495E]">Waiting</span>
+                    <div className="w-3 h-3 rounded-full bg-[#FF495E]"></div>
+                  </div>
+                )}
               </div>
-              {index === 0 && (
-                <div className="mx-4">
-                  <span className="text-white font-gilroyBold text-lg">VS</span>
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-
-        {/* Turn Status */}
-        {currentTurn && (
-          <div className=" p-5 rounded-lg text-center bg-blue-600 bg-opacity-20 border border-blue-400">
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-3 h-3 rounded-full animate-pulse bg-blue-400"></div>
-              <span className="font-gilroyBold text-xl text-blue-400 ">
-                {currentTurnName}'s turn to flip
-              </span>
-              <div className="w-3 h-3 rounded-full animate-pulse bg-blue-400"></div>
             </div>
-          </div>
-        )}
+            
+            {/* VS indicator between contestants */}
+            {index === 0 && (
+             <div className="px-6"> <VersusIcon/></div>
+            )}
+          </React.Fragment>
+        ))}
       </div>
-    );
-  };
+    </div>
+  );
+};
 
-  // Celebration Animation Component
+  
   const CelebrationAnimation = ({ isVisible, finderName }: { isVisible: boolean, finderName?: string }) => {
     if (!isVisible) return null;
 
@@ -221,7 +230,7 @@ const cardIcons = [PickCard1, PickCard2, PickCard3];
         </div>
 
         {/* Celebration content */}
-        <StageThreeWinnerModal />
+        <StageThreeWinnerModal name={finderName as string} />
       </div>
     );
   };
@@ -270,8 +279,7 @@ const cardIcons = [PickCard1, PickCard2, PickCard3];
               setCurrentTurn(nextContestant.id);
             }
           }
-
-          setFlippingCards(prev => prev.filter(idx => idx !== card_index));
+        setFlippingCards(prev => prev.filter(idx => idx !== card_index));
           setRecentlyUpdated([card_index]);
           setTimeout(() => setRecentlyUpdated([]), 1000);
         }, 600);
@@ -384,7 +392,7 @@ const cardIcons = [PickCard1, PickCard2, PickCard3];
                     Stage 3: Showdown for pass
                   </GlowyStrokeText>
 
-                  <div className="text-white flex justify-center items-center gap-5 flex-col">
+                  <div className="text-white flex justify-center items-center  flex-col">
                     <span className="font-gilroyBold text-[#D5B9FF] text-sm">
                       Watch as contestants select business elements for their hustle
                     </span>
@@ -422,7 +430,7 @@ const cardIcons = [PickCard1, PickCard2, PickCard3];
       <div
         key={index}
         className={cn(
-          "relative pointer-events-none transition-transform h-[170px]",
+          "relative pointer-events-none transition-transform h-[140px]",
           card.revealed ? "opacity-70" : "opacity-100",
           isRecentlyUpdated ? "animate-pulse" : "",
           isRevealedPass ? "z-10 opacity-100" : ""
@@ -469,13 +477,13 @@ const cardIcons = [PickCard1, PickCard2, PickCard3];
                 <PickCardContainer
                   backgroundColor={"transparent"}
                   text={React.createElement(cardIcons[index % 3], {
-                    className: "w-[150px] h-full",
+                    className: "w-[120px] h-full",
                   })}
                   textColor={style.textColor}
                   fontFamily={style.fontFamily}
                   containerLabel=""
                   className={cn(
-                    "transition-transform w-full h-full duration-300 ease-in-out p-0",
+                    "transition-transform w-full h-full  duration-300 ease-in-out p-0",
                     isRecentlyUpdated ? "ring-2 ring-white" : "",
                     isFlipping ? "shadow-md" : "",
                     isRevealedPass
@@ -487,12 +495,17 @@ const cardIcons = [PickCard1, PickCard2, PickCard3];
                 />
               )}
             </div>
+
+
           </motion.div>
         </AnimatePresence>
       </div>
     );
   })}
 </div>
+ <div className="mt-3">
+   <Stage3Reward/>
+ </div>
 
 
 

@@ -182,7 +182,6 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
     if (!isConnected) return;
 
     const handler = (receivedMessage: any) => {
-      console.log("📡 Received MQTT message on STage 2 Question Screen:", receivedMessage);
 
       // Handle prep page event
       if (receivedMessage?.event === "game_s2_question_reveal") {
@@ -219,7 +218,7 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
         ) {
           const answersData = payload?.answers_data?.answers;
           setCurrentQuestionAnswerData(answersData);
-          setShowResultModal(true);
+         
         }
       }
 
@@ -228,7 +227,7 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
         const payload = receivedMessage.payload || {};
         const questionId = payload.question_id;
         const shouldShowModal = payload?.show_modal;
-
+ setShowResultModal(true);
         // FIXED: Compare questionId properly (convert to string if needed)
         const currentQuestionIdStr = currentQuestionIdRef?.current?.toString();
         const receivedQuestionIdStr = questionId?.toString();
@@ -319,7 +318,6 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
         refetch();
       }
       if (receivedMessage?.event === "contestant_selected_option") {
-        console.log("✅ Processing contestant_selected_option");
         const payload = receivedMessage.payload || {};
 //         contestant_id: 13
 // ​​
@@ -341,31 +339,16 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
           question_id,
         } = payload;
 
-        if (contestant_id && contestant_name && selected_option !== undefined) {
+        if (contestant_id && contestant_name) {
           // Only update options for the current question
-          if (question_id === currentQuestionId) {
+          if (Number(question_id) === Number(currentQuestionId)) {
             // Play sound effect for option selection
             playOptionSelectedSound();
 
             // ✅ CALCULATE AND RECORD THE ANSWER TIME
-            let calculatedTimestamp = 0;
-            let formattedTimestamp = "0.000";
+           
 
-            if (questionStartTime && is_selected) {
-              const answerTime = Date.now(); // Get exact time when answer was submitted
-              calculatedTimestamp = Math.min((answerTime - questionStartTime) / 1000, 10); // Calculate elapsed time in seconds, cap at 10
-              formattedTimestamp = calculatedTimestamp.toFixed(3); // Format to 3 decimal places
-
-              // Store the timestamp for this contestant
-              setContestantTimestamps(prev => ({
-                ...prev,
-                [contestant_id]: calculatedTimestamp
-              }));
-            } else if (!is_selected) {
-              // If contestant didn't select an option, set to 0
-              formattedTimestamp = "0.000";
-            }
-
+          
             // Update contestant option with their answer time
             setContestantOption((prevOpt) => {
               const updatedBids = {
@@ -375,17 +358,11 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
                   contestant_name,
                   selected_option,
                   is_selected,
-                  timestamp: formattedTimestamp, // Use the properly formatted timestamp
                   question_id,
                 },
               };
 
-              console.log(`📊 Updated contestant ${contestant_name} option:`, {
-                selected_option,
-                is_selected,
-                timestamp: formattedTimestamp,
-                calculatedTime: calculatedTimestamp
-              });
+             
 
               return updatedBids;
             });
@@ -652,20 +629,6 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
                   {remainingContestants?.slice(0, 2)?.map((contestant, index: number) => {
                     const contestantSelection = contestantOption[contestant?.id];
                     const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
-
-                    // Calculate display timestamp
-                    // let displayTimestamp = "0.000";
-
-                    // if (hasSelected && contestantSelection?.contestant_id) {
-                    //   // Contestant has answered - show their frozen timestamp
-                    //   displayTimestamp = contestantSelection.timestamp;
-                    // } else if (timerActive && questionStartTime) {
-                    //   // Timer is active and contestant hasn't answered - show live counting
-                    //   displayTimestamp = currentTimestamp.toFixed(3);
-                    // } else if (!timerActive && !hasSelected) {
-                    //   // Timer ended and contestant didn't answer
-                    //   displayTimestamp = "0.00";
-                    // }
 
                     return (
                       <div
@@ -1066,19 +1029,6 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
                     const contestantSelection = contestantOption[contestant?.id];
                     const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
 
-                    // Calculate display timestamp
-                    let displayTimestamp = "0.000";
-
-                    if (hasSelected && contestantSelection?.timestamp) {
-                      // Contestant has answered - show their frozen timestamp
-                      displayTimestamp = contestantSelection.timestamp;
-                    } else if (timerActive && questionStartTime) {
-                      // Timer is active and contestant hasn't answered - show live counting
-                      displayTimestamp = currentTimestamp.toFixed(3);
-                    } else if (!timerActive && !hasSelected) {
-                      // Timer ended and contestant didn't answer
-                      displayTimestamp = "0.000";
-                    }
 
                     return (
                       <div

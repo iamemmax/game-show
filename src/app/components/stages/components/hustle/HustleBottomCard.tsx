@@ -66,7 +66,7 @@ const HustleBottomCard = ({inline=false}:prop) => {
                 <div className="relative h-[1.3rem] shrink-0 w-[1.3rem] bg-[#bf7222] border-[0px] border-[#dba531] rounded-full overflow-hidden">
                   <Image
                     alt="User avatar"
-                    src={contestantImages[index]??""}
+                    src={contestantImages[index]??"/images/userImage.png"}
                     fill
                     className="object-cover"
                   />
