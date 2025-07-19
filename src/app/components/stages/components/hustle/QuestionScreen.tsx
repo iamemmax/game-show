@@ -874,7 +874,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
                             <div className="h-[1.2rem] w-[1.2rem]  relative">
                               <Image
                                 alt="User avatar"
-                                src={contestant?.contestant_photo_url ?? "/"}
+                                src={contestant?.contestant_photo_url ?? "/images/userImage.png"}
                                 fill
                                 className="object-cover rounded-full"
                               />

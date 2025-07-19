@@ -194,7 +194,7 @@ const ContestantCard = ({
           }`}
         >
           <Image
-            src={String(contestantInfo?.contestant_photo_url)??"/"}
+            src={String(contestantInfo?.contestant_photo_url)??"/images/userImage.png"}
             alt="User Image"
             width={isBoardRoute ? 64 : 30}
             height={isBoardRoute ? 64 : 30}
