@@ -31,6 +31,7 @@ import {
   questionVariants,
 } from "../animation/animateQuestions";
 import { formatAmount } from "@/utils/currency";
+import EliminatedModal from "@/app/shared/EliminatedModal";
 
 // Add debug log to track component imports
 
@@ -141,9 +142,9 @@ const QuestionScreen = ({ onNext }: Prop) => {
     user?.game_episode as number
   );
 
-  const { data: contestantData, refetch: refechUser } = useGetGameContestants(
-    user?.game_episode as number
-  );
+  // const { data: contestantData, refetch: refechUser } = useGetGameContestants(
+  //   user?.game_episode as number
+  // );
 
   const { mutate: handleAnswerStageOneQuestion } = useAnswerStageOneQuestion();
 
@@ -232,7 +233,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
 
     // Fallback to contestant data for initial balance
     const baseCapital = Number(
-      contestantData?.data?.find(
+      allContestants?.data?.find(
         (contestant: any) =>
           String(contestant.id) === String(user?.contestant_id)
       )?.actual_balance || 0
@@ -272,8 +273,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
 
         setCurrentQuestionIndex(questionData.question_index || 1);
         const questionId =
-          questionData?.question?.question?.question_id ||
-          payload?.question_id;
+          questionData?.question?.question?.question_id || payload?.question_id;
         if (questionId) {
           setCurrentQuestionId(questionId.toString());
         }
@@ -345,7 +345,6 @@ const QuestionScreen = ({ onNext }: Prop) => {
 
           // Refetch contestant data
           refetch();
-          refechUser();
 
           // CRITICAL FIX: Update animated capital immediately with new balance
           if (answersData && user?.contestant_id) {
@@ -406,7 +405,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
     removeMessageListener,
     user?.contestant_id,
     refetch,
-    refechUser, // Added this missing dependency
+    // Added this missing dependency
   ]);
 
   // Updated animated capital effect with better dependency management
@@ -446,7 +445,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
   }, [
     selectedAmount,
     mqttAnswerData, // This will trigger when new answer data arrives
-    contestantData,
+    allContestants,
     user?.contestant_id,
   ]); //
 
@@ -486,7 +485,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
   }, [
     selectedAmount,
     contestantBalance,
-    contestantData,
+    allContestants,
     user?.contestant_id,
     mqttAnswerData,
   ]); //
@@ -536,27 +535,27 @@ const QuestionScreen = ({ onNext }: Prop) => {
     await sendMessage(bidData);
   };
   // Updated publishOption function (around line 390)
-  const publishOption = async (option: string) => {
-    if (!user?.contestant_id || !user?.name) return;
+  // const publishOption = async (option: string) => {
+  //   if (!user?.contestant_id || !user?.name) return;
 
-    const optionData = {
-      event: "contestant_selected_option",
-      payload: {
-        contestant_id: user.contestant_id,
-        contestant_name: user.name,
-        is_selected: true,
-        selected_option: option, // Added the actual selected option
-        timestamp: new Date().toISOString(),
-        question_id: currentQuestionId,
-        game_episode: user.game_episode,
-      },
-    };
+  //   const optionData = {
+  //     event: "contestant_selected_option",
+  //     payload: {
+  //       contestant_id: user.contestant_id,
+  //       contestant_name: user.name,
+  //       is_selected: true,
+  //       selected_option: option, // Added the actual selected option
+  //       timestamp: new Date().toISOString(),
+  //       question_id: currentQuestionId,
+  //       game_episode: user.game_episode,
+  //     },
+  //   };
 
-    console.log("Publishing selected option:", optionData);
+  //   console.log("Publishing selected option:", optionData);
 
-    // Publish to MQTT for leaderboard screen to listen
-    await sendMessage(optionData);
-  };
+  //   // Publish to MQTT for leaderboard screen to listen
+  //   await sendMessage(optionData);
+  // };
 
   // Updated handleOptionSelect function (around line 410)
   const handleOptionSelect = (option: OptionKey) => {
@@ -565,7 +564,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
 
       // Publish the selected option immediately when user selects it
       const answerLetter = convertOptionToLetter(option);
-      publishOption(answerLetter);
+      // publishOption(answerLetter);
     }
   };
 
@@ -574,7 +573,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
       return;
 
     const answerLetter = convertOptionToLetter(selectedOption);
-    publishOption(answerLetter);
+    // publishOption(answerLetter);
     const formattedTimestamp = new Date().toISOString();
     const formattedGameStartTime = formatTimestamp(gameStartTime as Date);
     setIsSubmitted(true);
@@ -639,7 +638,12 @@ const QuestionScreen = ({ onNext }: Prop) => {
     setGameStartTime(new Date());
     setTimeLeft(10);
   };
-
+  const getContestantInfo = (id: number) => {
+    const allconstestant = allContestants?.data?.find(
+      (contestant) => contestant?.id === id
+    );
+    return allconstestant;
+  };
   // Early returns should come AFTER all hooks are called
   if (showPrepPage) {
     return <GetReadyScreen />;
@@ -660,36 +664,17 @@ const QuestionScreen = ({ onNext }: Prop) => {
     <>
       {/* Elimination Modal */}
       {showEliminationModal && (
-        <Dialog
-          open={showEliminationModal}
-          onOpenChange={setShowEliminationModal}
-        >
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-            <div className="bg-gradient-to-b from-[#980306] to-[#FE8E8E] p-1 rounded-xl max-w-md w-full">
-              <div className="bg-[#13051E] rounded-lg p-6 flex flex-col items-center">
-                <h2 className="text-2xl font-bold text-white mb-4">
-                  You've Been Eliminated!
-                </h2>
-                <div className="mb-4">
-                  <Trophy height={80} width={80} />
-                </div>
-                <p className="text-white text-center mb-6">
-                  Unfortunately, your journey ends here. Thank you for
-                  participating!
-                </p>
-                <Button
-                  onClick={() => {
-                    router.push("/login");
-                    setShowEliminationModal(false);
-                  }}
-                  className="bg-[#D91FFF] hover:bg-[#b01ad3] text-white"
-                >
-                  Return to Login
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Dialog>
+        <EliminatedModal
+          setShowEliminationModal={setShowEliminationModal}
+          showEliminationModal={showEliminationModal}
+          balance={Number(
+            getContestantInfo(Number(user?.contestant_id))?.wallet_balance
+          )}
+          image_url={String(
+            getContestantInfo(Number(user?.contestant_id))
+              ?.contestant_photo_url ?? "/"
+          )}
+        />
       )}
 
       <div className="grid grid-cols-[1.2fr_5fr_1fr] items-start   h-full">
@@ -874,7 +859,10 @@ const QuestionScreen = ({ onNext }: Prop) => {
                             <div className="h-[1.2rem] w-[1.2rem]  relative">
                               <Image
                                 alt="User avatar"
-                                src={contestant?.contestant_photo_url ?? "/images/userImage.png"}
+                                src={
+                                  contestant?.contestant_photo_url ??
+                                  "/images/userImage.png"
+                                }
                                 fill
                                 className="object-cover rounded-full"
                               />
@@ -997,76 +985,81 @@ const QuestionScreen = ({ onNext }: Prop) => {
                             </motion.div>
 
                             {/* Options display with animation and overlay */}
-                           <motion.div
-  variants={questionElementVariants}
-  className="relative mt-[.625rem]"
->
-  {/* Options Grid */}
-  <div
-    className={cn(
-      "grid grid-cols-2 gap-[.625rem]",
-      selectedAmount
-        ? "opacity-100"
-        : "opacity-40 pointer-events-none"
-    )}
-  >
-    {(
-      [
-        "option_a",
-        "option_b",
-        "option_c",
-        "option_d",
-      ] as OptionKey[]
-    ).map((option, index) => {
-      const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-      const currentQuestions = mqttQuestionData?.question?.question || {};
-      const showResult = isSubmitted && correctAnswer;
-      convertOptionToLetter(option);
-      const isSelected = selectedOption === option;
+                            <motion.div
+                              variants={questionElementVariants}
+                              className="relative mt-[.625rem]"
+                            >
+                              {/* Options Grid */}
+                              <div
+                                className={cn(
+                                  "grid grid-cols-2 gap-[.625rem]",
+                                  selectedAmount
+                                    ? "opacity-100"
+                                    : "opacity-40 pointer-events-none"
+                                )}
+                              >
+                                {(
+                                  [
+                                    "option_a",
+                                    "option_b",
+                                    "option_c",
+                                    "option_d",
+                                  ] as OptionKey[]
+                                ).map((option, index) => {
+                                  const optionLetter = String.fromCharCode(
+                                    65 + index
+                                  ); // A, B, C, D
+                                  const currentQuestions =
+                                    mqttQuestionData?.question?.question || {};
+                                  const showResult =
+                                    isSubmitted && correctAnswer;
+                                  convertOptionToLetter(option);
+                                  const isSelected = selectedOption === option;
 
-      return (
-        <motion.button
-          key={option}
-          custom={index}
-          variants={optionVariants}
-          initial="initial"
-          animate="animate"
-          whileHover="hover"
-          whileTap="tap"
-          onClick={() => handleOptionSelect(option)}
-          className={cn(
-            "border rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-left relative", // No transitions - instant feedback
-            // Default background/text
-            "bg-black text-white",
+                                  return (
+                                    <motion.button
+                                      key={option}
+                                      custom={index}
+                                      variants={optionVariants}
+                                      initial="initial"
+                                      animate="animate"
+                                      whileHover="hover"
+                                      whileTap="tap"
+                                      onClick={() => handleOptionSelect(option)}
+                                      className={cn(
+                                        "border rounded-[.75rem] font-bold text-base font-gilroyBold px-4 py-[.5625rem] text-left relative", // No transitions - instant feedback
+                                        // Default background/text
+                                        "bg-black text-white",
 
-            // Selected state (before result) - immediate visual feedback
-            !showResult && isSelected
-              ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
-              : "border-[#d91fff]",
+                                        // Selected state (before result) - immediate visual feedback
+                                        !showResult && isSelected
+                                          ? "bg-[#FCCE19] border-[#FCCE19] text-[#745300]"
+                                          : "border-[#d91fff]",
 
-            // Grayed out when submitted, timer ended, or no questions
-            isSubmitted ||
-              !timerActive ||
-              !mqttQuestionData?.question?.question
-              ? "opacity-70 pointer-events-none"
-              : "",
+                                        // Grayed out when submitted, timer ended, or no questions
+                                        isSubmitted ||
+                                          !timerActive ||
+                                          !mqttQuestionData?.question?.question
+                                          ? "opacity-70 pointer-events-none"
+                                          : "",
 
-            // Correct answer highlight after submission
-            mqttAnswerData &&
-              currentQuestions?.correct_option === convertOptionToLetter(option)
-              ? "!bg-[#003218] !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
-              : ""
-          )}
-        >
-          {optionLetter}:
-          <span className="ml-2">
-            {currentQuestions[option] || `...`}
-          </span>
-        </motion.button>
-      );
-    })}
-  </div>
-</motion.div>
+                                        // Correct answer highlight after submission
+                                        mqttAnswerData &&
+                                          currentQuestions?.correct_option ===
+                                            convertOptionToLetter(option)
+                                          ? "!bg-[#003218] !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
+                                          : ""
+                                      )}
+                                    >
+                                      {optionLetter}:
+                                      <span className="ml-2">
+                                        {currentQuestions[option] || `...`}
+                                      </span>
+                                    </motion.button>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
 
                             {/* Amount buttons section with animation */}
                             <motion.div

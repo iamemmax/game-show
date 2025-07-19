@@ -251,6 +251,7 @@ const HustleQuestionAnswerModal = ({
   allocatedWinningAmount,showAllocatedAMount
 }: prop) => {
   
+  
   // Helper function to convert option key to letter
   const getOptionLetter = (optionKey: string): string => {
     const optionMap: Record<string, string> = {
@@ -300,7 +301,7 @@ const HustleQuestionAnswerModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50  flex items-center w-[103.25rem] mx-6 justify-center bg-black/80">
+    <div className="fixed inset-0 z-50  mx-auto flex items-center w-[83.25rem]  justify-center bg-black/80">
       <div className="px-8">
 
       <div className="bg-[#15052B] grid grid-cols-[1fr_1.5fr]  items-start gap-[2.1875rem] rounded-[30px] text-white w-full border border-[#7E3CE0] p-[1.875rem]">

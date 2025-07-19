@@ -22,7 +22,7 @@ import StageThreeWinnerModal from "../StageThreeWinnerModal";
 import PickCard1 from "@/app/icons/cards/PickCard1";
 import PickCard2 from "@/app/icons/cards/PickCard2";
 import PickCard3 from "@/app/icons/cards/PickCard3";
-import PickCard4 from "@/app/icons/cards/PickCard4";
+// import PickCard4 from "@/app/icons/cards/PickCard4";
 import DudCards from "@/app/icons/cards/DudCard";
 import PassCard from "@/app/icons/cards/PassCard";
 import EliminatedModal from "@/app/shared/EliminatedModal";
@@ -144,7 +144,7 @@ useEffect(() => {
     )
     .map((contestant) => ({
       id: contestant.id,
-      name: contestant?.name || ` ${contestant.name}`
+      name: contestant?.name || `Contestant ${contestant.id}`
     }));
   
   setRemainingContestants(remaining);
@@ -280,71 +280,73 @@ const getContestantInfo = (id: number) => {
   };
 
   // MQTT message handler
-  useEffect(() => {
-    if (!isConnected) return;
-    
-    const handleMQTTMessage = (receivedMessage: any) => {
-      if (receivedMessage?.event === "stage3_card_selection") {
-        const { contestant_id, card_index, card_type: originalCardType, contestant_name } = receivedMessage.payload;
+useEffect(() => {
+  if (!isConnected) return;
+  
+  const handleMQTTMessage = (receivedMessage: any) => {
+    if (receivedMessage?.event === "stage3_card_selection") {
+      const { contestant_id, card_index, card_type: originalCardType, contestant_name } = receivedMessage.payload;
+      
+      if (contestant_id === user?.contestant_id) return;
+              
+      setFlippingCards(prev => [...prev, card_index]);
+      
+      const revealedCount = cards.filter(card => card.revealed).length;
+      let card_type = originalCardType;
+      
+      if (originalCardType === CARD_TYPES.PASS && revealedCount < MIN_CARDS_BEFORE_PASS - 1) {
+        card_type = CARD_TYPES.DUD;
+      }
+      
+      setTimeout(() => {
+        setCards(prevCards => {
+          const newCards = [...prevCards];
+          newCards[card_index] = {
+            ...newCards[card_index],
+            revealed: true,
+            type: card_type,
+            contestant_id: contestant_id,
+            style: card_type === CARD_TYPES.PASS ? PASS_CARD_STYLE : newCards[card_index].style
+          };
+          return newCards;
+        });
         
-        if (contestant_id === user?.contestant_id) return;
-                
-        setFlippingCards(prev => [...prev, card_index]);
-        
-        const revealedCount = cards.filter(card => card.revealed).length;
-        let card_type = originalCardType;
-        
-        if (originalCardType === CARD_TYPES.PASS && revealedCount < MIN_CARDS_BEFORE_PASS - 1) {
-          card_type = CARD_TYPES.DUD;
+        if (card_type === CARD_TYPES.PASS) {
+          setPassCardIndex(card_index);
         }
         
-        setTimeout(() => {
-          setCards(prevCards => {
-            const newCards = [...prevCards];
-            newCards[card_index] = {
-              ...newCards[card_index],
-              revealed: true,
-              type: card_type,
-              contestant_id: contestant_id,
-              style: card_type === CARD_TYPES.PASS ? PASS_CARD_STYLE : newCards[card_index].style
-            };
-            return newCards;
-          });
+        setFlippingCards(prev => prev.filter(idx => idx !== card_index));
+        setRecentlyUpdated([card_index]);
+        setTimeout(() => setRecentlyUpdated([]), 1000);
+        
+        if (card_type === CARD_TYPES.PASS) {
+          const finderName = contestant_name || getContestantName(contestant_id);
+          setPassFinderName(finderName);
+          setPassFinderIsCurrentUser(false);
           
-          if (card_type === CARD_TYPES.PASS) {
-            setPassCardIndex(card_index);
-          }
+          // Only trigger refetch without processing the response
+          refetch();
           
-          setFlippingCards(prev => prev.filter(idx => idx !== card_index));
-          setRecentlyUpdated([card_index]);
-          setTimeout(() => setRecentlyUpdated([]), 1000);
-          
-          if (card_type === CARD_TYPES.PASS) {
-            // Use the helper function to get the correct name
-            const finderName = contestant_name || getContestantName(contestant_id);
-            setPassFinderName(finderName);
-            setPassFinderIsCurrentUser(false);
-            refetch()
-            setTimeout(() => setPassFound(true), 300);
-          } else {
-            setCurrentTurn(user?.contestant_id || null);
-            setIsMyTurn(true);
-             refetch()
-          }
-        }, 600);
-      }
-    };
-    
-     if (isConnected) {
-      addMessageListener(handleMQTTMessage);
+          setTimeout(() => setPassFound(true), 300);
+        } else {
+          setCurrentTurn(user?.contestant_id || null);
+          setIsMyTurn(true);
+          // Trigger refetch for DUD cards too to keep data synced
+          refetch();
+        }
+      }, 600);
     }
+  };
+  
+  if (isConnected) {
+    addMessageListener(handleMQTTMessage);
+  }
 
-    return () => {
-      removeMessageListener(handleMQTTMessage);
-    };
+  return () => {
+    removeMessageListener(handleMQTTMessage);
+  };
 
-
-  }, [isConnected, addMessageListener, removeMessageListener, cards, user?.contestant_id, contestantNames, contestantsData?.data]);
+}, [isConnected, addMessageListener, removeMessageListener, cards, user?.contestant_id, contestantNames, contestantsData?.data, refetch]);
 
   // Send card selection
 
@@ -384,62 +386,68 @@ const getContestantInfo = (id: number) => {
   };
   
   // Handle card click
-  const handleCardClick = (index: number) => {
-    if (cards[index].revealed || passFound || isSending || flippingCards.length > 0 || !isMyTurn) {
-      return;
-    }
-    
-    setFlippingCards([index]);
-    const newAttempts = attempts + 1;
-    setAttempts(newAttempts);
-    
-    const originalCardType = cards[index].originalType;
-    const revealedCount = cards.filter(card => card.revealed).length;
-    const isLastCard = revealedCount === 23;
-    
-    let revealedType = originalCardType;
-    
-    if (originalCardType === CARD_TYPES.PASS) {
-      if (revealedCount >= MIN_CARDS_BEFORE_PASS - 1 || isLastCard) {
-        revealedType = CARD_TYPES.PASS;
-      } else {
-        revealedType = CARD_TYPES.DUD;
-      }
-    } else if (isLastCard) {
+ const handleCardClick = (index: number) => {
+  if (cards[index].revealed || passFound || isSending || flippingCards?.length > 0 || !isMyTurn) {
+    return;
+  }
+  
+  setFlippingCards([index]);
+  const newAttempts = attempts + 1;
+  setAttempts(newAttempts);
+  
+  const originalCardType = cards[index].originalType;
+  const revealedCount = cards.filter(card => card.revealed).length;
+  const isLastCard = revealedCount === 23;
+  
+  let revealedType = originalCardType;
+  
+  if (originalCardType === CARD_TYPES.PASS) {
+    if (revealedCount >= MIN_CARDS_BEFORE_PASS - 1 || isLastCard) {
       revealedType = CARD_TYPES.PASS;
+    } else {
+      revealedType = CARD_TYPES.DUD;
+    }
+  } else if (isLastCard) {
+    revealedType = CARD_TYPES.PASS;
+  }
+  
+  setTimeout(() => {
+    const newCards = [...cards];
+    newCards[index] = {
+      ...newCards[index],
+      revealed: true,
+      type: revealedType,
+      contestant_id: user?.contestant_id || null,
+      style: revealedType === CARD_TYPES.PASS ? PASS_CARD_STYLE : newCards[index].style
+    };
+    setCards(newCards);
+    
+    if (revealedType === CARD_TYPES.PASS) {
+      setPassCardIndex(index);
     }
     
-    setTimeout(() => {
-      const newCards = [...cards];
-      newCards[index] = {
-        ...newCards[index],
-        revealed: true,
-        type: revealedType,
-        contestant_id: user?.contestant_id || null,
-        style: revealedType === CARD_TYPES.PASS ? PASS_CARD_STYLE : newCards[index].style
-      };
-      setCards(newCards);
+    sendCardSelection(index, revealedType);
+    setFlippingCards([]);
+    
+    if (revealedType === CARD_TYPES.PASS) {
+      setPassFinderName(user?.name || "You");
+      setPassFinderIsCurrentUser(true);
+      setPassRevealed(true);
       
-      if (revealedType === CARD_TYPES.PASS) {
-        setPassCardIndex(index);
-      }
+      // Only trigger refetch without processing response
+      refetch();
       
-      sendCardSelection(index, revealedType);
-      setFlippingCards([]);
-      
-      if (revealedType === CARD_TYPES.PASS) {
-        setPassFinderName(user?.name || "You");
-        setPassFinderIsCurrentUser(true);
-        setPassRevealed(true);
-        setTimeout(() => setPassFound(true), 300);
-      } else {
-        setCurrentTurn(otherContestantId);
-        setIsMyTurn(false);
-      }
-      refetch()
-    }, 600);
-  };
+      setTimeout(() => setPassFound(true), 300);
+    } else {
+      setCurrentTurn(otherContestantId);
+      setIsMyTurn(false);
+      // Trigger refetch for DUD cards too to keep data synced
+      refetch();
+    }
+  }, 600);
+};
 
+// Re
   
 
   // Show elimination modal if user is eliminated
@@ -447,7 +455,7 @@ const getContestantInfo = (id: number) => {
     return <EliminatedModal
       setShowEliminationModal={()=>setIsEliminated(true)} 
       showEliminationModal={true}
-      balance={Number(getContestantInfo(Number(user?.contestant_id))?.wallet_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ??"/")}/>
+      balance={Number(getContestantInfo(Number(user?.contestant_id))?.actual_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ??"/")}/>
       
       ;
   }
