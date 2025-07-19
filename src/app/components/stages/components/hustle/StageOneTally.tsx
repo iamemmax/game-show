@@ -182,11 +182,20 @@ const StageOneTally = ({
   };
 
    {showEliminationModal && (
-      <EliminatedModal
-      setShowEliminationModal={setShowEliminationModal} 
-      showEliminationModal={showEliminationModal}
-      balance={Number(getContestantInfo(Number(user?.contestant_id))?.actual_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ?? "/")}/>
-      )}
+     <div className="fixed inset-0 bg-black flex justify-center items-center h-screen w-full z-[9999999999]">
+        <EliminatedModal
+      setShowEliminationModal={()=>setShowEliminationModal(true)} 
+      showEliminationModal={true}
+      balance={Number(getContestantInfo(Number(user?.contestant_id))?.actual_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ??"/")}/>
+      
+      </div>
+      // <EliminatedModal
+      // setShowEliminationModal={setShowEliminationModal} 
+      // showEliminationModal={showEliminationModal}
+      // balance={Number(getContestantInfo(Number(user?.contestant_id))?.actual_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ?? "/")}/>
+      
+    
+    )}
 
   return (
     <div key={`stage-one-tally-${episodeId || 'default'}`}>

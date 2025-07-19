@@ -97,28 +97,30 @@ const cardIcons = [PickCard1, PickCard2, PickCard3];
 
   // Helper function to get contestant name by ID
  // Helper function to get contestant name by ID
-const getContestantName = (contestantId: number): string => {
+const getContestantName = (contestantId: number): { name: string; balance?: string } => {
   if (contestantId === user?.contestant_id) {
-    return user?.name || "YOU";
+    return { name: user?.name || "YOU", balance:String(0) };
   }
   
   // First try to find in contestantsData (most up-to-date)
   if (contestantsData?.data) {
     const contestant = contestantsData.data.find((c: any) => c.id === contestantId);
     if (contestant?.name) {
-      return contestant.name;
+      return {
+        name: contestant.name,
+        balance: contestant?.actual_balance
+      };
     }
   }
   
   // Then try the contestantNames map (cached data)
   if (contestantNames[contestantId]) {
-    return contestantNames[contestantId];
+    return { name: contestantNames[contestantId], balance: undefined };
   }
   
   // Only use fallback if no name is found anywhere
-  return `Contestant  ${contestantId}`;
+  return { name: `Contestant ${contestantId}`, balance: undefined };
 };
-
 // Check elimination status and set remaining contestants
 useEffect(() => {
   if (!contestantsData?.data || !user?.contestant_id) return;
@@ -228,50 +230,33 @@ const getContestantInfo = (id: number) => {
 
 
   // Celebration Animation Component
-  const CelebrationAnimation = ({ isVisible, finderName }: { isVisible: boolean, finderName?: string }) => {
+  const CelebrationAnimation = ({ isVisible, finderName, }: { isVisible: boolean, finderBalance:string, finderName?: string }) => {
     if (!isVisible) return null;
 
     return (
-      <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
+      <div className="">
+   {passFinderIsCurrentUser&&   <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
        
         
         {/* Celebration content */}
-    {passFinderIsCurrentUser && <StageThreeWinnerModal name={passFinderName}/>
+    {passFinderIsCurrentUser && <StageThreeWinnerModal name={passFinderName} balance={String(getContestantInfo(Number(user?.contestant_id))?.actual_balance ??0)} imgUrl={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ??"/")}/>
 }
           
 
 
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-          <div className="relative">
-            <motion.div
-              className="w-48 h-48 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 flex items-center justify-center"
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <span className="text-7xl">🎉</span>
-              <span className="text-7xl absolute">🙌</span>
-            </motion.div>
-          </div>
-          
-          {!passFinderIsCurrentUser&&<div className="mt-8 text-center">
+        
+      </div>}
+      
+          {!passFinderIsCurrentUser&&
+          <div className="fixed inset-0 bg-black flex justify-center items-center h-screen w-full z-[9999999999]">
+
+            <EliminatedModal
+           setShowEliminationModal={()=>setIsEliminated(true)} 
+           showEliminationModal={true}
+           balance={Number(getContestantInfo(Number(user?.contestant_id))?.actual_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ??"/")}/>
            
-            
-            <motion.div
-              className="bg-black bg-opacity-70 p-4 rounded-lg mt-4 border-2 border-yellow-400"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 1, duration: 0.5 }}
-            >
-              <p className="text-white text-xl mb-2">Winner:</p>
-              <p className="text-yellow-400 text-3xl font-gilroyBold">
-                { passFinderName}
-              </p>
-              <p className="text-white text-lg mt-4">
-                {`${passFinderName} found the PASS card!`}
-              </p>
-            </motion.div>
-          </div>}
-        </div>
+          </div>
+          }
       </div>
     );
   };
@@ -317,16 +302,21 @@ useEffect(() => {
         setRecentlyUpdated([card_index]);
         setTimeout(() => setRecentlyUpdated([]), 1000);
         
-        if (card_type === CARD_TYPES.PASS) {
-          const finderName = contestant_name || getContestantName(contestant_id);
-          setPassFinderName(finderName);
-          setPassFinderIsCurrentUser(false);
-          
-          // Only trigger refetch without processing the response
-          refetch();
-          
-          setTimeout(() => setPassFound(true), 300);
-        } else {
+       if (card_type === CARD_TYPES.PASS) {
+      const finderName = contestant_name || getContestantName(contestant_id)?.name;
+      const finderBalance = getContestantName(contestant_id)?.balance;
+      
+      // WINNER DATA COLLECTION
+      setPassFinderName(finderName);
+      setPassFinderBal(finderBalance as string);
+      setPassFinderIsCurrentUser(false);
+      setPassCardIndex(card_index);
+      
+      // Refetch to get updated contestant data
+      refetch();
+      
+      setTimeout(() => setPassFound(true), 300);
+    } else {
           setCurrentTurn(user?.contestant_id || null);
           setIsMyTurn(true);
           // Trigger refetch for DUD cards too to keep data synced
@@ -450,12 +440,16 @@ useEffect(() => {
 
   // Show elimination modal if user is eliminated
   if (isEliminated) {
-    return <EliminatedModal
+    return(
+     <div className="fixed inset-0 bg-black flex justify-center items-center h-screen w-full z-[9999999999]">
+        <EliminatedModal
       setShowEliminationModal={()=>setIsEliminated(true)} 
       showEliminationModal={true}
       balance={Number(getContestantInfo(Number(user?.contestant_id))?.actual_balance)} image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ??"/")}/>
       
-      ;
+      </div>
+
+    )
   }
 
 
@@ -560,7 +554,7 @@ useEffect(() => {
                     // Use the helper function to get the correct display name
                     let displayName = "";
                     if (card.revealed && card.contestant_id) {
-                      displayName = getContestantName(card.contestant_id);
+                      displayName = getContestantName(card.contestant_id)?.name;
                     }
                     
                     return (
@@ -665,6 +659,7 @@ useEffect(() => {
       <CelebrationAnimation 
         isVisible={passFound} 
         finderName={passFinderIsCurrentUser ? undefined : passFinderName} 
+        finderBalance={String(getContestantInfo(Number(user?.contestant_id))?.actual_balance)}
       />
       
       {/* Error Modal */}
