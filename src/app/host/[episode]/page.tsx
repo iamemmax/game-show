@@ -861,6 +861,8 @@ export default function HostPage() {
                                     sendGameMessage={sendGameMessage}
                                     currentStageStep={gameState.currentStageStep}
                                     lastAction={currentUniversalStep}
+                                    contestantsData={contestantsData}
+                                    isLoadingContestants={isLoadingContestants}
                                 />
                             )}
 

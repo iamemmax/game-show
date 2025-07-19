@@ -12,6 +12,7 @@ import {
 } from "../misc/api"
 import { GlowyStrokeText } from "@/components/core/GlowyText"
 import { FlipCountdown } from "@/components/core"
+import { ContestantsResponse } from "@/app/admin/misc/api"
 
 interface Stage1QuestionsProps {
   gameId: string | number
@@ -20,6 +21,8 @@ interface Stage1QuestionsProps {
   sendGameMessage: (eventCode: string, data?: any) => Promise<void>
   currentStageStep: string
   lastAction?: string
+  contestantsData: ContestantsResponse
+  isLoadingContestants: boolean
 }
 
 export default function Stage1Questions({
@@ -29,6 +32,8 @@ export default function Stage1Questions({
   sendGameMessage,
   currentStageStep,
   lastAction,
+  contestantsData,
+  isLoadingContestants
 }: Stage1QuestionsProps) {
   const [loading, setLoading] = useState(false)
   const [currentQuestionData, setCurrentQuestionData] = useState<IGetHustleQuestionAPIResponse | null>(null)
@@ -134,11 +139,13 @@ export default function Stage1Questions({
           sendGameMessage(`game_s1_timer_end_${currentQuestionData.data.question_index}`, {
             question_id: questionId,
           })
-          sendGameMessage(`game_s1_question_bids_reveal`, {
-            answers_data: data.data,
-            question_index: currentQuestionData.data.question_index,
-            show_modal: true,
-          })
+          if (contestantsData.game.reveal_step_count == "DOUBLE") {
+            sendGameMessage(`game_s1_question_bids_reveal`, {
+              answers_data: data.data,
+              question_index: currentQuestionData.data.question_index,
+              show_modal: true,
+            })
+          }
           setSentAnswers((prev) => new Set(prev).add(questionId))
           setTimerActive(false)
           onQuestionComplete(currentQuestionData.data.question.question.question_id)

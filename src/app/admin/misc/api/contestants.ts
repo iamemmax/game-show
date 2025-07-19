@@ -15,7 +15,7 @@ interface Contestant {
   actual_balance: string;
   book_balance: string;
   wallet_balance: string;
-  contestant_photo_url:string | null
+  contestant_photo_url: string | null
 }
 
 interface GameInfo {
@@ -23,6 +23,7 @@ interface GameInfo {
   game_nick: string
   status: string
   stage: string
+  reveal_step_count: "SINGLE" | "DOUBLE"
 }
 
 export interface ContestantsResponse {
@@ -37,7 +38,7 @@ interface AssignContestantRequest {
   constestants_attr: string
   name: string
   phone_number: string;
-  contestant_photo:any
+  contestant_photo: any
 }
 
 interface AssignContestantResponse {
@@ -61,22 +62,22 @@ export const useGetGameContestants = (gameId: number) =>
     enabled: !!gameId,
     staleTime: 0, // Consider data stale immediately
     cacheTime: 0, // Don't cache the data
-   
+
   })
 
 // Assign a contestant
 export const assignContestant = async (data: AssignContestantRequest) => {
   const formData = new FormData()
   console.log(data);
-  
+
   formData.append("name", data?.name)
   formData.append("constestants_attr", data?.constestants_attr)
   formData.append("game_episode", String(data?.game_episode))
   formData.append("phone_number", data?.phone_number)
   formData.append("contestant_photo", data?.contestant_photo)
 
-  const response = await tokenlessAxios.post("api/accounts/assign_contestants/", formData,{
-    headers:{
+  const response = await tokenlessAxios.post("api/accounts/assign_contestants/", formData, {
+    headers: {
       "Content-Type": "multipart/form-data",
     }
   })
@@ -89,14 +90,14 @@ export const useAssignContestant = () =>
   })
 
 
-  export interface CreditDebitContestantRequest {
+export interface CreditDebitContestantRequest {
   question_id: number | string;
   giver_contestant_ids: (number | string)[];
   credit_source: "gameshow_float" | "";
 }
 export const creditDebitContestant = async (data: CreditDebitContestantRequest) => {
   const response = await tokenlessAxios.post("api/game/debit_for_proof_hustle", data)
-  return response?.data 
+  return response?.data
 }
 
 export const useCreditDebitContestant = () =>
@@ -105,9 +106,9 @@ export const useCreditDebitContestant = () =>
   })
 
 
-export const hustleTimeELapse = async (data: {game_episode?: number | string}) => {
+export const hustleTimeELapse = async (data: { game_episode?: number | string }) => {
   const response = await tokenlessAxios.post("api/admin-controller/hustle_pick_time_elapsed/", data)
-  return response?.data 
+  return response?.data
 }
 
 export const useHandleHustlePickTimeElapse = () =>
