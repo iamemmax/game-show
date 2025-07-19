@@ -40,7 +40,7 @@ const Stage3CardSelection = () => {
     errorModalMessage,
   } = useErrorModalState();
   
-  const MIN_CARDS_BEFORE_PASS = 10;
+  const MIN_CARDS_BEFORE_PASS = 12;
 
   const CARD_TYPES = {
     DUD: "DUD",
@@ -80,6 +80,7 @@ const Stage3CardSelection = () => {
   const [flippingCards, setFlippingCards] = useState<number[]>([]);
   const [contestantNames, setContestantNames] = useState<Record<number, string>>({});
   const [passFinderName, setPassFinderName] = useState<string>("");
+  const [passFinderBal, setPassFinderBal] = useState<string>("");
   const [passFinderIsCurrentUser, setPassFinderIsCurrentUser] = useState(false);
   const [passCardIndex, setPassCardIndex] = useState<number>(-1);
   const [currentTurn, setCurrentTurn] = useState<number | null>(null);
@@ -91,10 +92,6 @@ const Stage3CardSelection = () => {
 const cardIcons = [PickCard1, PickCard2, PickCard3];
 
 
-  const getUserName = (id:number)=>{
-  const contestn = contestantsData?.data?.find((x)=>x?.id === Number(id))
-  return contestn?.name
-}
 
 
 
@@ -239,7 +236,7 @@ const getContestantInfo = (id: number) => {
        
         
         {/* Celebration content */}
-    {passFinderIsCurrentUser && <StageThreeWinnerModal/>
+    {passFinderIsCurrentUser && <StageThreeWinnerModal name={passFinderName}/>
 }
           
 
@@ -313,6 +310,7 @@ useEffect(() => {
         
         if (card_type === CARD_TYPES.PASS) {
           setPassCardIndex(card_index);
+           refetch();
         }
         
         setFlippingCards(prev => prev.filter(idx => idx !== card_index));

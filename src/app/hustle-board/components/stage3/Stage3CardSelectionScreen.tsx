@@ -128,55 +128,7 @@ const cardIcons = [PickCard1, PickCard2, PickCard3];
     }
   }, [currentTurn, contestantNames, contestantsData?.data]);
 
-  // const TurnIndicator = () => {
-  //   if (passFound || remainingContestants.length !== 2) return null;
 
-  //   return (
-  //     <div className="mb-4 flex items-center gap-4">
-  //       <div className="flex items-center justify-between bg-[#13051E] border-2 border-[#D91FFF] rounded-lg p-3">
-  //         {/* Contestants */}
-  //         {remainingContestants?.map((contestant, index) => (
-  //           <React.Fragment key={contestant.id}>
-  //             <div className={cn(
-  //               "flex items-center px-4 py-2 rounded border-2 min-w-[120px] justify-center",
-  //               currentTurn === contestant.id
-  //                 ? "bg-blue-600 border-blue-400 text-white"
-  //                 : "bg-gray-700 border-gray-500 text-gray-300"
-  //             )}>
-  //               <span className="font-gilroyBold text-sm uppercase tracking-wide">
-  //                 {contestant.name}
-  //               </span>
-  //             </div>
-  //             {index === 0 && (
-  //               <div className="mx-4">
-  //                 <span className="text-white font-gilroyBold text-lg">VS</span>
-  //               </div>
-  //             )}
-  //           </React.Fragment>
-  //         ))}
-  //       </div>
-
-  //       {/* Turn Status */}
-  //       {currentTurn && (
-  //         <div className=" p-5 rounded-lg text-center bg-blue-600 bg-opacity-20 border border-blue-400">
-  //           <div className="flex items-center justify-center gap-2">
-  //             <div className="w-3 h-3 rounded-full animate-pulse bg-blue-400"></div>
-  //             <span className="font-gilroyBold text-xl text-blue-400 ">
-  //               {currentTurnName}'s turn to flip
-  //             </span>
-  //             <div className="w-3 h-3 rounded-full animate-pulse bg-blue-400"></div>
-  //           </div>
-  //         </div>
-  //       )}
-  //     </div>
-  //   );
-  // };
-
-
-
-  // Celebration Animation Component
-  
-  
 
 const TurnIndicator = () => {
    if (passFound || remainingContestants.length !== 2) return null;
@@ -278,7 +230,7 @@ const TurnIndicator = () => {
         </div>
 
         {/* Celebration content */}
-        <StageThreeWinnerModal />
+        <StageThreeWinnerModal name={finderName as string} />
       </div>
     );
   };

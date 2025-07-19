@@ -477,10 +477,10 @@ const Stage1 = ({ onNext }: Props) => {
                       //     <div className="flex items-center justify-center bg-gradient-to-r from-green-500 to-green-600 border-[2px] border-[#035D2E] rounded-xl px-3 py-2 shadow-md">
                       //       <span
                       //         className="text-[16px] font-extrabold font-verdana text-white"
-                      //         style={{
-                      //           WebkitTextStroke: "1px #035D2E",
-                      //           textShadow: "0px 1px 2px rgba(3, 93, 46, 0.5)"
-                      //         }}
+                              // style={{
+                              //   WebkitTextStroke: "1px #035D2E",
+                              //   textShadow: "0px 1px 2px rgba(3, 93, 46, 0.5)"
+                              // }}
                       //       >
                       //         Start Timer
                       //       </span>
