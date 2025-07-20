@@ -52,4 +52,9 @@ export interface ContestantDetails {
   contestant_id: number;
   contestant_attr: string;
   contestant_photo_url:string
+   actual_balance: string;
 }
+
+
+
+

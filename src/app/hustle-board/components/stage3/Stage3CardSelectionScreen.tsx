@@ -68,6 +68,7 @@ const Stage3CardSelectionScreens = ({ onNext }: prop) => {
   const [flippingCards, setFlippingCards] = useState<number[]>([]);
   const [contestantNames, setContestantNames] = useState<Record<number, string>>({});
   const [passFinderName, setPassFinderName] = useState<string>("");
+  const [passFinderId, setPassFinderId] = useState<string>("");
   const [passCardIndex, setPassCardIndex] = useState<number>(-1);
   const [currentTurn, setCurrentTurn] = useState<number | null>(null);
   const [currentTurnName, setCurrentTurnName] = useState<string>("");
@@ -92,6 +93,12 @@ const cardIcons = [PickCard1, PickCard2, PickCard3];
 
     // Only use fallback if no name is found anywhere
     return `Contestant ${contestantId}`;
+  };
+  const getContestantInfo = (id: number) => {
+    const allconstestant = contestantsData?.data?.find(
+      (contestant) => contestant.id === id
+    );
+    return allconstestant;
   };
 
   // Set remaining contestants and contestant names
@@ -230,7 +237,8 @@ const TurnIndicator = () => {
         </div>
 
         {/* Celebration content */}
-        <StageThreeWinnerModal name={finderName as string} />
+      <StageThreeWinnerModal name={passFinderName} balance={String(getContestantInfo(Number(passFinderId))?.actual_balance ??0)} imgUrl={String(getContestantInfo(Number(passFinderId))?.contestant_photo_url ??"/")}/>
+     
       </div>
     );
   };
@@ -269,7 +277,9 @@ const TurnIndicator = () => {
             setPassCardIndex(card_index);
 
             const finderName = contestant_name || getContestantName(contestant_id);
+            const finderId = contestant_id || getContestantName(contestant_id);
             setPassFinderName(finderName);
+            setPassFinderId(finderId);
             setTimeout(() => setPassFound(true), 300);
             refetch()
           } else {
