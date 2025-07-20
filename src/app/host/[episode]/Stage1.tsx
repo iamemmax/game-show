@@ -139,13 +139,11 @@ export default function Stage1Questions({
           sendGameMessage(`game_s1_timer_end_${currentQuestionData.data.question_index}`, {
             question_id: questionId,
           })
-          if (contestantsData.game.reveal_step_count == "DOUBLE") {
-            sendGameMessage(`game_s1_question_bids_reveal`, {
-              answers_data: data.data,
-              question_index: currentQuestionData.data.question_index,
-              show_modal: true,
-            })
-          }
+          sendGameMessage(`game_s1_question_bids_reveal`, {
+            answers_data: data.data,
+            question_index: currentQuestionData.data.question_index,
+            show_modal: true,
+          })
           setSentAnswers((prev) => new Set(prev).add(questionId))
           setTimerActive(false)
           onQuestionComplete(currentQuestionData.data.question.question.question_id)

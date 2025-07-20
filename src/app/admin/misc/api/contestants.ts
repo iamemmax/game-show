@@ -16,6 +16,7 @@ interface Contestant {
   book_balance: string;
   wallet_balance: string;
   contestant_photo_url: string | null
+  
 }
 
 interface GameInfo {
