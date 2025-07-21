@@ -181,6 +181,13 @@ export default function HostPage() {
                 }))
                 setActiveStage("stage3")
                 break
+            case UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStage: "STAGE_THREE",
+                    currentStageStep: "dud_or_pass_picks_start",
+                }))
+                break
             case UNIVERSAL_GAME_STEPS.STAGE4_INIT:
                 setGameState((prev) => ({
                     ...prev,

@@ -296,6 +296,13 @@ const ContestantHomePage = () => {
           currentStageStep: "init",
         }))
         break
+      case UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START:
+        setGameState((prev) => ({
+          ...prev,
+          currentStage: "STAGE_THREE",
+          currentStageStep: "dud_or_pass_picks_start",
+        }))
+        break
       case UNIVERSAL_GAME_STEPS.STAGE4_INIT:
         setGameState((prev) => ({
           ...prev,
@@ -480,7 +487,7 @@ const ContestantHomePage = () => {
               }
               {
                 (
-                  gameState.currentStageStep === "game_s3_start"
+                  gameState.currentStageStep === "dud_or_pass_picks_start"
                 ) && (
                   <motion.div key={gameState.currentStageStep} className="h-full" {...motionProps}>
                     <Stage3CardSelectionScreens />
