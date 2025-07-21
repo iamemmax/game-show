@@ -63,7 +63,7 @@ export default function RootLayout({
                 <ProtectedRouteGuard>
                   <Suspense fallback={<></>}>
                   
-                    <FullscreenWrapper />
+                    {/* <FullscreenWrapper /> */}
                     <Wrapper>{children}</Wrapper>
                   </Suspense>
                 </ProtectedRouteGuard>

@@ -157,7 +157,6 @@ export function GameSynchroniser({
     `/game-sync/${gameId}`, // Subscribe to the specific game-sync topic
     useCallback(
       (message: MQTTMessage) => {
-        console.log(message, participantId + " " + "GameSynchroniser received message")
         switch (message.event) {
           case "game_start":
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_INIT)

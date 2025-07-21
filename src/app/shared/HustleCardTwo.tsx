@@ -54,7 +54,7 @@ const HustleCardTwo = ({
       />
 
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all duration-300 z-10"></div>
+      <div className="absolute inset-0 bg-black/50 group-hover:bg-black/0 transition-all duration-300 z-10"></div>
 
       {/* Content layer (above pattern and overlay) */}
       <div className="absolute inset-0 flex w-full flex-col justify-between z-20 p-3">

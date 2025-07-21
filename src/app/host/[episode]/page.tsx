@@ -13,6 +13,7 @@ import Stage2Questions from "./Stage2"
 import Stage4 from "./Stage4"
 import { UNIVERSAL_GAME_STEPS, UniversalGameStep } from "@/constants"
 import { GameSynchroniser } from "@/components/gameplay/Heartbeat"
+import { LastStepStorage } from "@/lib/lastStep"
 
 export default function HostPage() {
     const params = useParams()
@@ -66,7 +67,7 @@ export default function HostPage() {
         return () => {
             window.removeEventListener("keydown", handleKeyDown)
         }
-    }, []) // Empty dependency array means this runs once on mount and cleans up on unmount
+    }, [])
 
     // Update game state based on universal step
     const updateGameStateFromUniversalStep = (step: UniversalGameStep) => {
@@ -147,7 +148,7 @@ export default function HostPage() {
             case UNIVERSAL_GAME_STEPS.STAGE1_RESULTS:
                 setGameState((prev) => ({
                     ...prev,
-                    currentStageStep: "results",
+                    currentStageStep: "init",
                 }))
                 break
             case UNIVERSAL_GAME_STEPS.STAGE2_INIT:
@@ -180,6 +181,13 @@ export default function HostPage() {
                 }))
                 setActiveStage("stage3")
                 break
+            case UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStage: "STAGE_THREE",
+                    currentStageStep: "dud_or_pass_picks_start",
+                }))
+                break
             case UNIVERSAL_GAME_STEPS.STAGE4_INIT:
                 setGameState((prev) => ({
                     ...prev,
@@ -196,7 +204,8 @@ export default function HostPage() {
     // Initialize game data when contestants data is loaded
     useEffect(() => {
         if (!isLoadingContestants && contestantsData) {
-            console.log(contestantsData.game.stage, "game stage in contestantsData")
+            const savedStep = LastStepStorage.getLastStep();
+            console.log("Saved Step:", savedStep)
             setGameState((prevState) => ({
                 ...prevState,
                 currentStage: contestantsData.game.stage || "STAGE_ONE",
@@ -204,27 +213,29 @@ export default function HostPage() {
                 contestants: contestantsData.data,
             }))
 
-            // Set currentUniversalStep based on fetched data, or default to GAME_SETUP
-            const initialUniversalStep = UNIVERSAL_GAME_STEPS.GAME_SETUP
-            
+
             // Set active tab based on current stage
             if (contestantsData.game.stage?.includes("STAGE_ONE")) {
-                setActiveStage("stage1")
-                setCurrentUniversalStep(initialUniversalStep) 
-                updateGameStateFromUniversalStep(initialUniversalStep)
+                if (contestantsData.game.status == "IN_ACTIVE") {
+                    setGameState((prevState) => ({
+                        ...prevState,
+                        currentStageStep: "start",
+                    }))
+                    setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP)
+                }
+                else {
+                    setCurrentUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE1_INIT)
+                    updateGameStateFromUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE1_INIT)
+                }
             } else if (contestantsData.game.stage?.includes("STAGE_TWO")) {
-                setActiveStage("stage2")
-                setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_INIT)
-                updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_INIT)
-
+                setCurrentUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE2_INIT)
+                updateGameStateFromUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE2_INIT)
             } else if (contestantsData.game.stage?.includes("STAGE_THREE")) {
-                setActiveStage("stage3")
-                setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_INIT)
-                updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_INIT)
+                setCurrentUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE3_INIT)
+                updateGameStateFromUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE3_INIT)
             } else if (contestantsData.game.stage?.includes("STAGE_FOUR")) {
-                setActiveStage("stage4")
-                setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
-                updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
+                setCurrentUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE4_INIT)
+                updateGameStateFromUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE4_INIT)
             }
         }
     }, [contestantsData, isLoadingContestants])
@@ -257,9 +268,9 @@ export default function HostPage() {
                         timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
                     },
                 ])
-              
+
                 sendMessage(message)
-            
+
                 // Update local game state and universal step based on action
                 updateLocalStateAfterAction(eventCode)
             } catch (error) {
@@ -420,21 +431,21 @@ export default function HostPage() {
             setGameState((prev) => ({
                 ...prev,
                 lastAction: "game_s3_init",
-                currentStageStep: "prep_dud_opportunity_pick",
+                currentStageStep: "game_s3_prep",
             }))
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PREP)
         } else if (eventCode === "game_s3_prep") {
             setGameState((prev) => ({
                 ...prev,
                 lastAction: "game_s3_dud_opportunity_prep",
-                currentStageStep: "start_dud_opportunity_pick",
+                currentStageStep: "game_s3_start",
                 showQuestions: true,
             }))
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START)
         } else if (eventCode === "game_s3_start") {
             setGameState((prev) => ({
                 ...prev,
-                lastAction: "start_dud_opportunity_pick",
+                lastAction: "game_s3_start",
                 currentStageStep: "game_s3_end",
                 showQuestions: true,
             }))
@@ -716,7 +727,7 @@ export default function HostPage() {
         /////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////
         else if (currentStage.includes("STAGE_THREE")) {
-            if (currentStageStep === "init") {
+            if (currentStageStep === "init" || currentStageStep === "setup") {
                 return (
                     <div className="flex justify-center mt-8">
                         <div className="text-center">
@@ -730,7 +741,7 @@ export default function HostPage() {
                         </div>
                     </div>
                 )
-            } else if (currentStageStep === "prep_dud_opportunity_pick") {
+            } else if (currentStageStep === "game_s3_prep") {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={prepStage3Picks} variant="green" data-remote-target="true">
@@ -738,7 +749,7 @@ export default function HostPage() {
                         </TrapeziumButton>
                     </div>
                 )
-            } else if (currentStageStep === "start_dud_opportunity_pick") {
+            } else if (currentStageStep === "game_s3_start") {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={startStage3Picks} variant="yellow" data-remote-target="true">
@@ -861,6 +872,8 @@ export default function HostPage() {
                                     sendGameMessage={sendGameMessage}
                                     currentStageStep={gameState.currentStageStep}
                                     lastAction={currentUniversalStep}
+                                    contestantsData={contestantsData}
+                                    isLoadingContestants={isLoadingContestants}
                                 />
                             )}
 
@@ -896,7 +909,7 @@ export default function HostPage() {
             )}
 
             {/* Enhanced Heartbeat Component */}
-            {/* <GameSynchroniser
+            <GameSynchroniser
                 gameId={gameId}
                 participantId={`host-${gameId}`}
                 participantType="host"
@@ -906,7 +919,7 @@ export default function HostPage() {
                 gameStage={gameState.currentStage || contestantsData?.game.stage || "STAGE_ONE"}
                 setCurrentUniversalStep={setCurrentUniversalStep}
                 updateGameStateFromUniversalStep={updateGameStateFromUniversalStep}
-            /> */}
+            />
         </div>
     )
 }

@@ -27,14 +27,14 @@ export const UNIVERSAL_GAME_STEPS = {
   STAGE2_RESULTS: "game_s2_results_reveal",
 
   // Stage 3 - Dud or Opportunity
-  STAGE3_INIT: "stage3_init",
-  STAGE3_PREP: "stage3_prep",
-  STAGE3_PICKS_START: "stage3_picks_start",
-  STAGE3_END: "stage3_end",
+  STAGE3_INIT: "game_s3_init",
+  STAGE3_PREP: "game_s3_prep",
+  STAGE3_PICKS_START: "game_s3_start",
+  STAGE3_END: "game_s3_end",
 
   // Stage 4 - Final Round
-  STAGE4_INIT: "stage4_init",
-  STAGE4_PREP: "stage4_prep",
+  STAGE4_INIT: "game_s4_init",
+  STAGE4_PREP: "game_s4_prep",
   STAGE4_RAFFLE: "stage4_raffle",
 
   // Game End
@@ -75,3 +75,6 @@ export const STEP_PROGRESSION: Record<UniversalGameStep, UniversalGameStep | nul
   [UNIVERSAL_GAME_STEPS.STAGE4_RAFFLE]: UNIVERSAL_GAME_STEPS.GAME_END,
   [UNIVERSAL_GAME_STEPS.GAME_END]: null,
 }
+
+
+

@@ -232,10 +232,7 @@ import Stage3CardSelectionScreens from "./Stage3CardSelectionScreen";
 // import { useMQTT } from "@/hooks/useMqttService"; // Commented out as it's not currently used
 
 
-interface prop{
-  onNext:()=>void
-}
-const Stage3BoardGetReadyPage = ({onNext}:prop) => {
+const Stage3BoardGetReadyPage = () => {
     const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   
     const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
@@ -277,33 +274,6 @@ const Stage3BoardGetReadyPage = ({onNext}:prop) => {
 
 
 
-   useEffect(() => {
-      if (isConnected) {
-        const handleMQTTMessage = (receivedMessage: any) => {
-          console.log("Main page received message:", receivedMessage);
-          
-          // Handle stage transition events
-          if (receivedMessage?.event === "game_s3_start") {
-            // Proceed to the next stage
-            setShowCardRevealScreen(true);
-          }
-        };
-        if (isConnected) {
-      addMessageListener(handleMQTTMessage);
-    }
-
-    return () => {
-      removeMessageListener(handleMQTTMessage);
-    };
-
-
-      }
-    }, [isConnected, addMessageListener, removeMessageListener]);
-  
-  if(showCardRevealScreen){
-    return <Stage3CardSelectionScreens onNext={()=>onNext?.()}/>
-
-}
  
   return (
     <AnimatePresence mode="wait">

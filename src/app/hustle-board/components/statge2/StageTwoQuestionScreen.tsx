@@ -37,10 +37,7 @@ const convertOptionToLetter = (option: string | null): string => {
   return optionMap[option] || "";
 };
 
-interface prop {
-  onNext: () => void;
-}
-const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
+const ViewOnlyQuestionTwoScreen = () => {
   const { isConnected, addMessageListener, removeMessageListener, sendMessage } = useMQTT();
   const params = useParams();
 
@@ -416,21 +413,8 @@ const ViewOnlyQuestionTwoScreen = ({ onNext }: prop) => {
     setFontSize(newFontSize);
   }, [mqttQuestionData?.question]);
 
-  if (showStage2Prep) {
-    return <StageTwoGetReadyStage />;
-  }
 
-  if (allQuestionsCompleted) {
-    return (
-      <HustleBoardStageTallyPage
-        eliminationCount={2}
-        removeCount={2}
-        title={"Hustle Board"}
-        activeState={2}
-        onNext={() => onNext}
-      />
-    );
-  }
+
 
   const remainingContestants = contestantData?.data?.filter(
     (contestant) => contestant.eliminated_stage === null

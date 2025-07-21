@@ -12,6 +12,7 @@ import {
 } from "../misc/api"
 import { GlowyStrokeText } from "@/components/core/GlowyText"
 import { FlipCountdown } from "@/components/core"
+import { ContestantsResponse } from "@/app/admin/misc/api"
 
 interface Stage1QuestionsProps {
   gameId: string | number
@@ -20,6 +21,8 @@ interface Stage1QuestionsProps {
   sendGameMessage: (eventCode: string, data?: any) => Promise<void>
   currentStageStep: string
   lastAction?: string
+  contestantsData: ContestantsResponse
+  isLoadingContestants: boolean
 }
 
 export default function Stage1Questions({
@@ -29,6 +32,8 @@ export default function Stage1Questions({
   sendGameMessage,
   currentStageStep,
   lastAction,
+  contestantsData,
+  isLoadingContestants
 }: Stage1QuestionsProps) {
   const [loading, setLoading] = useState(false)
   const [currentQuestionData, setCurrentQuestionData] = useState<IGetHustleQuestionAPIResponse | null>(null)

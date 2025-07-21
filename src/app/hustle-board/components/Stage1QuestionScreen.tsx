@@ -57,7 +57,7 @@ interface Prop {
 
 // import typewriterSfx from "@/sounds/typewriter.mp3"; // Replace with your sound file
 
-const Stage1QuestionScreen = ({ onNext }: Prop) => {
+const Stage1QuestionScreen = () => {
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const params = useParams();
 
@@ -201,7 +201,6 @@ const playOptionSelectedSound = () => {
       // Handle question reveal event
       if (receivedMessage?.event === "game_s1_question_reveal") {
         setShowPrepPage(false);
-
         const payload = receivedMessage.payload || {};
         const questionData = payload.data || {};
         const spendBreakdown =
@@ -472,16 +471,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
     return <GetHustleBoardReadyScreen />;
   }
 
-  if (allQuestionsCompleted) {
-    return (
-      <HustleBoardStageTallyPage
-        eliminationCount={0}
-        removeCount={0}
-        activeState={1}
-        onNext={() => onNext}
-      />
-    );
-  }
+
   const handleAmountStart = (id: string) => {
     console.log("Animation started for contestant:", id);
   };

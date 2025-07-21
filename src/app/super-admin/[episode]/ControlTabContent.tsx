@@ -109,8 +109,8 @@ export function ControlTabContent({
           <CardContent>
             <ScrollArea className="h-96">
               <div className="space-y-3">
-                {participants.map((participant) => (
-                  <div key={participant.id} className="flex items-center justify-between p-2 bg-[#462B58] rounded">
+                {participants.map((participant, index) => (
+                  <div key={participant.id + index} className="flex items-center justify-between p-2 bg-[#462B58] rounded">
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full ${getStatusColor(participant.isConnected)}`} />
                       <span className="text-sm">{participant.name}</span>

@@ -115,9 +115,10 @@ export function EventsTabContent({
                       </div>
                       {(Array.isArray(events) ? events : []).map(
                         (
-                          event: any, // Cast to any for now, ideally define event type
+                          event: any, 
+                          index
                         ) => (
-                          <SelectItem key={event.code} value={event.code} className="text-white">
+                          <SelectItem key={event.code +  index} value={event.code} className="text-white">
                             <div>
                               <div className="font-medium flex items-center gap-2">
                                 {event.label}
