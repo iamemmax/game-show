@@ -1023,7 +1023,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
               </div>
 
 <div className="">
-              <div className="flex items-center gap-x-12 mt-8">
+              <div className="flex items-center gap-x-16 mt-8">
  {questionData?.map((contestant, idx: number) => (
                       <div className="flex flex-col gap-2 items-center" key={idx}>
                         <div className="select-none">
@@ -1051,8 +1051,8 @@ if (receivedMessage?.event === "contestant_selected_option") {
                                   ? "#04DA6A"
                                   : "black"
                             }
-                            width={60}
-                            height={60}
+                            width={95}
+                      height={100}
                             active={
                               mqttQuestionData?.question?.hustle_reveal
                                 ?.hustle_number > contestant?.hustle_number

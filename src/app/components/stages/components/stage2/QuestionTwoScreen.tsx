@@ -1,5 +1,4 @@
 import Logo from "@/app/icons/Logo";
-import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import React, { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -7,11 +6,9 @@ import NumberCardContainer from "@/app/shared/NumberContainer";
 // import { questionArray } from "../mocks/sampleQuestion";
 import { cn } from "@/utils/classNames";
 import CheckIcon from "@/app/icons/CheckIcon";
-import ErrorIcon from "@/app/icons/ErrorIcon";
 import { tokenStorage } from "@/utils/auth";
-import { Button, ErrorModal, GlowyStrokeText } from "@/components/core";
-import GradientButton from "@/app/shared/GradientButton";
-import { addCommasToNumber, formatAxiosErrorMessage } from "@/utils";
+import {  GlowyStrokeText } from "@/components/core";
+import { formatAxiosErrorMessage } from "@/utils";
 import { useErrorModalState } from "@/hooks";
 import { AxiosError } from "axios";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
@@ -295,8 +292,8 @@ const QuestionTwoScreen = ({onNext}:prop) => {
           // Update answer data for all questions
           setMqttAnswerData(answersData);
 
-          // FIXED: For elimination questions (index > 4), set result data separately
-          if (currentQuestionIndex > 4) {
+          // FIXED: For elimination questions (index > 3), set result data separately
+          if (currentQuestionIndex > 3) {
             setMqttAnsweResultData(answersData);
             setMqttAnswerData(answersData);
           }
@@ -496,7 +493,7 @@ useEffect(() => {
                   className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
                   style={{
                     background:
-                      currentQuestionIndex > 4
+                      currentQuestionIndex > 3
                         ? `conic-gradient(from 0deg at 50% 50%,
            #ff0000 0deg,
            #ff4444 120deg,
@@ -528,7 +525,7 @@ useEffect(() => {
                   className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
                   style={{
                     background:
-                      currentQuestionIndex > 4
+                      currentQuestionIndex > 3
                         ? `conic-gradient(from 0deg at 50% 50%,
            #ff0000 0deg, #ff0000 10deg,
            #8b0000 10deg, #8b0000 20deg,
@@ -578,7 +575,7 @@ useEffect(() => {
                   }}
                   animate={{
                     rotate: [0, 360],
-                    ...(currentQuestionIndex > 4 && {
+                    ...(currentQuestionIndex > 3 && {
                       filter: [
                         "brightness(1) saturate(1)",
                         "brightness(1.5) saturate(1.5)",
@@ -592,7 +589,7 @@ useEffect(() => {
                     duration: currentQuestionIndex > 5 ? 2 : 4,
                     ease: "linear",
                     repeat: Infinity,
-                    ...(currentQuestionIndex > 4 && {
+                    ...(currentQuestionIndex > 3 && {
                       filter: {
                         duration: 0.3,
                         ease: "easeInOut",
@@ -688,7 +685,7 @@ useEffect(() => {
                           <motion.div
                             key={`question-${currentQuestionIndex}-${mqttQuestionData?.question_id}`}
                             className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000] ${
-                              currentQuestionIndex > 4
+                              currentQuestionIndex > 3
                                 ? "border-red-500"
                                 : "border-[#D71BFA]"
                             }`}
@@ -698,7 +695,7 @@ useEffect(() => {
                               y: 0,
                               scale: 1,
                               borderColor:
-                                currentQuestionIndex > 4
+                                currentQuestionIndex > 3
                                   ? [
                                       "#ff0000",
                                       "#ff4444",
@@ -710,7 +707,7 @@ useEffect(() => {
                                     ]
                                   : "#D71BFA",
                               boxShadow:
-                                currentQuestionIndex > 4
+                                currentQuestionIndex > 3
                                   ? [
                                       "0 0 20px #ff0000",
                                       "0 0 40px #ff4444",
@@ -727,7 +724,7 @@ useEffect(() => {
                               duration: 0.6,
                               ease: "easeInOut",
                               borderColor:
-                                currentQuestionIndex > 4
+                                currentQuestionIndex > 3
                                   ? {
                                       duration: 0.5,
                                       repeat: Infinity,
@@ -735,7 +732,7 @@ useEffect(() => {
                                     }
                                   : { duration: 0.6 },
                               boxShadow:
-                                currentQuestionIndex > 4
+                                currentQuestionIndex > 3
                                   ? {
                                       duration: 0.5,
                                       repeat: Infinity,
@@ -927,12 +924,12 @@ useEffect(() => {
                       </div>
 
                      {((mqttAnswerData && (openModals || showModal)) || 
-  (currentQuestionIndex > 4 && mqttAnswerResultData && (openModals || showModal))) && (
+  (currentQuestionIndex > 3 && mqttAnswerResultData && (openModals || showModal))) && (
   <GameResultModal
     key={`${user?.contestant_id}-${currentQuestionIndex}-${currentQuestionId}`}
     isOpen={true}
     data={
-      currentQuestionIndex > 4
+      currentQuestionIndex > 3
         ? mqttAnswerResultData || mqttAnswerData
         : mqttAnswerData
     }
@@ -945,7 +942,7 @@ useEffect(() => {
                     <FastestFingerResult
                       key={`${user?.contestant_id}-${currentQuestionIndex}-${currentQuestionId}`}
                       resultArray={
-                        currentQuestionIndex > 4
+                        currentQuestionIndex > 3
                           ? mqttAnswerResultData || mqttAnswerData
                           : mqttAnswerData
                       }
@@ -968,7 +965,7 @@ useEffect(() => {
             eliminated={2}
             balanceData={balanceData}
             mqttAnswerData={
-              currentQuestionIndex > 4 ? mqttAnswerResultData : mqttAnswerData
+              currentQuestionIndex > 3 ? mqttAnswerResultData : mqttAnswerData
             }
           />
         </div>

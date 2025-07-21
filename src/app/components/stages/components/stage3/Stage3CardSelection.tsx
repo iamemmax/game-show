@@ -1009,7 +1009,7 @@ useEffect(() => {
                   textClassName="font-bold text-[1.2rem]"
                   labelClassName="hidden"
                 />
-               <p className="text-white"> {card?.type}</p>
+               {/* <p className="text-white"> {card?.type}</p> */}
                 </div>
               )}
             </div>

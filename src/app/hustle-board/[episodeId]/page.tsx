@@ -418,24 +418,18 @@ const ContestantHomePage = () => {
                   </motion.div>
                 )
               }
+             
               {
                 (
-                  gameState.currentStageStep === "prep_questions"
-                ) && (
-                  <motion.div key={gameState.currentStageStep} className="h-full" {...motionProps}>
-                    <StageTwoGetReadyStage />
-
-                  </motion.div>
-                )
-              }
-              {
-                (
+                  gameState.currentStageStep === "prep_questions" ||
                   gameState.currentStageStep === "questions" ||
                   gameState.currentStageStep === "question_reveal" ||
-                  gameState.currentStageStep === "timer_running"
+                  gameState.currentStageStep === "timer_running" ||
+                  gameState.currentStageStep === "bids_reveal" ||
+                  gameState.currentStageStep === "question_result_reveal"
                 )
                 && (
-                  <motion.div key={"question-section"} className="h-full" {...motionProps}>
+                  <motion.div key={gameState.currentStageStep === "prep_questions" ? "stage-2-prep" :"question-section"} className="h-full" {...motionProps}>
                     <ViewOnlyQuestionTwoScreen />
                   </motion.div>
                 )

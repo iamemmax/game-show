@@ -816,7 +816,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
                 </div>
 
                 <div className="grid mt-5 gap-2 w-full  grid-cols-[1fr_3fr_1fr] items-start">
-                  <div className="flex flex-col">
+                  <div className="flex gap-4 flex-col">
                     {questionData?.map((contestant, idx: number) => (
                       <div className="flex gap-2 items-center" key={idx}>
                         <div className="">
@@ -844,8 +844,8 @@ const QuestionScreen = ({ onNext }: Prop) => {
                                   ? "#04DA6A"
                                   : "black"
                             }
-                            width={30}
-                            height={35}
+                            width={34}
+                            height={40}
                             active={
                               mqttQuestionData?.question?.hustle_reveal
                                 ?.hustle_number > contestant?.hustle_number
@@ -867,17 +867,19 @@ const QuestionScreen = ({ onNext }: Prop) => {
                                 className="object-cover rounded-full"
                               />
                             </div>
+<div className=" max-w-[100px] overflow-hidden whitespace-nowrap truncate">
+  <GlowyStrokeText
+    strokeWidth={3}
+    strokeColor="#7E3CE0"
+    glowColor="#04DA6A"
+    textclassName="text-xs text-white font-extrabold font-gilroyBold text-center font-gilroyHeavy"
+    fillColor="#fff"
+    glowIntensity="none"
+  >
+    {contestant?.contestant_name?.split(" ")[0]} 
+  </GlowyStrokeText>
+</div>
 
-                            <GlowyStrokeText
-                              strokeWidth={3}
-                              strokeColor="#7E3CE0"
-                              glowColor="#04DA6A"
-                              textclassName="text-xs  text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
-                              fillColor="#fff"
-                              glowIntensity={"none"}
-                            >
-                              {contestant?.contestant_name?.split(" ")[0]}
-                            </GlowyStrokeText>
                           </div>
                         </div>
                       </div>

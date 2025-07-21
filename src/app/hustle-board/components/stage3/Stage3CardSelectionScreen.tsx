@@ -23,6 +23,7 @@ import PassCard from "@/app/icons/cards/PassCard";
 import DudCards from "@/app/icons/cards/DudCard";
 import VersusIcon from "@/app/icons/Versus";
 import Stage3Reward from "./Stage3Reward";
+import { useGetStage3WiningAmount } from "@/app/components/stages/api/stage3/fetchWInningAmt";
 
 interface prop {
   onNext: () => void
@@ -73,10 +74,12 @@ const Stage3CardSelectionScreens = () => {
   const [currentTurn, setCurrentTurn] = useState<number | null>(null);
   const [currentTurnName, setCurrentTurnName] = useState<string>("");
   const [showStageResult, setShowStageResult] = useState(false);
-  const { data: contestantsData, isLoading: isLoadingContestants, refetch } = useGetGameContestants(Number(params?.episodeId));
-const cardIcons = [PickCard1, PickCard2, PickCard3];
+  const cardIcons = [PickCard1, PickCard2, PickCard3];
+const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.episodeId));
 
+  const { data: contestantsData, isLoading: isLoadingContestants, refetch } = useGetGameContestants(Number(params?.episodeId));
   // Helper function to get contestant name by ID
+
   const getContestantName = (contestantId: number): string => {
     // First try to find in contestantsData (most up-to-date)
     if (contestantsData?.data) {
@@ -513,7 +516,7 @@ const TurnIndicator = () => {
   })}
 </div>
  <div className="mt-3">
-   <Stage3Reward/>
+   <Stage3Reward data={data} isLoadingAmt={isLoadingAmt}/>
  </div>
 
 

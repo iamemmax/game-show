@@ -1,6 +1,12 @@
+import { winninData } from '@/app/components/stages/api/stage3/fetchWInningAmt';
+import { SmallSpinner } from '@/icons/core';
+import { addCommasToNumber } from '@/utils';
 import React from 'react';
-
-const Stage3Reward = () => {
+interface prop{
+  data:winninData | undefined
+  isLoadingAmt: boolean
+}
+const Stage3Reward = ({data,isLoadingAmt}:prop) => {
   return (
     <div className="flex gap-8  items-center justify-center">
       {/* Dud Card */}
@@ -32,14 +38,14 @@ const Stage3Reward = () => {
           
           {/* Main Text with Strong Neon Effect */}
           <div className="text-center mt-2">
-            <h2 className="text-white outline-text-white text-3xl font-bold tracking-wide" 
+           {isLoadingAmt?<SmallSpinner/>: <h2 className="text-white outline-text-white text-3xl font-bold tracking-wide" 
                style={{
                                 WebkitTextStroke: "2px #035D2E",
                                 textShadow: "0px 1px 2px rgba(3, 93, 46, 0.5)"
                               }}
                >
-              ₦500,000
-            </h2>
+              ₦{addCommasToNumber(data?.data?.amount)}
+            </h2>}
           </div>
         </div>
         

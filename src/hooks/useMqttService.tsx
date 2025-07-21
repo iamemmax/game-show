@@ -1,4 +1,6 @@
 import { MQTTContext, MQTTMessage } from '@/contexts/MQTTProvider';
+import { tokenStorage } from '@/utils/auth';
+import { useParams } from 'next/navigation';
 import { useContext, useEffect, useCallback, useState, useRef } from 'react';
 
 // Hook return types
@@ -32,7 +34,9 @@ export function useMQTT(): MQTTHookReturn {
   if (!context) {
     throw new Error('useMQTT must be used within an MQTTProvider');
   }
-
+  const user = tokenStorage?.getUser();
+const episodeId = useParams().episodeId || useParams().episode as string || user?.game_episode
+console.log(episodeId, "episodeId in useMQTT")
   const {
     isConnected,
     client,
