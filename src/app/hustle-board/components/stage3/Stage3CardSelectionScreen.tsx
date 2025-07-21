@@ -27,7 +27,7 @@ import Stage3Reward from "./Stage3Reward";
 interface prop {
   onNext: () => void
 }
-const Stage3CardSelectionScreens = ({ onNext }: prop) => {
+const Stage3CardSelectionScreens = () => {
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const [remainingContestants, setRemainingContestants] = useState<Array<{ id: number, name: string }>>([]);
 
@@ -326,7 +326,6 @@ const TurnIndicator = () => {
         removeCount={2}
         title="stage 3"
         activeState={3}
-        onNext={() => onNext}
       />
     );
   }

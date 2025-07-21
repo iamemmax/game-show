@@ -368,7 +368,9 @@ export default function SuperAdminDashboard() {
           setCurrentUniversalStep(message.payload.currentStep)
         }
       }
+
     },
+
     [gameId, isConnected], // isConnected is not strictly needed here but kept for consistency
   )
   useMQTTTopic(gameSyncTopic, handleGameSyncMessages, [gameSyncTopic])
@@ -378,6 +380,12 @@ export default function SuperAdminDashboard() {
     /^((?!\/game-sync\/).)*$/, // Regex to match any topic NOT containing /game-sync/
     useCallback((message: MQTTMessage) => {
       addMqttOtherEvent("info", `Received: ${message.event || "Unknown Event"}`, `MQTT (${message.topic})`)
+      if (message.payload.source == "host") {
+        addSystemEvent("info", `Host action: ${message.event}`, "Host")
+        if (message.payload.new_universal_step) {
+          setCurrentUniversalStep(message.payload.new_universal_step)
+        }
+      }
     }, []),
     [],
   )
