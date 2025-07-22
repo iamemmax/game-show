@@ -79,11 +79,8 @@ const formatTimestamp = (date: Date): string => {
   return `${year}-${month}-${day}:${hours}:${minutes}:${seconds}`;
 };
 
-interface Prop {
-  onNext: () => void;
-}
 
-const QuestionScreen = ({ onNext }: Prop) => {
+const QuestionScreen = () => {
   const {
     isConnected,
     addMessageListener,
@@ -649,16 +646,7 @@ const QuestionScreen = ({ onNext }: Prop) => {
     return <GetReadyScreen />;
   }
 
-  if (allQuestionsCompleted) {
-    return (
-      <StageOneTally
-        eliminationCount={0}
-        removeCount={0}
-        activeState={1}
-        onNext={() => onNext}
-      />
-    );
-  }
+
 
   return (
     <>

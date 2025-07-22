@@ -15,7 +15,7 @@ import Stage3CardSelection from "./Stage3CardSelection";
 interface prop {
   onNext: () => void
 }
-const Stage3GetReadyPage = ({ onNext }: prop) => {
+const Stage3GetReadyPage = () => {
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
 

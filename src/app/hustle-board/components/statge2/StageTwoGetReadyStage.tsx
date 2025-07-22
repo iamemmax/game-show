@@ -136,7 +136,7 @@ const StageTwoGetReadyStage = () => {
                     }}
                   >
                     <GlowyStrokeText
-                      className="text-[3.75rem] font-extrabold"
+                      className="text-[3.75rem] font-extrabold font-lucky"
                       glowColor="D91FFF"
                       glowIntensity="low"
                       fillColor="black"

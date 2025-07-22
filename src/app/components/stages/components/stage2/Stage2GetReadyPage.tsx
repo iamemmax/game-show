@@ -143,7 +143,7 @@ const Stage2GetReadyPage = () => {
   variants={itemVariants}
 >
   <motion.h2
-    className="text-[2rem] font-extrabold outline-text text-black"
+    className="text-[2rem] font-extrabold outline-text text-black font-lucky"
     variants={itemVariants}
     animate={{
       scale: [1, 1.05, 1],

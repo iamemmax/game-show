@@ -128,7 +128,7 @@ const GetReadyScreen = () => {
                 }}
               >
                 <GlowyStrokeText
-                  className="text-[2.5rem] font-extrabold"
+                  className="text-[2.5rem] font-extrabold font-lucky"
                   glowColor="D91FFF"
                   glowIntensity="low"
                   fillColor="black"

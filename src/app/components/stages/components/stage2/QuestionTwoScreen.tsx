@@ -52,10 +52,8 @@ const convertOptionToLetter = (option: string | null): string => {
 
   return optionMap[option] || "";
 };
-interface prop{
-  onNext:()=>void
-}
-const QuestionTwoScreen = ({onNext}:prop) => {
+
+const QuestionTwoScreen = () => {
   const {
     isErrorModalOpen,
     setErrorModalState,
@@ -437,18 +435,7 @@ useEffect(() => {
   if (showStage2Prep) {
     return <Stage2GetReadyPage />;
   }
-  if (allQuestionsCompleted) {
-    return (
-      <StageOneTally
-        eliminationCount={2}
-        removeCount={2}
-        title="stage 2"
-        activeState={2}
-        onNext={()=>onNext}
-      />
-    );
-  }
-
+ 
   // Timer effect
 
   return (
