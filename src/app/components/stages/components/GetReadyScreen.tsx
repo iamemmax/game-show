@@ -87,7 +87,7 @@ const GetReadyScreen = () => {
               style={{
                 background: `conic-gradient(from 0deg at 50% 50%,
                   #d91fff 0deg,
-                  #d91fff 120deg,
+                  #d91fff 80deg,
                   #00ffff 100deg,
                   #00ffff 240deg,
                   #FFD700 220deg,
@@ -143,7 +143,7 @@ const GetReadyScreen = () => {
                 className="text-sm font-outfit text-white max-w-2xl"
                 variants={itemVariants}
               >
-                <strong>12 Questions:</strong> All contestants face 12 questions
+                <strong>8 Questions:</strong> All contestants face 8 questions
                 where each questions are to be answered with{" "}
                 <strong>10 seconds</strong>.
               </motion.p>
@@ -216,7 +216,7 @@ const GetReadyScreen = () => {
                 className="text-sm font-outfit text-white max-w-2xl"
                 variants={itemVariants}
               >
-                <strong>Elimination:</strong> After all 12 questions, the{" "}
+                <strong>Elimination:</strong> After all 8 questions, the{" "}
                 <span className="font-semibold text-[#d91fff]">
                   two contestants with the lowest scores
                 </span>{" "}

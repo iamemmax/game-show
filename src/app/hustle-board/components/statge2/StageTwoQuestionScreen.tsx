@@ -52,7 +52,7 @@ const ViewOnlyQuestionTwoScreen = () => {
   );
 
   // State for display purposes only - no user interaction
-  const [timeLeft, setTimeLeft] = useState<number>(10);
+  const [timeLeft, setTimeLeft] = useState<number>(5);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
   const [timerActive, setTimerActive] = useState(false);
@@ -138,7 +138,7 @@ const ViewOnlyQuestionTwoScreen = () => {
   // 2. Timer start handler - Records when question timer begins
   const handleStartTimer = () => {
     setTimerActive(true);
-    setTimeLeft(10); // Start countdown from 10
+    setTimeLeft(5); // Start countdown from 10
     const startTime = Date.now(); // Record exact start time
     setQuestionStartTime(startTime);
     setCurrentTimestamp(0);
@@ -166,7 +166,7 @@ const ViewOnlyQuestionTwoScreen = () => {
   // Update the resetTimerState function
   const resetTimerState = () => {
     setTimerActive(false);
-    setTimeLeft(10); // Reset to 10 seconds
+    setTimeLeft(5); // Reset to 10 seconds
     setQuestionStartTime(null);
     setContestantTimestamps({});
     setCurrentTimestamp(0);
@@ -999,7 +999,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                           )}
                         </AnimatePresence>
                       </div>
-                      {showResultModal && (
+                      {contestantData?.game?.reveal_step_count === "DOUBLE" ||showResultModal && (
                         <HustleQuestionAnswerModal
                           booster={mqttQuestionData?.question_booster}
                           showBooster={false}

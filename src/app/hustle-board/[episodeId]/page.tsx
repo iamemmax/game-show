@@ -386,6 +386,7 @@ const ContestantHomePage = () => {
                   eliminationCount={0}
                   removeCount={0}
                   activeState={1}
+                  title={"Hustle Board"}
                 />
               </motion.div>
             )}
@@ -403,6 +404,7 @@ const ContestantHomePage = () => {
                   eliminationCount={0}
                   removeCount={0}
                   activeState={1}
+                    title={"Hustle Board"}
                 />
               </motion.div>
             )}
@@ -453,6 +455,7 @@ const ContestantHomePage = () => {
                   eliminationCount={0}
                   removeCount={0}
                   activeState={2}
+                    title={"Hustle Board"}
                 />
               </motion.div>
             )}

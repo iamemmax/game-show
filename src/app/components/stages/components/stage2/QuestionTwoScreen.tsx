@@ -78,7 +78,7 @@ const QuestionTwoScreen = ({onNext}:prop) => {
   //   user?.game_episode as number
   // );
 
-  const [timeLeft, setTimeLeft] = useState<number>(10);
+  const [timeLeft, setTimeLeft] = useState<number>(5);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<OptionKey | null>(null);
   const [attemptedOptions, setAttemptedOptions] = useState<AttemptedOption[]>(
@@ -193,7 +193,7 @@ const QuestionTwoScreen = ({onNext}:prop) => {
   // Add this function to reset the timer state for the next question
   const resetTimerState = () => {
     setTimerActive(false);
-    setTimeLeft(10);
+    setTimeLeft(5);
     setResultMessageSent(false); // Reset the flag
     setAnswerReceived(false); // Reset answer received flag
   };
@@ -227,7 +227,7 @@ const QuestionTwoScreen = ({onNext}:prop) => {
   const handleStartTimer = () => {
     setTimerActive(true);
     setGameStartTime(new Date()); // Reset game start time when timer starts
-    setTimeLeft(10); // Reset timer to 10 seconds
+    setTimeLeft(5); // Reset timer to 10 seconds
   };
 
   // Add useEffect for MQTT message handling
@@ -616,10 +616,10 @@ useEffect(() => {
                     >
                       Stage 2: Prove your hustle
                     </GlowyStrokeText>
-                    <p className="text-sm font-normal text-[#D5B9FF]">
+                    {/* <p className="text-sm font-normal text-[#D5B9FF]">
                       Select minimum of 2 number to determine the trivia
                       questions for this round
-                    </p>
+                    </p> */}
                   </div>
 
                   {timerActive && (

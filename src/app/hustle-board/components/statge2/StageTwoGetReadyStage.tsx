@@ -148,7 +148,7 @@ const StageTwoGetReadyStage = () => {
                   </motion.div>
 
                   <motion.p className="text-2xl font-outfit text-white" variants={itemVariants}>
-                    <strong>8 Questions:</strong> Each contestant faces 8 questions, each requiring a <strong>10-second</strong> response.
+                    <strong>6 Questions:</strong> Each contestant faces 6 questions, each requiring a <strong>5-second</strong> response.
                   </motion.p>
 
                   <motion.p className="text-2xl font-outfit text-white" variants={itemVariants}>
@@ -166,7 +166,7 @@ const StageTwoGetReadyStage = () => {
                   </motion.p>
 
                   <motion.p className="text-2xl font-outfit text-white" variants={itemVariants}>
-                    <strong>Questions 1–4:</strong> Win amount is credited directly to the winner’s purse from the game’s purse.
+                    <strong>Questions 1–3:</strong> Win amount is credited directly to the winner’s purse from the game’s purse.
                   </motion.p>
 
                  <motion.div
@@ -175,7 +175,7 @@ const StageTwoGetReadyStage = () => {
 >
   {/* Intro line */}
   <motion.p variants={itemVariants}>
-    <strong>Questions 5–8:</strong> The fastest correct contestant chooses where the Win Amount is deducted:
+    <strong>Questions 4-6:</strong> The fastest correct contestant chooses where the Win Amount is deducted:
   </motion.p>
 
   {/* Bullet list with animation */}
@@ -201,7 +201,7 @@ const StageTwoGetReadyStage = () => {
 
 
                   <motion.p className="text-2xl font-outfit text-white" variants={itemVariants}>
-                    <strong>Elimination:</strong> After all 8 questions, the <span className="text-[#d91fff] font-semibold">2 contestants with the lowest purse values</span> are eliminated.
+                    <strong>Elimination:</strong> After all 6 questions, the <span className="text-[#d91fff] font-semibold">2 contestants with the lowest purse values</span> are eliminated.
                     <br />
                     Only the top 2 contestants by purse value advance to the <strong>Dud & Pass</strong> round.
                   </motion.p>

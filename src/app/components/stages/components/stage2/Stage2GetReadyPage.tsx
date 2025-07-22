@@ -163,7 +163,7 @@ const Stage2GetReadyPage = () => {
   </motion.h2>
 
   <motion.p className="text-sm font-outfit text-white max-w-2xl" variants={itemVariants}>
-    <strong>8 Questions:</strong> Each contestant faces 8 questions, each requiring a <strong>10-second</strong> response.
+    <strong>6 Questions:</strong> Each contestant faces 6 questions, each requiring a <strong>5-second</strong> response.
   </motion.p>
 
   <motion.div className="text-sm font-outfit text-white  max-w-2xl" variants={itemVariants}>
@@ -178,8 +178,8 @@ const Stage2GetReadyPage = () => {
 
   <motion.div className="text-sm font-outfit text-white  max-w-3xl" variants={itemVariants}>
     <p><strong>Payout Structure</strong></p>
-    <p><strong>Questions 1–4:</strong> <strong className="text-[#d91fff]">Win amount is credited directly to the winner’s purse from the game’s purse</strong>.</p>
-    <p><strong>Questions 5–8:</strong></p>
+    <p><strong>Questions 1–3:</strong> <strong className="text-[#d91fff]">Win amount is credited directly to the winner’s purse from the game’s purse</strong>.</p>
+    <p><strong>Questions 4–6:</strong></p>
     <ul className="list-disc pl-6 space-y-1">
       <motion.li variants={listItemVariants}>The fastest correct contestant chooses where the Win Amount is deducted:</motion.li>
       <motion.li variants={listItemVariants}>From one of the other 3 contestants’ purses</motion.li>
@@ -191,7 +191,7 @@ const Stage2GetReadyPage = () => {
   <motion.div className="text-sm font-outfit text-white  max-w-2xl" variants={itemVariants}>
     <p><strong>Elimination:</strong></p>
     <ul className="list-disc pl-6">
-      <motion.li variants={listItemVariants}>After all 8 questions, <strong className="text-[#d91fff]">the 2 contestants with the lowest purse values are eliminated.</strong></motion.li>
+      <motion.li variants={listItemVariants}>After all 6 questions, <strong className="text-[#d91fff]">the 2 contestants with the lowest purse values are eliminated.</strong></motion.li>
       <motion.li variants={listItemVariants}>Only the top 2 contestants by purse value advance to the Dud & Pass round.</motion.li>
     </ul>
   </motion.div>

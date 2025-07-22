@@ -80,10 +80,10 @@ const GetHustleBoardReadyScreen = () => {
               <HeaderTitleContainer
                 backgroundColor="#791192"
                 color="#ed99ff"
-                text="Pick-Pad"
+                text="Hustle Board"
                 textGradientEnd="#8E17AA"
                 textGradientStart="#8E17AA"
-                borderGradientStart="#f712fc"
+                borderGradientStart="#f78fc"
                 borderGradientEnd="#e151fe"
                 fontSize={45}
                 fontFamily="Verdana"
@@ -103,7 +103,7 @@ const GetHustleBoardReadyScreen = () => {
                   style={{
                     background: `conic-gradient(from 0deg at 50% 50%,
                       #d91fff 0deg,
-                      #d91fff 120deg,
+                      #d91fff 80deg,
                       #00ffff 100deg,
                       #00ffff 240deg,
                       #FFD700 220deg,
@@ -159,7 +159,7 @@ const GetHustleBoardReadyScreen = () => {
                     className="text-3xl font-outfit text-white "
                     variants={itemVariants}
                   >
-                    <strong>12 Questions:</strong> All contestants face 12
+                    <strong>8 Questions:</strong> All contestants face 8
                     questions where each questions are to be answered with in{" "}
                     <strong>10 seconds</strong>.
                   </motion.p>
@@ -235,7 +235,7 @@ const GetHustleBoardReadyScreen = () => {
                     className="text-3xl font-outfit text-white"
                     variants={itemVariants}
                   >
-                    <strong>Elimination:</strong> After all 12 questions, the{" "}
+                    <strong>Elimination:</strong> After all 8 questions, the{" "}
                     <span className="font-semibold text-[#d91fff]">
                       two contestants with the lowest scores
                     </span>{" "}
