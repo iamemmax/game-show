@@ -211,12 +211,12 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                 </div>
 
                 <div>
-                  <p className="text-xl capitalize font-gilroyMedium text-white">
+                  <p className="text-2xl capitalize font-gilroyMedium text-white">
                     {capitalizeFirstLetter(data?.contestant_name)}
                   </p>
-                  <div className="font-sans opacity-75 text-base text-white truncate   max-w-[400px]">
+                  <div className="font-sans opacity-75 text-xl text-white truncate   max-w-[400px]">
                     Answer:
-                    <span className="font-bold opacity-100 text-lg">
+                    <span className="font-bold opacity-100 text-xl">
                       {" "}{data?.answer === "N" ? "No answer": data?.answer}. {getOptionValue(currentQuestion?.question?.questions, String(data?.answer?.toLowerCase()))}  
                     </span>
                   </div>
@@ -226,8 +226,8 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                       className="mt-1 flex justify-center items-center flex-col rounded-[1.5rem] py-2 px-6" 
                       style={{ backgroundColor: `${styles.text}22` }}
                     >
-                      <p className="font-gilroyMedium text-base text-white">Bid amount:</p>
-                      <h2 className="font-gilroyHeavy font-semibold text-2xl" style={{ color: styles.text }}>
+                      <p className="font-verdana text-2xl text-white">Bid:</p>
+                      <h2 className="font-verdana font-semibold text-2xl" style={{ color: styles.text }}>
                         ₦{(Math.ceil(Number(data?.profit_loss?.bid_amount || 0) / 100) * 100).toLocaleString()}
                       </h2>
                     </div>}
@@ -236,18 +236,18 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                       className="mt-1 flex justify-center leading-none items-center flex-col rounded-[1.5rem] py-2 px-6" 
                       style={{ backgroundColor: `${styles.text}22` }}
                     >
-                      {data?.is_winner && <p className="font-gilroyMedium text-base text-white">Won amount:</p>}
-                      {data?.profit_loss?.amount_lost > 0 && <p className="font-gilroyMedium text-base text-white">Lost amount:</p>}
+                      {data?.is_winner && <p className="font-verdana text-2xl text-white">Won :</p>}
+                      {data?.profit_loss?.amount_lost > 0 && <p className="font-gilroyMedium text-2xl text-white">Lost:</p>}
                       
                       {data?.is_correct && (
-                        <h2 className="font-gilroyHeavy block font-extrabold text-xl" style={{ color: styles.text }}>
+                        <h2 className="font-verdana block font-extrabold text-2xl" style={{ color: styles.text }}>
                           {/* ₦{formatAmount(Number(data?.profit_loss?.amount_gained) || 0)} */}
                              ₦{(Math.ceil(Number(data?.profit_loss?.amount_gained || 0) / 100) * 100).toLocaleString()}
                         </h2>
                       )}
                       
                       {!data?.is_correct && (
-                        <h2 className="font-gilroyHeavy block font-extrabold text-xl" style={{ color: styles.text }}>
+                        <h2 className="font-verdana block font-extrabold text-2xl" style={{ color: styles.text }}>
                           {/* ₦{formatAmount(Number(data?.profit_loss?.amount_lost) || 0)} */}
                         
                          ₦{(Math.ceil(Number(data?.profit_loss?.amount_lost || 0) / 100) * 100).toLocaleString()}
@@ -271,8 +271,8 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                   >
                     <UserBadge
                       username={data.contestant_name || `Player ${idx + 1}`}
-                      amount={`${String(data.answered_in?.toFixed(2))}`}
-                      avatarUrl={contestantImages[idx % contestantImages.length]}
+                      amount={`${String(data.answered_in?.toFixed(2))}s`}
+                      // avatarUrl={data?.profit_loss?.contestant_photo_url??"/"}
                       isOnline={true}
                       isActive={data.is_winner && data?.is_correct}
                       borderColor="#FFC125"
@@ -289,10 +289,12 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                       }}
                       color="#FFFFFF"
                       correctAnswerColor={data.is_correct ? "#04DA6A" : "#EB001B"}
-                      usernameClassName="mt-[6px] text-white text-xs"
+                      usernameClassName="mt-[3px] text-white text-sm"
+                      amountClassName="text-xl  w-[200px]"
                       dotPosition={{ y: 36 }}
                       width={230}
                       height={80}
+                      route="hustle-board"
                     />
                   </motion.div>
                 </AnimatePresence>

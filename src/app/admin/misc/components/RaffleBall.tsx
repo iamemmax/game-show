@@ -29,7 +29,7 @@ export function Ball({
 
   const extraTextClass = cn(
     "font-semibold font-montserrat",
-    size == "sm" ? "text-base" : size == "md" ? "text-lg" : "text-lg",
+    size == "sm" ? "text-base" : size == "md" ? "text-xl" : "text-2xl",
   )
 
   return (
@@ -95,7 +95,7 @@ export function Ball({
           </svg>
           {number && (
   <div className="absolute inset-0 flex items-center justify-center">
-    <span className={cn("text-white text-center", textClassName, extraTextClass)}>{number}</span>
+    <span className={cn("text-black text-center", textClassName, extraTextClass)}>{number}</span>
   </div>
 )}
 
@@ -161,7 +161,7 @@ export function Ball({
           </svg>
           {number && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className={cn("text-white", textClassName, extraTextClass)}>{number}</span>
+              <span className={cn("text-black", textClassName, extraTextClass)}>{number}</span>
             </div>
           )}
         </>
@@ -226,7 +226,7 @@ export function Ball({
           </svg>
           {number && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className={cn("text-white", textClassName, extraTextClass)}>{number}</span>
+              <span className={cn("text-black", textClassName, extraTextClass)}>{number}</span>
             </div>
           )}
         </>
@@ -291,7 +291,7 @@ export function Ball({
           </svg>
           {number && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className={cn("text-white", textClassName, extraTextClass)}>{number}</span>
+              <span className={cn("text-black", textClassName, extraTextClass)}>{number}</span>
             </div>
           )}
         </>

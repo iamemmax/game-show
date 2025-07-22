@@ -591,7 +591,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                     strokeColor="#D91FFF"
                     glowColor="#13051E"
                     glowIntensity="low"
-                    textclassName="text-[2.5rem] font-extrabold font-gilroyBold"
+                    textclassName="text-[2.5rem] font-extrabold font-lucky"
                     fillColor="#000"
                   >
                     Stage 2: Prove your hustle
@@ -630,11 +630,11 @@ const ViewOnlyQuestionTwoScreen = () => {
                         contestantSelection?.selected_option;
 
                       return (
-                        <div
+                         <div
                           key={`left-${contestant?.id}`}
                           className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${
                             hasSelected
-                              ? "bg-[#003218] text-white"
+                              ? "bg-[#29986f] text-white"
                               : "bg-[#160036] text-white"
                           }`}
                         >
@@ -661,10 +661,10 @@ const ViewOnlyQuestionTwoScreen = () => {
                             )}
                           </div>
 
-                          <p className="text-white text-opacity-70 text-base">
+                          <p className={`${hasSelected ? "text-white" : "text-white"} font-semibold  text-xl`}>
                             Status:
-                            <span className="text-white text-opacity-100">
-                              {hasSelected ? " answered" : " "}
+                            <span className={`${hasSelected ? "text-white" : "text-white"} text-opacity-100`}>
+                              {hasSelected ? " Answered" : " "}
                             </span>
                           </p>
                           {/* <p className="text-white text-opacity-70 text-base">
@@ -748,7 +748,7 @@ const ViewOnlyQuestionTwoScreen = () => {
 
                           <div className="flex absolute -bottom-11 justify-center items-center w-full gap-4">
                             <div className="bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] flex justify-center gap-y-0 space-y-0 items-center flex-col rounded-[12px] py-2 px-[5rem]">
-                              <p className="text-xl block font-outfit font-normal text-[#1E1E1E]">
+                              <p className="text-2xl block font-outfit font-normal text-[#1E1E1E]">
                                 Win amount
                               </p>
                               <GlowyStrokeText
@@ -1043,7 +1043,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                           key={`left-${contestant?.id}`}
                           className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${
                             hasSelected
-                              ? "bg-[#003218] text-white"
+                              ? "bg-[#29986f] text-white"
                               : "bg-[#160036] text-white"
                           }`}
                         >
@@ -1070,10 +1070,10 @@ const ViewOnlyQuestionTwoScreen = () => {
                             )}
                           </div>
 
-                          <p className="text-white text-opacity-70 text-base">
+                          <p className={`${hasSelected ? "text-white" : "text-white"} font-semibold  text-xl`}>
                             Status:
-                            <span className="text-white text-opacity-100">
-                              {hasSelected ? " answered" : " "}
+                            <span className={`${hasSelected ? "text-white" : "text-white"} text-opacity-100`}>
+                              {hasSelected ? " Answered" : " "}
                             </span>
                           </p>
                           {/* <p className="text-white text-opacity-70 text-base">
@@ -1090,7 +1090,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                 {/*  */}
               </div>
               <div className="flex w-full justify-center items-center mt-10 gap-[2rem]  ">
-                {Array.from({ length: 8 }, (_, index) => (
+                {Array.from({ length: 6 }, (_, index) => (
                   <div className="" key={index}>
                     <NumberCardContainer
                       // text={index + 1}
@@ -1115,8 +1115,8 @@ const ViewOnlyQuestionTwoScreen = () => {
                             ? "#04DA6A"
                             : "black"
                       }
-                      width={65}
-                      height={65}
+                      width={90}
+                      height={95}
                       active={currentQuestionIndex > index + 1}
                       iconPosition={{ y: 33 }}
                       iconSize={30}

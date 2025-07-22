@@ -75,7 +75,6 @@ const Stage3CardSelectionScreens = () => {
   const [currentTurnName, setCurrentTurnName] = useState<string>("");
   const [showStageResult, setShowStageResult] = useState(false);
   const cardIcons = [PickCard1, PickCard2, PickCard3];
-const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.episodeId));
 
   const { data: contestantsData, isLoading: isLoadingContestants, refetch } = useGetGameContestants(Number(params?.episodeId));
   // Helper function to get contestant name by ID
@@ -158,20 +157,20 @@ const TurnIndicator = () => {
             `}>
               <div className="flex items-center gap-6">
                 <span className={`
-                  font-bold text-sm capitalize tracking-wide
+                  font-bold text-xl capitalize tracking-wide
                   ${currentTurn === contestant.id ? 'text-white' : 'text-gray-300'}
                 `}>
                   {contestant.name?.split(" ")[0]}
                 </span>
                 {currentTurn === contestant.id && (
                   <div className="flex items-center gap-3 bg-[#053F20] py-[7px] px-4 rounded-xl border border-[#04DA6A]">
-                    <span className="text-sm font-semibold font-gilroyBold text-[#04DA6A]">Your turn</span>
+                    <span className="text-xl font-semibold font-verdana text-[#04DA6A]">Your turn</span>
                     <div className="w-3 h-3 rounded-full bg-[#04DA6A] animate-pulse"></div>
                   </div>
                 )}
                 {currentTurn !== contestant.id && (
                   <div className="flex items-center gap-3 bg-[#38040A] py-[7px] px-4 rounded-xl">
-                    <span className="text-sm font-semibold font-gilroyBold text-[#FF495E]">Waiting</span>
+                    <span className="text-xl font-semibold font-verdana text-[#FF495E]">Waiting</span>
                     <div className="w-3 h-3 rounded-full bg-[#FF495E]"></div>
                   </div>
                 )}
@@ -355,7 +354,7 @@ const TurnIndicator = () => {
             <HeaderTitleContainer
               backgroundColor="#791192"
               color="#ed99ff"
-              text="Pick-Pad"
+              text="Hustle Board"
               textGradientEnd="#8E17AA"
               textGradientStart="#8E17AA"
               borderGradientStart="#f712fc"
@@ -398,7 +397,7 @@ const TurnIndicator = () => {
                     strokeColor="#D91FFF"
                     glowColor="#13051E"
                     glowIntensity="low"
-                    textclassName="text-[2.125rem] font-extrabold font-gilroyBold"
+                    textclassName="text-[2.125rem] font-extrabold font-lucky"
                     fillColor="#000"
                   >
                     Stage 3: Showdown for pass
@@ -414,7 +413,7 @@ const TurnIndicator = () => {
                   </div>
                 </div>
               </div>
-
+ 
               {isLoadingContestants ? (
                 <div className="flex justify-center items-center h-full w-full">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
@@ -472,7 +471,7 @@ const TurnIndicator = () => {
               {/* Display contestant name */}
               {card.revealed && (
                 <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-20">
-                  <span className="font-bold text-black text-xs bg-white px-2 py-1 rounded">
+                  <span className="font-bold text-black text-sm bg-white px-2 py-1 rounded">
                     {displayName?.split(" ")[0]}
                   </span>
                 </div>
@@ -515,9 +514,7 @@ const TurnIndicator = () => {
     );
   })}
 </div>
- <div className="mt-3">
-   <Stage3Reward data={data} isLoadingAmt={isLoadingAmt}/>
- </div>
+
 
 
 
@@ -530,8 +527,12 @@ const TurnIndicator = () => {
       </div>
 
       {/* Right Sidebar */}
-      <div>
-        <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={4} />
+      <div className="flex flex-col">
+        <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={4} showStage3Reward={true} />
+        <div className="">
+
+
+        </div>
       </div>
 
       {/* Celebration Animation */}

@@ -308,20 +308,21 @@ const HustleQuestionAnswerModal = ({
         
         <div className="">
           <div className="bg-[#29104A] flex items-center justify-center rounded-10 px-[22px] py-2">
-            <p className="text-[#9E5CFF] text-[1.625rem] font-sans font-semibold">
+            <p className="text-[#9E5CFF] text-[2rem] font-sans font-semibold">
               Question {questionIndex}
             </p>
           </div>
 
           <div className="bg-[#000] border-[.125rem] border-[#7E3CE0] mt-3 rounded-[20px] px-4 py-10 flex justify-center items-center flex-col">
-            <p className="text-white text-center text-2xl font-gilroyBold font-semibold">
+            <p className="text-white text-center text-3xl font-gilroyBold font-semibold">
               {question || "What is the Biggest market in West Africa?"}
+         
             </p>
 
             {showBooster && (
               <div className="bg-[#011B0D] mt-5 rounded-[12px] py-2 px-8">
                 <p
-                  className="text-base text-white font-extrabold text-center"
+                  className="text-3xl text-white font-extrabold text-center"
                   style={{
                     WebkitTextStroke: "1px #04DA6A",
                     textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
@@ -329,7 +330,7 @@ const HustleQuestionAnswerModal = ({
                 >
                   {booster}
                   <span
-                    className="text-base pl-1 font-outfit font-normal text-[#04DA6A]"
+                    className="text-3xl pl-3 font-outfit font-normal text-[#04DA6A]"
                     style={{
                       WebkitTextStroke: "0px",
                       textShadow: "none",

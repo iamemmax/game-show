@@ -126,7 +126,7 @@ export default function StageThreeWinnerModal({ name, balance, imgUrl }: StageTh
       textShadow: '0 2px 4px rgba(0, 0, 0, 0.6)',
     }}
   >
-    YOU WON THE PASS!
+     WON THE PASS!
   </h2>
 </motion.div>
 

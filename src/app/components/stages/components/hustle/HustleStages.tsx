@@ -3,6 +3,7 @@ import { useParams } from "next/navigation";
 import React from "react";
 interface prop {
   activeStage?: number;
+  
 }
 const HustleStages = ({ activeStage = 1 }: prop) => {
   const params = useParams();

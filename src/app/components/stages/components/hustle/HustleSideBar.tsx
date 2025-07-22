@@ -14,6 +14,8 @@ import { useParams } from "next/navigation";
 import { balanceProp, useGetWalletBalance } from "../../api/stage1/getbalance";
 import { formatAmount } from "@/utils/currency";
 import { Contestant } from "@/app/super-admin/misc/types";
+import Stage3Reward from "@/app/hustle-board/components/stage3/Stage3Reward";
+import { useGetStage3WiningAmount } from "../../api/stage3/fetchWInningAmt";
 
 interface prop {
   showJackpot?: boolean;
@@ -24,6 +26,7 @@ interface prop {
   showHustleCardAmt?: boolean;
   mqttAnswerData?: Datum[];
   balanceData?: balanceProp | null | undefined
+  showStage3Reward?: boolean;
   // mqttAnswerBalanceData?: any;
   
 }
@@ -267,10 +270,12 @@ const HustleSideBar = ({
   showHustlerCard = false,
   showHustleCardAmt = true,
   mqttAnswerData,
-  balanceData
+  balanceData,
+  showStage3Reward = false,
 }: prop) => {
   const user = tokenStorage.getUser();
   const params = useParams();
+const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.episodeId));
 
   const { data: allContestsant, isLoading } = useGetGameContestants(
     !params?.episodeId
@@ -393,6 +398,11 @@ const HustleSideBar = ({
                   />
                 );
               })}
+
+               {showStage3Reward && <div className="">
+           <Stage3Reward data={data} isLoadingAmt={isLoadingAmt}/>
+      </div>}
+    
             </div>
           )}
         </>
@@ -415,6 +425,7 @@ const HustleSideBar = ({
         </div>
       )}
       
+
       <div className="min-h-[100px]">
         {showJackpot && <JackpotContainer size={80} text="₦100m" />}
       </div>

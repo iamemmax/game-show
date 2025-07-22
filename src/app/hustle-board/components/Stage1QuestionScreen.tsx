@@ -2,7 +2,7 @@ import Logo from "@/app/icons/Logo";
 import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import React, { useEffect, useState, useRef } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import NumberCardContainer from "@/app/shared/NumberContainer";
 // import { questionArray } from "../mocks/sampleQuestion";
 import { cn } from "@/utils/classNames";
@@ -27,6 +27,7 @@ import HustleQuestionAnswerModal from "./modals/HustleQuestionAnswer";
 import AnimatedText from "@/app/shared/AnimatedText";
 import { ContestantSpend } from "@/app/components/type";
 import { AnimatedAmount } from "@/app/shared/AnimatedAmount";
+import StarIcon from "@/app/icons/StarIcon";
 
 // Add type for option keys
 type OptionKey = "option_a" | "option_b" | "option_c" | "option_d" | "N";
@@ -501,7 +502,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
               <HeaderTitleContainer
                 backgroundColor="#791192"
                 color="#ed99ff"
-                text="Pick-Pad"
+                text="Hustle Board"
                 textGradientEnd="#8E17AA"
                 textGradientStart="#8E17AA"
                 borderGradientStart="#f712fc"
@@ -587,13 +588,12 @@ if (receivedMessage?.event === "contestant_selected_option") {
 
                     <div className="flex w-full  gap-4 mt-1">
   {/* Left Column: First 3 contestants */}
+
+
 <div className="flex flex-col gap-4 w-full">
-  {mqttQuestionData?.spend_breakdown?.slice(0, 3).map((spend: ContestantSpend) => {
+  {mqttQuestionData?.spend_breakdown?.slice(0,3).map((spend: ContestantSpend) => {
     const selectedBid = contestantBids?.[spend.contestant_id];
     const selectedOption = contestantOption?.[spend.contestant_id];
-
-    console.log(selectedBid);
-    
 
     const matchingKey = selectedBid
       ? Object.keys(spend.spend_breakdown).find(
@@ -615,6 +615,25 @@ if (receivedMessage?.event === "contestant_selected_option") {
     // Determine if bid is selected but option is not
     const isBidSelectedButOptionNot = !!selectedBid && !selectedOption;
 
+    // Calculate number of stars based on bid position (lowest=1 star, highest=4 stars)
+    let numberOfStars = 0;
+    if (selectedBid) {
+      // Get all bid amounts and sort them from lowest to highest
+      const allBidAmounts = Object.keys(spend.spend_breakdown)
+        .map(key => Math.ceil(Number(key) / 100) * 100)
+        .sort((a, b) => a - b);
+      
+      const selectedBidAmount = Math.ceil(Number(selectedBid.bid_amount) / 100) * 100;
+      
+      // Find the position of selected bid (0-based index)
+      const bidPosition = allBidAmounts.findIndex(amount => amount === selectedBidAmount);
+      
+      // Convert to 1-4 stars (lowest bid = 1 star, highest bid = 4 stars)
+      numberOfStars = bidPosition + 1;
+    }
+ const starsArray = Array.from({ length: numberOfStars });
+
+
     return (
       <div
         key={spend.contestant_id}
@@ -624,8 +643,44 @@ if (receivedMessage?.event === "contestant_selected_option") {
             : "bg-[#0F002E]" // Purple background default
         }`}
       >
-        <div className="text-white text-base font-gilroyBold font-bold mb-1">
+        <div className="flex items-center justify-between mb-2">
+        <div className="text-white text-2xl font-gilroyBold font-bold ">
           {spend.contestant_name?.split(" ")[0]}
+        </div>
+<motion.div
+  initial={{ opacity: 0, scale: 0.8 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{ delay: 0.2, duration: 0.4 }}
+  className="flex items-center gap-1"
+>
+
+<AnimatePresence>
+  {starsArray.map((_, index) => (
+    <motion.button
+      key={index}
+      initial={{ opacity: 0, scale: 0 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0 }}
+      transition={{
+        delay: index * 0.1, // stagger each star on entry/exit
+        duration: 0.3,
+        type: "spring",
+      }}
+      className="cursor-pointer"
+    >
+      <StarIcon
+        size={22}
+        filled
+        centerFill="transparent"
+        color="#FFD700"
+        strokeColor="#fff"
+        strokeWidth={1}
+      />
+    </motion.button>
+  ))}
+</AnimatePresence>
+</motion.div>
+
         </div>
 
         <div className="grid grid-cols-2 w-full justify-center gap-2">
@@ -663,7 +718,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
             className="mt-2 flex items-center gap-2"
           >
             <div
-              className={`text-lg font-gilroyMedium transition-all ${
+              className={`text-[1.375rem] font-verdana transition-all ${
                 isAnswerOptionSelected 
                   ? "text-[#00FF47]" // Green text when answer option is selected
                   : isBidSelectedButOptionNot
@@ -671,9 +726,9 @@ if (receivedMessage?.event === "contestant_selected_option") {
                     : "text-white opacity-50" // Default white with opacity
               }`}
             >
-              {isAnswerOptionSelected ? "Winning:" : isBidSelectedButOptionNot && "Winning:"}
+              {isAnswerOptionSelected ? "To Win:" : isBidSelectedButOptionNot && "To Win:"}
             </div>
-            <div className={`text-lg font-gilroyHeavy font-bold transition-all ${
+            <div className={`text-[1.375rem] font-verdana font-bold transition-all ${
               isAnswerOptionSelected 
                 ? "text-[#00FF47]" // Green amount when answer option is selected
                 : isBidSelectedButOptionNot
@@ -715,7 +770,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.4 }}
                           >
-                            <p className="bg-[#011B0D] rounded-10 px-6 py-2 text-2xl text-[#04DA6A] font-outfit">
+                            <p className="bg-[#011B0D] rounded-10 px-6 py-2 text-2xl text-[#30ff7c] font-outfit">
                               Question{" "}
                               {mqttQuestionData?.question_index || "..."}
                             </p>
@@ -725,7 +780,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.4 }}
                           >
-                            <p className="bg-[#011B0D] rounded-10 px-6 py-2 text-2xl text-[#04DA6A] font-outfit">
+                            <p className="bg-[#011B0D] rounded-10 px-6 py-2 text-2xl text-[#30ff7c] font-gilroyMedium">
                             Owner: {mqttQuestionData?.question?.contestant?.contestant_name?.split((" ")[0])}
                             </p>
                           </motion.div>
@@ -918,6 +973,24 @@ if (receivedMessage?.event === "contestant_selected_option") {
     // Determine if bid is selected but option is not
     const isBidSelectedButOptionNot = !!selectedBid && !selectedOption;
 
+    // Calculate number of stars based on bid position (lowest=1 star, highest=4 stars)
+    let numberOfStars = 0;
+    if (selectedBid) {
+      // Get all bid amounts and sort them from lowest to highest
+      const allBidAmounts = Object.keys(spend.spend_breakdown)
+        .map(key => Math.ceil(Number(key) / 100) * 100)
+        .sort((a, b) => a - b);
+      
+      const selectedBidAmount = Math.ceil(Number(selectedBid.bid_amount) / 100) * 100;
+      
+      // Find the position of selected bid (0-based index)
+      const bidPosition = allBidAmounts.findIndex(amount => amount === selectedBidAmount);
+      
+      // Convert to 1-4 stars (lowest bid = 1 star, highest bid = 4 stars)
+      numberOfStars = bidPosition + 1;
+    }
+           const starsArray = Array.from({ length: numberOfStars });
+
     return (
       <div
         key={spend.contestant_id}
@@ -927,8 +1000,45 @@ if (receivedMessage?.event === "contestant_selected_option") {
             : "bg-[#0F002E]" // Purple background default
         }`}
       >
-        <div className="text-white text-base font-gilroyBold font-bold mb-1">
+        <div className="flex items-center justify-between mb-2">
+        <div className="text-white text-2xl font-gilroyBold font-bold ">
           {spend.contestant_name?.split(" ")[0]}
+        </div>
+ <div className="flex items-center gap-1 ">
+<motion.div
+  initial={{ opacity: 0, scale: 0.8 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{ delay: 0.2, duration: 0.4 }}
+  className="flex items-center gap-1"
+>
+
+<AnimatePresence>
+  {starsArray.map((_, index) => (
+    <motion.button
+      key={index}
+      initial={{ opacity: 0, scale: 0 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0 }}
+      transition={{
+        delay: index * 0.1, // stagger each star on entry/exit
+        duration: 0.3,
+        type: "spring",
+      }}
+      className="cursor-pointer"
+    >
+      <StarIcon
+        size={22}
+        filled
+        centerFill="transparent"
+        color="#FFD700"
+        strokeColor="#fff"
+        strokeWidth={1}
+      />
+    </motion.button>
+  ))}
+</AnimatePresence>
+</motion.div>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 w-full justify-center gap-2">
@@ -966,7 +1076,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
             className="mt-2 flex items-center gap-2"
           >
             <div
-              className={`text-lg font-gilroyMedium transition-all ${
+              className={`text-[1.375rem] font-verdana transition-all ${
                 isAnswerOptionSelected 
                   ? "text-[#00FF47]" // Green text when answer option is selected
                   : isBidSelectedButOptionNot
@@ -974,9 +1084,9 @@ if (receivedMessage?.event === "contestant_selected_option") {
                     : "text-white opacity-50" // Default white with opacity
               }`}
             >
-              {isAnswerOptionSelected ? "Winning:" : isBidSelectedButOptionNot && "Winning:"}
+              {isAnswerOptionSelected ? "To Win:" : isBidSelectedButOptionNot && "To Win:"}
             </div>
-            <div className={`text-lg font-gilroyHeavy font-bold transition-all ${
+            <div className={`text-[1.375rem] font-verdana font-bold transition-all ${
               isAnswerOptionSelected 
                 ? "text-[#00FF47]" // Green amount when answer option is selected
                 : isBidSelectedButOptionNot
@@ -1055,7 +1165,8 @@ if (receivedMessage?.event === "contestant_selected_option") {
                       height={100}
                             active={
                               mqttQuestionData?.question?.hustle_reveal
-                                ?.hustle_number > contestant?.hustle_number
+                                ?.hustle_number > contestant?.hustle_number || mqttQuestionData?.question?.hustle_reveal
+                                ?.hustle_number === contestant?.hustle_number
                             }
                             iconPosition={{ y: 33 }}
                             iconSize={30}
