@@ -1,14 +1,20 @@
+import { winninData } from '@/app/components/stages/api/stage3/fetchWInningAmt';
+import { SmallSpinner } from '@/icons/core';
+import { addCommasToNumber } from '@/utils';
 import React from 'react';
-
-const Stage3Reward = () => {
+interface prop{
+  data:winninData | undefined
+  isLoadingAmt: boolean
+}
+const Stage3Reward = ({data,isLoadingAmt}:prop) => {
   return (
-    <div className="flex gap-8  items-center justify-center">
+    <div className="flex gap-8 flex-col   items-center justify-center">
       {/* Dud Card */}
-      <div className="relative">
-        <div className="w-80 h-32 bg-black border-2 border-cyan-400 rounded-lg flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="relative ">
+        <div className="  p-4  bg-black  gap-5 rounded-lg flex  flex-col items-center justify-center relative overflow-hidden">
           {/* Dud Badge */}
-          <div className="absolute top-2 bg-red-900 border border-red-600 px-4 py-1 rounded-full">
-            <span className="text-red-300 font-bold text-xs uppercase tracking-wide">Dud</span>
+          <div className=" bg-red-900 border border-red-600 px-4 py-1 rounded-full">
+            <span className="text-red-300 font-bold text-2xl uppercase tracking-wide">Dud</span>
           </div>
           
           {/* Main Text with Strong Neon Effect */}
@@ -16,7 +22,7 @@ const Stage3Reward = () => {
           <div className="text-center mt-2">
             <h2 className="text-white text-2xl outline-text-white font-bold tracking-wide uppercase" 
                >
-              Health Insurance
+              Liberty Life
             </h2>
           </div>
         </div>
@@ -24,22 +30,22 @@ const Stage3Reward = () => {
 
       {/* Pass Card */}
       <div className="relative">
-        <div className="w-80 h-32 bg-black border-2 border-cyan-400 rounded-lg flex flex-col items-center justify-center relative overflow-hidden">
+        <div className=" bg-black p-4  flex gap-x-5  items-center justify-center flex-col relative overflow-hidden">
           {/* Pass Badge */}
-          <div className="absolute top-2 bg-green-800 border border-green-600 px-4 py-1 rounded-full">
-            <span className="text-green-300 font-bold text-xs uppercase tracking-wide">Pass</span>
+          <div className=" bg-green-800 border border-green-600 px-4 py-1 rounded-full">
+            <span className="text-green-300 font-bold text-2xl uppercase tracking-wide">Pass</span>
           </div>
           
           {/* Main Text with Strong Neon Effect */}
           <div className="text-center mt-2">
-            <h2 className="text-white outline-text-white text-3xl font-bold tracking-wide" 
+           {isLoadingAmt?<SmallSpinner/>: <h2 className="text-white outline-text-white text-3xl font-bold tracking-wide" 
                style={{
                                 WebkitTextStroke: "2px #035D2E",
                                 textShadow: "0px 1px 2px rgba(3, 93, 46, 0.5)"
                               }}
                >
-              ₦500,000
-            </h2>
+              ₦{addCommasToNumber(data?.data?.amount)}
+            </h2>}
           </div>
         </div>
         

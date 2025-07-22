@@ -33,6 +33,7 @@ interface UserBadgeProps extends SVGProps<SVGSVGElement> {
     endColor: string;
     direction: "horizontal" | "vertical";
   };
+  route?:string;
 }
 
 const UserBadge = ({
@@ -55,6 +56,7 @@ const UserBadge = ({
   dotRadius = 5,
   showDot = true,
   backgroundGradient,
+  route,
   textGradient,
   ...props
 }: UserBadgeProps) => {
@@ -182,10 +184,10 @@ const UserBadge = ({
       </foreignObject>
       
       {/* Amount */}
-      <foreignObject x={35} y={height * 0.8 - 15} width={width - avatarSize - 60} height={30}>
+      <foreignObject className="" x={35} y={height * 0.8 - 15} width={route === "hustle-board" ? width : width - avatarSize - 60} height={30}>
         <div 
           className={cn(
-            "text-base font-bold overflow-hidden text-ellipsis whitespace-nowrap",
+            `text-base font-bold ${route === "hustle-board" ? "" : "overflow-hidden"} overflow-hidden text-ellipsis whitespace-nowrap`,
             isActive ? "text-white" : "text-[#AAAAAA]",
             amountClassName
           )}
@@ -210,22 +212,7 @@ const UserBadge = ({
       )}
       
       {/* Avatar */}
-      <foreignObject 
-        x={avatarX} 
-        y={avatarY} 
-        width={avatarSize} 
-        height={avatarSize} 
-        clipPath={`url(#${clipId})`}
-      >
-        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-          <Image
-            src={avatarUrl}
-            alt={`${username}'s avatar`}
-            fill
-            style={{ objectFit: 'cover' }}
-          />
-        </div>
-      </foreignObject>
+    
     </svg>
   );
 };

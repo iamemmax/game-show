@@ -38,7 +38,12 @@ const convertOptionToLetter = (option: string | null): string => {
 };
 
 const ViewOnlyQuestionTwoScreen = () => {
-  const { isConnected, addMessageListener, removeMessageListener, sendMessage } = useMQTT();
+  const {
+    isConnected,
+    addMessageListener,
+    removeMessageListener,
+    sendMessage,
+  } = useMQTT();
   const params = useParams();
 
   // Get wallet balances for display
@@ -70,12 +75,17 @@ const ViewOnlyQuestionTwoScreen = () => {
   >(null);
 
   // Add these new state variables after the existing state declarations
-  const [questionStartTime, setQuestionStartTime] = useState<number | null>(null);
-  const [contestantTimestamps, setContestantTimestamps] = useState<{ [contestantId: string]: number }>({});
+  const [questionStartTime, setQuestionStartTime] = useState<number | null>(
+    null
+  );
+  const [contestantTimestamps, setContestantTimestamps] = useState<{
+    [contestantId: string]: number;
+  }>({});
   const [currentTimestamp, setCurrentTimestamp] = useState<number>(0);
 
-
-  const { refetch, data: contestantData } = useGetGameContestants(Number(params?.episodeId));
+  const { refetch, data: contestantData } = useGetGameContestants(
+    Number(params?.episodeId)
+  );
   const [mqttAnswerResultData, setMqttAnsweResultData] =
     useState<any>(mqttAnswerData);
   const [contestantOption, setContestantOption] = useState<{
@@ -99,17 +109,20 @@ const ViewOnlyQuestionTwoScreen = () => {
     } catch (error) {
       console.error("Error playing option selected sound:", error);
     }
-  }
+  };
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
     if (timerActive && timeLeft > 0) {
       interval = setInterval(() => {
-        setTimeLeft(prev => {
+        setTimeLeft((prev) => {
           if (prev <= 1) {
             setTimerActive(false);
             // Mark current question as attempted when timer ends
-            setAttemptedQuestions(prevAttempted => new Set([...prevAttempted, currentQuestionIndex]));
+            setAttemptedQuestions(
+              (prevAttempted) =>
+                new Set([...prevAttempted, currentQuestionIndex])
+            );
             return 0;
           }
           return prev - 1;
@@ -150,7 +163,6 @@ const ViewOnlyQuestionTwoScreen = () => {
     };
   }, [timerActive, questionStartTime]);
 
-
   // Update the resetTimerState function
   const resetTimerState = () => {
     setTimerActive(false);
@@ -179,7 +191,6 @@ const ViewOnlyQuestionTwoScreen = () => {
     if (!isConnected) return;
 
     const handler = (receivedMessage: any) => {
-
       // Handle prep page event
       if (receivedMessage?.event === "game_s2_question_reveal") {
         setShowStage2Prep(false);
@@ -215,7 +226,6 @@ const ViewOnlyQuestionTwoScreen = () => {
         ) {
           const answersData = payload?.answers_data?.answers;
           setCurrentQuestionAnswerData(answersData);
-         
         }
       }
 
@@ -224,7 +234,7 @@ const ViewOnlyQuestionTwoScreen = () => {
         const payload = receivedMessage.payload || {};
         const questionId = payload.question_id;
         const shouldShowModal = payload?.show_modal;
- setShowResultModal(true);
+        setShowResultModal(true);
         // FIXED: Compare questionId properly (convert to string if needed)
         const currentQuestionIdStr = currentQuestionIdRef?.current?.toString();
         const receivedQuestionIdStr = questionId?.toString();
@@ -232,11 +242,10 @@ const ViewOnlyQuestionTwoScreen = () => {
         if (receivedQuestionIdStr === currentQuestionIdStr) {
           const answersData = payload?.data?.answers;
 
-
           // Update answer data for all questions
           setMqttAnswerData(answersData);
-          // FIXED: For elimination questions (index > 4), set result data separately
-          if (currentQuestionIndex > 4) {
+          // FIXED: For elimination questions (index > 3), set result data separately
+          if (currentQuestionIndex > 3) {
             setMqttAnsweResultData(answersData);
             setMqttAnswerData(answersData);
           }
@@ -279,11 +288,11 @@ const ViewOnlyQuestionTwoScreen = () => {
         );
 
         // Set timestamp to 10.000 for contestants who didn't answer
-        setContestantOption(prevOpt => {
+        setContestantOption((prevOpt) => {
           const updatedOpt = { ...prevOpt };
 
           // Get remaining contestants for current question
-          remainingContestants?.forEach(contestant => {
+          remainingContestants?.forEach((contestant) => {
             const contestantId = contestant.id;
             const existingOption = updatedOpt[contestantId];
 
@@ -292,7 +301,7 @@ const ViewOnlyQuestionTwoScreen = () => {
               updatedOpt[contestantId] = {
                 contestant_id: String(contestantId),
                 contestant_name: String(contestant.name),
-                selected_option: existingOption?.selected_option || '',
+                selected_option: existingOption?.selected_option || "",
                 is_selected: false,
                 timestamp: "10.000", // 10 seconds for non-answered (properly formatted)
                 question_id: String(currentQuestionId),
@@ -300,7 +309,10 @@ const ViewOnlyQuestionTwoScreen = () => {
             }
           });
 
-          console.log("📊 Updated non-answered contestants timestamps:", updatedOpt);
+          console.log(
+            "📊 Updated non-answered contestants timestamps:",
+            updatedOpt
+          );
           return updatedOpt;
         });
       }
@@ -316,23 +328,23 @@ const ViewOnlyQuestionTwoScreen = () => {
       }
       if (receivedMessage?.event === "contestant_selected_option") {
         const payload = receivedMessage.payload || {};
-//         contestant_id: 13
-// ​​
-// contestant_name: "Emmanuel"
-// ​​
-// game_episode: 2
-// ​​
-// is_selected: true
-// ​​
-// question_id: 15
-// ​​
-// selected_option: "D"
+        //         contestant_id: 13
+        // ​​
+        // contestant_name: "Emmanuel"
+        // ​​
+        // game_episode: 2
+        // ​​
+        // is_selected: true
+        // ​​
+        // question_id: 15
+        // ​​
+        // selected_option: "D"
         const {
           contestant_id,
           contestant_name,
           selected_option,
           is_selected,
-          
+
           question_id,
         } = payload;
 
@@ -343,9 +355,7 @@ const ViewOnlyQuestionTwoScreen = () => {
             playOptionSelectedSound();
 
             // ✅ CALCULATE AND RECORD THE ANSWER TIME
-           
 
-          
             // Update contestant option with their answer time
             setContestantOption((prevOpt) => {
               const updatedBids = {
@@ -359,8 +369,6 @@ const ViewOnlyQuestionTwoScreen = () => {
                 },
               };
 
-             
-
               return updatedBids;
             });
           }
@@ -371,8 +379,6 @@ const ViewOnlyQuestionTwoScreen = () => {
       }
     };
 
-
-
     if (isConnected) {
       addMessageListener(handler);
     }
@@ -380,7 +386,12 @@ const ViewOnlyQuestionTwoScreen = () => {
     return () => {
       removeMessageListener(handler);
     };
-  }, [isConnected, addMessageListener, removeMessageListener, currentQuestionIndex]);
+  }, [
+    isConnected,
+    addMessageListener,
+    removeMessageListener,
+    currentQuestionIndex,
+  ]);
 
   // Add effect to mark question as attempted when timer ends
   useEffect(() => {
@@ -413,13 +424,12 @@ const ViewOnlyQuestionTwoScreen = () => {
     setFontSize(newFontSize);
   }, [mqttQuestionData?.question]);
 
-
-
-
   const remainingContestants = contestantData?.data?.filter(
     (contestant) => contestant.eliminated_stage === null
   );
-
+  if (showStage2Prep) {
+    return <StageTwoGetReadyStage />;
+  }
   return (
     <div className="grid grid-cols-[1fr_5fr_1fr] h-full">
       {/* Left Sidebar */}
@@ -462,7 +472,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                 className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
                 style={{
                   background:
-                    currentQuestionIndex > 4
+                    currentQuestionIndex > 3
                       ? `conic-gradient(from 0deg at 50% 50%,
                      #ff0000 0deg,
                      #ff4444 120deg,
@@ -495,7 +505,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                 className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
                 style={{
                   background:
-                    currentQuestionIndex > 4
+                    currentQuestionIndex > 3
                       ? `conic-gradient(from 0deg at 50% 50%,
                                    #ff0000 0deg, #ff0000 10deg,
                                    #8b0000 10deg, #8b0000 20deg,
@@ -545,7 +555,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                 }}
                 animate={{
                   rotate: [0, 360],
-                  ...(currentQuestionIndex > 4 && {
+                  ...(currentQuestionIndex > 3 && {
                     filter: [
                       "brightness(1) saturate(1)",
                       "brightness(1.5) saturate(1.5)",
@@ -559,7 +569,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                   duration: currentQuestionIndex > 5 ? 2 : 4,
                   ease: "linear",
                   repeat: Infinity,
-                  ...(currentQuestionIndex > 4 && {
+                  ...(currentQuestionIndex > 3 && {
                     filter: {
                       duration: 0.3,
                       ease: "easeInOut",
@@ -581,7 +591,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                     strokeColor="#D91FFF"
                     glowColor="#13051E"
                     glowIntensity="low"
-                    textclassName="text-[2.5rem] font-extrabold font-gilroyBold"
+                    textclassName="text-[2.5rem] font-extrabold font-lucky"
                     fillColor="#000"
                   >
                     Stage 2: Prove your hustle
@@ -610,59 +620,65 @@ const ViewOnlyQuestionTwoScreen = () => {
                 {/* Question numbers sidebar - Updated to show attempted questions */}
 
                 <div className="flex flex-col gap-4 w-full">
-                  {remainingContestants?.slice(0, 2)?.map((contestant, index: number) => {
-                    const contestantSelection = contestantOption[contestant?.id];
-                    const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
+                  {remainingContestants
+                    ?.slice(0, 2)
+                    ?.map((contestant, index: number) => {
+                      const contestantSelection =
+                        contestantOption[contestant?.id];
+                      const hasSelected =
+                        contestantSelection?.is_selected &&
+                        contestantSelection?.selected_option;
 
-                    return (
-                      <div
-                        key={`left-${contestant?.id}`}
-                        className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${hasSelected
-                            ? 'bg-[#003218] text-white'
-                            : 'bg-[#160036] text-white'
+                      return (
+                         <div
+                          key={`left-${contestant?.id}`}
+                          className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${
+                            hasSelected
+                              ? "bg-[#29986f] text-white"
+                              : "bg-[#160036] text-white"
                           }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <p className="text-2xl">{contestant.name?.split(" ")[0]} </p>
-                          {hasSelected && (
-                            <motion.div
-                              initial={{ scale: 0, rotate: -180 }}
-                              animate={{
-                                scale: 1,
-                                rotate: 0,
-                                transition: {
-                                  type: "spring",
-                                  stiffness: 200,
-                                  damping: 10
-                                }
-                              }}
-                              className="ml-auto"
-                            >
-                              <CheckIcon size={24} />
-                            </motion.div>
-                          )}
-                        </div>
+                        >
+                          <div className="flex items-center gap-2">
+                            <p className="text-2xl">
+                              {contestant.name?.split(" ")[0]}{" "}
+                            </p>
+                            {hasSelected && (
+                              <motion.div
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{
+                                  scale: 1,
+                                  rotate: 0,
+                                  transition: {
+                                    type: "spring",
+                                    stiffness: 200,
+                                    damping: 10,
+                                  },
+                                }}
+                                className="ml-auto"
+                              >
+                                <CheckIcon size={24} />
+                              </motion.div>
+                            )}
+                          </div>
 
-                        <p className="text-white text-opacity-70 text-base">
-                          Status:
-                          <span className="text-white text-opacity-100">
-                            {hasSelected ? " answered" : " "}
-                          </span>
-                        </p>
-                        {/* <p className="text-white text-opacity-70 text-base">
+                          <p className={`${hasSelected ? "text-white" : "text-white"} font-semibold  text-xl`}>
+                            Status:
+                            <span className={`${hasSelected ? "text-white" : "text-white"} text-opacity-100`}>
+                              {hasSelected ? " Answered" : " "}
+                            </span>
+                          </p>
+                          {/* <p className="text-white text-opacity-70 text-base">
           Timestamp:
           <span className="text-white text-opacity-100">
             {displayTimestamp}s
           </span>
         </p> */}
-                      </div>
-                    );
-                  })}
+                        </div>
+                      );
+                    })}
                 </div>
 
-
                 <>
-
                   {isLoading ? (
                     <div className="flex justify-center items-center h-full">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
@@ -672,43 +688,44 @@ const ViewOnlyQuestionTwoScreen = () => {
                       <div className="relative">
                         {/* Question display section */}
                         <motion.div
-                          className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000] ${currentQuestionIndex > 4
+                          className={`border-[.3125rem] relative flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[3rem] rounded-[1.5rem] bg-[#000000] ${
+                            currentQuestionIndex > 3
                               ? "border-red-500"
                               : "border-[#D71BFA]"
-                            }`}
+                          }`}
                           animate={
-                            currentQuestionIndex > 4
+                            currentQuestionIndex > 3
                               ? {
-                                borderColor: [
-                                  "#ff0000",
-                                  "#ff4444",
-                                  "#cc0000",
-                                  "#ff6666",
-                                  "#990000",
-                                  "#ff3333",
-                                  "#ff0000",
-                                ],
-                                boxShadow: [
-                                  "0 0 20px #ff0000",
-                                  "0 0 40px #ff4444",
-                                  "0 0 25px #cc0000",
-                                  "0 0 35px #ff6666",
-                                  "0 0 30px #990000",
-                                  "0 0 45px #ff3333",
-                                  "0 0 20px #ff0000",
-                                ],
-                                scale: [1, 1.02, 1, 1.01, 1],
-                              }
+                                  borderColor: [
+                                    "#ff0000",
+                                    "#ff4444",
+                                    "#cc0000",
+                                    "#ff6666",
+                                    "#990000",
+                                    "#ff3333",
+                                    "#ff0000",
+                                  ],
+                                  boxShadow: [
+                                    "0 0 20px #ff0000",
+                                    "0 0 40px #ff4444",
+                                    "0 0 25px #cc0000",
+                                    "0 0 35px #ff6666",
+                                    "0 0 30px #990000",
+                                    "0 0 45px #ff3333",
+                                    "0 0 20px #ff0000",
+                                  ],
+                                  scale: [1, 1.02, 1, 1.01, 1],
+                                }
                               : {}
                           }
                           transition={
-                            currentQuestionIndex > 4
+                            currentQuestionIndex > 3
                               ? {
-                                duration: 0.5,
-                                ease: "easeInOut",
-                                repeat: Infinity,
-                                repeatType: "loop",
-                              }
+                                  duration: 0.5,
+                                  ease: "easeInOut",
+                                  repeat: Infinity,
+                                  repeatType: "loop",
+                                }
                               : {}
                           }
                         >
@@ -720,16 +737,18 @@ const ViewOnlyQuestionTwoScreen = () => {
 
                           <AnimatePresence mode="wait">
                             <div className="py-4 pb-8">
-                              <AnimatedText text={mqttQuestionData?.question ||
-                                "Waiting for question..."}
+                              <AnimatedText
+                                text={
+                                  mqttQuestionData?.question ||
+                                  "Waiting for question..."
+                                }
                               />
                             </div>
-
                           </AnimatePresence>
 
                           <div className="flex absolute -bottom-11 justify-center items-center w-full gap-4">
                             <div className="bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] flex justify-center gap-y-0 space-y-0 items-center flex-col rounded-[12px] py-2 px-[5rem]">
-                              <p className="text-xl block font-outfit font-normal text-[#1E1E1E]">
+                              <p className="text-2xl block font-outfit font-normal text-[#1E1E1E]">
                                 Win amount
                               </p>
                               <GlowyStrokeText
@@ -744,7 +763,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                                 {formatAmount(
                                   Number(
                                     mqttQuestionData?.allocated_winning_amount ||
-                                    0
+                                      0
                                   )
                                 )}
                               </GlowyStrokeText>
@@ -802,50 +821,52 @@ const ViewOnlyQuestionTwoScreen = () => {
                                     }}
                                     whileHover={
                                       timerActive &&
-                                        mqttQuestionData?.question?.question
+                                      mqttQuestionData?.question?.question
                                         ? {
-                                          scale: 1.03,
-                                          y: -3,
-                                          transition: { duration: 0.2 },
-                                        }
+                                            scale: 1.03,
+                                            y: -3,
+                                            transition: { duration: 0.2 },
+                                          }
                                         : {}
                                     }
                                     whileTap={
                                       timerActive &&
-                                        mqttQuestionData?.question?.question
+                                      mqttQuestionData?.question?.question
                                         ? { scale: 0.98 }
                                         : {}
                                     }
                                     animate={
                                       isSelected && !showResult
                                         ? {
-                                          scale: [1, 1.05, 1],
-                                          transition: {
-                                            duration: 0.3,
-                                            ease: "easeInOut",
-                                          },
-                                        }
-                                        : showResult && isCorrect
-                                          ? {
-                                            scale: [1, 1.08, 1.02],
-                                            backgroundColor: [
-                                              "#04DA6A20",
-                                              "#04DA6A40",
-                                              "#04DA6A20",
-                                            ],
+                                            scale: [1, 1.05, 1],
                                             transition: {
-                                              duration: 0.8,
+                                              duration: 0.3,
                                               ease: "easeInOut",
                                             },
                                           }
-                                          : showResult && isSelected && !isCorrect
-                                            ? {
-                                              x: [-2, 2, -2, 2, 0],
+                                        : showResult && isCorrect
+                                          ? {
+                                              scale: [1, 1.08, 1.02],
+                                              backgroundColor: [
+                                                "#04DA6A20",
+                                                "#04DA6A40",
+                                                "#04DA6A20",
+                                              ],
                                               transition: {
-                                                duration: 0.5,
+                                                duration: 0.8,
                                                 ease: "easeInOut",
                                               },
                                             }
+                                          : showResult &&
+                                              isSelected &&
+                                              !isCorrect
+                                            ? {
+                                                x: [-2, 2, -2, 2, 0],
+                                                transition: {
+                                                  duration: 0.5,
+                                                  ease: "easeInOut",
+                                                },
+                                              }
                                             : {}
                                     }
                                     className={cn(
@@ -859,7 +880,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                                         : "hover:shadow-lg",
                                       mqttAnswerData &&
                                         mqttQuestionData?.correct_option ===
-                                        convertOptionToLetter(option)
+                                          convertOptionToLetter(option)
                                         ? "!bg-[#04DA6A]/20 !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
                                         : ""
                                     )}
@@ -899,7 +920,8 @@ const ViewOnlyQuestionTwoScreen = () => {
                                       )}
                                       style={{
                                         WebkitTextStroke:
-                                          selectedOption === option && !showResult
+                                          selectedOption === option &&
+                                          !showResult
                                             ? "1px #C76000"
                                             : "",
                                       }}
@@ -997,73 +1019,78 @@ const ViewOnlyQuestionTwoScreen = () => {
                           mqttAnswerData={mqttAnswerData}
                           showBid={false}
                           showAllocatedAMount={false}
-
-                          allocatedWinningAmount={mqttQuestionData?.allocated_winning_amount}
+                          allocatedWinningAmount={
+                            mqttQuestionData?.allocated_winning_amount
+                          }
                         />
                       )}
-
-
                     </>
                   )}
                 </>
 
-
                 <div className="flex flex-col gap-4 w-full">
-                  {remainingContestants?.slice(-2)?.map((contestant, index: number) => {
-                    const contestantSelection = contestantOption[contestant?.id];
-                    const hasSelected = contestantSelection?.is_selected && contestantSelection?.selected_option;
+                  {remainingContestants
+                    ?.slice(-2)
+                    ?.map((contestant, index: number) => {
+                      const contestantSelection =
+                        contestantOption[contestant?.id];
+                      const hasSelected =
+                        contestantSelection?.is_selected &&
+                        contestantSelection?.selected_option;
 
-
-                    return (
-                      <div
-                        key={`left-${contestant?.id}`}
-                        className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${hasSelected
-                            ? 'bg-[#003218] text-white'
-                            : 'bg-[#160036] text-white'
+                      return (
+                        <div
+                          key={`left-${contestant?.id}`}
+                          className={`flex items-start flex-col gap-3 rounded-lg px-6 py-4 font-gilroyMedium transition-all duration-300 ${
+                            hasSelected
+                              ? "bg-[#29986f] text-white"
+                              : "bg-[#160036] text-white"
                           }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <p className="text-2xl">{contestant.name?.split(" ")[0]} </p>
-                          {hasSelected && (
-                            <motion.div
-                              initial={{ scale: 0, rotate: -180 }}
-                              animate={{
-                                scale: 1,
-                                rotate: 0,
-                                transition: {
-                                  type: "spring",
-                                  stiffness: 200,
-                                  damping: 10
-                                }
-                              }}
-                              className="ml-auto"
-                            >
-                              <CheckIcon size={24} />
-                            </motion.div>
-                          )}
-                        </div>
+                        >
+                          <div className="flex items-center gap-2">
+                            <p className="text-2xl">
+                              {contestant.name?.split(" ")[0]}{" "}
+                            </p>
+                            {hasSelected && (
+                              <motion.div
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{
+                                  scale: 1,
+                                  rotate: 0,
+                                  transition: {
+                                    type: "spring",
+                                    stiffness: 200,
+                                    damping: 10,
+                                  },
+                                }}
+                                className="ml-auto"
+                              >
+                                <CheckIcon size={24} />
+                              </motion.div>
+                            )}
+                          </div>
 
-                        <p className="text-white text-opacity-70 text-base">
-                          Status:
-                          <span className="text-white text-opacity-100">
-                            {hasSelected ? " answered" : " "}
-                          </span>
-                        </p>
-                        {/* <p className="text-white text-opacity-70 text-base">
+                          <p className={`${hasSelected ? "text-white" : "text-white"} font-semibold  text-xl`}>
+                            Status:
+                            <span className={`${hasSelected ? "text-white" : "text-white"} text-opacity-100`}>
+                              {hasSelected ? " Answered" : " "}
+                            </span>
+                          </p>
+                          {/* <p className="text-white text-opacity-70 text-base">
           Timestamp:
           <span className="text-white text-opacity-100">
             {displayTimestamp}s
           </span>
         </p> */}
-                      </div>
-                    );
-                  })}
+                        </div>
+                      );
+                    })}
                 </div>
 
                 {/*  */}
               </div>
               <div className="flex w-full justify-center items-center mt-10 gap-[2rem]  ">
-                {Array.from({ length: 8 }, (_, index) => (
+                {Array.from({ length: 6 }, (_, index) => (
                   <div className="" key={index}>
                     <NumberCardContainer
                       // text={index + 1}
@@ -1088,8 +1115,8 @@ const ViewOnlyQuestionTwoScreen = () => {
                             ? "#04DA6A"
                             : "black"
                       }
-                      width={65}
-                      height={65}
+                      width={90}
+                      height={95}
                       active={currentQuestionIndex > index + 1}
                       iconPosition={{ y: 33 }}
                       iconSize={30}
@@ -1097,8 +1124,6 @@ const ViewOnlyQuestionTwoScreen = () => {
                   </div>
                 ))}
               </div>
-
-
             </div>
           </div>
         </div>
@@ -1112,7 +1137,7 @@ const ViewOnlyQuestionTwoScreen = () => {
           eliminated={2}
           balanceData={balanceData}
           mqttAnswerData={
-            currentQuestionIndex > 4 ? mqttAnswerResultData : mqttAnswerData
+            currentQuestionIndex > 3 ? mqttAnswerResultData : mqttAnswerData
           }
         />
       </div>

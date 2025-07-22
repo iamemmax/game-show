@@ -368,7 +368,7 @@ const HustleBoardNumberPicks = () => {
                       timerStarted && (
                         <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 ">
                           <span
-                            className="text-[20px] font-extrabold font-verdana text-white"
+                            className="text-[40px] font-extrabold font-verdana text-white"
                             style={{
                               WebkitTextStroke: "1.5px #C76000",
                               textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",

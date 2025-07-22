@@ -61,7 +61,7 @@ const ReviewHustle = () => {
               <HeaderTitleContainer
                 backgroundColor="#791192"
                 color="#ed99ff"
-                text="Stage 1"
+                text="Hustle Board"
                 textGradientEnd="#8E17AA"
                 textGradientStart="#8E17AA"
                 borderGradientStart="#f712fc"

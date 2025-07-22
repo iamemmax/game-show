@@ -1105,13 +1105,13 @@ const RafflePickReveal = () => {
                         <Ball
                           number={ballNumber}
                           variant={getBallVariant(ballNumber)}
-                          size="md"
+                          size="lg"
                           className={cn(
                             "transition-all duration-300 w-12 h-12", // Even bigger balls
                             animatingBall === ballNumber && "z-50",
                             isExtraBall && ballInfo?.is_extra_ball && "",
                           )}
-                          textClassName="text-xl font-black" // Much bigger text
+                          textClassName="text-2xl font-black" // Much bigger text
                         />
 
                         {/* Enhanced Ball Type Indicator for balls 50-60 */}
@@ -1167,7 +1167,7 @@ const RafflePickReveal = () => {
                 
                 {/* Effect Label - Only show if not revealed */}
                 {getEffectLabel(item) && (
-                  <div className={`px-4 py-[.4375rem] ${isRevealed ? "opacity-40" : ""} rounded-[3.125rem] flex items-center border justify-center text-xs font-extrabold font-display  ${getLabelColor(item)}`}>
+                  <div className={`px-4 py-[.4375rem] ${isRevealed ? "opacity-40" : ""} rounded-[3.125rem] flex items-center border justify-center text-xl font-extrabold font-display  ${getLabelColor(item)}`}>
                     {getEffectLabel(item)}
                   </div>
                 )}

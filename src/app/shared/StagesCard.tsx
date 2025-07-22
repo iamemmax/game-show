@@ -97,16 +97,16 @@ StagesCard = ({
       {/* Text */}
       <text
         x="50"
-        y="24"
+        y="32"
         fill={isActive ? activeColor : inactiveColor}
-        fontSize="14"
+        fontSize="16"
         fontWeight="bold"
         fontFamily="Arial, sans-serif"
       >
         {title}
       </text>
 
-      <text
+      {/* <text
         x="50"
         y="40"
         fill={isActive ? activeColor : inactiveColor}
@@ -115,7 +115,7 @@ StagesCard = ({
         opacity="0.7"
       >
         {subTitle}
-      </text>
+      </text> */}
 
       {/* Accent sparkle */}
       <path

@@ -14,6 +14,8 @@ import { useParams } from "next/navigation";
 import { balanceProp, useGetWalletBalance } from "../../api/stage1/getbalance";
 import { formatAmount } from "@/utils/currency";
 import { Contestant } from "@/app/super-admin/misc/types";
+import Stage3Reward from "@/app/hustle-board/components/stage3/Stage3Reward";
+import { useGetStage3WiningAmount } from "../../api/stage3/fetchWInningAmt";
 
 interface prop {
   showJackpot?: boolean;
@@ -24,6 +26,7 @@ interface prop {
   showHustleCardAmt?: boolean;
   mqttAnswerData?: Datum[];
   balanceData?: balanceProp | null | undefined
+  showStage3Reward?: boolean;
   // mqttAnswerBalanceData?: any;
   
 }
@@ -178,7 +181,7 @@ const ContestantCard = ({
   return (
     <div
       key={originalIndex}
-      className={`${isBoardRoute ? "w-[12rem] h-[7rem] mt-3" : "w-[8.5456rem] h-[70.66px]"} ${baseCardBg} p-[5px] rounded-[12.79px] relative z-[999999999999] transition-all duration-300 ${
+      className={`${isBoardRoute ? "w-[13rem] h-[8rem] mt-3" : "w-[8.5456rem] h-[70.66px]"} ${baseCardBg} p-[5px] rounded-[12.79px] relative z-[999999999999] transition-all duration-300 ${
         contestantInfo?.is_eliminated ? "opacity-50 hidden" : ""
       } ${isBalanceChanging ? 'scale-105 shadow-lg' : ''}`}
     >
@@ -196,8 +199,8 @@ const ContestantCard = ({
           <Image
             src={String(contestantInfo?.contestant_photo_url)??"/images/userImage.png"}
             alt="User Image"
-            width={isBoardRoute ? 64 : 30}
-            height={isBoardRoute ? 64 : 30}
+            width={isBoardRoute ? 75 : 30}
+            height={isBoardRoute ? 75 : 30}
             className="object-cover w-full h-full"
           />
         </div>
@@ -227,7 +230,7 @@ const ContestantCard = ({
                   glowIntensity={isBalanceChanging ? "high" : "low"}
                   textclassName={`${
                     isBoardRoute
-                      ? "text-[1.5rem]"
+                      ? "text-[2rem]"
                       : "text-[19.18px]"
                   } font-extrabold font-gilroyHeavy text-white  mt-1 transition-all duration-300 ${
                     isBalanceChanging ? 'text-shadow-lg' : ''
@@ -245,7 +248,7 @@ const ContestantCard = ({
               glowColor="#ce45eb"
               glowIntensity="low"
               textclassName={`${
-                isBoardRoute ? "text-[1.5rem]  max-w-[130px]" : "text-[19.18px]  max-w-[110px]"
+                isBoardRoute ? "text-[1.6rem]  max-w-[140px]" : "text-[19.18px]  max-w-[110px]"
               } font-extrabold font-gilroyHeavy text-white -mt-3   truncate`}
               fillColor="#fff"
             >
@@ -267,10 +270,12 @@ const HustleSideBar = ({
   showHustlerCard = false,
   showHustleCardAmt = true,
   mqttAnswerData,
-  balanceData
+  balanceData,
+  showStage3Reward = false,
 }: prop) => {
   const user = tokenStorage.getUser();
   const params = useParams();
+const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.episodeId));
 
   const { data: allContestsant, isLoading } = useGetGameContestants(
     !params?.episodeId
@@ -365,7 +370,7 @@ const HustleSideBar = ({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
             </div>
           ) : (
-            <div className="flex-1 flex px-3 gap-6 h-full flex-col justify-center items-center">
+            <div className="flex-1 flex px-3 mt-5 gap-6 h-full flex-col justify-center items-center">
               {/* Render contestants ranked by balance (highest to lowest) */}
               {rankedData?.map((contestantData: any, idx: number) => {
                 const isBoardRoute = typeof params?.episodeId !== "undefined";
@@ -393,6 +398,11 @@ const HustleSideBar = ({
                   />
                 );
               })}
+
+               {showStage3Reward && <div className="">
+           <Stage3Reward data={data} isLoadingAmt={isLoadingAmt}/>
+      </div>}
+    
             </div>
           )}
         </>
@@ -415,6 +425,7 @@ const HustleSideBar = ({
         </div>
       )}
       
+
       <div className="min-h-[100px]">
         {showJackpot && <JackpotContainer size={80} text="₦100m" />}
       </div>
