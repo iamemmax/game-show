@@ -1,4 +1,5 @@
 import { winninData } from '@/app/components/stages/api/stage3/fetchWInningAmt';
+import LibertyLifeLogo from '@/app/icons/LibertyLifeLogo';
 import { SmallSpinner } from '@/icons/core';
 import { addCommasToNumber } from '@/utils';
 import React from 'react';
@@ -11,29 +12,27 @@ const Stage3Reward = ({data,isLoadingAmt}:prop) => {
     <div className="flex gap-8 flex-col   items-center justify-center">
       {/* Dud Card */}
       <div className="relative ">
-        <div className="  p-4  bg-black  gap-5 rounded-lg flex  flex-col items-center justify-center relative overflow-hidden">
+        <div className="  p-4  bg-[#002A05]  gap-3 rounded-lg flex  flex-col items-center justify-center relative overflow-hidden">
           {/* Dud Badge */}
-          <div className=" bg-red-900 border border-red-600 px-4 py-1 rounded-full">
-            <span className="text-red-300 font-bold text-2xl uppercase tracking-wide">Dud</span>
+          <div className=" bg-[#0B502B] border  px-4 py-1 rounded-full">
+            <span className="text-[#FFC125] font-bold text-2xl uppercase tracking-wide">Dud</span>
           </div>
           
           {/* Main Text with Strong Neon Effect */}
          {/* Main Text with Strong Neon Effect */}
-          <div className="text-center mt-2">
-            <h2 className="text-white text-2xl outline-text-white font-bold tracking-wide uppercase" 
-               >
-              Liberty Life
-            </h2>
+          <div className="flex items-center gap-x-3">
+           <LibertyLifeLogo width={40} />
+          <h2 className='text-white font-gilroyBold text-[1.625rem]'> Liberty Life</h2>
           </div>
         </div>
       </div>
 
       {/* Pass Card */}
       <div className="relative">
-        <div className=" bg-black p-4  flex gap-x-5  items-center justify-center flex-col relative overflow-hidden">
+        <div className=" bg-[#002A05] p-4  flex gap-x-5  items-center justify-center flex-col relative overflow-hidden">
           {/* Pass Badge */}
-          <div className=" bg-green-800 border border-green-600 px-4 py-1 rounded-full">
-            <span className="text-green-300 font-bold text-2xl uppercase tracking-wide">Pass</span>
+          <div className=" bg-green-800  px-4 py-1 rounded-full">
+            <span className="text-[#04DA6A] font-bold text-2xl uppercase tracking-wide">Pass</span>
           </div>
           
           {/* Main Text with Strong Neon Effect */}

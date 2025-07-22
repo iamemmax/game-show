@@ -1,74 +1,64 @@
+
 // "use client"
 // import Logo from "@/app/icons/Logo";
+// import Trophy from "@/app/icons/Trophy";
 // import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 // import React, { useEffect, useState } from "react";
-// import { AnimatePresence, motion } from "framer-motion";
+// import { motion, AnimatePresence } from "framer-motion";
+
+// // Removed import of QuestionScreen to avoid circular dependency
+// // import QuestionScreen from "./hustle/QuestionScreen";
 // import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
-// import { useMQTT } from "@/hooks/useMqttService";
-// import Stage3CardSelection from "./Stage3CardSelectionScreen";
 // import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 // import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
+// import { useMQTT } from "@/hooks/useMqttService";
 // import Stage3CardSelectionScreens from "./Stage3CardSelectionScreen";
+// // import { useMQTT } from "@/hooks/useMqttService"; // Commented out as it's not currently used
 
-// // Rename component to match the import in StageOneTally
+
 // const Stage3BoardGetReadyPage = () => {
-//   console.log("Stage3BoardGetReadyPage rendering"); // Add debug log
-//   const { isConnected } = useMQTT();
-//   const [showCardRevealScreen, setShowCardRevealScreen] = useState(false);
-
+//     const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
+  
+//     const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
+  
 //   // Animation variants
 //   const containerVariants = {
 //     hidden: { opacity: 0 },
-//     visible: { 
+//     visible: {
 //       opacity: 1,
-//       transition: { 
+//       transition: {
 //         duration: 0.5,
 //         when: "beforeChildren",
 //         staggerChildren: 0.2
 //       }
 //     },
-//     exit: { 
+//     exit: {
 //       opacity: 0,
 //       transition: { duration: 0.3 }
 //     }
 //   };
-  
+
 //   const itemVariants = {
 //     hidden: { y: 20, opacity: 0 },
-//     visible: { 
-//       y: 0, 
+//     visible: {
+//       y: 0,
 //       opacity: 1,
 //       transition: { duration: 0.5, ease: "easeOut" }
 //     }
 //   };
-  
-//   useEffect(() => {
-//     if (isConnected) {
-//       const handler = (receivedMessage: any) => {
-//         console.log("Stage3BoardGetReadyPage received message:", receivedMessage);
-        
-//         // Handle stage transition events
-//         if (receivedMessage?.event === "game_s3_start") {
-//           // Proceed to the next stage
-//           setShowCardRevealScreen(true);
-//         }
-//       };
-      
-//       // Register the message handler
-//       onMessage(handler);
-      
-//       // Clean up function to remove the handler when component unmounts
-//       return () => {
-//         onMessage(null);
-//       };
-//     }
-//   }, [isConnected, onMessage]);
 
-//   if(showCardRevealScreen){
-//     console.log("Navigating to Stage3CardSelection");
-//     return <Stage3CardSelectionScreens />
-//   }
-  
+//   const listItemVariants = {
+//     hidden: { x: -10, opacity: 0 },
+//     visible: {
+//       x: 0,
+//       opacity: 1,
+//       transition: { duration: 0.3, ease: "easeOut" }
+//     }
+//   };
+
+
+
+ 
 //   return (
 //     <AnimatePresence mode="wait">
 //       <motion.div
@@ -80,7 +70,7 @@
 //         className="grid grid-cols-[1.2fr_5fr_1fr] h-full"
 //       >
 //         {/* Left Sidebar */}
-//         <motion.div 
+//         <motion.div
 //           className="flex flex-col justify-between"
 //           variants={itemVariants}
 //         >
@@ -88,7 +78,7 @@
 //             <Logo />
 //           </div>
 //           <div>
-//             <HustleStages activeStage={3} />
+//             <HustleStages />
 //           </div>
 //           <div className="pb-4">
 //             <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>
@@ -99,7 +89,7 @@
 //         <div className="flex flex-col justify-between items-center min-h-full">
 //           {/* Top section */}
 //           <div className="flex flex-col w-full items-center">
-//             <motion.div 
+//             <motion.div
 //               className="w-full h-[100px] flex items-center justify-center"
 //               variants={itemVariants}
 //             >
@@ -118,8 +108,8 @@
 //               />
 //             </motion.div>
 
-//             <motion.div 
-//               className="relative w-full py-[2rem] 2xl:py-[6.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
+//             <motion.div
+//               className="relative w-full py-[2rem] 2xl:py-[5.5rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
 //               variants={itemVariants}
 //             >
 //               {/* Animated border */}
@@ -149,51 +139,48 @@
 //               </div>
 
 //               {/* Content container - increased border width from 5px to 8px for bolder appearance */}
-//               <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
+//               <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem] " />
 //               <div className="relative flex flex-col items-center w-full">
-//                 <motion.div 
-//                   className="flex flex-col justify-between items-start gap-4 p-6 rounded-lg shadow-md"
+//                 <motion.div
+//                   className="flex flex-col justify-between  w-full items-start gap-4 p-6 rounded-lg shadow-md"
 //                   variants={itemVariants}
 //                 >
-//                   <motion.h2 
-//                     className="text-[2.75rem] font-extrabold outline-text text-black"
+//                   <motion.h2
+//                     className="text-[3.75rem] font-extrabold outline-text text-black"
 //                     variants={itemVariants}
-//                     animate={{ 
+//                     animate={{
 //                       scale: [1, 1.05, 1],
 //                       textShadow: ["0px 0px 0px rgba(217, 31, 255, 0)", "0px 0px 10px rgba(217, 31, 255, 0.7)", "0px 0px 0px rgba(217, 31, 255, 0)"]
 //                     }}
-//                     transition={{ 
+//                     transition={{
 //                       duration: 2,
 //                       repeat: Infinity,
 //                       repeatType: "reverse"
 //                     }}
 //                   >
-//                     Get Ready for stage 3
+//                     Get Ready for Stage 3
 //                   </motion.h2>
 
-                  
-
-//                   <motion.p 
-//                     className="text-sm font-outfit text-white max-w-2xl"
+//                   <motion.p
+//                     className="text-4xl font-outfit text-white"
 //                     variants={itemVariants}
 //                   >
-//                    Contestants will select Dud or Opportunity cards. The system will automatically handle the selections.
-//                   </motion.p>
+//                                     Contestants will select  <span className="font-semibold text-[#d91fff] px-1">Dud or Opportunity cards.</span>   The system will automatically handle the selections.
+ 
+                 
+                 
+//                     </motion.p>
 
+                                  
 //                   <motion.p 
-//                     className="text-sm font-outfit text-white max-w-2xl"
+//                    className="text-4xl font-outfit text-white"
 //                     variants={itemVariants}
 //                   >
 //                     At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">1 contestants with the lowest scores</span> 
 //                     will be <strong>eliminated</strong> from the competition. So bring your A-game — every second and every point counts!
 //                   </motion.p>
+             
 
-//                   <motion.ul 
-//                     className="list-disc pl-5 leading-7 text-sm text-white font-outfit"
-//                     variants={itemVariants}
-//                   >
-                    
-//                   </motion.ul>
 //                 </motion.div>
 //               </div>
 //             </motion.div>
@@ -202,42 +189,26 @@
 
 //         {/* Right Sidebar */}
 //         <motion.div variants={itemVariants}>
-//           <HustleSideBar showEmptyCard={false} showHustlerCard={true} removeCount={2} eliminated={2} />
+//           <HustleSideBar showEmptyCard={false} showHustlerCard={true} />
 //         </motion.div>
 //       </motion.div>
 //     </AnimatePresence>
 //   );
 // };
 
-// // Make sure to export the component with the correct name
 // export default Stage3BoardGetReadyPage;
 
-
-
-
-"use client"
+"use client";
 import Logo from "@/app/icons/Logo";
-import Trophy from "@/app/icons/Trophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-// Removed import of QuestionScreen to avoid circular dependency
-// import QuestionScreen from "./hustle/QuestionScreen";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
-import { useMQTT } from "@/hooks/useMqttService";
-import Stage3CardSelectionScreens from "./Stage3CardSelectionScreen";
-// import { useMQTT } from "@/hooks/useMqttService"; // Commented out as it's not currently used
-
+import { GlowyStrokeText } from "@/components/core";
 
 const Stage3BoardGetReadyPage = () => {
-    const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
-  
-    const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
-  
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -245,13 +216,13 @@ const Stage3BoardGetReadyPage = () => {
       transition: {
         duration: 0.5,
         when: "beforeChildren",
-        staggerChildren: 0.2
-      }
+        staggerChildren: 0.2,
+      },
     },
     exit: {
       opacity: 0,
-      transition: { duration: 0.3 }
-    }
+      transition: { duration: 0.3 },
+    },
   };
 
   const itemVariants = {
@@ -259,8 +230,8 @@ const Stage3BoardGetReadyPage = () => {
     visible: {
       y: 0,
       opacity: 1,
-      transition: { duration: 0.5, ease: "easeOut" }
-    }
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
   };
 
   const listItemVariants = {
@@ -268,13 +239,10 @@ const Stage3BoardGetReadyPage = () => {
     visible: {
       x: 0,
       opacity: 1,
-      transition: { duration: 0.3, ease: "easeOut" }
-    }
+      transition: { duration: 0.3, ease: "easeOut" },
+    },
   };
 
-
-
- 
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -297,7 +265,7 @@ const Stage3BoardGetReadyPage = () => {
             <HustleStages />
           </div>
           <div className="pb-4">
-            <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>
+            <Salary4LifeTrophy className="max-xl:h-[13.25rem]" />
           </div>
         </motion.div>
 
@@ -312,10 +280,10 @@ const Stage3BoardGetReadyPage = () => {
               <HeaderTitleContainer
                 backgroundColor="#791192"
                 color="#ed99ff"
-                text="Pick-Pad"
+                text="Hustle Board"
                 textGradientEnd="#8E17AA"
                 textGradientStart="#8E17AA"
-                borderGradientStart="#f712fc"
+                borderGradientStart="#f78fc"
                 borderGradientEnd="#e151fe"
                 fontSize={45}
                 fontFamily="Verdana"
@@ -325,7 +293,7 @@ const Stage3BoardGetReadyPage = () => {
             </motion.div>
 
             <motion.div
-              className="relative w-full py-[2rem] 2xl:py-[5.5rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
+              className="relative w-full py-[2rem] 2xl:py-[1.5rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden"
               variants={itemVariants}
             >
               {/* Animated border */}
@@ -335,7 +303,7 @@ const Stage3BoardGetReadyPage = () => {
                   style={{
                     background: `conic-gradient(from 0deg at 50% 50%,
                       #d91fff 0deg,
-                      #d91fff 120deg,
+                      #d91fff 80deg,
                       #00ffff 100deg,
                       #00ffff 240deg,
                       #FFD700 220deg,
@@ -343,9 +311,7 @@ const Stage3BoardGetReadyPage = () => {
                       #d91fff 340deg
                     )`,
                   }}
-                  animate={{
-                    rotate: [0, 360],
-                  }}
+                  animate={{ rotate: [0, 360] }}
                   transition={{
                     duration: 4,
                     ease: "linear",
@@ -354,49 +320,105 @@ const Stage3BoardGetReadyPage = () => {
                 />
               </div>
 
-              {/* Content container - increased border width from 5px to 8px for bolder appearance */}
-              <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem] " />
+              {/* Content container */}
+              <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
               <div className="relative flex flex-col items-center w-full">
                 <motion.div
-                  className="flex flex-col justify-between  w-full items-start gap-4 p-6 rounded-lg shadow-md"
+                  className="flex flex-col justify-between w-full items-start gap-4 px-6 rounded-lg shadow-md"
                   variants={itemVariants}
                 >
-                  <motion.h2
-                    className="text-[3.75rem] font-extrabold outline-text text-black"
+                  <motion.div
                     variants={itemVariants}
                     animate={{
                       scale: [1, 1.05, 1],
-                      textShadow: ["0px 0px 0px rgba(217, 31, 255, 0)", "0px 0px 10px rgba(217, 31, 255, 0.7)", "0px 0px 0px rgba(217, 31, 255, 0)"]
                     }}
                     transition={{
                       duration: 2,
                       repeat: Infinity,
-                      repeatType: "reverse"
+                      repeatType: "reverse",
                     }}
                   >
-                    Get Ready for Stage 3
-                  </motion.h2>
+                    <GlowyStrokeText
+                      className="text-[3.75rem] font-extrabold font-lucky"
+                      glowColor="D91FFF"
+                      glowIntensity="low"
+                      fillColor="black"
+                      strokeColor="#d91fff"
+                      strokeWidth={3}
+                    >
+                      Stage 3: Dud & Pass
+                    </GlowyStrokeText>
+                  </motion.div>
+
+                  <motion.h3
+                    className="text-4xl font-bold text-white font-outfit"
+                    variants={itemVariants}
+                  >
+                    Rules
+                  </motion.h3>
+
+               <motion.ul
+        className="list-disc text-3xl text-white font-outfit pl-6 leading-[2.5rem] space-y-2"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+      >
+        <motion.li variants={listItemVariants}>
+          Each of the 2 remaining contestants is presented with 24 face-down cards:
+        </motion.li>
+        <motion.li className="text-[#d91fff]" variants={listItemVariants}>
+          1 PASS Card
+        </motion.li>
+        <motion.li className="text-[#d91fff]" variants={listItemVariants}>
+          23 DUD Cards
+        </motion.li>
+        <motion.li variants={listItemVariants}>
+          Contestants take turns flipping cards, one at a time.
+        </motion.li>
+        <motion.li variants={listItemVariants}>
+          The first to find the PASS card receives a Bonus Cash Boost and advances to the Final Stage.
+        </motion.li>
+      </motion.ul>
+
+                  <motion.h3
+                    className="text-4xl font-bold text-white mt-8 font-outfit"
+                    variants={itemVariants}
+                  >
+                    Consolation Prize
+                  </motion.h3>
 
                   <motion.p
-                    className="text-4xl font-outfit text-white"
+                    className="text-3xl font-outfit text-white"
                     variants={itemVariants}
                   >
-                                    Contestants will select  <span className="font-semibold text-[#d91fff] px-1">Dud or Opportunity cards.</span>   The system will automatically handle the selections.
- 
-                 
-                 
-                    </motion.p>
-
-                                  
-                  <motion.p 
-                   className="text-4xl font-outfit text-white"
-                    variants={itemVariants}
-                  >
-                    At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">1 contestants with the lowest scores</span> 
-                    will be <strong>eliminated</strong> from the competition. So bring your A-game — every second and every point counts!
+                    The eliminated contestant receives:
                   </motion.p>
-             
+                  <motion.p
+                    className="text-3xl font-outfit  font-semibold text-[#d91fff]"
+                    variants={itemVariants}
+                  >
+                    Liberty Life Health Plan worth ₦369,000
+                  </motion.p>
 
+                  <motion.div className="mt-4" variants={itemVariants}>
+                    <h3 className="text-4xl font-bold text-white mb-2">
+                      Key Tips:
+                    </h3>
+                    <motion.ul
+                      className="list-disc pl-6 leading-[3.5rem] text-3xl text-white font-outfit"
+                      variants={itemVariants}
+                    >
+                      {[
+                        "It’s a game of luck—stay calm, stay hopeful.",
+                        "Even if you don’t move on, you still win something meaningful.",
+                      ].map((tip, index) => (
+                        <motion.li key={index} variants={listItemVariants}>
+                          {tip}
+                        </motion.li>
+                      ))}
+                    </motion.ul>
+                  </motion.div>
                 </motion.div>
               </div>
             </motion.div>
@@ -413,4 +435,3 @@ const Stage3BoardGetReadyPage = () => {
 };
 
 export default Stage3BoardGetReadyPage;
-

@@ -151,7 +151,7 @@ const StageOneTally = ({
 
   // Early returns for stage transitions
   if (goToStage2) {
-    return <QuestionTwoScreen onNext={() => onNext?.()} />;
+    return <QuestionTwoScreen  />;
   }
 
   if (goToStage3) {
@@ -159,7 +159,7 @@ const StageOneTally = ({
      return (
         <Stage3GetReadyPage 
           key="stage3-ready" 
-          onNext={() => onNext?.()} 
+         
         />
       );
   }

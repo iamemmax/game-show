@@ -254,7 +254,7 @@ const HustleBoardStageTallyPage = ({
   const [showEliminationModal, setShowEliminationModal] = useState(false);
   const [processedBalances, setProcessedBalances] = useState<any[]>([]);
   const [revealedItems, setRevealedItems] = useState<Set<number>>(new Set());
-
+const [stage, setStage] = useState(1)
   const user = tokenStorage.getUser();
 
   // Use episodeId consistently and add dependency to force re-fetch
@@ -404,14 +404,14 @@ const HustleBoardStageTallyPage = ({
 
   // Early returns for stage transitions
   if (goToStage2) {
-    return <ViewOnlyQuestionTwoScreen onNext={() => onNext?.()} />;
+    return <ViewOnlyQuestionTwoScreen key={`stage2-question-${episodeId}`} />;
   }
 
   if (goToStage3) {
     return (
       <Stage3HustleBoardGetReadyPage 
         key={`stage3-board-ready-${episodeId}`}
-        onNext={() => onNext?.()}  
+      
       />
     );
   }
