@@ -48,7 +48,7 @@ export default function Stage2Questions({
   } = useGetProofQuestionResult(currentQuestionData?.data.question.question_id)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [timerActive, setTimerActive] = useState(false)
-  const [timerSeconds, setTimerSeconds] = useState(10)
+  const [timerSeconds, setTimerSeconds] = useState(5)
   const [questionsExhausted, setQuestionExhausted] = useState(false)
 
   const handleFetchNextQuestion = async () => {
@@ -122,7 +122,7 @@ export default function Stage2Questions({
     // Update UI to show timer is running
     sendGameMessage(`game_s2_timer_start`)
     setTimerActive(true)
-    setTimerSeconds(10)
+    setTimerSeconds(5)
   }
 
   const endQuestionTimer = () => {

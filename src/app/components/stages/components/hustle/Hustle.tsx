@@ -23,7 +23,7 @@ import { useGetGameContestants } from "@/app/admin/misc/api/contestants";
 interface Prop{
   onNext: () => void
 }
-const Hustle = ({onNext}:Prop) => {
+const Hustle = () => {
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const [ShowQuestionScreen, setShowQuestionScreen] = useState(false);
   const router = useRouter();
@@ -81,12 +81,7 @@ const Hustle = ({onNext}:Prop) => {
   const  contestant = data?.data?.find((contestant) => contestant.contestant_id === user?.contestant_id);
 
 
- // FIXED CODE for HustleReveal page:
-useEffect(() => {
-  if (ShowQuestionScreen) {
-    onNext();
-  }
-}, [ShowQuestionScreen, onNext]);
+
 
   return (
     <>

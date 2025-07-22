@@ -88,19 +88,7 @@ const ContestantHomePage = () => {
 
 
 
-  // Protected step change handler with debouncing
-  const handleStepChange = useCallback((nextStep: number) => {
-    // Set transitioning flag
-    transitioningRef.current = true;
-
-    // Clear transitioning flag after a short delay
-    setTimeout(() => {
-      transitioningRef.current = false;
-    }, 500); // 500ms cooldown period
-  }, []);
-
-
-
+ 
 
 
 

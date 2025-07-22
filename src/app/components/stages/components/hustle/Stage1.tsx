@@ -35,7 +35,7 @@ interface ExtendedContestantDetails extends ContestantDetails {
   game_episode?: number;
 }
 
-const Stage1 = ({ onNext }: Props) => {
+const Stage1 = () => {
   // Type the user properly
   const user = tokenStorage.getUser() as ExtendedContestantDetails | null;
   const {
@@ -301,10 +301,6 @@ const Stage1 = ({ onNext }: Props) => {
           }
         }
 
-        if (receivedMessage?.event === "game_s1_hustle_reveal") {
-          // Proceed to the next stage
-          onNext();
-        }
       };
 
     
