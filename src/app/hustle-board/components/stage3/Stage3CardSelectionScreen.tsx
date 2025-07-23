@@ -2235,7 +2235,7 @@ const Stage3CardSelectionScreens = () => {
 
         {/* Right Sidebar */}
         <div>
-          <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={4} />
+          <HustleSideBar showEmptyCard={false} showHustlerCard={true} eliminated={4} showStage3Reward={true}/>
         </div>
 
         {/* Winner Modal for viewer */}
