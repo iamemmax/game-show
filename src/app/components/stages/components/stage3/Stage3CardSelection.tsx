@@ -2472,7 +2472,7 @@ const Stage3CardSelection = () => {
         case CARD_TYPES.MISS_FLIP:
           return {
             title: `${otherContestantName} will flip twice before your next flip`,
-            subtitle: <MissCardFlip width={300} height={300} />,
+            icon: <MissCardFlip width={300} height={300} />,
             bgColor: "bg-gradient-to-br from-purple-600 to-purple-800",
             cardBg: "bg-purple-600",
           }
