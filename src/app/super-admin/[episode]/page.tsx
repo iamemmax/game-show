@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { Monitor, Settings, Zap, Activity } from "lucide-react"
+import { Monitor, Settings, Zap, Activity, Users } from "lucide-react"
 import { useMQTT, useMQTTTopic, useMQTTTopicPattern } from "@/hooks/useMqttService"
 import { useGetGameContestants, useCreditDebitContestant } from "@/app/admin/misc/api"
 import toast from "react-hot-toast"
@@ -392,21 +392,22 @@ export default function SuperAdminDashboard() {
 
   // Periodically check for disconnected participants (last seen > 5 seconds)
   useEffect(() => {
-    const disconnectThreshold = 5000 // 5 seconds
+    const disconnectThreshold = 6000
     const interval = setInterval(() => {
       setParticipants((prevParticipants) =>
         prevParticipants.map((p) => {
           if (
             p.isConnected &&
             p.lastSeen instanceof Date &&
-            Date.now() - p.lastSeen.getTime() > disconnectThreshold
+            // Date.now() - p.lastSeen.getTime() > disconnectThreshold
+            (Date.now() - new Date(p.lastSeen).getTime()) > disconnectThreshold
           ) {
             return { ...p, isConnected: false }
           }
           return p
         }),
       )
-    }, 1000) // Check every second
+    }, 1000)
 
     return () => clearInterval(interval)
   }, [])
@@ -466,6 +467,10 @@ export default function SuperAdminDashboard() {
             <TabsTrigger value="system" className="data-[state=active]:bg-[#ff00ff]">
               <Activity className="w-4 h-4 mr-2" />
               System
+            </TabsTrigger>
+            <TabsTrigger value="contestants" className="data-[state=active]:bg-[#ff00ff]">
+              <Users className="w-4 h-4 mr-2" />
+              Contestants
             </TabsTrigger>
           </TabsList>
 

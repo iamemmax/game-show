@@ -1,6 +1,6 @@
 "use client";
 
-import { DM_Sans, Wix_Madefor_Display, Outfit, Montserrat, Platypi,Luckiest_Guy } from "next/font/google";
+import { DM_Sans, Wix_Madefor_Display, Outfit, Montserrat, Platypi,Luckiest_Guy, Anton } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/utils/classNames";
 import FullscreenWrapper from "./components/AutoFullScreenMode";
@@ -11,6 +11,12 @@ import { Suspense } from "react";
 import { Wrapper } from "@/contexts/Wrapper";
 import { MQTTProvider } from "@/contexts/MQTTProvider";
 
+const anton = Anton({
+  subsets: ["latin"],
+  variable: "--font-anton",
+  display: "swap",
+  weight: "400"
+});
 const sans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -52,7 +58,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={cn(sans.className, display.variable, outfit.variable, montserrat.variable, platypi.variable, lucky.variable)}
+      className={cn(sans.className, display.variable, outfit.variable, montserrat.variable, platypi.variable, lucky.variable, anton.variable)}
       lang="en"
     >
       <body>

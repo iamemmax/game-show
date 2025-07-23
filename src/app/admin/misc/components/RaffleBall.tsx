@@ -5,7 +5,7 @@ import type { SVGProps } from "react"
 interface BallProps extends SVGProps<SVGSVGElement> {
   number?: number
   variant?: "regular" | "matched" | "mismatched" | "selected"
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "custom"
   onClick?: () => void
   textClassName?: string
 }
@@ -23,6 +23,7 @@ export function Ball({
     sm: "w-8 h-8",
     md: "w-10 h-10",
     lg: "w-16 h-16",
+    custom: "w-20 h-20"
   }
 
   const baseClasses = cn("cursor-pointer transition-transform hover:scale-105", sizeClasses[size], className)
@@ -30,6 +31,7 @@ export function Ball({
   const extraTextClass = cn(
     "font-semibold font-montserrat",
     size == "sm" ? "text-base" : size == "md" ? "text-xl" : "text-2xl",
+    textClassName
   )
 
   return (
@@ -94,10 +96,10 @@ export function Ball({
             </defs>
           </svg>
           {number && (
-  <div className="absolute inset-0 flex items-center justify-center">
-    <span className={cn("text-black text-center", textClassName, extraTextClass)}>{number}</span>
-  </div>
-)}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className={cn("text-black text-center", textClassName, extraTextClass)}>{number}</span>
+            </div>
+          )}
 
         </>
       ) : variant === "mismatched" ? (
