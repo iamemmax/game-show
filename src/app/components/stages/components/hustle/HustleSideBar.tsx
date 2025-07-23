@@ -212,7 +212,7 @@ const ContestantCard = ({
           }`}
           style={{
             top: isBoardRoute ? "35px" : "15px",
-            right: isBoardRoute ? "60px" : "52px",
+            right: isBoardRoute ? "50px" : "52px",
           }}
         />
 
@@ -248,8 +248,8 @@ const ContestantCard = ({
               glowColor="#ce45eb"
               glowIntensity="low"
               textclassName={`${
-                isBoardRoute ? "text-[1.6rem]  max-w-[140px]" : "text-[19.18px]  max-w-[110px]"
-              } font-extrabold font-gilroyHeavy text-white -mt-3   truncate`}
+                isBoardRoute ? "text-[1.4rem]  max-w-[160px]" : "text-[19.18px]  max-w-[110px]"
+              } font-extrabold font-gilroyHeavy text-white -mt-3 capitalize  truncate`}
               fillColor="#fff"
             >
               {name}
