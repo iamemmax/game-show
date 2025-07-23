@@ -1,8 +1,8 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { GlowyStrokeText } from "@/components/core"
-import { useEffect, useState } from "react"
+import { GlowyStrokeText,Dialog } from "@/components/core"
+import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import { HustleMatch } from "@/app/admin/misc/api"
 
 interface LibertyLifeModalProps {
@@ -10,10 +10,12 @@ interface LibertyLifeModalProps {
     data: {
         hustle_match: HustleMatch
         number_revealed: number[]
-    }
+    };
+        setShowModal: Dispatch<SetStateAction<boolean>>
+    
 }
 
-const LibertyLifeModal = ({ isOpen, data }: LibertyLifeModalProps) => {
+const LibertyLifeModal = ({ isOpen, data,setShowModal }: LibertyLifeModalProps) => {
     const [showPulse, setShowPulse] = useState(false)
 
     useEffect(() => {
@@ -28,6 +30,8 @@ const LibertyLifeModal = ({ isOpen, data }: LibertyLifeModalProps) => {
     if (!isOpen) return null
 
     return (
+          <Dialog open={isOpen} onOpenChange={setShowModal}>
+
         <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -110,6 +114,7 @@ const LibertyLifeModal = ({ isOpen, data }: LibertyLifeModalProps) => {
                 </div>
             </div>
         </motion.div>
+          </Dialog>
     )
 }
 

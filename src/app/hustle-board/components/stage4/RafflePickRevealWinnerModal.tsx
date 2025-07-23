@@ -1,5 +1,6 @@
 import WinnerBallIcon from "@/app/icons/WinnerBallIcon"
-import { GlowyStrokeText } from "@/components/core"
+import { GlowyStrokeText ,Dialog} from "@/components/core"
+import { Dispatch, SetStateAction } from "react"
 
 interface WinnerModalProps {
   isOpen: boolean
@@ -10,14 +11,17 @@ interface WinnerModalProps {
       }
     }
   }
+      setShowModal: Dispatch<SetStateAction<boolean>>
+  
 }
 
-const WinnerBallModal = ({ isOpen, data }: WinnerModalProps) => {
+const WinnerBallModal = ({ isOpen, data,setShowModal }: WinnerModalProps) => {
   const balance = data?.name?.balance_details?.current_balance || 3500000
 
   return (
     <>
-      {isOpen && (
+         <Dialog open={isOpen} onOpenChange={setShowModal}>
+
         <div className="flex flex-col items-center text-center text-white space-y-4">
           {/* Icon */}
           <WinnerBallIcon />
@@ -46,7 +50,8 @@ const WinnerBallModal = ({ isOpen, data }: WinnerModalProps) => {
             </GlowyStrokeText>
           </div>
         </div>
-      )}
+      
+          </Dialog>
     </>
   )
 }

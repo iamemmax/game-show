@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion"
 import CrystalIcon from "@/app/icons/CrystalIcon"
-import { GlowyStrokeText } from "@/components/core"
-import { useEffect, useState } from "react"
+import { GlowyStrokeText,Dialog } from "@/components/core"
+import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import { HustleMatch } from "@/app/admin/misc/api"
 
 interface CrystalModalProps {
@@ -12,9 +12,11 @@ interface CrystalModalProps {
     hustle_match: HustleMatch
     number_revealed: number[]
   }
+    setShowModal: Dispatch<SetStateAction<boolean>>
+  
 }
 
-const CrystalModal = ({ isOpen, data }: CrystalModalProps) => {
+const CrystalModal = ({ isOpen, data ,setShowModal}: CrystalModalProps) => {
   const [animatedAmount, setAnimatedAmount] = useState(0)
   const [showSparkle, setShowSparkle] = useState(false)
 
@@ -45,6 +47,7 @@ const CrystalModal = ({ isOpen, data }: CrystalModalProps) => {
   if (!isOpen) return null
 
   return (
+     <Dialog open={isOpen} onOpenChange={setShowModal}>
     <motion.div
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
@@ -140,6 +143,8 @@ const CrystalModal = ({ isOpen, data }: CrystalModalProps) => {
         )}
       </div>
     </motion.div>
+      
+     </Dialog>
   )
 }
 

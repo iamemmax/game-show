@@ -28,8 +28,8 @@ const Stage3Reward = ({data,isLoadingAmt}:prop) => {
       </div>
 
       {/* Pass Card */}
-      <div className="relative">
-        <div className=" bg-[#002A05] p-4  flex gap-x-5  items-center justify-center flex-col relative overflow-hidden">
+      <div className="relative w-full">
+        <div className=" bg-[#002A05] p-4 w-full flex gap-x-5 rounded-lg  items-center justify-center flex-col relative overflow-hidden">
           {/* Pass Badge */}
           <div className=" bg-green-800  px-4 py-1 rounded-full">
             <span className="text-[#04DA6A] font-bold text-2xl uppercase tracking-wide">Pass</span>

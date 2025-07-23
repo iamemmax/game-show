@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion"
 import KillerIcon from "@/app/icons/KillerIcon"
-import { GlowyStrokeText } from "@/components/core"
-import { useEffect, useState } from "react"
+import { GlowyStrokeText ,Dialog} from "@/components/core"
+import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import { HustleMatch } from "@/app/admin/misc/api"
 
 interface KillerModalProps {
@@ -12,9 +12,10 @@ interface KillerModalProps {
     hustle_match: HustleMatch
     number_revealed: number[]
   }
+  setShowModal: Dispatch<SetStateAction<boolean>>
 }
 
-const KillerHustlePulledModal = ({ isOpen, data }: KillerModalProps) => {
+const KillerHustlePulledModal = ({ isOpen, data,setShowModal }: KillerModalProps) => {
   const [animatedAmount, setAnimatedAmount] = useState(0)
   const [showGlitch, setShowGlitch] = useState(false)
 
@@ -45,6 +46,9 @@ const KillerHustlePulledModal = ({ isOpen, data }: KillerModalProps) => {
   if (!isOpen) return null
 
   return (
+
+      <Dialog open={isOpen} onOpenChange={setShowModal}>
+
     <motion.div
       initial={{ scale: 0, opacity: 0, rotate: -180 }}
       animate={{ scale: 1, opacity: 1, rotate: 0 }}
@@ -110,6 +114,7 @@ const KillerHustlePulledModal = ({ isOpen, data }: KillerModalProps) => {
         )}
       </div>
     </motion.div>
+      </Dialog>
   )
 }
 
