@@ -32,7 +32,7 @@ const nextConfig = {
         hostname: '192.168.1.131',
         pathname: '/**',
       },
-      
+
       {
         protocol: 'http',
         hostname: process.env.NEXT_PUBLIC_MQTT_BROKER,
