@@ -1142,37 +1142,37 @@
 //                       }
 
 //                       return (
-//                         <div
-//                           key={index}
-//                           className={cn(
-//                             "relative transition-transform h-[140px]",
-//                             "cursor-default pointer-events-none opacity-70",
-//                             isRecentlyUpdated ? "animate-pulse" : "",
-//                           )}
-//                             style={{ perspective: "1000px" }}
-//                         >
-//                           <AnimatePresence mode="wait">
-//                             <motion.div
-//                               key={`card-${index}-${card.revealed ? "revealed" : "hidden"}`}
-//                               initial={isFlipping ? { rotateY: 0, opacity: 1 } : false}
-//                               animate={isFlipping ? { rotateY: 180, opacity: 0 } : { rotateY: 0, opacity: 1 }}
-//                               transition={{ duration: 0.3, ease: "easeInOut" }}
-//                               style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
-//                               className="relative"
-//                             >
-//                               <div className="relative">
-//                                 {card.revealed && (
-//                                   <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-20">
-//                                     <span className="font-bold text-black text-xs bg-white px-2 py-1 rounded">
-//                                       {displayName?.split(" ")[0]}
-//                                     </span>
-//                                   </div>
-//                                 )}
+                        // <div
+                        //   key={index}
+                        //   className={cn(
+                        //     "relative transition-transform h-[140px]",
+                        //     "cursor-default pointer-events-none opacity-70",
+                        //     isRecentlyUpdated ? "animate-pulse" : "",
+                        //   )}
+                        //     style={{ perspective: "1000px" }}
+                        // >
+                          // <AnimatePresence mode="wait">
+                          //   <motion.div
+                          //     key={`card-${index}-${card.revealed ? "revealed" : "hidden"}`}
+                          //     initial={isFlipping ? { rotateY: 0, opacity: 1 } : false}
+                          //     animate={isFlipping ? { rotateY: 180, opacity: 0 } : { rotateY: 0, opacity: 1 }}
+                          //     transition={{ duration: 0.3, ease: "easeInOut" }}
+                          //     style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
+                          //     className="relative"
+                          //   >
+                          //     <div className="relative">
+                          //       {card.revealed && (
+                          //         <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-20">
+                          //           <span className="font-bold text-black text-xs bg-white px-2 py-1 rounded">
+                          //             {displayName?.split(" ")[0]}
+                          //           </span>
+                          //         </div>
+                          //       )}
 
-//                                 <div className="relative w-full h-full">{renderCard(card, index)}</div>
-//                               </div>
-//                             </motion.div>
-//                           </AnimatePresence>
+                          //       <div className="relative w-full h-full">{renderCard(card, index)}</div>
+                          //     </div>
+                          //   </motion.div>
+                          // </AnimatePresence>
 //                         </div>
 //                       )
 //                     })}
@@ -1616,7 +1616,7 @@ const Stage3CardSelectionScreens = () => {
     return (
       <div className="flex items-center justify-center gap-6 p-4 w-full">
         {/* Main container with contestants */}
-        <div className="flex items-center justify-center w-full max-w-2xl">
+        <div className="flex items-center justify-center w-full ">
           {remainingContestants?.map((contestant, index) => {
             const missFlipInfo = missFlipTimers[contestant.id]
             const isCurrentTurn = currentTurn === contestant.id
@@ -1632,7 +1632,7 @@ const Stage3CardSelectionScreens = () => {
                   <div className="flex items-center gap-6">
                     <span
                       className={`
-                      font-bold text-sm capitalize tracking-wide
+                      font-bold text-2xl capitalize tracking-wide
                       ${isCurrentTurn ? "text-white" : "text-gray-300"}
                     `}
                     >
@@ -1640,21 +1640,21 @@ const Stage3CardSelectionScreens = () => {
                     </span>
                     {isCurrentTurn && !missFlipInfo && (
                       <div className="flex items-center gap-3 bg-[#053F20] py-[7px] px-4 rounded-xl border border-[#04DA6A]">
-                        <span className="text-sm font-semibold font-verdana text-[#04DA6A]">Your turn</span>
+                        <span className="text-2xl font-semibold font-verdana text-[#04DA6A]">Your turn</span>
                         <div className="w-3 h-3 rounded-full bg-[#04DA6A] animate-pulse"></div>
                       </div>
                     )}
                     {isCurrentTurn && missFlipInfo && (
                       <div className="flex items-center gap-3 bg-[#4A1A00] py-[7px] px-4 rounded-xl border border-[#FF8C00]">
-                        <span className="text-sm font-semibold font-verdana text-[#FF8C00]">
+                        <span className="text-2xl font-semibold font-verdana text-[#FF8C00]">
                           Extra Flips: {missFlipInfo.flipsRemaining}
                         </span>
-                        <div className="text-[#FF8C00] text-sm font-bold">{missFlipInfo.timer}s</div>
+                        <div className="text-[#FF8C00] text-2xl font-bold">{missFlipInfo.timer}s</div>
                       </div>
                     )}
                     {!isCurrentTurn && (
                       <div className="flex items-center gap-3 bg-[#38040A] py-[7px] px-4 rounded-xl">
-                        <span className="text-sm font-semibold font-verdana text-[#FF495E]">Waiting</span>
+                        <span className="text-2xl font-semibold font-verdana text-[#FF495E]">Waiting</span>
                         <div className="w-3 h-3 rounded-full bg-[#FF495E]"></div>
                       </div>
                     )}
@@ -2186,7 +2186,7 @@ const Stage3CardSelectionScreens = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                   </div>
                 ) : (
-                  <div className="mt-4 grid grid-cols-6 justify-center gap-4">
+                   <div className="grid grid-cols-6 gap-y-4 justify-center items-center">
                     {cards.map((card, index) => {
                       const isFlipping = flippingCards.includes(index)
                       const isRecentlyUpdated = recentlyUpdated.includes(index)
@@ -2196,19 +2196,22 @@ const Stage3CardSelectionScreens = () => {
                       }
 
                       return (
-                        <div
+                         <div
                           key={index}
                           className={cn(
-                            "relative transition-transform h-[150px] pointer-events-none cursor-default opacity-90",
+                            "relative transition-transform h-[140px]",
+                            "cursor-default pointer-events-none opacity-70",
                             isRecentlyUpdated ? "animate-pulse" : "",
                           )}
+                            // style={{ perspective: "1000px" }}
                         >
-                          <AnimatePresence mode="wait">
+                         <AnimatePresence mode="wait">
                             <motion.div
                               key={`card-${index}-${card.revealed ? "revealed" : "hidden"}`}
                               initial={isFlipping ? { rotateY: 0, opacity: 1 } : false}
                               animate={isFlipping ? { rotateY: 180, opacity: 0 } : { rotateY: 0, opacity: 1 }}
                               transition={{ duration: 0.3, ease: "easeInOut" }}
+                              style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
                               className="relative"
                             >
                               <div className="relative">
@@ -2219,6 +2222,7 @@ const Stage3CardSelectionScreens = () => {
                                     </span>
                                   </div>
                                 )}
+
                                 <div className="relative w-full h-full">{renderCard(card, index)}</div>
                               </div>
                             </motion.div>
