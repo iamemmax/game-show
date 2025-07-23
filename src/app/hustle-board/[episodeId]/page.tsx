@@ -27,9 +27,7 @@ const ContestantHomePage = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const initializationRef = useRef(false);
 
-  // Track if step transitions are in progress to prevent multiple calls
-  const transitioningRef = useRef(false);
-  const currentStepRef = useRef<number | null>(null);
+
 
   const gameEpisode = params?.episodeId;
   const { data: allContestants, isLoading } = useGetGameContestants(
@@ -42,7 +40,7 @@ const ContestantHomePage = () => {
     const handleMQTTMessage = (message: any) => {
       if (message?.topic.includes("/game-sync")) return;
       console.log(message.payload);
-      if (message.payload.source === "host") {
+      if (message.payload.source === "host" && Number(message.payload.game_episode as string) === Number(gameEpisode)) {
         console.log(message, "Hustleboard received message from host");
         LastStepStorage.setLastStep({
           step: message.event,
@@ -287,6 +285,13 @@ const ContestantHomePage = () => {
           currentStageStep: "init",
         }));
         break;
+      case UNIVERSAL_GAME_STEPS.STAGE4_RAFFLE:
+        setGameState((prev) => ({
+          ...prev,
+          currentStage: "STAGE_FOUR",
+          currentStageStep: "game_s4_start",
+        }));
+        break;
       default:
         break;
     }
@@ -322,14 +327,14 @@ const ContestantHomePage = () => {
             {(gameState.currentStageStep === "init" ||
               gameState.currentStageStep === "hustle_pick" ||
               gameState.currentStageStep === "start") && (
-              <motion.div
-                key={"number-pick"}
-                className="h-full"
-                {...motionProps}
-              >
-                <HustleBoardNumberPicks />
-              </motion.div>
-            )}
+                <motion.div
+                  key={"number-pick"}
+                  className="h-full"
+                  {...motionProps}
+                >
+                  <HustleBoardNumberPicks />
+                </motion.div>
+              )}
             {gameState.currentStageStep === "hustle_reveal" && (
               <motion.div
                 key={gameState.currentStageStep}
@@ -346,14 +351,14 @@ const ContestantHomePage = () => {
               gameState.currentStageStep === "timer_running" ||
               gameState.currentStageStep === "bids_reveal" ||
               gameState.currentStageStep === "question_result_reveal") && (
-              <motion.div
-                key={"question-section"}
-                className="h-full"
-                {...motionProps}
-              >
-                <Stage1QuestionScreen />
-              </motion.div>
-            )}
+                <motion.div
+                  key={"question-section"}
+                  className="h-full"
+                  {...motionProps}
+                >
+                  <Stage1QuestionScreen />
+                </motion.div>
+              )}
             {gameState.currentStageStep === "results" && (
               <motion.div
                 key={gameState.currentStageStep}
@@ -382,7 +387,7 @@ const ContestantHomePage = () => {
                   eliminationCount={0}
                   removeCount={0}
                   activeState={1}
-                    title={"Hustle Board"}
+                  title={"Hustle Board"}
                 />
               </motion.div>
             )}
@@ -393,18 +398,18 @@ const ContestantHomePage = () => {
               gameState.currentStageStep === "timer_running" ||
               gameState.currentStageStep === "bids_reveal" ||
               gameState.currentStageStep === "question_result_reveal") && (
-              <motion.div
-                key={
-                  gameState.currentStageStep === "prep_questions"
-                    ? "stage-2-prep"
-                    : "question-section"
-                }
-                className="h-full"
-                {...motionProps}
-              >
-                <ViewOnlyQuestionTwoScreen />
-              </motion.div>
-            )}
+                <motion.div
+                  key={
+                    gameState.currentStageStep === "prep_questions"
+                      ? "stage-2-prep"
+                      : "question-section"
+                  }
+                  className="h-full"
+                  {...motionProps}
+                >
+                  <ViewOnlyQuestionTwoScreen />
+                </motion.div>
+              )}
             {gameState.currentStageStep === "results" && (
               <motion.div
                 key={"stage-2-results"}
@@ -433,7 +438,7 @@ const ContestantHomePage = () => {
                   eliminationCount={0}
                   removeCount={0}
                   activeState={2}
-                    title={"Hustle Board"}
+                  title={"Hustle Board"}
                 />
               </motion.div>
             )}

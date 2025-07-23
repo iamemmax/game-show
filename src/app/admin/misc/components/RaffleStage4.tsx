@@ -49,6 +49,7 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
             ...data,
           },
         }
+        console.log("Sending message in admin raffle:", message)
 
 
         sendMessage(message)
@@ -62,7 +63,6 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
     },
     [isConnected, sendMessage, gameEpisode, refetchContestants],
   )
-
   const handleStartStageFour = useCallback(() => {
     if (!gameEpisode) return
     initStage({ episode: gameEpisode }, {
@@ -72,7 +72,9 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
       },
       onError: (error) => {
         console.error("Failed to initialize Stage Four:", error)
-        if ((error as any)?.response?.data.data.includes("Unable to create Stage progress for contestant")) {
+        if ((error as any)?.response?.data.data.includes("Unable to create Stage progress for contestant") ||
+          (error as any)?.response?.data.data.includes("Unable to create Stage progress")
+        ) {
           sendGameMessage("game_s4_start", { episode: gameEpisode })
         }
       },
@@ -92,6 +94,27 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
           contestant_id: lastContestant.id,
           number_pick: ballNumber,
         }
+        sendGameMessage("ball_picked", {
+          "hustle_match": {
+            "contestant_id": 1983,
+            "number_pick": 31,
+            "is_match": true,
+            "is_extra_ball": false,
+            "extra_ball_details": null,
+            "balance_details": {
+              "is_gain": false,
+              "previous_balance": 1500000.0,
+              "amount_gained": 0,
+              "amount_lost": 0,
+              "current_balance": 1500000.0
+            }
+          },
+          "number_revealed": [
+            9,
+            31
+          ]
+        })
+        return
         pickBall(pickData, {
           onSuccess: (data) => {
             sendGameMessage("ball_picked", data)

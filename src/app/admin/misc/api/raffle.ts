@@ -84,7 +84,7 @@ interface MatchedHustle {
     extra_ball_effect_desc: string | null
 }
 
-interface MatchedHustlesResponse {
+export interface MatchedHustlesResponse {
     status: string
     data: MatchedHustle[]
 }

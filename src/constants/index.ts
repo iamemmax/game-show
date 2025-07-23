@@ -35,7 +35,7 @@ export const UNIVERSAL_GAME_STEPS = {
   // Stage 4 - Final Round
   STAGE4_INIT: "game_s4_init",
   STAGE4_PREP: "game_s4_prep",
-  STAGE4_RAFFLE: "stage4_raffle",
+  STAGE4_RAFFLE: "geme_s4_start",
 
   // Game End
   GAME_END: "game_end",
