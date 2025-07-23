@@ -2028,13 +2028,13 @@ const Stage3CardSelectionScreens = () => {
         <PickCardContainer
           backgroundColor={"transparent"}
           text={React.createElement(cardIcons[index % 3], {
-            className: "w-[150px]",
+            className: "w-[130px] h-full",
           })}
           textColor={card.style.textColor}
           fontFamily={card.style.fontFamily}
           containerLabel=""
           className={cn(
-            "transition-transform w-full h-full duration-300 ease-in-out p-0 pointer-events-none cursor-default",
+            "transition-transform w-full h-full  duration-300 ease-in-out p-0 pointer-events-none cursor-default",
             recentlyUpdated.includes(index) ? "ring-2 ring-white" : "",
             flippingCards.includes(index) ? "shadow-md" : "",
           )}
@@ -2048,19 +2048,19 @@ const Stage3CardSelectionScreens = () => {
     const cardElement = (() => {
       switch (card.type) {
         case CARD_TYPES.DUD:
-          return <DudCards className="w-[103px]" />
+          return <DudCards className="w-[130px] h-full" />
         case CARD_TYPES.CASH_5K:
         case CARD_TYPES.CASH_10K:
         case CARD_TYPES.CASH_20K:
-          return <InstantCashout className="w-[103px]" />
+          return <InstantCashout className="w-[130px] h-full" />
         case CARD_TYPES.BONUS_FLIP:
-          return <BonusFlip className="w-[103px]" />
+          return <BonusFlip className="w-[130px] h-full" />
         case CARD_TYPES.MISS_FLIP:
-          return <MissCardFlip className="w-[103px]" />
+          return <MissCardFlip className="w-[130px] h-full" />
         case CARD_TYPES.PASS:
-          return <PassCard className="w-[103px]" />
+          return <PassCard className="w-[130px] h-full" />
         default:
-          return <DudCards className="w-[103px]" />
+          return <DudCards className="w-[130px] h-full" />
       }
     })()
 
@@ -2140,7 +2140,7 @@ const Stage3CardSelectionScreens = () => {
                 textStrokeWidth={4.4}
               />
             </div>
-            <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[65rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
+            <div className="relative w-full py-[2rem] 2xl:py-[2.5rem]  px-6 -mt-3 rounded-[.875rem] 2xl:px-[2rem] overflow-hidden">              {/* Animated border */}
               {/* Animated border */}
               <div className="absolute inset-0">
                 <motion.div
