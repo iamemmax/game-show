@@ -79,7 +79,7 @@ export default function EpisodesPage() {
     if (!newEpisodeName.trim() || !season_id) return;
     if (!episodeType) {
 
-        return
+      return
     }
     try {
       await createEpisodeMutation.mutateAsync({
@@ -171,7 +171,7 @@ export default function EpisodesPage() {
         header: "STAGE",
         cell: ({ row }) => (
           <div className="text-white ">
-            {GAME_STATUSES_ENUMS[row.getValue("stage") as string]}
+            {convertKebabAndSnakeToTitleCase(row.getValue("stage") as string)}
           </div>
         ),
       },

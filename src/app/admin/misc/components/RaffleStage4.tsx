@@ -9,6 +9,7 @@ import { useParams } from "next/navigation"
 import { useInitStageFour } from "@/app/host/misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import { SmallSpinner } from "@/icons/core"
+import toast from "react-hot-toast"
 
 interface PickViewProps {
   onPickResult?: (result: any) => void
@@ -19,6 +20,8 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [revealedBalls, setRevealedBalls] = useState<Map<number, "matched" | "mismatched">>(new Map())
   const { isConnected, sendMessage } = useMQTT()
+  const [isLoading, setIsSending] = useState(false)
+
 
 
   const params = useParams()
@@ -31,23 +34,46 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
   const { mutate: pickBall } = useHandleBallPick()
   const { mutate: initStage, isLoading: isStartingStage } = useInitStageFour()
 
+  const sendGameMessage = useCallback(
+    async (eventCode: string, data: any = {}) => {
+      if (!isConnected) {
+        toast.error("Not connected to server")
+        return
+      }
+      setIsSending(true)
+      try {
+        const message = {
+          event: eventCode,
+          payload: {
+            game_episode: Number.parseInt(gameEpisode),
+            ...data,
+          },
+        }
+
+
+        sendMessage(message)
+
+      } catch (error) {
+        console.error("Failed to send message:", error)
+        toast.error("Failed to send message")
+      } finally {
+        setIsSending(false)
+      }
+    },
+    [isConnected, sendMessage, gameEpisode, refetchContestants],
+  )
+
   const handleStartStageFour = useCallback(() => {
     if (!gameEpisode) return
     initStage({ episode: gameEpisode }, {
       onSuccess: (data) => {
         console.log("Stage Four initialized successfully:", data)
-        sendMessage({
-          event: "game_s4_start",
-          payload: { episode: gameEpisode },
-        })
+        sendGameMessage("game_s4_start", { episode: gameEpisode })
       },
       onError: (error) => {
         console.error("Failed to initialize Stage Four:", error)
-        if((error as any)?.response?.data.data.includes("Unable to create Stage progress for contestant")){
-          sendMessage({
-            event: "game_s4_start",
-            payload: { episode: gameEpisode },
-          })
+        if ((error as any)?.response?.data.data.includes("Unable to create Stage progress for contestant")) {
+          sendGameMessage("game_s4_start", { episode: gameEpisode })
         }
       },
     })
@@ -68,10 +94,7 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
         }
         pickBall(pickData, {
           onSuccess: (data) => {
-            sendMessage({
-              event: "ball_picked",
-              payload: data,
-            })
+            sendGameMessage("ball_picked", data)
             const isPositiveResult = data.hustle_match.is_extra_ball
               ? data.hustle_match.balance_details?.is_gain
               : data.hustle_match.is_match
@@ -91,14 +114,12 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
         setSelectedBall(null)
       }
     },
-    [gameEpisode, isSubmitting, revealedBalls, sendMessage, onPickResult],
+    [gameEpisode, isSubmitting, revealedBalls, sendGameMessage, onPickResult],
   )
 
-  const handCloseRevealModal = useCallback(() => {
-    sendMessage({
-      event: "close_reveal_modal",
-    })
-  }, [])
+  const handCloseRevealModal = () => {
+    sendGameMessage("close_reveal_modal")
+  }
 
   const getBallVariant = (ballNumber: number): "regular" | "matched" | "mismatched" | "selected" => {
     if (selectedBall === ballNumber && isSubmitting) {
@@ -132,7 +153,6 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
             variant={"orange"}
           >
             CLOSE REVEAL MODAL
-
           </TrapeziumButton>
         </div>
 

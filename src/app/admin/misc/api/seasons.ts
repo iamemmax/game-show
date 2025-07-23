@@ -18,17 +18,22 @@ import { useMutation, useQuery, useQueryClient } from "react-query"
 //     data: Datum[];
 // }
 
+
 export interface THustleSeason {
-    id: number;
-    updated_at: string;
-    created_at: string;
-    season: string;
-    year: string;
-    description: null;
-    is_active_season: boolean;
+  id: number;
+  updated_at: string;
+  created_at: string;
+  game_episode: number;
+  game_nick: string;
+  status: string;
+  stage: string;
+  game_type: string;
+  game_mode: string;
+  reveal_step_count: null;
+  live_studio_episode: null;
+  game_owner: null;
+  hustle_season: number;
 }
-
-
 
 
 

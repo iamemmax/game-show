@@ -38,7 +38,7 @@ export default function Page() {
         if (seasons) {
             console.log("Fetched seasons:", seasons)
         }
-    }    , [isLoading, seasons])
+    }, [isLoading, seasons])
 
     const form = useForm<CreateSeasonFormValues>({
         resolver: zodResolver(createSeasonSchema),
@@ -158,10 +158,10 @@ export default function Page() {
                         >
                             <CardHeader className="pb-3 pt-2 !px-4">
                                 <CardTitle className="text-lg font-bold text-white group-hover:text-[#ff9500] transition-colors !p-0">
-                                    {season.season}
+                                    {season.hustle_season}
                                 </CardTitle>
                                 <CardDescription>
-                                    <span className="text-sm text-white/70">({season.year})</span>
+                                    <span className="text-sm text-white/70">({season.created_at})</span>
                                 </CardDescription>
                             </CardHeader>
 
@@ -186,8 +186,8 @@ export default function Page() {
                         <h3 className="text-xl font-bold text-white mb-2">No Seasons Found</h3>
                         <p className="text-white/70 mb-4">Create your first season to get started</p>
                         <Button
-                            onClick={() => setIsCreateModalOpen(true)}
                             className="bg-gradient-to-r from-[#ff9500] to-[#ff00ff] hover:opacity-90"
+                            onClick={() => setIsCreateModalOpen(true)}
                         >
                             <Plus className="h-4 w-4 mr-2" />
                             Create First Season

@@ -185,7 +185,7 @@ export default function HostPage() {
                 setGameState((prev) => ({
                     ...prev,
                     currentStage: "STAGE_THREE",
-                    currentStageStep: "dud_or_pass_picks_start",
+                    currentStageStep: "game_s3_start",
                 }))
                 break
             case UNIVERSAL_GAME_STEPS.STAGE4_INIT:

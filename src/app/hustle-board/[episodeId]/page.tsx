@@ -63,29 +63,7 @@ const ContestantHomePage = () => {
     };
   }, [addMessageListener, removeMessageListener]);
 
-  // Helper function to save step to localStorage
-  const saveStep = (stepToSave: number) => {
-    if (gameEpisode !== undefined) {
-      try {
-        const dataToSave = {
-          step: stepToSave,
-          gameEpisode,
-          timestamp: Date.now(), // Optional: add timestamp for debugging
-        };
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
-        console.log(`Saved step ${stepToSave} for episode ${gameEpisode}`);
-      } catch (error) {
-        console.warn("Failed to save step:", error);
-      }
-    }
-  };
 
-
-
-
-
-
- 
 
 
 
