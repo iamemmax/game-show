@@ -2970,15 +2970,15 @@ const Stage3CardSelection = () => {
     const cardElement = (() => {
       switch (card.type) {
         case CARD_TYPES.DUD:
-          return <DudCards className="w-[103px] h-full" />
+          return <DudCards className="w-[90px] h-full" />
         case CARD_TYPES.BONUS_FLIP:
-          return <BonusFlip className="w-[103px] h-full" />
+          return <BonusFlip className="w-[90px] h-full" />
         case CARD_TYPES.MISS_FLIP:
-          return <MissCardFlip className="w-[103px] h-full" />
+          return <MissCardFlip className="w-[90px] h-full" />
         case CARD_TYPES.PASS:
-          return <PassCard className="w-[103px]" />
+          return <PassCard className="w-[90px]" />
         default:
-          return <DudCards className="w-[103px] h-full" />
+          return <DudCards className="w-[90px] h-full" />
       }
     })()
 
@@ -3144,7 +3144,7 @@ const Stage3CardSelection = () => {
                           key={index}
                           onClick={() => handleCardClick(index)}
                           className={cn(
-                            "relative transition-transform h-[98px]",
+                            "relative transition-transform h-[90px]",
                             card.revealed
                               ? "cursor-default pointer-events-none opacity-70"
                               : isMyTurn && !globalTimer.show
