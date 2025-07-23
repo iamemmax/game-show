@@ -627,7 +627,7 @@ useEffect(() => {
                 <div className="grid mt-5 gap-3 grid-cols-[1fr_4fr_1.3fr] items-start">
                   <div className="flex gap-2 flex-col">
                     {/* Remove the mapping over selectedQuestions since we're not using it anymore */}
-                    {Array.from({ length: 8 }, (_, index) => (
+                    {Array.from({ length: 6 }, (_, index) => (
                       <div className="" key={index}>
                         <NumberCardContainer
                           // text={index + 1}
