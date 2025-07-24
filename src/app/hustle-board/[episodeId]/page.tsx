@@ -323,7 +323,7 @@ const ContestantHomePage = () => {
       <AnimatePresence mode="wait">
         {gameState.currentStage.includes("STAGE_ONE") && (
           <>
-            {(gameState.currentStageStep === "start"  ||
+            {(
               gameState.currentStageStep === "setup"
             ) && (
                 <motion.div
@@ -335,6 +335,7 @@ const ContestantHomePage = () => {
                 </motion.div>
               )}
             {(gameState.currentStageStep === "init" ||
+            gameState.currentStageStep === "start"  ||
               gameState.currentStageStep === "hustle_pick") && (
                 <motion.div
                   key={"number-pick"}

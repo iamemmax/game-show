@@ -656,7 +656,7 @@ const QuestionScreen = () => {
           setShowEliminationModal={setShowEliminationModal}
           showEliminationModal={showEliminationModal}
           balance={Number(
-            getContestantInfo(Number(user?.contestant_id))?.wallet_balance
+            getContestantInfo(Number(user?.contestant_id))?.actual_balance
           )}
           image_url={String(
             getContestantInfo(Number(user?.contestant_id))

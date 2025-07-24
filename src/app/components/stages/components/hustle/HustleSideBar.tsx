@@ -332,7 +332,7 @@ const findPicks = (contestantId: number) => {
           }`}
           fillColor="#fff"
         >
-           {findPicks(contestantInfo?.id)?.length}
+           {findPicks(contestantInfo?.id)?.length || pickCount} 
         </GlowyStrokeText>
       );  
     })()}
