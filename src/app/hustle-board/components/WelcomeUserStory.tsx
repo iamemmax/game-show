@@ -2,7 +2,7 @@
 
 import { useGetGameContestants } from "@/app/admin/misc/api"
 import { useParams } from "next/navigation"
-import { Instagram } from "lucide-react"
+import { Facebook, Instagram, Twitter } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage, Card, CardContent } from "@/components/core"
 
 const WelcomeUserStory = () => {
@@ -37,7 +37,7 @@ const WelcomeUserStory = () => {
                 </div>
 
                 {/* Contestants Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto grow">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[85rem] mx-auto grow">
                     {contestants.map((contestant, index) => (
                         <Card
                             key={contestant.id}
@@ -71,14 +71,14 @@ const WelcomeUserStory = () => {
 
                                 {/* Hustle Category */}
                                 <div className="mb-4">
-                                    <span className="text-purple-300 font-medium text-xl">
+                                    <span className="text-[#CE64FF] font-medium text-xl px-5 py-2 rounded-full bg-[#1D0048]">
                                         {contestant.contestant_hustle || "Digital Marketing"}
                                     </span>
                                 </div>
 
                                 {/* Bio */}
                                 <div className="flex-1 mb-4">
-                                    <p className="text-gray-300 text-sm leading-relaxed">
+                                    <p className="text-gray-300 text-lg leading-relaxed">
                                         {contestant.bio ||
                                             "I help small businesses grow online by crafting campaigns that convert and tell powerful brand stories"}
                                     </p>
@@ -90,6 +90,18 @@ const WelcomeUserStory = () => {
                                         <div className="flex items-center gap-2 text-orange-400 text-sm">
                                             <Instagram className="w-4 h-4" />
                                             <span>{contestant.instagram}</span>
+                                        </div>
+                                    )}
+                                    {contestant.x && (
+                                        <div className="flex items-center gap-2 text-orange-400 text-sm">
+                                            <Twitter className="w-4 h-4" />
+                                            <span>{contestant.x}</span>
+                                        </div>
+                                    )}
+                                    {contestant.facebook && (
+                                        <div className="flex items-center gap-2 text-orange-400 text-sm">
+                                            <Facebook className="w-4 h-4" />
+                                            <span>{contestant.facebook}</span>
                                         </div>
                                     )}
                                 </div>
