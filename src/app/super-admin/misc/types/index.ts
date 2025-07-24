@@ -14,7 +14,6 @@ export interface Contestant {
   is_eliminated: boolean
   actual_balance: string
   book_balance: string
-  wallet_balance: string
   contestant_photo_url: string | null
 }
 
