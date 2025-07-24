@@ -375,7 +375,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
           questionId?.toString() === currentQuestionIdRef?.current?.toString()
         ) {
           const answersData = payload?.data?.answers;
-
+setShowBidRevealModal(false)
           setMqttAnswerData(answersData);
           setMqttResultData(answersData);
 

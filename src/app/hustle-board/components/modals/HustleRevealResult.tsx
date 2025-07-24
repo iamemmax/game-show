@@ -185,7 +185,7 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
 
   return (
     <div className="">
-         {mqttAnswerData.slice(0, visibleItems).map((data, idx) => {
+         {mqttAnswerData?.slice(0, visibleItems).map((data, idx) => {
           const styles = getCardStyle(data);
 
           return (
