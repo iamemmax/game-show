@@ -102,4 +102,5 @@ export const useGetMatchedHustles = (gameEpisode: number) =>
         enabled: !!gameEpisode,
         staleTime: 0,
         refetchOnWindowFocus: true,
+        refetchInterval: 1000,
     })

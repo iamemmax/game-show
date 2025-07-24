@@ -42,15 +42,15 @@ const RafflePickFInalResultModal = ({ isOpen, data, setShowModal, contestant }: 
     return (
         <article className={cn(
             "relative flex flex-col items-center justify-center max-w-2xl w-full px-4 rounded-2xl h-[70vh]",
-            isGoldenCard 
-                ? "bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 shadow-2xl shadow-yellow-500/50" 
+            isGoldenCard
+                ? "bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 shadow-2xl shadow-yellow-500/50"
                 : "bg-[#1A0B25]"
         )}>
             {/* Golden card subtle effect */}
             {isGoldenCard && (
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
             )}
-            
+
             <article className={cn(
                 "relative flex flex-col items-center justify-center w-[300px] h-[400px]",
                 isGoldenCard && "ring-4 ring-yellow-600/30 rounded-xl"
@@ -63,11 +63,11 @@ const RafflePickFInalResultModal = ({ isOpen, data, setShowModal, contestant }: 
                     className="rounded-xl"
                 />
             </article>
-            
+
             <h2 className={cn(
-                "text-5xl font-anton",
-                isGoldenCard 
-                    ? "text-black" 
+                "text-5xl font-anton text-center font-balance",
+                isGoldenCard
+                    ? "text-black"
                     : "text-yellow-500"
             )}
               style={!isGoldenCard ? {
@@ -76,12 +76,12 @@ const RafflePickFInalResultModal = ({ isOpen, data, setShowModal, contestant }: 
             >
                 {contestant?.name || "Contestant"}'s Final Result
             </h2>
-            
+
             <h5
                 className={cn(
                     "text-8xl font-anton",
-                    isGoldenCard 
-                        ? "text-black" 
+                    isGoldenCard
+                        ? "text-black"
                         : "bg-gradient-to-b from-yellow-400 to-orange-500 bg-clip-text text-transparent"
                 )}
                 style={!isGoldenCard ? {
@@ -94,12 +94,12 @@ const RafflePickFInalResultModal = ({ isOpen, data, setShowModal, contestant }: 
             <p
             className={cn(
                 "text-4xl mt-8 font-anton border-2 rounded-lg px-4 py-2",
-                isGoldenCard 
-                    ? "text-black border-black bg-yellow-200/50" 
+                isGoldenCard
+                    ? "text-black border-black bg-yellow-200/50"
                     : "text-white border-green-500 bg-green-950"
             )}
             >
-               Final Balance:  
+               Final Balance:
                {
                 convertNumberToNaira(Number(contestant.actual_balance) || 0)
                }
