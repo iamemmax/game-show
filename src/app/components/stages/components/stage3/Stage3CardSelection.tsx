@@ -2850,21 +2850,23 @@ const Stage3CardSelection = () => {
     const newAttempts = attempts + 1;
     setAttempts(newAttempts);
 
-let dud_array 
-const clickedCard = cards[index];
+    let dud_array;
+    const clickedCard = cards[index];
 
-// Apply the reveal after animation delay
-setTimeout(() => {
-  
-  let finalCardType = clickedCard.originalType;
-  
-  if(newAttempts >= 10) {
-    // CARD_TYPES
-  Math.random() < 0.7 ? finalCardType = CARD_TYPES.PASS : finalCardType;
-  }
-  else if (newAttempts > 20){
-finalCardType = CARD_TYPES.PASS
-  }
+    // Apply the reveal after animation delay
+    setTimeout(() => {
+      let finalCardType = clickedCard.originalType;
+
+      if (newAttempts <= 10) {
+        if (finalCardType == "PASS") {
+          finalCardType = "DUD";
+        }
+      } else if (newAttempts >= 10) {
+        // CARD_TYPES
+        Math.random() < 0.7 ? (finalCardType = CARD_TYPES.PASS) : finalCardType;
+      } else if (newAttempts > 20) {
+        finalCardType = CARD_TYPES.PASS;
+      }
       console.log(
         `🎯 Card ${index}: Original=${clickedCard.originalType}, Final=${finalCardType}`
       );
