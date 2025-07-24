@@ -2298,6 +2298,8 @@ import StageThreeWinnerModal from "@/app/components/stages/components/StageThree
 import InstantCashout from "@/app/icons/cards/InstantCashout"
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages"
 import { useParams } from "next/navigation"
+import DudCardWithShadow from "@/app/icons/DudCardWithShadow"
+import InstantCashWithShadow from "./InstantCashWithShadow"
 
 const Stage3CardSelectionScreens = () => {
   const user = tokenStorage.getUser()
@@ -2307,53 +2309,14 @@ const Stage3CardSelectionScreens = () => {
   // Updated card types
   const CARD_TYPES = {
     DUD: "DUD",
-    CASH_5K: "CASH_5K",
-    CASH_10K: "CASH_10K",
-    CASH_20K: "CASH_20K",
+    FIVE_K: "FIVE_K",
+    TEN_K: "TEN_K",
+    TWENTY_K: "TWENTY_K",
     BONUS_FLIP: "BONUS_FLIP",
     MISS_FLIP: "MISS_FLIP",
     PASS: "PASS",
   }
 
-  // Updated card styles for new types with all required properties
-  const CASH_5K_STYLE = {
-    backgroundColor: "#004400",
-    rayColor: "#00FF00",
-    innerCircleColor: "#006600",
-    textColor: "#00FF00",
-    cornerColor: "#00AA00",
-    fontFamily: "Arial",
-    fontSize: 16,
-    labelBackgroundColor: "#002200",
-    textStrokeWidth: 1,
-    textStrokeColor: "#003300",
-  }
-
-  const CASH_10K_STYLE = {
-    backgroundColor: "#444400",
-    rayColor: "#FFD700",
-    innerCircleColor: "#666600",
-    textColor: "#FFD700",
-    cornerColor: "#AAAA00",
-    fontFamily: "Arial",
-    fontSize: 16,
-    labelBackgroundColor: "#222200",
-    textStrokeWidth: 1,
-    textStrokeColor: "#333300",
-  }
-
-  const CASH_20K_STYLE = {
-    backgroundColor: "#440000",
-    rayColor: "#FF6B35",
-    innerCircleColor: "#660000",
-    textColor: "#FF6B35",
-    cornerColor: "#AA0000",
-    fontFamily: "Arial",
-    fontSize: 16,
-    labelBackgroundColor: "#220000",
-    textStrokeWidth: 1,
-    textStrokeColor: "#330000",
-  }
 
   const BONUS_FLIP_STYLE = {
     backgroundColor: "#001144",
@@ -2740,7 +2703,6 @@ const Stage3CardSelectionScreens = () => {
 
   // Enhanced Global Timer Component with better visibility
   const GlobalTimer = () => {
-    console.log(`🎯 GlobalTimer: show=${globalTimer.show}, value=${globalTimer.value}`)
     if (!globalTimer.show || globalTimer.value <= 0) return null
 
     return (
@@ -2750,17 +2712,17 @@ const Stage3CardSelectionScreens = () => {
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
-            className="text-center p-8 bg-gray-900 rounded-2xl border-4 border-yellow-400"
+            className="text-center p-8 "
           >
-            <div className="text-white text-3xl font-bold mb-6">{globalTimer.message}</div>
-            <div className="text-yellow-400 text-9xl font-bold animate-pulse mb-6 drop-shadow-lg">
-              {globalTimer.value}
-            </div>
+            {/* <div className="text-white text-3xl font-bold mb-6">{globalTimer.message}</div> */}
             {globalTimer.nextPlayer && (
-              <div className="text-green-400 text-2xl font-bold bg-green-900 px-6 py-3 rounded-lg">
+              <div className="text-green-400 text-2xl font-bold  px-6 py-3 rounded-lg">
                 {globalTimer.nextPlayer}'s turn next
               </div>
             )}
+            <div className="text-[#04DA6A] text-9xl font-bold animate-pulse mb-4 drop-shadow-lg">
+              {globalTimer.value}
+            </div>
           </motion.div>
         </div>
       </AnimatePresence>
@@ -2777,7 +2739,7 @@ const Stage3CardSelectionScreens = () => {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg shadow-lg border-2 border-yellow-400"
+            className="bg-gradient-to-r  text-white px-6 py-3 rounded-lg shadow-lg border-2"
           >
             <div className="text-center">
               <div className="text-yellow-400 font-bold text-lg">🎯 BONUS FLIP!</div>
@@ -2807,24 +2769,24 @@ const Stage3CardSelectionScreens = () => {
   }) => {
     const getCardDisplay = () => {
       switch (cardType) {
-        case CARD_TYPES.CASH_5K:
+        case CARD_TYPES.FIVE_K:
           return {
             title: "+₦5,000",
             Icon: <InstantCashout width={300} height={300} />,
             bgColor: "bg-gradient-to-br from-green-500 to-green-700",
             cardBg: "bg-green-600",
           }
-        case CARD_TYPES.CASH_10K:
+        case CARD_TYPES.TEN_K:
           return {
             title: "+₦10,000",
             Icon: <InstantCashout width={300} height={300} />,
             bgColor: "bg-gradient-to-br from-green-500 to-green-700",
             cardBg: "bg-green-600",
           }
-        case CARD_TYPES.CASH_20K:
+        case CARD_TYPES.TWENTY_K:
           return {
             title: "+₦20,000",
-            Icon: <InstantCashout width={300} height={300} />,
+            Icon: <InstantCashWithShadow width={300} height={300} />,
             bgColor: "bg-gradient-to-br from-green-500 to-green-700",
             cardBg: "bg-green-600",
           }
@@ -2846,7 +2808,7 @@ const Stage3CardSelectionScreens = () => {
         default:
           return {
             title: "DUD CARD",
-            Icon: <DudCards width={300} height={300} />,
+            Icon: <DudCardWithShadow width={300} height={300} />,
             bgColor: "bg-gradient-to-br from-gray-400 to-gray-600",
             cardBg: "bg-gray-500",
           }
@@ -3125,9 +3087,9 @@ const Stage3CardSelectionScreens = () => {
       switch (card.type) {
         case CARD_TYPES.DUD:
           return <DudCards className="w-[130px] h-full" />
-        case CARD_TYPES.CASH_5K:
-        case CARD_TYPES.CASH_10K:
-        case CARD_TYPES.CASH_20K:
+        case CARD_TYPES.FIVE_K:
+        case CARD_TYPES.TEN_K:
+        case CARD_TYPES.TWENTY_K:
           return <InstantCashout className="w-[130px] h-full" />
         case CARD_TYPES.BONUS_FLIP:
           return <BonusFlip className="w-[130px] h-full" />

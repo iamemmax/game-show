@@ -94,6 +94,7 @@ const { data: allContestsant } = useGetGameContestants(
   const [previousWinnings, setPreviousWinnings] = useState<
     Record<string, number>
   >({});
+  const [showBidRevealModal, setShowBidRevealModal] = useState(false)
 
   const [showResultModal, setShowResultModal] = useState(false);
   const [currentQuestionAnswerData, setCurrentQuestionAnswerData] = useState<
@@ -223,6 +224,7 @@ const playOptionSelectedSound = () => {
          setShowBidPrompt(true);
         // setResultMessageSent(false);
         setMqttAnswerData(null);
+           setShowBidRevealModal(false)
         setShowResultModal(false);
         setCurrentQuestionAnswerData(null);
         // FIXED: Clear contestant bids completely for new question
@@ -356,7 +358,9 @@ if (receivedMessage?.event === "contestant_selected_option") {
         ) {
           const answersData = payload?.answers_data?.answers;
           setCurrentQuestionAnswerData(answersData);
-      
+
+          setShowResultModal(true)
+      setShowBidRevealModal(true)
         }
       }
 
@@ -371,7 +375,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
           questionId?.toString() === currentQuestionIdRef?.current?.toString()
         ) {
           const answersData = payload?.data?.answers;
-
+setShowBidRevealModal(false)
           setMqttAnswerData(answersData);
           setMqttResultData(answersData);
 
@@ -594,165 +598,6 @@ if (receivedMessage?.event === "contestant_selected_option") {
   {/* Left Column: First 3 contestants */}
 
 
-{/* <div className="flex flex-col gap-4 w-full">
-  {mqttQuestionData?.spend_breakdown?.slice(0,3).map((spend: ContestantSpend) => {
-    const selectedBid = contestantBids?.[spend.contestant_id];
-    const selectedOption = contestantOption?.[spend.contestant_id];
-
-    const matchingKey = selectedBid
-      ? Object.keys(spend.spend_breakdown).find(
-          (key) =>
-            Math.ceil(Number(key) / 100) * 100 ===
-            Math.ceil(Number(selectedBid.bid_amount) / 100) * 100
-        )
-      : null;
-
-    const potentialWinning = matchingKey
-      ? Math.ceil(Number(spend.spend_breakdown[matchingKey]) / 100) * 100
-      : 0;
-
-    const previousValue = previousWinnings[spend.contestant_id] || 0;
-
-    // Determine if answer option is selected
-    const isAnswerOptionSelected = !!selectedOption;
-    
-    // Determine if bid is selected but option is not
-    const isBidSelectedButOptionNot = !!selectedBid && !selectedOption;
-
-    // Calculate number of stars based on bid position (lowest=1 star, highest=4 stars)
-    let numberOfStars = 0;
-    if (selectedBid) {
-      // Get all bid amounts and sort them from lowest to highest
-      const allBidAmounts = Object.keys(spend.spend_breakdown)
-        .map(key => Math.ceil(Number(key) / 100) * 100)
-        .sort((a, b) => a - b);
-      
-      const selectedBidAmount = Math.ceil(Number(selectedBid.bid_amount) / 100) * 100;
-      
-      // Find the position of selected bid (0-based index)
-      const bidPosition = allBidAmounts.findIndex(amount => amount === selectedBidAmount);
-      
-      // Convert to 1-4 stars (lowest bid = 1 star, highest bid = 4 stars)
-      numberOfStars = bidPosition + 1;
-    }
- const starsArray = Array.from({ length: numberOfStars });
-
-
-    return (
-      <div
-        key={spend.contestant_id}
-        className={`text-left py-4 px-3  w-full rounded-10 transition-all duration-300 ${
-          isAnswerOptionSelected 
-            ? "bg-[#011B0D]" // Green background when answer option is selected
-            : "bg-[#0F002E]" // Purple background default
-        }`}
-      >
-        <div className="flex items-center justify-between mb-2">
-        <div className="text-white text-2xl font-gilroyBold font-bold ">
-          {spend.contestant_name?.split(" ")[0]}
-        </div>
-<motion.div
-  initial={{ opacity: 0, scale: 0.8 }}
-  animate={{ opacity: 1, scale: 1 }}
-  transition={{ delay: 0.2, duration: 0.4 }}
-  className="flex items-center gap-1"
->
-
-<AnimatePresence>
-  {starsArray.map((_, index) => (
-    <motion.button
-      key={index}
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0 }}
-      transition={{
-        delay: index * 0.1, // stagger each star on entry/exit
-        duration: 0.3,
-        type: "spring",
-      }}
-      className="cursor-pointer"
-    >
-      <StarIcon
-        size={38}
-        filled={true}
-        color="#fff"
-        strokeColor="#fff"
-        strokeWidth={1}
-        centerFill="#fff"
-        
-      />
-    </motion.button>
-  ))}
-</AnimatePresence>
-</motion.div>
-
-        </div>
-
-        <div className="grid grid-cols-2 w-full justify-center gap-2">
-          {Object.entries(spend.spend_breakdown).map(([amount, value], index) => {
-            const parsedAmount = Math.ceil(Number(amount) / 100) * 100;
-            const normalizedBidAmount = selectedBid
-              ? Math.ceil(Number(selectedBid.bid_amount) / 100) * 100
-              : null;
-
-            const isBidSelected = parsedAmount === normalizedBidAmount;
-
-            return (
-              <div
-                key={`${spend.contestant_id}-${index}`}
-                className={`rounded-lg px-3 py-2 text-2xl font-gilroyHeavy transition-all ${
-                  isBidSelected
-                    ? isAnswerOptionSelected
-                      ? "bg-[#00FF47] font-semibold text-black" // Green when both bid and option selected
-                      : "bg-[#fff] font-semibold text-black" // White when only bid selected
-                    : isAnswerOptionSelected
-                      ? "bg-[#004D1A] text-white" // Darker green for unselected bids when option is selected
-                      : "bg-[#26005F] text-[#E86FFF]" // Default purple for unselected bids
-                }`}
-              >
-                ₦{parsedAmount.toLocaleString()}
-              </div>
-            );
-          })}
-        </div>
-
-        {selectedBid && potentialWinning > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-2 flex items-center gap-2"
-          >
-            <div
-              className={`text-[1.375rem] font-verdana transition-all ${
-                isAnswerOptionSelected 
-                  ? "text-[#00FF47]" // Green text when answer option is selected
-                  : isBidSelectedButOptionNot
-                    ? "text-[#FFB800]" // Yellow/orange text when bid selected but option not
-                    : "text-white opacity-50" // Default white with opacity
-              }`}
-            >
-              {isAnswerOptionSelected ? "To Win:" : isBidSelectedButOptionNot && "To Win:"}
-            </div>
-            <div className={`text-[1.375rem] font-verdana font-bold transition-all ${
-              isAnswerOptionSelected 
-                ? "text-[#00FF47]" // Green amount when answer option is selected
-                : isBidSelectedButOptionNot
-                  ? "text-[#FFB800]" // Yellow/orange amount when bid selected but option not
-                  : "text-[#fff]" // Default white
-            }`}>
-              <AnimatedAmount
-                from={previousValue}
-                to={potentialWinning}
-                onStart={() => handleAmountStart(String(spend.contestant_id))}
-                onComplete={() => handleAmountComplete(String(spend.contestant_id))}
-              />
-            </div>
-          </motion.div>
-        )}
-      </div>
-    );
-  })}
-</div> */}
 
 <div className="flex flex-col gap-4 w-full">
   {mqttQuestionData?.spend_breakdown?.slice(0,3).map((spend: ContestantSpend) => {
@@ -989,30 +834,55 @@ if (receivedMessage?.event === "contestant_selected_option") {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.6 }}
-                            className="flex justify-center  absolute  -bottom-9 items-center w-full gap-4"
+                            className="flex justify-center  absolute  -bottom-9 items-center w-full gap-8"
                           >
+                            
                             <div className="bg-[#011B0D] rounded-[12px] py-3 px-8 max-xl:max-w-[170px]">
                               <p
-                                className="text-4xl text-white font-extrabold text-center"
+                                className="text-3xl flex flex-col text-white font-extrabold text-center"
                                 style={{
                                   WebkitTextStroke: "2px #04DA6A",
                                   textShadow:
                                     "0px 2px 4px rgba(4, 218, 106, 0.5)",
                                 }}
                               >
-                                {mqttQuestionData?.question?.question
-                                  ?.question_booster || "..."}{" "}
                                 <span
-                                  className="text-4xl font-outfit font-normal text-[#04DA6A]"
+                                  className="text-2xl font-outfit font-normal text-[#04DA6A]"
                                   style={{
                                     WebkitTextStroke: "0px",
                                     textShadow: "none",
                                   }}
                                 >
-                                  Booster
+                                Owner Booster
                                 </span>
+                                {mqttQuestionData?.question?.question
+                                  ?.owner_booster || "..."}{" "}
                               </p>
                             </div>
+                            <div className="bg-[#011B0D] rounded-[12px] py-3 px-8 max-xl:max-w-[170px]">
+                              <p
+                                className="text-3xl flex flex-col text-white font-extrabold text-center"
+                                style={{
+                                  WebkitTextStroke: "2px #04DA6A",
+                                  textShadow:
+                                    "0px 2px 4px rgba(4, 218, 106, 0.5)",
+                                }}
+                              >
+                                <span
+                                  className="text-2xl font-outfit font-normal text-[#04DA6A]"
+                                  style={{
+                                    WebkitTextStroke: "0px",
+                                    textShadow: "none",
+                                  }}
+                                >
+                                General Booster
+                                </span>
+                                {mqttQuestionData?.question?.question
+                                  ?.owner_booster || "..."}{" "}
+                              </p>
+                            </div>
+                            
+                           
                           </motion.div>
                         </motion.div>
 
@@ -1290,7 +1160,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
     );
   })}
 </div>
-                {allContestsant?.game?.reveal_step_count==="DOUBLE" || showResultModal && (
+                {showResultModal && (
                   <HustleQuestionAnswerModal
                     booster={
                       mqttQuestionData?.question?.question?.question_booster
@@ -1310,6 +1180,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
                     currentQuestionAnswerData={currentQuestionAnswerData}
                     currentQuestion={mqttQuestionData}
                     mqttAnswerData={mqttAnswerData}
+                    showBidRevealModal={showBidRevealModal}
                   />
                 )}
 

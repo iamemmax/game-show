@@ -16,6 +16,8 @@ import { formatAmount } from "@/utils/currency";
 import { Contestant } from "@/app/super-admin/misc/types";
 import Stage3Reward from "@/app/hustle-board/components/stage3/Stage3Reward";
 import { useGetStage3WiningAmount } from "../../api/stage3/fetchWInningAmt";
+import { hustlePicksProps } from "../../api/stage1/getAllHustlePicks";
+import { contestantPicks } from "../mocks/contestantPicks";
 
 interface prop {
   showJackpot?: boolean;
@@ -27,6 +29,17 @@ interface prop {
   mqttAnswerData?: Datum[];
   balanceData?: balanceProp | null | undefined
   showStage3Reward?: boolean;
+  dotColor?: string;
+  showDot?: boolean;
+  showPickCount?: boolean;
+  pickCount?: number;
+ hustlePicksData?: hustlePicksProps | null | undefined
+  contestantsPicks?: {
+    id: number;
+    name: string;
+    picks: number[];
+    color: string;
+}[]
   // mqttAnswerBalanceData?: any;
   
 }
@@ -62,7 +75,15 @@ interface Questions {
   question_booster: string;
 }
 
-
+ const contestantColors: Record<number | 'default', string> = {
+    1: "#FEC124", // Yellow/Gold
+    2: "#FF5733", // Orange/Red
+    3: "#33FF57", // Green
+    4: "#3357FF", // Blue
+    5: "#FF33F5", // Pink/Magenta
+    6: "#33FFF5", // Cyan
+    default: "#666666" // Gray (default)
+  };
 
 // Animation hook for counting up/down numbers with sound
 const useAnimatedBalance = (targetValue: number, duration: number = 1000) => {
@@ -142,7 +163,14 @@ const ContestantCard = ({
   isBoardRoute, 
   showHustleCardAmt, 
   balance,
-  name 
+  name,
+  dotColor,
+  showDot,
+  pickCount,
+  showPickCount,
+  hustlePicksData,
+  contestantsPicks
+
 }: {
   contestant: Contestant;
   originalIndex: number; // Changed from idx to originalIndex for clarity
@@ -152,6 +180,17 @@ const ContestantCard = ({
   showHustleCardAmt: boolean;
   balance: number;
   name: string;
+  dotColor?: string;
+  showDot?: boolean;
+  showPickCount?: boolean;
+  pickCount?: number;
+   contestantsPicks: {
+    id: number;
+    name: string;
+    picks: number[];
+    color: string;
+}[] | undefined
+  hustlePicksData?: hustlePicksProps | null | undefined;
 }) => {
   const animatedBalance = useAnimatedBalance(balance, 800);
   const [isBalanceChanging, setIsBalanceChanging] = useState(false);
@@ -177,6 +216,12 @@ const ContestantCard = ({
     : isMyContestant
       ? "from-amber-500 to-yellow-500"
       : "from-[#d531f8] to-[#9a5eb2]";
+
+const findColor = (contestantId: number) => {
+    const color = contestantsPicks?.find((contestant) => contestant.id === contestantId)?.color;
+    return color || "#666666"; // Default to gray if not found
+  };  
+   
 
   return (
     <div
@@ -206,15 +251,16 @@ const ContestantCard = ({
         </div>
 
         {/* Green Dot with pulse animation when balance changes */}
-        <div
-          className={`z-[999999] bg-green-500 -mt-2 absolute w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+        {showDot&&<div
+          className={`z-[999999] -mt-2 absolute w-8 h-8 rounded-full transition-all duration-300 ${
             isBalanceChanging ? 'animate-pulse scale-125' : ''
           }`}
           style={{
-            top: isBoardRoute ? "35px" : "15px",
-            right: isBoardRoute ? "50px" : "52px",
+            top: isBoardRoute ? "20px" : "15px",
+            right: isBoardRoute ? "10px" : "52px",
+            backgroundColor: findColor(contestantInfo?.id)
           }}
-        />
+        />}
 
         {/* Balance & Name */}
         <div
@@ -249,11 +295,48 @@ const ContestantCard = ({
               glowIntensity="low"
               textclassName={`${
                 isBoardRoute ? "text-[1.4rem]  max-w-[160px]" : "text-[19.18px]  max-w-[110px]"
-              } font-extrabold font-gilroyHeavy text-white -mt-3 capitalize  truncate`}
+              } font-extrabold font-gilroyHeavy text-white ${showPickCount ? "" : "-mt-3"} capitalize  truncate`}
               fillColor="#fff"
             >
               {name}
             </GlowyStrokeText>
+            
+{showPickCount && (
+  <div className="picks-display">
+    {(() => {
+      // Find picks for this specific contestant
+      const contestantPicks = hustlePicksData?.data?.find((x) => 
+        x.contestant_id === (contestantInfo?.contestant_id || contestantInfo?.id)
+      );
+      
+      const pickCount = contestantPicks?.picks?.length || 0;
+      
+      return (
+        <GlowyStrokeText
+          truncate
+          strokeWidth={2}
+          strokeColor="#a132b7"
+          glowColor="#ce45eb"
+          glowIntensity="low" 
+          textclassName={`
+            ${pickCount === 0 ? "hidden" : ""}
+            ${
+            isBoardRoute ? "text-[2rem] max-w-[160px]" : "text-[16px] max-w-[110px]"
+          } font-extrabold font-gilroyHeavy text-white  transition-all duration-300 ${
+            isBalanceChanging ? 'text-shadow-lg' : ''
+            
+          }`}
+          fillColor="#fff"
+        >
+           {pickCount}
+        </GlowyStrokeText>
+      );  
+    })()}
+  </div>
+)}
+
+
+          
           </div>
         </div>
       </div>
@@ -272,6 +355,12 @@ const HustleSideBar = ({
   mqttAnswerData,
   balanceData,
   showStage3Reward = false,
+  dotColor="red",
+  showDot=false,
+  showPickCount,
+  pickCount=0,
+  hustlePicksData,
+  contestantsPicks
 }: prop) => {
   const user = tokenStorage.getUser();
   const params = useParams();
@@ -290,6 +379,8 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
     return allconstestant;
   };
 
+  console.log(hustlePicksData);
+  
   // Helper function to calculate balance with fallback logic
   const calculateBalance = (contestant: any, contestantInfo: any) => {
     // For non-STAGE_ONE games, prioritize balance data
@@ -395,6 +486,12 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
                     showHustleCardAmt={showHustleCardAmt}
                     balance={balance}
                     name={name}
+                    showDot={showDot}
+                    dotColor={dotColor}
+                    showPickCount={showPickCount}
+                    pickCount={pickCount}
+                    hustlePicksData={hustlePicksData}
+                    contestantsPicks={contestantsPicks}
                   />
                 );
               })}
@@ -426,7 +523,7 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
       )}
       
 
-      <div className="min-h-[100px]">
+      <div className="min-h-[100px] hidden">
         {showJackpot && <JackpotContainer size={80} text="₦100m" />}
       </div>
     </div>

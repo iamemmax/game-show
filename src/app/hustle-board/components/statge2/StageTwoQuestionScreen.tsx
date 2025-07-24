@@ -73,6 +73,7 @@ const ViewOnlyQuestionTwoScreen = () => {
   const [currentQuestionAnswerData, setCurrentQuestionAnswerData] = useState<
     any | null
   >(null);
+  const [showBidRevealModal, setShowBidRevealModal] = useState(false)
 
   // Add these new state variables after the existing state declarations
   const [questionStartTime, setQuestionStartTime] = useState<number | null>(
@@ -208,6 +209,8 @@ const ViewOnlyQuestionTwoScreen = () => {
         setShowResultModal(false);
         setCurrentQuestionAnswerData(null);
         setContestantOption({});
+           setShowBidRevealModal(false)
+
         // Set current index and question ID
         setCurrentQuestionIndex(questionData?.index);
 
@@ -226,6 +229,7 @@ const ViewOnlyQuestionTwoScreen = () => {
         ) {
           const answersData = payload?.answers_data?.answers;
           setCurrentQuestionAnswerData(answersData);
+           setShowBidRevealModal(true)
         }
       }
 
@@ -731,7 +735,7 @@ const ViewOnlyQuestionTwoScreen = () => {
                         >
                           <div>
                             <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-2xl text-[#04DA6A] font-outfit">
-                              Question {currentQuestionIndex}
+                              Question {currentQuestionIndex} 
                             </p>
                           </div>
 
@@ -739,13 +743,12 @@ const ViewOnlyQuestionTwoScreen = () => {
                             <div className="py-4 pb-8">
                               <AnimatedText
                                 text={
-                                  mqttQuestionData?.question ||
+                                  mqttQuestionData?.question  +  ""||
                                   "Waiting for question..."
                                 }
                               />
                             </div>
                           </AnimatePresence>
-
                           <div className="flex absolute -bottom-11 justify-center items-center w-full gap-4">
                             <div className="bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] flex justify-center gap-y-0 space-y-0 items-center flex-col rounded-[12px] py-2 px-[5rem]">
                               <p className="text-2xl block font-outfit font-normal text-[#1E1E1E]">
@@ -999,7 +1002,8 @@ const ViewOnlyQuestionTwoScreen = () => {
                           )}
                         </AnimatePresence>
                       </div>
-                      {contestantData?.game?.reveal_step_count === "DOUBLE" ||showResultModal && (
+                      {/* contestantData?.game?.reveal_step_count === "DOUBLE" || */}
+                      {showResultModal && (
                         <HustleQuestionAnswerModal
                           booster={mqttQuestionData?.question_booster}
                           showBooster={false}
@@ -1018,10 +1022,12 @@ const ViewOnlyQuestionTwoScreen = () => {
                           currentQuestion={mqttQuestionData}
                           mqttAnswerData={mqttAnswerData}
                           showBid={false}
-                          showAllocatedAMount={false}
+                          showAllocatedAMount={true}
                           allocatedWinningAmount={
                             mqttQuestionData?.allocated_winning_amount
+                            
                           }
+                            showBidRevealModal={showBidRevealModal}
                         />
                       )}
                     </>
