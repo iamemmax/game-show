@@ -17,7 +17,7 @@ import { useGetLastContestantPick } from "@/app/components/stages/api/stage4/get
 import {
   type MatchedHustle,
   useGetGameContestants,
-  useGetHustleMatches,  
+  useGetHustleMatches,
   useGetMatchedHustles,
 } from "@/app/admin/misc/api"
 import { Ball } from "@/app/admin/misc/components/RaffleBall"
@@ -100,6 +100,7 @@ const RafflePickReveal = () => {
 
   // Initialize revealed numbers from matched hustles data
   useEffect(() => {
+    console.log(matchedHustlesData)
     if (matchedHustlesData?.data) {
       const alreadyRevealed = matchedHustlesData.data.map((hustle) => hustle.number_pick)
       setRevealedNumbers(alreadyRevealed)

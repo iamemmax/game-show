@@ -52,6 +52,16 @@ interface AssignContestantRequest {
   name: string
   phone_number: string;
   contestant_photo: any
+  bio: string
+  website: string
+  instagram: string
+  tiktok: string
+  facebook: string
+  x: string
+  state_of_origin: string
+  contestant_hustle: string
+  gender: string
+  date_of_birth: string
 }
 
 interface AssignContestantResponse {
@@ -87,7 +97,18 @@ export const assignContestant = async (data: AssignContestantRequest) => {
   formData.append("constestants_attr", data?.constestants_attr)
   formData.append("game_episode", String(data?.game_episode))
   formData.append("phone_number", data?.phone_number)
+  formData.append("bio", data?.bio)
   formData.append("contestant_photo", data?.contestant_photo)
+  formData.append("website", data?.website)
+  formData.append("instagram", data?.instagram)
+  formData.append("tiktok", data?.tiktok)
+  formData.append("facebook", data?.facebook)
+  formData.append("x", data?.x)
+  formData.append("state_of_origin", data?.state_of_origin)
+  formData.append("contestant_hustle", data?.contestant_hustle)
+  formData.append("gender", data?.gender)
+  formData.append("date_of_birth", data?.date_of_birth)
+
   Object.entries(data).forEach(([key, value]) => {
     formData.append(key, value)
   })

@@ -69,7 +69,7 @@ export default function RootLayout({
               <MQTTProvider>
                 <ProtectedRouteGuard>
                   <Suspense fallback={<></>}>
-                  
+
                     <FullscreenWrapper />
                     <Wrapper>{children}</Wrapper>
                   </Suspense>

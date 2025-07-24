@@ -100,6 +100,6 @@ export const useGetMatchedHustles = (gameEpisode: number) =>
         queryKey: ["matched-hustles", gameEpisode],
         queryFn: () => getMatchedHustles(gameEpisode),
         enabled: !!gameEpisode,
-        staleTime: 0, // Always fresh data
-        cacheTime: 5 * 60 * 1000, // 5 minutes cache
+        staleTime: 0,
+        refetchOnWindowFocus: true,
     })
