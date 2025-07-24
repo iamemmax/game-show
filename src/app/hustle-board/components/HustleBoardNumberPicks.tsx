@@ -1,3 +1,5 @@
+
+
 // "use client";
 // import React, { useState, useEffect, useCallback } from "react";
 // import {  GlowyStrokeText } from "@/components/core";
@@ -21,8 +23,6 @@
 //   picks: number[];
 // }
 
-
-
 // // Define an extended type for the user that includes game_episode
 // interface ExtendedContestantDetails extends ContestantDetails {
 //   game_episode?: number;
@@ -30,9 +30,6 @@
 
 // const HustleBoardNumberPicks = () => {
 //   // Type the user properly
-
-
-//   // Use the elimination check hook
 
 //   // Use the MQTT context
 //   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
@@ -54,12 +51,15 @@
 
 //   // Add state to track if timer has started
 //   const [timerStarted, setTimerStarted] = useState(false);
-// const [contestants, setContestants] = useState<Array<{
-//   id: number;
-//   name: string;
-//   picks: number[];
-//   color: string;
-// }>>([]);
+
+//   // Add state to track contestants array with all their information
+//   const [contestants, setContestants] = useState<Array<{
+//     id: number;
+//     name: string;
+//     picks: number[];
+//     color: string;
+//   }>>([]);
+
 //   // Add state to track picks by contestant ID
 //   const [picksByContestant, setPicksByContestant] = useState<Record<number, number[]>>({});
 
@@ -73,6 +73,31 @@
 //     6: "#33FFF5", // Cyan
 //     default: "#666666" // Gray (default)
 //   };
+
+//   // Function to get contestant name (you'll need to implement this based on your data)
+//   const getContestantName = (contestantId: number): string => {
+//     // This should return the actual contestant name from your data
+//     // For now, returning a placeholder
+//     return `Contestant ${contestantId}`;
+//   };
+
+//   // Function to get contestant color
+//   const getContestantColor = (contestantId: number): string => {
+//     const colorIndex = (Number(contestantId) % 6) + 1;
+//     return contestantColors[colorIndex];
+//   };
+
+//   // Function to update contestants array
+//   const updateContestantsArray = useCallback((picksByContestant: Record<number, number[]>) => {
+//     const contestantsArray = Object.entries(picksByContestant).map(([contestantId, picks]) => ({
+//       id: Number(contestantId),
+//       name: getContestantName(Number(contestantId)),
+//       picks: picks,
+//       color: getContestantColor(Number(contestantId))
+//     }));
+    
+//     setContestants(contestantsArray);
+//   }, []);
 
 //   // Function to handle all hustle picks received from API or socket
 //   const handleAllHustlePicks = useCallback(
@@ -99,6 +124,9 @@
 //         // Update state
 //         setOtherContestantsPicks(uniquePicks);
 //         setPicksByContestant(newPicksByContestant);
+        
+//         // Update contestants array
+//         updateContestantsArray(newPicksByContestant);
 
 //         return true; // Indicate that we handled this event
 //       }
@@ -129,13 +157,16 @@
 //         // Update state
 //         setOtherContestantsPicks(uniquePicks);
 //         setPicksByContestant(newPicksByContestant);
+        
+//         // Update contestants array
+//         updateContestantsArray(newPicksByContestant);
 
 //         return true; // Indicate that we handled this event
 //       }
 
 //       return false; // Indicate that we did not handle this event
 //     },
-//     []
+//     [updateContestantsArray]
 //   );
 
   
@@ -209,10 +240,17 @@
 //           const { contestant_id, pick } = receivedMessage.payload;
 
 //           // Update picks by contestant
-//           setPicksByContestant(prev => ({
-//             ...prev,
-//             [contestant_id]: [...(prev[contestant_id] || []), pick]
-//           }));
+//           setPicksByContestant(prev => {
+//             const updated = {
+//               ...prev,
+//               [contestant_id]: [...(prev[contestant_id] || []), pick]
+//             };
+            
+//             // Update contestants array
+//             updateContestantsArray(updated);
+            
+//             return updated;
+//           });
           
 //           // Update other contestants' picks for display
 //           setOtherContestantsPicks(prev => [...new Set([...prev, pick])]);
@@ -238,7 +276,7 @@
 
 
 //     }
-//   }, [isConnected, addMessageListener, removeMessageListener, handleAllHustlePicks]);
+//   }, [isConnected, addMessageListener, removeMessageListener, handleAllHustlePicks, updateContestantsArray]);
 
 //   // Add a connection status indicator
 //   const ConnectionStatus = () => (
@@ -435,6 +473,7 @@
 //             showPickCount={true}
 //             pickCount={3}
 //             hustlePicksData={hustlePicksData}
+//             contestantsPicks={contestants}
 //           />
 //         </div>
 //       </div>
@@ -443,6 +482,8 @@
 // };
 
 // export default HustleBoardNumberPicks;
+
+
 
 
 "use client";
@@ -474,8 +515,6 @@ interface ExtendedContestantDetails extends ContestantDetails {
 }
 
 const HustleBoardNumberPicks = () => {
-  // Type the user properly
-
   // Use the MQTT context
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const params = useParams()
@@ -497,15 +536,7 @@ const HustleBoardNumberPicks = () => {
   // Add state to track if timer has started
   const [timerStarted, setTimerStarted] = useState(false);
 
-  // Add state to track contestants array with all their information
-  const [contestants, setContestants] = useState<Array<{
-    id: number;
-    name: string;
-    picks: number[];
-    color: string;
-  }>>([]);
-
-  // Add state to track picks by contestant ID
+  // Add state to track picks by contestant ID - THIS IS THE PRIMARY SOURCE OF TRUTH
   const [picksByContestant, setPicksByContestant] = useState<Record<number, number[]>>({});
 
   // Define contestant colors (for 6 contestants)
@@ -532,21 +563,22 @@ const HustleBoardNumberPicks = () => {
     return contestantColors[colorIndex];
   };
 
-  // Function to update contestants array
-  const updateContestantsArray = useCallback((picksByContestant: Record<number, number[]>) => {
-    const contestantsArray = Object.entries(picksByContestant).map(([contestantId, picks]) => ({
+  // Create a derived state for contestants array that updates automatically
+  // when picksByContestant changes
+  const contestants = React.useMemo(() => {
+    return Object.entries(picksByContestant).map(([contestantId, picks]) => ({
       id: Number(contestantId),
       name: getContestantName(Number(contestantId)),
       picks: picks,
       color: getContestantColor(Number(contestantId))
     }));
-    
-    setContestants(contestantsArray);
-  }, []);
+  }, [picksByContestant]);
 
   // Function to handle all hustle picks received from API or socket
   const handleAllHustlePicks = useCallback(
     (receivedMessage: any) => {
+      console.log("Handling all hustle picks:", receivedMessage);
+      
       // Handle API response format (like the sample you provided)
       if (receivedMessage?.status === "success" && Array.isArray(receivedMessage.data)) {
 
@@ -559,19 +591,19 @@ const HustleBoardNumberPicks = () => {
           if (Array.isArray(contestant.picks)) {
             allPicks.push(...contestant.picks);
             // Store picks by contestant ID
-            newPicksByContestant[contestant.contestant_id] = contestant.picks;
+            newPicksByContestant[contestant.contestant_id] = [...contestant.picks]; // Create a new array
           }
         });
 
         // Remove duplicates from all picks
         const uniquePicks = [...new Set(allPicks)];
 
+        console.log("Setting picks by contestant:", newPicksByContestant);
+        console.log("Setting other contestants picks:", uniquePicks);
+
         // Update state
         setOtherContestantsPicks(uniquePicks);
         setPicksByContestant(newPicksByContestant);
-        
-        // Update contestants array
-        updateContestantsArray(newPicksByContestant);
 
         return true; // Indicate that we handled this event
       }
@@ -582,6 +614,7 @@ const HustleBoardNumberPicks = () => {
         receivedMessage?.payload &&
         Array.isArray(receivedMessage.payload)
       ) {
+        console.log("Handling MQTT receive_hustle_picks:", receivedMessage.payload);
 
         // Extract all picks from contestants
         const allPicks: number[] = [];
@@ -592,32 +625,33 @@ const HustleBoardNumberPicks = () => {
           if (Array.isArray(contestant.picks)) {
             allPicks.push(...contestant.picks);
             // Store picks by contestant ID
-            newPicksByContestant[contestant.contestant_id] = contestant.picks;
+            newPicksByContestant[contestant.contestant_id] = [...contestant.picks]; // Create a new array
           }
         });
 
         // Remove duplicates from all picks
         const uniquePicks = [...new Set(allPicks)];
 
+        console.log("MQTT - Setting picks by contestant:", newPicksByContestant);
+        console.log("MQTT - Setting other contestants picks:", uniquePicks);
+
         // Update state
         setOtherContestantsPicks(uniquePicks);
         setPicksByContestant(newPicksByContestant);
-        
-        // Update contestants array
-        updateContestantsArray(newPicksByContestant);
 
         return true; // Indicate that we handled this event
       }
 
       return false; // Indicate that we did not handle this event
     },
-    [updateContestantsArray]
+    []
   );
 
   
   // Initialize data from API when component loads
   useEffect(() => {
     if (hustlePicksData) {
+      console.log("Initializing with hustle picks data:", hustlePicksData);
       handleAllHustlePicks(hustlePicksData);
     }
   }, [hustlePicksData, handleAllHustlePicks]);
@@ -626,8 +660,8 @@ const HustleBoardNumberPicks = () => {
   useEffect(() => {
     if (isConnected) {
       const handleMQTTMessage = (receivedMessage: any) => {
+        console.log("Received MQTT message:", receivedMessage);
 
-     
         // Handle game_s1_init event to start timer
         if (receivedMessage?.event === "game_s1_init") {
           setTimerStarted(true);
@@ -640,12 +674,12 @@ const HustleBoardNumberPicks = () => {
               (currentTime.getTime() - startTime.getTime()) / 1000
             );
             
-            // Calculate remaining time (60 seconds total - elapsed time)
+            // Calculate remaining time (20 seconds total - elapsed time)
             const remainingTime = Math.max(0, 20 - elapsedSeconds);
             setTimeLeft(remainingTime);
           } else {
-            // Default to 60 seconds if no start_time provided
-            setTimeLeft(36);
+            // Default to 20 seconds if no start_time provided
+            setTimeLeft(20);
           }
         }
 
@@ -653,7 +687,7 @@ const HustleBoardNumberPicks = () => {
         if (receivedMessage?.event === "start_hustle_timer") {
           setTimerStarted(true);
           
-          // Set the time from the message or default to 60 seconds
+          // Set the time from the message or default to 20 seconds
           if (receivedMessage?.payload?.time) {
             setTimeLeft(receivedMessage.payload.time);
           }
@@ -672,7 +706,7 @@ const HustleBoardNumberPicks = () => {
           setTimeLeft(0);
         }
 
-        // Try to handle as all_hustle_pick event
+        // Try to handle as all_hustle_pick event FIRST
         if (handleAllHustlePicks(receivedMessage)) {
           return; // Event was handled, skip the rest
         }
@@ -683,22 +717,36 @@ const HustleBoardNumberPicks = () => {
           receivedMessage?.payload
         ) {
           const { contestant_id, pick } = receivedMessage.payload;
+          console.log(`Individual pick received: Contestant ${contestant_id} picked ${pick}`);
 
-          // Update picks by contestant
+          // Update picks by contestant using functional update to ensure we get the latest state
           setPicksByContestant(prev => {
+            const currentPicks = prev[contestant_id] || [];
+            
+            // Check if the pick already exists to avoid duplicates
+            if (currentPicks.includes(pick)) {
+              console.log(`Pick ${pick} already exists for contestant ${contestant_id}`);
+              return prev; // No change needed
+            }
+
             const updated = {
               ...prev,
-              [contestant_id]: [...(prev[contestant_id] || []), pick]
+              [contestant_id]: [...currentPicks, pick]
             };
             
-            // Update contestants array
-            updateContestantsArray(updated);
-            
+            console.log("Updated picks by contestant:", updated);
             return updated;
           });
           
-          // Update other contestants' picks for display
-          setOtherContestantsPicks(prev => [...new Set([...prev, pick])]);
+          // Update other contestants' picks for display using functional update
+          setOtherContestantsPicks(prev => {
+            if (prev.includes(pick)) {
+              return prev; // No change needed
+            }
+            const updated = [...new Set([...prev, pick])];
+            console.log("Updated other contestants picks:", updated);
+            return updated;
+          });
           
           // Add visual feedback for recently updated numbers
           setRecentlyUpdated(prev => [...prev, pick]);
@@ -708,20 +756,15 @@ const HustleBoardNumberPicks = () => {
             setRecentlyUpdated(prev => prev.filter(n => n !== pick));
           }, 1000);
         }
-       
       };
 
-      if (isConnected) {
       addMessageListener(handleMQTTMessage);
+
+      return () => {
+        removeMessageListener(handleMQTTMessage);
+      };
     }
-
-    return () => {
-      removeMessageListener(handleMQTTMessage);
-    };
-
-
-    }
-  }, [isConnected, addMessageListener, removeMessageListener, handleAllHustlePicks, updateContestantsArray]);
+  }, [isConnected, addMessageListener, removeMessageListener, handleAllHustlePicks]);
 
   // Add a connection status indicator
   const ConnectionStatus = () => (
@@ -745,8 +788,6 @@ const HustleBoardNumberPicks = () => {
     }
   }, [timerStarted, timeLeft]);
 
-
-
   // Function to get the color for a number based on which contestant picked it
   const getNumberColor = (num: number): string => {
     // Check which contestant picked this number
@@ -763,8 +804,11 @@ const HustleBoardNumberPicks = () => {
     return "black";
   };
 
-
-
+  // Debug logging effect
+  useEffect(() => {
+    console.log("Current picksByContestant:", picksByContestant);
+    console.log("Current contestants array:", contestants);
+  }, [picksByContestant, contestants]);
 
   return (
     <>

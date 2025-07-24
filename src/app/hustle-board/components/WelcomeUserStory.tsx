@@ -37,7 +37,7 @@ const WelcomeUserStory = () => {
                 </div>
 
                 {/* Contestants Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[85rem] mx-auto grow">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[95rem] mx-auto grow">
                     {contestants.map((contestant, index) => (
                         <Card
                             key={contestant.id}
@@ -63,22 +63,22 @@ const WelcomeUserStory = () => {
                                         </AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <h3 className="text-white font-semibold text-2xl leading-tight font-montserrat">
-                                            {contestant.name || "Contestant"}
+                                        <h3 className="text-white font-semibold text-4xl leading-tight font-montserrat">
+                                            {contestant?.name || "Contestant"}
                                         </h3>
                                     </div>
                                 </div>
 
                                 {/* Hustle Category */}
                                 <div className="mb-4">
-                                    <span className="text-[#CE64FF] font-medium text-xl px-5 py-2 rounded-full bg-[#1D0048]">
-                                        {contestant.contestant_hustle || "Digital Marketing"}
+                                    <span className="text-[#CE64FF] font-medium text-2xl px-5 py-2 rounded-full bg-[#1D0048]">
+                                        {contestant?.contestant_hustle || "Digital Marketing"}
                                     </span>
                                 </div>
 
                                 {/* Bio */}
                                 <div className="flex-1 mb-4">
-                                    <p className="text-gray-300 text-lg leading-relaxed">
+                                    <p className="text-gray-300 text-2xl leading-relaxed">
                                         {contestant.bio ||
                                             "I help small businesses grow online by crafting campaigns that convert and tell powerful brand stories"}
                                     </p>
