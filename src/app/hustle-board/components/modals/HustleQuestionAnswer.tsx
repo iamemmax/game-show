@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import CheckIcon from '@/app/icons/CheckIcon'
 import HustleBoardModal from './HustleBoardModal';
 import HustleRevealResult from './HustleRevealResult';
+import { GlowyStrokeText } from '@/components/core';
+import { formatAmount } from '@/utils/currency';
 
 
 interface BidData {
@@ -343,28 +345,36 @@ const HustleQuestionAnswerModal = ({
                 </p>
               </div>
             )}
-            {showAllocatedAMount&&(
-              <div className="bg-[#011B0D] mt-5 rounded-[12px] py-2 px-8">
-                <p
-                  className="text-base text-white font-extrabold text-center"
-                  style={{
-                    WebkitTextStroke: "1px #04DA6A",
-                    textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
-                  }}
-                >
-                  {allocatedWinningAmount}
-                  <span
-                    className="text-base pl-1 font-outfit font-normal text-[#04DA6A]"
-                    style={{
-                      WebkitTextStroke: "0px",
-                      textShadow: "none",
-                    }}
-                  >
-                     Win amount
-                  </span>
-                </p>
-              </div>
-            )}
+            {/* {showAllocatedAMount&&( */}
+           {showAllocatedAMount && allocatedWinningAmount !== undefined && (
+
+         <div className="flex mt-5  justify-center items-center w-full gap-4">
+                              <div className="bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] flex justify-center gap-y-0 space-y-0 items-center flex-col rounded-[12px] py-1 px-[5rem]">
+                                <p className="text-2xl block font-outfit font-normal text-[#1E1E1E]">
+                                  Win amount
+                                </p>
+                                <GlowyStrokeText
+                                  strokeWidth={2}
+                                  strokeColor="#C76000"
+                                  glowColor="#C76000"
+                                  textclassName="text-[30px] block -my-2 text-white font-extrabold font-gilroyBold text-center font-extrabold font-gilroyHeavy"
+                                  fillColor="#1E1E1E"
+                                  glowIntensity={"none"}
+                                >
+                                  ₦
+                                  {formatAmount(
+                                    Number(
+                                      allocatedWinningAmount ||
+                                        0
+                                    )
+                                  )}
+                                </GlowyStrokeText>
+                              </div>
+                            </div>
+          
+)}
+
+            {/* )} */}
           </div>
 
           <div className="space-y-4 mt-3">

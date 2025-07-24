@@ -10,6 +10,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatAmount } from "@/utils/currency";
 import UserBadge from "@/app/shared/UserBadge";
+import { useParams } from "next/navigation";
+import { useGetGameContestants } from "@/app/admin/misc/api";
 
 interface Datum {
   contestant_id: number;
@@ -73,7 +75,11 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
     },
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
   };
-
+  const params = useParams()
+const { data: allContestsant, isLoading } = useGetGameContestants(
+   
+      Number(params?.episodeId)
+  );
   const [visibleItems, setVisibleItems] = useState<number>(0);
   const soundRef = useRef<HTMLAudioElement | null>(null);
 
@@ -180,8 +186,14 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
     }
   };
 
+
   // Early return if no data
- 
+  const getContestantInfo = (id: number) => {
+    const allconstestant = allContestsant?.data?.find(
+      (contestant) => contestant.id === id
+    );
+    return allconstestant;
+  }
 
   return (
     <div className="">
@@ -204,7 +216,12 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
                 <div className="relative w-[6.125rem] h-[7.125rem] rounded-[10px] overflow-hidden">
                   <Image
                     alt={`contestant ${data.contestant_name}`}
-                    src={data?.profit_loss?.contestant_photo_url ??""}
+                  src={
+  data?.profit_loss?.contestant_photo_url ||
+  getContestantInfo(data?.contestant_id)?.contestant_photo_url ||
+  "/" // path to your fallback image
+}
+
                     fill
                     className="object-cover rounded-10"
                   />

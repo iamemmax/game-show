@@ -2307,53 +2307,14 @@ const Stage3CardSelectionScreens = () => {
   // Updated card types
   const CARD_TYPES = {
     DUD: "DUD",
-    CASH_5K: "CASH_5K",
-    CASH_10K: "CASH_10K",
-    CASH_20K: "CASH_20K",
+    FIVE_K: "FIVE_K",
+    TEN_K: "TEN_K",
+    TWENTY_K: "TWENTY_K",
     BONUS_FLIP: "BONUS_FLIP",
     MISS_FLIP: "MISS_FLIP",
     PASS: "PASS",
   }
 
-  // Updated card styles for new types with all required properties
-  const CASH_5K_STYLE = {
-    backgroundColor: "#004400",
-    rayColor: "#00FF00",
-    innerCircleColor: "#006600",
-    textColor: "#00FF00",
-    cornerColor: "#00AA00",
-    fontFamily: "Arial",
-    fontSize: 16,
-    labelBackgroundColor: "#002200",
-    textStrokeWidth: 1,
-    textStrokeColor: "#003300",
-  }
-
-  const CASH_10K_STYLE = {
-    backgroundColor: "#444400",
-    rayColor: "#FFD700",
-    innerCircleColor: "#666600",
-    textColor: "#FFD700",
-    cornerColor: "#AAAA00",
-    fontFamily: "Arial",
-    fontSize: 16,
-    labelBackgroundColor: "#222200",
-    textStrokeWidth: 1,
-    textStrokeColor: "#333300",
-  }
-
-  const CASH_20K_STYLE = {
-    backgroundColor: "#440000",
-    rayColor: "#FF6B35",
-    innerCircleColor: "#660000",
-    textColor: "#FF6B35",
-    cornerColor: "#AA0000",
-    fontFamily: "Arial",
-    fontSize: 16,
-    labelBackgroundColor: "#220000",
-    textStrokeWidth: 1,
-    textStrokeColor: "#330000",
-  }
 
   const BONUS_FLIP_STYLE = {
     backgroundColor: "#001144",
@@ -2807,21 +2768,21 @@ const Stage3CardSelectionScreens = () => {
   }) => {
     const getCardDisplay = () => {
       switch (cardType) {
-        case CARD_TYPES.CASH_5K:
+        case CARD_TYPES.FIVE_K:
           return {
             title: "+₦5,000",
             Icon: <InstantCashout width={300} height={300} />,
             bgColor: "bg-gradient-to-br from-green-500 to-green-700",
             cardBg: "bg-green-600",
           }
-        case CARD_TYPES.CASH_10K:
+        case CARD_TYPES.TEN_K:
           return {
             title: "+₦10,000",
             Icon: <InstantCashout width={300} height={300} />,
             bgColor: "bg-gradient-to-br from-green-500 to-green-700",
             cardBg: "bg-green-600",
           }
-        case CARD_TYPES.CASH_20K:
+        case CARD_TYPES.TWENTY_K:
           return {
             title: "+₦20,000",
             Icon: <InstantCashout width={300} height={300} />,
@@ -3125,9 +3086,9 @@ const Stage3CardSelectionScreens = () => {
       switch (card.type) {
         case CARD_TYPES.DUD:
           return <DudCards className="w-[130px] h-full" />
-        case CARD_TYPES.CASH_5K:
-        case CARD_TYPES.CASH_10K:
-        case CARD_TYPES.CASH_20K:
+        case CARD_TYPES.FIVE_K:
+        case CARD_TYPES.TEN_K:
+        case CARD_TYPES.TWENTY_K:
           return <InstantCashout className="w-[130px] h-full" />
         case CARD_TYPES.BONUS_FLIP:
           return <BonusFlip className="w-[130px] h-full" />
