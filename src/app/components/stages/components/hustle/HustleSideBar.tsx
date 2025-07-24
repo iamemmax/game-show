@@ -17,6 +17,7 @@ import { Contestant } from "@/app/super-admin/misc/types";
 import Stage3Reward from "@/app/hustle-board/components/stage3/Stage3Reward";
 import { useGetStage3WiningAmount } from "../../api/stage3/fetchWInningAmt";
 import { hustlePicksProps } from "../../api/stage1/getAllHustlePicks";
+import { contestantPicks } from "../mocks/contestantPicks";
 
 interface prop {
   showJackpot?: boolean;
@@ -33,6 +34,12 @@ interface prop {
   showPickCount?: boolean;
   pickCount?: number;
  hustlePicksData?: hustlePicksProps | null | undefined
+  contestantsPicks?: {
+    id: number;
+    name: string;
+    picks: number[];
+    color: string;
+}[]
   // mqttAnswerBalanceData?: any;
   
 }
@@ -161,7 +168,8 @@ const ContestantCard = ({
   showDot,
   pickCount,
   showPickCount,
-  hustlePicksData
+  hustlePicksData,
+  contestantsPicks
 
 }: {
   contestant: Contestant;
@@ -176,6 +184,12 @@ const ContestantCard = ({
   showDot?: boolean;
   showPickCount?: boolean;
   pickCount?: number;
+   contestantsPicks: {
+    id: number;
+    name: string;
+    picks: number[];
+    color: string;
+}[] | undefined
   hustlePicksData?: hustlePicksProps | null | undefined;
 }) => {
   const animatedBalance = useAnimatedBalance(balance, 800);
@@ -203,8 +217,12 @@ const ContestantCard = ({
       ? "from-amber-500 to-yellow-500"
       : "from-[#d531f8] to-[#9a5eb2]";
 
+const findColor = (contestantId: number) => {
+    const color = contestantsPicks?.find((contestant) => contestant.id === contestantId)?.color;
+    return color || "#666666"; // Default to gray if not found
+  };  
+   
 
-      
   return (
     <div
       key={originalIndex}
@@ -240,11 +258,7 @@ const ContestantCard = ({
           style={{
             top: isBoardRoute ? "20px" : "15px",
             right: isBoardRoute ? "10px" : "52px",
-            backgroundColor: (() => {
-  const match = String(contestantInfo?.constestant_attr).match(/\d+$/);
-  const number = match ? Number(match[0]) : "default";
-  return contestantColors[number] || contestantColors["default"];
-})()
+            backgroundColor: findColor(contestantInfo?.id)
           }}
         />}
 
@@ -345,7 +359,8 @@ const HustleSideBar = ({
   showDot=false,
   showPickCount,
   pickCount=0,
-  hustlePicksData
+  hustlePicksData,
+  contestantsPicks
 }: prop) => {
   const user = tokenStorage.getUser();
   const params = useParams();
@@ -476,6 +491,7 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
                     showPickCount={showPickCount}
                     pickCount={pickCount}
                     hustlePicksData={hustlePicksData}
+                    contestantsPicks={contestantsPicks}
                   />
                 );
               })}

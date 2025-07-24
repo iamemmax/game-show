@@ -475,7 +475,6 @@ interface ExtendedContestantDetails extends ContestantDetails {
 
 const HustleBoardNumberPicks = () => {
   // Type the user properly
-  const user = tokenStorage.getUser() as ExtendedContestantDetails | null;
 
   // Use the MQTT context
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
@@ -919,6 +918,7 @@ const HustleBoardNumberPicks = () => {
             showPickCount={true}
             pickCount={3}
             hustlePicksData={hustlePicksData}
+            contestantsPicks={contestants}
           />
         </div>
       </div>

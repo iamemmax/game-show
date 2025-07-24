@@ -1948,9 +1948,7 @@
 // }
 
 // export default Stage3CardSelection
-
 "use client"
-
 import Logo from "@/app/icons/Logo"
 import HeaderTitleContainer from "@/app/shared/HeaderContainer"
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy"
@@ -1985,7 +1983,7 @@ const Stage3CardSelection = () => {
   const [remainingContestants, setRemainingContestants] = useState<Array<{ id: number; name: string }>>([])
   const { isErrorModalOpen, setErrorModalState, openErrorModalWithMessage, errorModalMessage } = useErrorModalState()
 
-  // Updated card types
+  // Updated card types with instant cash
   const CARD_TYPES = {
     DUD: "DUD",
     FIVE_K: "FIVE_K",
@@ -1994,46 +1992,6 @@ const Stage3CardSelection = () => {
     BONUS_FLIP: "BONUS_FLIP",
     MISS_FLIP: "MISS_FLIP",
     PASS: "PASS",
-  }
-
-  // Card styles
-  const FIVE_K_STYLE = {
-    backgroundColor: "#004400",
-    rayColor: "#00FF00",
-    innerCircleColor: "#006600",
-    textColor: "#00FF00",
-    cornerColor: "#00AA00",
-    fontFamily: "Arial",
-    fontSize: 16,
-    labelBackgroundColor: "#002200",
-    textStrokeWidth: 1,
-    textStrokeColor: "#003300",
-  }
-
-  const TEN_K_STYLE = {
-    backgroundColor: "#444400",
-    rayColor: "#FFD700",
-    innerCircleColor: "#666600",
-    textColor: "#FFD700",
-    cornerColor: "#AAAA00",
-    fontFamily: "Arial",
-    fontSize: 16,
-    labelBackgroundColor: "#222200",
-    textStrokeWidth: 1,
-    textStrokeColor: "#333300",
-  }
-
-  const TWENTY_K_STYLE = {
-    backgroundColor: "#440000",
-    rayColor: "#FF6B35",
-    innerCircleColor: "#660000",
-    textColor: "#FF6B35",
-    cornerColor: "#AA0000",
-    fontFamily: "Arial",
-    fontSize: 16,
-    labelBackgroundColor: "#220000",
-    textStrokeWidth: 1,
-    textStrokeColor: "#330000",
   }
 
   const BONUS_FLIP_STYLE = {
@@ -2075,10 +2033,49 @@ const Stage3CardSelection = () => {
     textStrokeColor: "#B8860B",
   }
 
+  // Instant cash card styles
+  const INSTANT_CASH_STYLES = {
+    FIVE_K: {
+      backgroundColor: "#006600",
+      rayColor: "#00FF00",
+      innerCircleColor: "#008800",
+      textColor: "#00FF00",
+      cornerColor: "#00AA00",
+      fontFamily: "Arial",
+      fontSize: 16,
+      labelBackgroundColor: "#004400",
+      textStrokeWidth: 1,
+      textStrokeColor: "#002200",
+    },
+    TEN_K: {
+      backgroundColor: "#004400",
+      rayColor: "#00DD00",
+      innerCircleColor: "#006600",
+      textColor: "#00DD00",
+      cornerColor: "#008800",
+      fontFamily: "Arial",
+      fontSize: 16,
+      labelBackgroundColor: "#002200",
+      textStrokeWidth: 1,
+      textStrokeColor: "#001100",
+    },
+    TWENTY_K: {
+      backgroundColor: "#002200",
+      rayColor: "#00BB00",
+      innerCircleColor: "#004400",
+      textColor: "#00BB00",
+      cornerColor: "#006600",
+      fontFamily: "Arial",
+      fontSize: 16,
+      labelBackgroundColor: "#001100",
+      textStrokeWidth: 1,
+      textStrokeColor: "#000800",
+    },
+  }
+
   const [passFound, setPassFound] = useState(false)
   const [passFinderName, setPassFinderName] = useState<string>("")
   const [passFinderIsCurrentUser, setPassFinderIsCurrentUser] = useState(false)
-
   const [showCardRevealModal, setShowCardRevealModal] = useState(false)
   const [revealedCardInfo, setRevealedCardInfo] = useState<{
     type: string
@@ -2086,34 +2083,46 @@ const Stage3CardSelection = () => {
     index: number
     playerName?: string
   } | null>(null)
+  const [showCountdown, setShowCountdown] = useState(false)
+  const [countdownValue, setCountdownValue] = useState(3)
+  const [bonusCardTimers, setBonusCardTimers] = useState<Record<number, number>>({})
+  const [bonusCardIntervals, setBonusCardIntervals] = useState<Record<number, NodeJS.Timeout>>({})
+  
+  // Updated miss flip state management
+  const [missFlipState, setMissFlipState] = useState<{
+    active: boolean
+    contestantId: number | null
+    turnsRemaining: number
+    showTimer: boolean
+    timerValue: number
+  }>({
+    active: false,
+    contestantId: null,
+    turnsRemaining: 0,
+    showTimer: false,
+    timerValue: 0
+  })
+  const [missFlipInterval, setMissFlipInterval] = useState<NodeJS.Timeout | null>(null)
 
-  // Improved timer state management
+  const [showBonusModal, setShowBonusModal] = useState(false)
+  const [bonusModalInfo, setBonusModalInfo] = useState<{ playerName: string; cardIndex: number } | null>(null)
   const [globalTimer, setGlobalTimer] = useState<{
     show: boolean
     value: number
     message: string
     nextPlayer: string
-    type: "turn_switch" | "miss_flip" | "bonus_flip" | null
-  }>({ show: false, value: 0, message: "", nextPlayer: "", type: null })
-
+  }>({ show: false, value: 0, message: "", nextPlayer: "" })
   const [globalTimerInterval, setGlobalTimerInterval] = useState<NodeJS.Timeout | null>(null)
+  const [bonusFlipNotification, setBonusFlipNotification] = useState<{
+    show: boolean
+    playerName: string
+    isCurrentUser: boolean
+  }>({ show: false, playerName: "", isCurrentUser: false })
 
-  // Improved extra flips tracking
-  const [extraFlips, setExtraFlips] = useState<{
-    playerId: number
-    flipsRemaining: number
-    type: "bonus" | "miss"
-  } | null>(null)
-
-  const [playerCash, setPlayerCash] = useState<Record<number, number>>({})
-  const [showCashModal, setShowCashModal] = useState(false)
-  const [lastCashWon, setLastCashWon] = useState<number>(0)
-
-  // Create cards with correct distribution
+  // Enhanced card creation with proper randomization - 24 cards total
   const [cards, setCards] = useState<Card[]>(() => {
     const cardArray: Card[] = []
-
-    // Add 15 DUD cards
+    // Add 15 DUD cards (24 - 1 PASS - 3 BONUS - 2 MISS - 3 INSTANT = 15)
     for (let i = 0; i < 15; i++) {
       cardArray.push({
         type: CARD_TYPES.DUD,
@@ -2124,32 +2133,30 @@ const Stage3CardSelection = () => {
       })
     }
 
-    // Add cash cards
+    // Add exactly 3 instant cash cards
     cardArray.push({
       type: CARD_TYPES.FIVE_K,
       originalType: CARD_TYPES.FIVE_K,
       revealed: false,
-      style: FIVE_K_STYLE,
+      style: INSTANT_CASH_STYLES.FIVE_K,
       contestant_id: null,
     })
-
     cardArray.push({
       type: CARD_TYPES.TEN_K,
       originalType: CARD_TYPES.TEN_K,
       revealed: false,
-      style: TEN_K_STYLE,
+      style: INSTANT_CASH_STYLES.TEN_K,
       contestant_id: null,
     })
-
     cardArray.push({
       type: CARD_TYPES.TWENTY_K,
       originalType: CARD_TYPES.TWENTY_K,
       revealed: false,
-      style: TWENTY_K_STYLE,
+      style: INSTANT_CASH_STYLES.TWENTY_K,
       contestant_id: null,
     })
 
-    // Add 3 bonus flip cards
+    // Add exactly 3 bonus flip cards
     for (let i = 0; i < 3; i++) {
       cardArray.push({
         type: CARD_TYPES.BONUS_FLIP,
@@ -2160,7 +2167,7 @@ const Stage3CardSelection = () => {
       })
     }
 
-    // Add 2 miss flip cards
+    // Add exactly 2 miss flip cards
     for (let i = 0; i < 2; i++) {
       cardArray.push({
         type: CARD_TYPES.MISS_FLIP,
@@ -2171,20 +2178,36 @@ const Stage3CardSelection = () => {
       })
     }
 
-    // Add 1 PASS card
-    cardArray.push({
+    // Shuffle the first 23 cards (everything except PASS)
+    for (let i = cardArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[cardArray[i], cardArray[j]] = [cardArray[j], cardArray[i]]
+    }
+
+    // Now add the PASS card at a random position between index 10-23 (after first 10 cards)
+    const passInsertPosition = Math.floor(Math.random() * 14) + 10 // Random position from 10 to 23
+    const passCard = {
       type: CARD_TYPES.PASS,
       originalType: CARD_TYPES.PASS,
       revealed: false,
       style: PASS_CARD_STYLE,
       contestant_id: null,
-    })
-
-    // Shuffle the array
-    for (let i = cardArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[cardArray[i], cardArray[j]] = [cardArray[j], cardArray[i]]
     }
+
+    // Insert PASS card at the calculated position
+    cardArray.splice(passInsertPosition, 0, passCard)
+
+    console.log(`🎯 Cards created: ${cardArray.length} total`)
+    console.log(`DUD: ${cardArray.filter((c) => c.originalType === CARD_TYPES.DUD).length}`)
+    console.log(`Instant Cash (5K): ${cardArray.filter((c) => c.originalType === CARD_TYPES.FIVE_K).length}`)
+    console.log(`Instant Cash (10K): ${cardArray.filter((c) => c.originalType === CARD_TYPES.TEN_K).length}`)
+    console.log(`Instant Cash (20K): ${cardArray.filter((c) => c.originalType === CARD_TYPES.TWENTY_K).length}`)
+    console.log(`Bonus flips: ${cardArray.filter((c) => c.originalType === CARD_TYPES.BONUS_FLIP).length}`)
+    console.log(`Miss flips: ${cardArray.filter((c) => c.originalType === CARD_TYPES.MISS_FLIP).length}`)
+    console.log(`PASS cards: ${cardArray.filter((c) => c.originalType === CARD_TYPES.PASS).length}`)
+
+    const passIndex = cardArray.findIndex((card) => card.originalType === CARD_TYPES.PASS)
+    console.log(`🎯 PASS card is at index: ${passIndex}`)
 
     return cardArray
   })
@@ -2199,6 +2222,9 @@ const Stage3CardSelection = () => {
   const [isMyTurn, setIsMyTurn] = useState<boolean>(true)
   const [otherContestantId, setOtherContestantId] = useState<number | null>(null)
   const [otherContestantName, setOtherContestantName] = useState<string>("")
+  const [playerCash, setPlayerCash] = useState<Record<number, number>>({})
+  const [showCashModal, setShowCashModal] = useState(false)
+  const [lastCashWon, setLastCashWon] = useState<number>(0)
 
   const {
     data: contestantsData,
@@ -2208,68 +2234,165 @@ const Stage3CardSelection = () => {
 
   const cardIcons = [PickCard1, PickCard2, PickCard3]
 
-  // Improved timer function with better state management
-  const startTimer = (
-    seconds: number,
-    message: string,
-    nextPlayer: string,
-    type: "turn_switch" | "miss_flip" | "bonus_flip",
-  ) => {
-    console.log(`⏰ Starting timer: ${seconds}s - ${message}`)
+  // Helper function to get cash amount from card type
+  const getCashAmount = (cardType: string): number => {
+    switch (cardType) {
+      case CARD_TYPES.FIVE_K:
+        return 5000
+      case CARD_TYPES.TEN_K:
+        return 10000
+      case CARD_TYPES.TWENTY_K:
+        return 20000
+      default:
+        return 0
+    }
+  }
 
-    // Clear existing timer
+  // Helper function to start global timer for both contestants
+  const startGlobalTimer = (seconds: number, message: string, nextPlayer: string) => {
+    console.log(`⏰ Starting global timer: ${seconds}s - ${message}`)
+    setGlobalTimer({ show: true, value: seconds, message, nextPlayer })
     if (globalTimerInterval) {
       clearInterval(globalTimerInterval)
     }
-
-    setGlobalTimer({ show: true, value: seconds, message, nextPlayer, type })
-
     const interval = setInterval(() => {
       setGlobalTimer((prev) => {
         const newValue = prev.value - 1
         if (newValue <= 0) {
           clearInterval(interval)
           setGlobalTimerInterval(null)
-
-          // Handle timer completion based on type
-          setTimeout(() => {
-            switch (type) {
-              case "turn_switch":
-                if (otherContestantId) {
-                  setCurrentTurn(otherContestantId)
-                  setIsMyTurn(false)
-                }
-                break
-              case "miss_flip":
-                if (otherContestantId) {
-                  setExtraFlips({ playerId: otherContestantId, flipsRemaining: 2, type: "miss" })
-                  setCurrentTurn(otherContestantId)
-                  setIsMyTurn(false)
-                }
-                break
-              case "bonus_flip":
-                // Player continues their turn with bonus flip
-                break
-            }
-          }, 100)
-
-          return { show: false, value: 0, message: "", nextPlayer: "", type: null }
+          return { show: false, value: 0, message: "", nextPlayer: "" }
         }
         return { ...prev, value: newValue }
       })
     }, 1000)
-
     setGlobalTimerInterval(interval)
+  }
+
+  // Helper function to start bonus card timer
+  const startBonusCardTimer = (cardIndex: number) => {
+    console.log(`⏰ Starting bonus timer for card ${cardIndex}`)
+    setBonusCardTimers((prev) => ({ ...prev, [cardIndex]: 5 }))
+    const interval = setInterval(() => {
+      setBonusCardTimers((prev) => {
+        const newTime = (prev[cardIndex] || 0) - 1
+        if (newTime <= 0) {
+          console.log(`⏰ Timer finished for card ${cardIndex}`)
+          clearInterval(interval)
+          setBonusCardIntervals((prev) => {
+            const newIntervals = { ...prev }
+            delete newIntervals[cardIndex]
+            return newIntervals
+          })
+          return { ...prev, [cardIndex]: 0 }
+        }
+        return { ...prev, [cardIndex]: newTime }
+      })
+    }, 1000)
+    setBonusCardIntervals((prev) => ({ ...prev, [cardIndex]: interval }))
+  }
+
+  // Updated miss flip timer function - handles 2 separate turns with faster timer
+  const startMissFlipSequence = (contestantId: number) => {
+    console.log(`❌ Starting miss flip sequence for contestant ${contestantId} - 2 separate turns`)
+    
+    setMissFlipState({
+      active: true,
+      contestantId: contestantId,
+      turnsRemaining: 2,
+      showTimer: false,
+      timerValue: 0
+    })
+
+    // Give the first turn immediately
+    setCurrentTurn(contestantId)
+    setIsMyTurn(contestantId === user?.contestant_id)
+  }
+
+  // Function to handle turn completion during miss flip sequence
+  const handleMissFlipTurnComplete = () => {
+    if (!missFlipState.active || !missFlipState.contestantId) return
+
+    const remainingTurns = missFlipState.turnsRemaining - 1
+    console.log(`❌ Miss flip turn completed. Remaining turns: ${remainingTurns}`)
+
+    if (remainingTurns > 0) {
+      // Show timer before next turn (faster timer - 3 seconds)
+      setMissFlipState(prev => ({
+        ...prev,
+        turnsRemaining: remainingTurns,
+        showTimer: true,
+        timerValue: 3
+      }))
+
+      // Start countdown timer
+      if (missFlipInterval) {
+        clearInterval(missFlipInterval)
+      }
+
+      const interval = setInterval(() => {
+        setMissFlipState(prev => {
+          const newTimer = prev.timerValue - 1
+          if (newTimer <= 0) {
+            clearInterval(interval)
+            setMissFlipInterval(null)
+            
+            // Give the second turn
+            setTimeout(() => {
+              setCurrentTurn(prev.contestantId)
+              setIsMyTurn(prev.contestantId === user?.contestant_id)
+              setMissFlipState(prevState => ({
+                ...prevState,
+                showTimer: false,
+                timerValue: 0
+              }))
+            }, 100)
+            
+            return { ...prev, showTimer: false, timerValue: 0 }
+          }
+          return { ...prev, timerValue: newTimer }
+        })
+      }, 1000)
+
+      setMissFlipInterval(interval)
+    } else {
+      // All miss flip turns completed, return to original player
+      console.log(`❌ Miss flip sequence completed, returning to original player`)
+      
+      setMissFlipState({
+        active: false,
+        contestantId: null,
+        turnsRemaining: 0,
+        showTimer: false,
+        timerValue: 0
+      })
+
+      // Show transition timer before switching back
+      const originalPlayer = missFlipState.contestantId === user?.contestant_id ? otherContestantId : user?.contestant_id
+      const originalPlayerName = originalPlayer === user?.contestant_id ? (user?.name || "You") : otherContestantName
+      
+      startGlobalTimer(2, "Turn switching back...", originalPlayerName)
+      setTimeout(() => {
+        setCurrentTurn(originalPlayer as any)
+        setIsMyTurn(originalPlayer === user?.contestant_id)
+      }, 2000)
+    }
   }
 
   // Clean up intervals on unmount
   useEffect(() => {
     return () => {
+      Object.values(bonusCardIntervals).forEach((interval) => {
+        clearInterval(interval)
+      })
+      if (missFlipInterval) {
+        clearInterval(missFlipInterval)
+      }
       if (globalTimerInterval) {
         clearInterval(globalTimerInterval)
       }
     }
-  }, [globalTimerInterval])
+  }, [bonusCardIntervals, missFlipInterval, globalTimerInterval])
 
   // Helper function to get contestant name by ID
   const getContestantName = (contestantId: number): { name: string; balance?: string } => {
@@ -2308,7 +2431,6 @@ const Stage3CardSelection = () => {
         id: contestant.id,
         name: contestant?.name || `Contestant ${contestant.id}`,
       }))
-
     setRemainingContestants(remaining)
 
     const namesMap: Record<number, string> = {}
@@ -2335,7 +2457,7 @@ const Stage3CardSelection = () => {
         setOtherContestantName(otherContestant.name as string)
       }
 
-      // Lower contestant ID goes first
+      // Lower contestant ID goes first (unless they have bonus flips)
       const firstTurnId = Math.min(showdownContestants[0].id, showdownContestants[1].id)
       setCurrentTurn(firstTurnId)
       setIsMyTurn(firstTurnId === user.contestant_id)
@@ -2347,21 +2469,27 @@ const Stage3CardSelection = () => {
     return allContestant
   }
 
-  // Improved TurnIndicator component
+  // Updated TurnIndicator component to show miss flip status
   const TurnIndicator = () => {
     if (gameEnded) return null
 
-    const getExtraFlipInfo = () => {
-      if (extraFlips?.playerId === user?.contestant_id) {
-        return `Extra Flips: ${extraFlips?.flipsRemaining} (${extraFlips.type === "bonus" ? "Bonus" : "Miss"})`
-      }
-      if (extraFlips?.playerId === otherContestantId) {
-        return `${otherContestantName} - Extra Flips: ${extraFlips.flipsRemaining} (${extraFlips.type === "bonus" ? "Bonus" : "Miss"})`
-      }
-      return null
+    // Show miss flip timer if active
+    if (missFlipState.showTimer) {
+      const playerName = missFlipState.contestantId === user?.contestant_id ? "You" : otherContestantName
+      return (
+        <div className="mt-2 p-4 rounded-lg text-center bg-purple-600 bg-opacity-30 border border-purple-400">
+          <div className="text-purple-400 text-lg font-bold mb-2">
+            {playerName} - Next Turn Starting In:
+          </div>
+          <div className="text-purple-400 text-4xl font-bold animate-pulse">
+            {missFlipState.timerValue}
+          </div>
+          <div className="text-white text-sm mt-2">
+            Turns Remaining: {missFlipState.turnsRemaining}
+          </div>
+        </div>
+      )
     }
-
-    const extraFlipInfo = getExtraFlipInfo()
 
     return (
       <div className="">
@@ -2376,7 +2504,11 @@ const Stage3CardSelection = () => {
           <div className="flex items-center justify-center gap-2">
             <div className={cn("w-3 h-3 rounded-full animate-pulse", isMyTurn ? "bg-green-400" : "bg-red-400")}></div>
             <span className={cn("font-gilroyBold text-sm", isMyTurn ? "text-green-400" : "text-red-400")}>
-              {extraFlipInfo || (isMyTurn ? "Your turn to flip" : `${otherContestantName}'s turn`)}
+              {missFlipState.active && missFlipState.contestantId
+                ? `${missFlipState.contestantId === user?.contestant_id ? "Your" : `${otherContestantName}'s`} Extra Turn ${3 - missFlipState.turnsRemaining}/2`
+                : isMyTurn
+                  ? "Your turn to flip"
+                  : `${otherContestantName}'s turn`}
             </span>
             <div className={cn("w-3 h-3 rounded-full animate-pulse", isMyTurn ? "bg-green-400" : "bg-red-400")}></div>
           </div>
@@ -2391,9 +2523,9 @@ const Stage3CardSelection = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
+        <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
           <div className="text-white text-2xl font-bold mb-4">{globalTimer.message}</div>
-          <div className="text-yellow-400 text-6xl font-bold mb-4">{globalTimer.value}</div>
+          <div className="text-yellow-400 text-8xl font-bold animate-pulse mb-4">{globalTimer.value}</div>
           <div className="text-green-400 text-xl font-bold">{globalTimer.nextPlayer}'s turn next</div>
         </motion.div>
       </div>
@@ -2401,34 +2533,19 @@ const Stage3CardSelection = () => {
   }
 
   // Cash Modal Component
-  const CashModal = ({ amount, onClose }: { amount: number; onClose: () => void }) => {
-    // Auto-close after 3 seconds
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        onClose()
-      }, 3000)
-      return () => clearTimeout(timer)
-    }, [onClose])
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-gradient-to-br from-yellow-400 to-yellow-600 p-8 rounded-lg text-center"
-        >
-          <h2 className="text-4xl font-bold text-black mb-4">🎉 CASH WON! 🎉</h2>
-          <p className="text-6xl font-bold text-green-800 mb-4">₦{amount.toLocaleString()}</p>
-          <Button onClick={onClose} className="bg-green-600 hover:bg-green-700 text-white px-8 py-3">
-            Continue Game
-          </Button>
-          <p className="text-sm text-black mt-2">Auto-closing in 3 seconds...</p>
-        </motion.div>
+  const CashModal = ({ amount, onClose }: { amount: number; onClose: () => void }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+      <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 p-8 rounded-lg text-center">
+        <h2 className="text-4xl font-bold text-black mb-4">🎉 CASH WON! 🎉</h2>
+        <p className="text-6xl font-bold text-green-800 mb-4">₦{amount.toLocaleString()}</p>
+        <Button onClick={onClose} className="bg-green-600 hover:bg-green-700 text-white px-8 py-3">
+          Continue Game
+        </Button>
       </div>
-    )
-  }
+    </div>
+  )
 
-  // Enhanced Card Reveal Modal Component
+  // Enhanced Card Reveal Modal Component matching the provided designs
   const CardRevealModal = ({
     cardType,
     amount,
@@ -2444,38 +2561,31 @@ const Stage3CardSelection = () => {
       switch (cardType) {
         case CARD_TYPES.FIVE_K:
           return {
-            title: "+₦5,000 + Extra Pick!",
+            title: "+₦5,000",
             Icon: <InstantCashout width={300} height={300} />,
             bgColor: "bg-gradient-to-br from-green-500 to-green-700",
             cardBg: "bg-green-600",
           }
         case CARD_TYPES.TEN_K:
           return {
-            title: "+₦10,000 + Extra Pick!",
+            title: "+₦10,000",
             Icon: <InstantCashout width={300} height={300} />,
             bgColor: "bg-gradient-to-br from-green-500 to-green-700",
             cardBg: "bg-green-600",
           }
         case CARD_TYPES.TWENTY_K:
           return {
-            title: "+₦20,000 + Extra Pick!",
+            title: "+₦20,000",
             Icon: <InstantCashout width={300} height={300} />,
             bgColor: "bg-gradient-to-br from-green-500 to-green-700",
             cardBg: "bg-green-600",
           }
         case CARD_TYPES.MISS_FLIP:
           return {
-            title: `${otherContestantName} gets 2 extra flips`,
+            title: `${otherContestantName} gets 2 extra turns before your next turn`,
             Icon: <MissCardFlip width={300} height={300} />,
             bgColor: "bg-gradient-to-br from-purple-600 to-purple-800",
             cardBg: "bg-purple-600",
-          }
-        case CARD_TYPES.BONUS_FLIP:
-          return {
-            title: "BONUS FLIP! You get 1 extra flip",
-            Icon: <BonusFlip width={300} height={300} />,
-            bgColor: "bg-gradient-to-br from-blue-600 to-blue-800",
-            cardBg: "bg-blue-600",
           }
         case CARD_TYPES.PASS:
           return {
@@ -2505,15 +2615,65 @@ const Stage3CardSelection = () => {
           exit={{ scale: 0.5, opacity: 0 }}
           className="text-center max-w-lg w-full mx-4"
         >
-          <div className="text-green-400 text-2xl font-bold mb-6 text-shadow-lg">{cardDisplay.title}</div>
+          {/* Top text for cash cards */}
+          {(cardType.includes("K") ||
+            cardType === CARD_TYPES.FIVE_K ||
+            cardType === CARD_TYPES.TEN_K ||
+            cardType === CARD_TYPES.TWENTY_K) && (
+            <div className="text-green-400 text-2xl font-bold mb-6 text-shadow-lg">{cardDisplay.title}</div>
+          )}
+
+          {/* Miss flip special text */}
+          {cardType === CARD_TYPES.MISS_FLIP && (
+            <div className="text-green-400 text-xl font-bold mb-6 text-shadow-lg">{cardDisplay.title}</div>
+          )}
+
+          {/* Card container */}
           <div className="relative mb-8">
-            <div className="bg-transparent rounded-3xl p-8 flex justify-center items-center mx-auto max-w-sm">
-              {cardDisplay.Icon}
+            <div className={`bg-transparent rounded-3xl p-8 flex justify-center items-center mx-auto max-w-sm `}>
+              <div className="text-white text-4xl font-bold mb-2">{cardDisplay.Icon}</div>
             </div>
           </div>
+
+          {/* Player name at bottom */}
           {playerName && (
             <div className="bg-red-800 text-white px-6 py-3 rounded-lg inline-block font-bold">{playerName}</div>
           )}
+
+          {/* Countdown display */}
+          {showCountdown && (
+            <div className="mt-8">
+              <div className="text-green-400 text-xl font-bold mb-4">{`${otherContestantName}'s turn to flip`}</div>
+              <div className="text-green-400 text-8xl font-bold animate-pulse">{countdownValue}</div>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    )
+  }
+
+  // Bonus Modal Component
+  const BonusModal = () => {
+    if (!showBonusModal || !bonusModalInfo) return null
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.5, opacity: 0 }}
+          className="text-center max-w-lg w-full mx-4"
+        >
+          <div className="text-purple-400 text-3xl font-bold mb-6">🎯 BONUS FLIP!</div>
+          <div className="relative mb-8">
+            <div className="bg-transparent rounded-3xl p-8 flex justify-center items-center mx-auto max-w-sm">
+              <BonusFlip width={300} height={300} />
+            </div>
+          </div>
+          <div className="text-white text-xl font-bold mb-4">{bonusModalInfo.playerName} earned an extra flip!</div>
+          <div className="bg-purple-800 text-white px-6 py-3 rounded-lg inline-block font-bold">
+            {bonusModalInfo.playerName}
+          </div>
         </motion.div>
       </div>
     )
@@ -2561,7 +2721,7 @@ const Stage3CardSelection = () => {
   }
 
   const handleCardClick = (index: number) => {
-    // Prevent clicks when not allowed
+    // Prevent clicks when not allowed or when global timer is showing
     if (
       cards[index].revealed ||
       gameEnded ||
@@ -2569,7 +2729,8 @@ const Stage3CardSelection = () => {
       isSending ||
       flippingCards?.length > 0 ||
       !isMyTurn ||
-      globalTimer.show
+      globalTimer.show ||
+      missFlipState.showTimer
     ) {
       return
     }
@@ -2591,88 +2752,59 @@ const Stage3CardSelection = () => {
         revealed: true,
         type: finalCardType,
         contestant_id: user?.contestant_id || null,
-        style: finalCardType === CARD_TYPES.PASS ? PASS_CARD_STYLE : newCards[index].style,
+        style:
+          finalCardType === CARD_TYPES.PASS
+            ? PASS_CARD_STYLE
+            : finalCardType === CARD_TYPES.FIVE_K
+              ? INSTANT_CASH_STYLES.FIVE_K
+              : finalCardType === CARD_TYPES.TEN_K
+                ? INSTANT_CASH_STYLES.TEN_K
+                : finalCardType === CARD_TYPES.TWENTY_K
+                  ? INSTANT_CASH_STYLES.TWENTY_K
+                  : newCards[index].style,
       }
 
       setCards(newCards)
       setFlippingCards([])
       setRecentlyUpdated([index])
 
-      // Handle different card types with FIXED logic
+      // Handle different card types based on FINAL type
       switch (finalCardType) {
         case CARD_TYPES.FIVE_K:
-          console.log(`💰 5K cash card revealed - EXTRA PICK GRANTED`)
-          setLastCashWon(5000)
-          setPlayerCash((prev) => ({
-            ...prev,
-            [user?.contestant_id || 0]: (prev[user?.contestant_id || 0] || 0) + 5000,
-          }))
-          setRevealedCardInfo({
-            type: finalCardType,
-            amount: 5000,
-            index,
-            playerName: user?.name || "You",
-          })
-          setShowCardRevealModal(true)
-          setTimeout(() => {
-            setShowCardRevealModal(false)
-            setShowCashModal(true)
-          }, 3000)
-          setTimeout(() => {
-            setShowCashModal(false)
-            // FIXED: Cash cards give extra pick - player continues their turn
-            setExtraFlips({ playerId: user?.contestant_id || 0, flipsRemaining: 1, type: "bonus" })
-          }, 6000)
-          break
-
         case CARD_TYPES.TEN_K:
-          console.log(`💰 10K cash card revealed - EXTRA PICK GRANTED`)
-          setLastCashWon(10000)
-          setPlayerCash((prev) => ({
-            ...prev,
-            [user?.contestant_id || 0]: (prev[user?.contestant_id || 0] || 0) + 10000,
-          }))
-          setRevealedCardInfo({
-            type: finalCardType,
-            amount: 10000,
-            index,
-            playerName: user?.name || "You",
-          })
-          setShowCardRevealModal(true)
-          setTimeout(() => {
-            setShowCardRevealModal(false)
-            setShowCashModal(true)
-          }, 3000)
-          setTimeout(() => {
-            setShowCashModal(false)
-            // FIXED: Cash cards give extra pick - player continues their turn
-            setExtraFlips({ playerId: user?.contestant_id || 0, flipsRemaining: 1, type: "bonus" })
-          }, 6000)
-          break
-
         case CARD_TYPES.TWENTY_K:
-          console.log(`💰 20K cash card revealed - EXTRA PICK GRANTED`)
-          setLastCashWon(20000)
-          setPlayerCash((prev) => ({
-            ...prev,
-            [user?.contestant_id || 0]: (prev[user?.contestant_id || 0] || 0) + 20000,
-          }))
+          console.log(`💰 Instant cash revealed: ${finalCardType}`)
+          const cashAmount = getCashAmount(finalCardType)
+          setLastCashWon(cashAmount)
           setRevealedCardInfo({
             type: finalCardType,
-            amount: 20000,
+            amount: cashAmount,
             index,
             playerName: user?.name || "You",
           })
           setShowCardRevealModal(true)
+
+          // Show cash modal after card reveal, then switch turns
           setTimeout(() => {
             setShowCardRevealModal(false)
             setShowCashModal(true)
+            // Switch turns after getting cash
+            setTimeout(() => {
+              setShowCashModal(false)
+              
+              // Check if we're in miss flip sequence
+              if (missFlipState.active && missFlipState.contestantId === user?.contestant_id) {
+                handleMissFlipTurnComplete()
+              } else {
+                startGlobalTimer(3, "Turn switching...", otherContestantName)
+                setTimeout(() => {
+                  setCurrentTurn(otherContestantId)
+                  setIsMyTurn(false)
+                }, 3000)
+              }
+            }, 2000) // Show cash modal for 2 seconds
           }, 3000)
-          setTimeout(() => {
-            setShowCashModal(false)
-            // FIXED: Cash cards give extra pick - player continues their turn
-            setExtraFlips({ playerId: user?.contestant_id || 0, flipsRemaining: 1, type: "bonus" })
-          }, 6000)
+          sendCardSelection(index, finalCardType)
           break
 
         case CARD_TYPES.DUD:
@@ -2683,63 +2815,73 @@ const Stage3CardSelection = () => {
             playerName: user?.name || "You",
           })
           setShowCardRevealModal(true)
+
+          // Show card for 3 seconds, then handle turn switching
           setTimeout(() => {
             setShowCardRevealModal(false)
-            // FIXED: Handle extra flips properly
-            if (extraFlips && extraFlips.playerId === user?.contestant_id) {
-              if (extraFlips.flipsRemaining > 1) {
-                setExtraFlips((prev) => (prev ? { ...prev, flipsRemaining: prev.flipsRemaining - 1 } : null))
-              } else {
-                setExtraFlips(null)
-                startTimer(3, "Turn switching...", otherContestantName, "turn_switch")
-              }
+            
+            // Check if we're in miss flip sequence
+            if (missFlipState.active && missFlipState.contestantId === user?.contestant_id) {
+              handleMissFlipTurnComplete()
             } else {
-              startTimer(3, "Turn switching...", otherContestantName, "turn_switch")
+              startGlobalTimer(3, "Turn switching...", otherContestantName)
+              setTimeout(() => {
+                setCurrentTurn(otherContestantId)
+                setIsMyTurn(false)
+              }, 3000)
             }
           }, 3000)
+          sendCardSelection(index, finalCardType)
           break
 
         case CARD_TYPES.BONUS_FLIP:
           console.log(`🎯 Bonus flip revealed! Player gets 1 extra flip`)
-          setRevealedCardInfo({
-            type: finalCardType,
-            index,
-            playerName: user?.name || "You",
-          })
-          setShowCardRevealModal(true)
+          // Show modal and start timer
+          setBonusModalInfo({ playerName: user?.name || "You", cardIndex: index })
+          setShowBonusModal(true)
+          startBonusCardTimer(index)
+
+          // Hide modal after 3 seconds
           setTimeout(() => {
-            setShowCardRevealModal(false)
-            // FIXED: Add bonus flip to existing extra flips
-            setExtraFlips((prev) => ({
-              playerId: user?.contestant_id || 0,
-              flipsRemaining: (prev?.flipsRemaining || 0) + 1,
-              type: "bonus",
-            }))
+            setShowBonusModal(false)
           }, 3000)
+
+          // Show notification
+          setBonusFlipNotification({
+            show: true,
+            playerName: user?.name || "You",
+            isCurrentUser: true,
+          })
+
+          // Hide notification after 3 seconds
+          setTimeout(() => {
+            setBonusFlipNotification({ show: false, playerName: "", isCurrentUser: false })
+          }, 3000)
+
+          // IMPORTANT: Keep the turn with current player - they get 1 more flip
+          sendCardSelection(index, finalCardType)
           break
 
         case CARD_TYPES.MISS_FLIP:
-          console.log(`❌ Miss flip revealed! Opponent gets 2 extra flips`)
+          console.log(`❌ Miss flip revealed! Opponent gets 2 separate turns`)
           setRevealedCardInfo({
             type: finalCardType,
             index,
             playerName: user?.name || "You",
           })
           setShowCardRevealModal(true)
+
+          // Show card for 3 seconds, then start miss flip sequence
           setTimeout(() => {
             setShowCardRevealModal(false)
-            // FIXED: Handle current player's extra flips before switching
-            if (extraFlips && extraFlips.playerId === user?.contestant_id) {
-              if (extraFlips.flipsRemaining > 1) {
-                setExtraFlips((prev) => (prev ? { ...prev, flipsRemaining: prev.flipsRemaining - 1 } : null))
-              } else {
-                setExtraFlips(null)
-                startTimer(3, `${otherContestantName} gets 2 extra flips!`, otherContestantName, "miss_flip")
+            startGlobalTimer(3, `${otherContestantName} gets 2 extra turns!`, otherContestantName)
+            setTimeout(() => {
+              if (otherContestantId) {
+                startMissFlipSequence(otherContestantId)
               }
-            } else {
-              startTimer(3, `${otherContestantName} gets 2 extra flips!`, otherContestantName, "miss_flip")
-            }
+            }, 3000)
           }, 3000)
+          sendCardSelection(index, finalCardType)
           break
 
         case CARD_TYPES.PASS:
@@ -2750,6 +2892,8 @@ const Stage3CardSelection = () => {
             playerName: user?.name || "You",
           })
           setShowCardRevealModal(true)
+
+          // Show PASS card for 5 seconds before showing winner modal
           setTimeout(() => {
             setShowCardRevealModal(false)
             setPassFinderName(user?.name || "You")
@@ -2757,37 +2901,48 @@ const Stage3CardSelection = () => {
             setPassFound(true)
             setGameEnded(true)
           }, 5000)
+          sendCardSelection(index, finalCardType)
           break
 
         default:
           console.log(`❓ Unknown card type: ${finalCardType}`)
-          startTimer(3, "Turn switching...", otherContestantName, "turn_switch")
+          
+          // Check if we're in miss flip sequence
+          if (missFlipState.active && missFlipState.contestantId === user?.contestant_id) {
+            handleMissFlipTurnComplete()
+          } else {
+            setCurrentTurn(otherContestantId)
+            setIsMyTurn(false)
+          }
+          sendCardSelection(index, finalCardType)
       }
 
-      sendCardSelection(index, finalCardType)
       refetch()
-
       // Clear recent update highlight
       setTimeout(() => setRecentlyUpdated([]), 1000)
     }, 600)
   }
 
-  // Check if game should end
+  // Check if game should end (PASS found or all valuable cards found)
   useEffect(() => {
+    const revealedCards = cards.filter((card) => card.revealed)
+    const unrevealedCards = cards.filter((card) => !card.revealed)
+
+    // Game ends if PASS is found
     if (passFound) {
       console.log(`🏁 Game ended - PASS card found`)
       setGameEnded(true)
       return
     }
 
-    const unrevealedCards = cards.filter((card) => !card.revealed)
+    // Or if all cards are revealed and no PASS found (shouldn't happen)
     if (unrevealedCards.length === 0 && !passFound) {
-      console.log(`🚨 All cards revealed but no PASS found`)
+      console.log(`🚨 All cards revealed but no PASS found - this shouldn't happen!`)
       setGameEnded(true)
     }
   }, [cards, passFound])
 
-  // MQTT message handler with FIXED logic
+  // MQTT message handler
   useEffect(() => {
     if (!isConnected) return
 
@@ -2810,61 +2965,100 @@ const Stage3CardSelection = () => {
               revealed: true,
               type: finalCardType,
               contestant_id: contestant_id,
-              style: finalCardType === CARD_TYPES.PASS ? PASS_CARD_STYLE : newCards[card_index].style,
+              style:
+                finalCardType === CARD_TYPES.PASS
+                  ? PASS_CARD_STYLE
+                  : finalCardType === CARD_TYPES.FIVE_K
+                    ? INSTANT_CASH_STYLES.FIVE_K
+                    : finalCardType === CARD_TYPES.TEN_K
+                      ? INSTANT_CASH_STYLES.TEN_K
+                      : finalCardType === CARD_TYPES.TWENTY_K
+                        ? INSTANT_CASH_STYLES.TWENTY_K
+                        : newCards[card_index].style,
             }
-
             return newCards
           })
 
           console.log(`📡 MQTT: Opponent revealed card ${card_index} as ${card_type}`)
 
-          // FIXED: Handle opponent's card reveal with proper timing
+          // Handle opponent's card reveal based on the received card type
           switch (card_type) {
             case CARD_TYPES.FIVE_K:
             case CARD_TYPES.TEN_K:
             case CARD_TYPES.TWENTY_K:
-              console.log(`💰 Opponent got cash + extra pick, they continue`)
-              // FIXED: Opponent's cash cards give them extra picks, they continue
+              console.log(`💰 Opponent got instant cash: ${card_type}`)
+              
+              // Check if opponent is in miss flip sequence
+              if (missFlipState.active && missFlipState.contestantId === contestant_id) {
+                // Opponent completed their miss flip turn, handle accordingly
+                setTimeout(() => {
+                  handleMissFlipTurnComplete()
+                }, 2000)
+              } else {
+                // Normal turn switching
+                startGlobalTimer(3, "Turn switching...", user?.name || "You")
+                setTimeout(() => {
+                  setCurrentTurn(user?.contestant_id || null)
+                  setIsMyTurn(true)
+                }, 3000)
+              }
               break
 
             case CARD_TYPES.DUD:
-              console.log(`💀 Opponent revealed DUD`)
-              // FIXED: Handle opponent's extra flips before switching
-              if (extraFlips && extraFlips.playerId === contestant_id) {
-                if (extraFlips.flipsRemaining > 1) {
-                  setExtraFlips((prev) => (prev ? { ...prev, flipsRemaining: prev.flipsRemaining - 1 } : null))
-                } else {
-                  setExtraFlips(null)
-                  startTimer(3, "Turn switching...", user?.name || "You", "turn_switch")
-                }
+              console.log(`💀 Opponent revealed ${card_type}`)
+              
+              // Check if opponent is in miss flip sequence
+              if (missFlipState.active && missFlipState.contestantId === contestant_id) {
+                // Opponent completed their miss flip turn
+                setTimeout(() => {
+                  handleMissFlipTurnComplete()
+                }, 2000)
               } else {
-                startTimer(3, "Turn switching...", user?.name || "You", "turn_switch")
+                // Normal turn switching
+                startGlobalTimer(3, "Turn switching...", user?.name || "You")
+                setTimeout(() => {
+                  setCurrentTurn(user?.contestant_id || null)
+                  setIsMyTurn(true)
+                }, 3000)
               }
               break
 
             case CARD_TYPES.MISS_FLIP:
               console.log(`❌ Opponent hit miss flip, I get 2 extra flips`)
-              // FIXED: Handle opponent's extra flips before giving current user miss flips
-              if (extraFlips && extraFlips.playerId === contestant_id) {
-                if (extraFlips.flipsRemaining > 1) {
-                  setExtraFlips((prev) => (prev ? { ...prev, flipsRemaining: prev.flipsRemaining - 1 } : null))
-                } else {
-                  setExtraFlips(null)
-                  startTimer(3, "You get 2 extra flips!", user?.name || "You", "miss_flip")
+              startGlobalTimer(3, "You get 2 extra flips!", user?.name || "You")
+              setTimeout(() => {
+                if (user?.contestant_id) {
+                  startMissFlipSequence(user.contestant_id)
                 }
-              } else {
-                startTimer(3, "You get 2 extra flips!", user?.name || "You", "miss_flip")
-              }
+              }, 3000)
               break
 
             case CARD_TYPES.BONUS_FLIP:
-              console.log(`🎯 Opponent got bonus flip, they continue`)
-              // FIXED: Add bonus flip to opponent's existing extra flips
-              setExtraFlips((prev) => ({
-                playerId: contestant_id,
-                flipsRemaining: (prev?.playerId === contestant_id ? prev?.flipsRemaining : 0) + 1,
-                type: "bonus",
-              }))
+              console.log(`🎯 Opponent got bonus flip, they get 1 extra flip`)
+              // Show modal for opponent
+              const opponentName = contestant_name || getContestantName(contestant_id)?.name || "Opponent"
+              setBonusModalInfo({ playerName: opponentName, cardIndex: card_index })
+              setShowBonusModal(true)
+              startBonusCardTimer(card_index)
+
+              // Hide modal after 3 seconds
+              setTimeout(() => {
+                setShowBonusModal(false)
+              }, 3000)
+
+              // Show notification for opponent
+              setBonusFlipNotification({
+                show: true,
+                playerName: opponentName,
+                isCurrentUser: false,
+              })
+
+              // Hide notification after 3 seconds
+              setTimeout(() => {
+                setBonusFlipNotification({ show: false, playerName: "", isCurrentUser: false })
+              }, 3000)
+
+              // IMPORTANT: Opponent keeps their turn for 1 more flip
               break
 
             case CARD_TYPES.PASS:
@@ -2878,8 +3072,16 @@ const Stage3CardSelection = () => {
 
             default:
               console.log(`❓ Unknown card type from opponent: ${card_type}`)
-              setCurrentTurn(user?.contestant_id || null)
-              setIsMyTurn(true)
+              
+              // Check if opponent is in miss flip sequence
+              if (missFlipState.active && missFlipState.contestantId === contestant_id) {
+                setTimeout(() => {
+                  handleMissFlipTurnComplete()
+                }, 2000)
+              } else {
+                setCurrentTurn(user?.contestant_id || null)
+                setIsMyTurn(true)
+              }
           }
 
           setFlippingCards((prev) => prev.filter((idx) => idx !== card_index))
@@ -2905,8 +3107,7 @@ const Stage3CardSelection = () => {
     refetch,
     otherContestantId,
     otherContestantName,
-    extraFlips,
-    isMyTurn,
+    missFlipState,
   ])
 
   // Render different card types
@@ -2952,6 +3153,29 @@ const Stage3CardSelection = () => {
       }
     })()
 
+    // Add timer overlay for bonus cards - works for both current user and opponent
+    if (card.type === CARD_TYPES.BONUS_FLIP && bonusCardTimers[index] > 0) {
+      const isCurrentUserCard = card.contestant_id === user?.contestant_id
+      const playerName = card.contestant_id ? getContestantName(card.contestant_id)?.name : "Unknown"
+
+      return (
+        <div className="relative">
+          {cardElement}
+          <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg border-2 border-yellow-400">
+            <div className="text-center">
+              <div className="text-yellow-400 text-xs font-bold mb-1">BONUS FLIP</div>
+              <div className="text-yellow-400 text-2xl font-bold animate-pulse">{bonusCardTimers[index]}</div>
+              <div className="text-white text-xs font-bold">
+                {isCurrentUserCard ? "You can flip again!" : `${playerName?.split(" ")[0]} can flip again!`}
+              </div>
+              {/* Add pulsing border effect */}
+              <div className="absolute inset-0 border-2 border-yellow-400 rounded-lg animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     return cardElement
   }
 
@@ -2965,6 +3189,30 @@ const Stage3CardSelection = () => {
           balance={Number(getContestantInfo(Number(user?.contestant_id))?.actual_balance)}
           image_url={String(getContestantInfo(Number(user?.contestant_id))?.contestant_photo_url ?? "/")}
         />
+      </div>
+    )
+  }
+
+  const BonusFlipNotification = () => {
+    if (!bonusFlipNotification.show) return null
+
+    return (
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg shadow-lg border-2 border-yellow-400"
+        >
+          <div className="text-center">
+            <div className="text-yellow-400 font-bold text-lg">🎯 BONUS FLIP!</div>
+            <div className="text-sm">
+              {bonusFlipNotification.isCurrentUser
+                ? "You can flip again!"
+                : `${bonusFlipNotification.playerName} can flip again!`}
+            </div>
+          </div>
+        </motion.div>
       </div>
     )
   }
@@ -3044,6 +3292,7 @@ const Stage3CardSelection = () => {
                 </div>
 
                 <div className="text-white flex justify-center items-center gap-5">
+                  {/* New Turn Indicator - placed between header and cards */}
                   {!passFound && <TurnIndicator />}
                 </div>
 
@@ -3070,10 +3319,10 @@ const Stage3CardSelection = () => {
                             "relative transition-transform h-[90px]",
                             card.revealed
                               ? "cursor-default pointer-events-none opacity-70"
-                              : isMyTurn && !globalTimer.show
+                              : isMyTurn && !globalTimer.show && !missFlipState.showTimer
                                 ? "cursor-pointer hover:scale-105"
                                 : "cursor-not-allowed opacity-80",
-                            isSending || flippingCards.length > 0 || globalTimer.show
+                            isSending || flippingCards.length > 0 || globalTimer.show || missFlipState.showTimer
                               ? "cursor-wait pointer-events-none"
                               : "",
                             isRecentlyUpdated ? "animate-pulse" : "",
@@ -3120,7 +3369,6 @@ const Stage3CardSelection = () => {
 
         {/* Cash Modal */}
         {showCashModal && <CashModal amount={lastCashWon} onClose={() => setShowCashModal(false)} />}
-
         {/* Error Modal */}
         {isErrorModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -3162,9 +3410,15 @@ const Stage3CardSelection = () => {
             playerName={revealedCardInfo.playerName}
             onClose={() => {
               setShowCardRevealModal(false)
+              setShowCountdown(false)
             }}
           />
         )}
+
+        <BonusFlipNotification />
+
+        {/* Bonus Modal */}
+        <BonusModal />
       </div>
     </>
   )
