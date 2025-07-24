@@ -1,13 +1,10 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import path from "path";
 import { useEffect, useState } from "react";
 
 const FullscreenWrapper = () => {
   const [isFullscreenActive, setIsFullscreenActive] = useState(false);
-const excludedPathNames =["/admin"]
-const pathName = usePathname()
+
   // Function to check if we're in fullscreen mode
   const checkFullscreen = () => {
     return !!(
@@ -20,11 +17,6 @@ const pathName = usePathname()
 
   // Function to request fullscreen
   const requestFullscreen = () => {
-   excludedPathNames.forEach((pathname)=>{
-    if(pathName.includes(pathname)){
-      return
-    }
-   })
     const element = document.documentElement;
     
     try {

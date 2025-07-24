@@ -19,6 +19,7 @@ import WinnerBallModal from "./RafflePickRevealWinnerModal";
 import LibertyLifeModal from "./RafflePickRevealLibertyLifeModal";
 import { useGetLastContestantPick } from "@/app/components/stages/api/stage4/getLastContestantPick";
 import {
+  MatchedHustle,
   useGetGameContestants,
   useGetHustleMatches,
   useGetMatchedHustles,
@@ -34,6 +35,7 @@ import Stage4ProfileCard from "./Stage4ProfileCard";
 import Image from "next/image";
 import { MQTTMessage } from "@/contexts/MQTTProvider";
 import RaffleRevealModalMatchSection from "./RaffleRevealModalMatchSection";
+import RafflePickFInalResultModal from "./RafflePickFInalResultModal";
 
 // Types for MQTT data
 interface ExtraBallDetails {
@@ -65,15 +67,13 @@ interface BallPickedPayload {
   number_revealed: number[];
 }
 
-interface BallPickedResult {
-  event: string;
-  payload: BallPickedPayload;
-}
-
 const RafflePickReveal = () => {
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
   const params = useParams();
   const episodeId = Number(params?.episodeId || params?.episode);
+
+  const [finalResult, setFinalResult] = useState<MatchedHustle[] | null>(null);
+
 
   // State for ball animations and reveals
   const [revealedBalls, setRevealedBalls] = useState<Set<number>>(new Set());
@@ -92,14 +92,13 @@ const RafflePickReveal = () => {
   const { data: matchedHustlesData, isLoading: isLoadingMatched } =
     useGetMatchedHustles(episodeId);
 
-  // 1. Fetch all contestants for the episode
+
   const {
     data: contestantsData,
     refetch,
     isLoading: isLoadingContestants,
   } = useGetGameContestants(episodeId);
 
-  // 2. Get the last non-eliminated contestant (memoized for stability)
   const lastContestantId = useMemo(() => {
     const data = contestantsData?.data?.find(
       (contestant) => contestant?.is_eliminated !== true
@@ -107,14 +106,13 @@ const RafflePickReveal = () => {
     return data?.id;
   }, [contestantsData]);
 
-  // 3. Only fetch pick if lastContestantId is available
   const { data: lastPickData } = useGetLastContestantPick({
     contestant_id: Number(lastContestantId),
     episode_id: episodeId,
   });
 
   const mynumbers = lastPickData && lastPickData[0]?.picks;
-  
+
   const [revealedNumbers, setRevealedNumbers] = useState<number[]>(
     matchedHustlesData?.data
       ? matchedHustlesData.data.map((hustle) => hustle.number_pick)
@@ -134,9 +132,16 @@ const RafflePickReveal = () => {
 
   // Check how many numbers match - Fixed to use mynumbers and revealedNumbers correctly
   const matchedCount = useMemo(() => {
-    if (!mynumbers || !revealedNumbers.length) return 0;
-    return revealedNumbers.filter((num) => mynumbers.includes(num)).length;
-  }, [mynumbers, revealedNumbers]);
+    const previous_matches = matchedHustlesData?.data.map((hustle) => hustle.number_pick);
+
+    if (!mynumbers) return 0;
+    if (revealedNumbers.length > 0) {
+      return revealedNumbers.filter((num) => mynumbers.includes(num)).length;
+    }
+    else {
+      return !previous_matches?.length ? 0 : previous_matches?.filter((num) => mynumbers.includes(num)).length;
+    }
+  }, [mynumbers, revealedNumbers, matchedHustlesData]);
 
   // If all numbers matched
   const isWinner = matchedCount === mynumbers?.length;
@@ -191,9 +196,13 @@ const RafflePickReveal = () => {
       }
       if (message.event === "ball_picked") {
         const { hustle_match } = result;
-        animateBallReveal(hustle_match.number_pick, result);
         setRevealedNumbers((prev) => [...prev, hustle_match.number_pick]);
+        animateBallReveal(hustle_match.number_pick, result);
         refetch();
+      }
+      if (message.event === "game_s4_final_result_reveal") {
+        refetch();
+        setFinalResult(message.payload.matched_hustles as MatchedHustle[]);
       }
     };
     if (isConnected) {
@@ -735,6 +744,27 @@ const RafflePickReveal = () => {
                   </div>
                 </article>
               )}
+          </article>
+        </div>
+      )}
+      {!!finalResult && contestantsData?.data?.find((contestant) => contestant.id === lastContestantId) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm font-montserrat">
+          <article
+            className={cn("relative flex flex-col items-center justify-center max-w-2xl w-full px-4 rounded-2xl h-[70vh]",)}
+          >
+            <RafflePickFInalResultModal
+
+              isOpen={!!finalResult}
+              contestant={
+                contestantsData.data.find(
+                  (contestant) => contestant.id === lastContestantId
+                )!
+              }
+              data={finalResult}
+              setShowModal={setFinalResult}
+
+            />
+
           </article>
         </div>
       )}

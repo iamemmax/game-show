@@ -74,7 +74,7 @@ export const useGetHustleMatches = (gameEpisode: number) =>
     })
 
 
-interface MatchedHustle {
+export interface MatchedHustle {
     number_pick: number
     is_match: boolean
     is_extra_ball: boolean
