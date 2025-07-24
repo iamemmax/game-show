@@ -4,7 +4,7 @@ import { useState, useCallback } from "react"
 import { Loader2 } from "lucide-react"
 import { useMQTT } from "@/hooks/useMqttService"
 import { Ball } from "./RaffleBall"
-import { IBallPickData, useGetGameContestants, useHandleBallPick } from "../api"
+import { IBallPickData, useGetGameContestants, useGetMatchedHustles, useHandleBallPick } from "../api"
 import { useParams } from "next/navigation"
 import { useInitStageFour } from "@/app/host/misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
@@ -33,6 +33,9 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
   } = useGetGameContestants(Number.parseInt(gameEpisode))
   const { mutate: pickBall } = useHandleBallPick()
   const { mutate: initStage, isLoading: isStartingStage } = useInitStageFour()
+
+  const { data: matchedHustlesData, isLoading: isLoadingMatched, refetch: refetchMatchedHustles } =
+    useGetMatchedHustles(Number.parseInt(gameEpisode));
 
   const sendGameMessage = useCallback(
     async (eventCode: string, data: any = {}) => {
@@ -103,7 +106,7 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
               : data.hustle_match.is_match
 
             setRevealedBalls((prev) => new Map([...prev, [pickData.number_pick, isPositiveResult ? "matched" : "mismatched"]]))
-
+            refetchMatchedHustles()
           },
           onError: (error) => {
             console.error("API call failed:", error)
@@ -123,6 +126,16 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
   const handCloseRevealModal = () => {
     sendGameMessage("close_reveal_modal")
   }
+
+  const handleFinalResultRevealModal = () => {
+    if(!matchedHustlesData?.data) return
+  
+    sendGameMessage("game_s4_final_result_reveal", {
+      episode: gameEpisode,
+      matched_hustles: matchedHustlesData?.data,
+    })
+  }
+
 
   const getBallVariant = (ballNumber: number): "regular" | "matched" | "mismatched" | "selected" => {
     if (selectedBall === ballNumber && isSubmitting) {
@@ -146,10 +159,16 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
           <TrapeziumButton
             onClick={handleStartStageFour}
           >
-            INIT STAGE
+            INIT STAGE 4
             {
               isStartingStage && <SmallSpinner className="ml-2" />
             }
+          </TrapeziumButton>
+          <TrapeziumButton
+            onClick={handleFinalResultRevealModal}
+            variant={"purple"}
+          >
+            SHOW FINAL RESULT
           </TrapeziumButton>
           <TrapeziumButton
             onClick={handCloseRevealModal}

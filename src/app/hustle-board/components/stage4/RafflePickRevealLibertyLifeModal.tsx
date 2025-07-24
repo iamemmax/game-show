@@ -87,30 +87,12 @@ const LibertyLifeModal = ({ isOpen, data,setShowModal }: LibertyLifeModalProps) 
                     >
                         Health Insurance Plan
                     </GlowyStrokeText>
-                    <div className="text-blue-300 text-lg mt-2">Liberty Life Ivy Plan</div>
+                    <div className="text-blue-300 text-lg mt-2">Liberty Life Ivy Plan worth #00k+</div>
                 </motion.div>
 
                 {/* Balance (unchanged) */}
                 <div className="text-lg font-bold text-white">
                     Balance Unchanged: ₦{data.hustle_match.balance_details?.current_balance.toLocaleString()}
-                </div>
-
-                {/* Effect Type */}
-                {data.hustle_match.extra_ball_details?.type && (
-                    <div className="text-sm text-blue-300 bg-blue-900/30 px-4 py-2 rounded-full">
-                        {data.hustle_match.extra_ball_details.type.replace(/_/g, " ")}
-                    </div>
-                )}
-
-                {/* Additional Benefits */}
-                <div className="bg-blue-900/30 rounded-lg p-4 text-sm text-blue-200">
-                    <div className="font-semibold mb-2">Plan Benefits:</div>
-                    <ul className="text-left space-y-1">
-                        <li>• Comprehensive health coverage</li>
-                        <li>• Emergency medical services</li>
-                        <li>• Preventive care included</li>
-                        <li>• Family coverage options</li>
-                    </ul>
                 </div>
             </div>
         </motion.div>

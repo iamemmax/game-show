@@ -1,7 +1,7 @@
 import { tokenlessAxios } from "@/lib/axios"
 import { useMutation, useQuery } from "react-query"
 
-interface Contestant {
+export interface Contestant {
   id: number
   constestant_attr: string
   name: string | null

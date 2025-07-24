@@ -5,6 +5,8 @@ import KillerIcon from "@/app/icons/KillerIcon"
 import { GlowyStrokeText, Dialog } from "@/components/core"
 import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import { HustleMatch } from "@/app/admin/misc/api"
+import { Ball } from "@/app/admin/misc/components/RaffleBall";
+import { cn } from "@/utils/classNames"
 
 interface KillerModalProps {
   isOpen: boolean
@@ -61,12 +63,24 @@ const KillerHustlePulledModal = ({ isOpen, data, setShowModal }: KillerModalProp
             <KillerIcon />
           </motion.div>
 
-          {/* Title with glitch effect */}
+          <Ball
+            number={data.hustle_match.number_pick}
+            variant={"mismatched"}
+            size="md"
+            className={cn("transition-all duration-300 w-20 h-20")}
+            textClassName="!font-semibold !text-3xl"
+          />
           <motion.h2
-            className={`text-5xl font-outfit text-[#EB001B] mt-5 font-black ${showGlitch ? "animate-pulse" : ""}`}
+            className={`text-6xl font-anton text-[#EB001B] mt-5 font-black ${showGlitch ? "animate-pulse" : ""}`}
             animate={showGlitch ? { textShadow: ["0 0 10px #EB001B", "0 0 20px #EB001B", "0 0 10px #EB001B"] } : {}}
           >
-            Killer Hustle Pulled!
+            Crusher Ball!(+
+            {data.hustle_match.extra_ball_details?.effect_desc?.includes("50")
+              ? "50%"
+              : data.hustle_match.extra_ball_details?.effect_desc?.includes("30")
+                ? "30%"
+                : "20%"}
+            )
           </motion.h2>
 
           {/* Ball Number */}
@@ -105,12 +119,6 @@ const KillerHustlePulledModal = ({ isOpen, data, setShowModal }: KillerModalProp
             </div>
           </div>
 
-          {/* Effect Type */}
-          {data.hustle_match.extra_ball_details?.type && (
-            <div className="text-sm text-red-300 bg-red-900/30 px-4 py-2 rounded-full">
-              {data.hustle_match.extra_ball_details.type.replace(/_/g, " ")}
-            </div>
-          )}
         </div>
       </motion.div>
     </Dialog>
