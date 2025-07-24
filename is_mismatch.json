@@ -1,0 +1,20 @@
+{
+    "hustle_match": {
+        "contestant_id": 110,
+        "number_pick": 33,
+        "is_match": false,
+        "is_extra_ball": false,
+        "extra_ball_details": null,
+        "balance_details": {
+            "is_gain": false,
+            "previous_balance": 1275387.0,
+            "amount_gained": 0,
+            "amount_lost": 0,
+            "current_balance": 1275387.0
+        }
+    },
+    "number_revealed": [
+        42,
+        33
+    ]
+}

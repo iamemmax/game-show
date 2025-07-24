@@ -114,8 +114,13 @@ const RafflePickReveal = () => {
   });
 
   const mynumbers = lastPickData && lastPickData[0]?.picks;
-  const revealedNumbers =
-    matchedHustlesData?.data?.map((hustle) => hustle.number_pick) || [];
+  
+  const [revealedNumbers, setRevealedNumbers] = useState<number[]>(
+    matchedHustlesData?.data
+      ? matchedHustlesData.data.map((hustle) => hustle.number_pick)
+      : []
+  );
+  console.log("revealedNumbers", revealedNumbers);
 
   // Initialize revealed balls from matched hustles data
   useEffect(() => {
@@ -162,8 +167,7 @@ const RafflePickReveal = () => {
       setAnimatingBall(ballNumber);
       setCurrentResult(result);
 
-      // Simulate ball moving to center and exploding
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Mark ball as revealed
       setRevealedBalls((prev) => new Set([...prev, ballNumber]));
@@ -179,7 +183,6 @@ const RafflePickReveal = () => {
   useEffect(() => {
     const handleMQTTMessage = (message: MQTTMessage) => {
       const result = message.payload as BallPickedPayload;
-      console.log("Received MQTT message:", message.event, result);
       if (message.event === "game_s4_start") {
         setShowStage4Prep(false);
       }
@@ -189,6 +192,7 @@ const RafflePickReveal = () => {
       if (message.event === "ball_picked") {
         const { hustle_match } = result;
         animateBallReveal(hustle_match.number_pick, result);
+        setRevealedNumbers((prev) => [...prev, hustle_match.number_pick]);
         refetch();
       }
     };
@@ -431,55 +435,57 @@ const RafflePickReveal = () => {
                   </div>
                 </div>
                 {matchedHustlesData && matchedHustlesData?.data?.length > 0 && (
-                  <div className="size-[5.5rem] shrink-0 py-1  bg-white rounded-full flex mt-10 justify-center flex-col items-center font-display text-black">
-                    <p className="text-2xl font-extrabold font-display">
-                      {displayCount}/5
-                    </p>
-                    <p className="block text-lg font-display font-bold uppercase text-black">
-                      match
-                    </p>
-                  </div>
-                )}
-                <div className="flex justify-center items-center flex-col">
-                  <h3 className="text-white text-xl font-gilroyMedium  mb-2">
-                    Match
-                  </h3>
-                  <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[5.35px] px-3 border-[#CE64FF]">
-                    {matchedHustlesData?.data?.map((x, idx: number) => {
-                      {
-                        /* {[30,3,10,56,5]?.map((x, idx) => { */
-                      }
-                      const isRevealed = x !== null;
+                  <>
+                    <div className="size-[5.5rem] shrink-0 py-1  bg-white rounded-full flex mt-10 justify-center flex-col items-center font-display text-black">
+                      <p className="text-2xl font-extrabold font-display">
+                        {displayCount}/5
+                      </p>
+                      <p className="block text-lg font-display font-bold uppercase text-black">
+                        match
+                      </p>
+                    </div>
+                    <div className="flex justify-center items-center flex-col">
+                      <h3 className="text-white text-xl font-gilroyMedium  mb-2">
+                        Match
+                      </h3>
+                      <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[5.35px] px-3 border-[#CE64FF]">
+                        {matchedHustlesData?.data?.map((x, idx: number) => {
+                          {
+                            /* {[30,3,10,56,5]?.map((x, idx) => { */
+                          }
+                          const isRevealed = x !== null;
 
-                      const isMatched =
-                        isRevealed && mynumbers?.includes(x?.number_pick);
-                      // const status = !isRevealed ? "default" : isMatched ? "correct" : "error"
-                      return (
-                        <div
-                          key={idx}
-                          className="px-4 flex items-center flex-col justify-center"
-                        >
-                          <NumberCardContainer
-                            text={isRevealed ? String(x?.number_pick) : ""}
-                            textColor="#fff"
-                            backgroundColor={
-                              isMatched
-                                ? "#04DA6A"
-                                : !isMatched
-                                  ? "#EB001B"
-                                  : ""
-                            }
-                            width={75}
-                            height={80}
-                            active={isMatched || !isMatched}
-                            className="cursor-pointer font-verdana transition-transform hover:scale-105"
-                          // status={status}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                          const isMatched =
+                            isRevealed && mynumbers?.includes(x?.number_pick);
+                          // const status = !isRevealed ? "default" : isMatched ? "correct" : "error"
+                          return (
+                            <div
+                              key={idx}
+                              className="px-4 flex items-center flex-col justify-center"
+                            >
+                              <NumberCardContainer
+                                text={isRevealed ? String(x?.number_pick) : ""}
+                                textColor="#fff"
+                                backgroundColor={
+                                  isMatched
+                                    ? "#04DA6A"
+                                    : !isMatched
+                                      ? "#EB001B"
+                                      : ""
+                                }
+                                width={75}
+                                height={80}
+                                active={isMatched || !isMatched}
+                                className="cursor-pointer transition-transform hover:scale-105"
+                              // status={status}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* 60 Ball Grid - Much Bigger */}
@@ -666,7 +672,7 @@ const RafflePickReveal = () => {
                   setShowModal={setShowModal}
                 />
               )}
-           
+
             {!currentResult?.hustle_match.is_extra_ball &&
               !currentResult?.hustle_match.is_match && (
                 <article
@@ -700,7 +706,7 @@ const RafflePickReveal = () => {
               )}
             {!currentResult?.hustle_match.is_extra_ball &&
               currentResult?.hustle_match.is_match && (
-               <article
+                <article
                   className={cn("relative flex flex-col items-center justify-center max-w-2xl w-full px-4 bg-[#1A0B25] rounded-2xl h-[70vh]",
 
                   )}
@@ -715,7 +721,7 @@ const RafflePickReveal = () => {
                   <div className="flex flex-col items-center text-center text-white space-y-6">
 
                     <h2 className="text-6xl font-anton text-green-500">
-                      Match 
+                      Match
                     </h2>
 
                     <RaffleRevealModalMatchSection
