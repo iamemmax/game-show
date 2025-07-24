@@ -33,19 +33,19 @@ import {
   type CreditDebitContestantRequest,
 } from "../misc/api"
 import { convertKebabAndSnakeToTitleCase } from "@/utils/strings"
-import toast from "react-hot-toast"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import { useMQTT } from "@/hooks/useMqttService"
 import type { Question2AnswerDataAPIResponse } from "@/app/components/stages/api/stage2/getQuestion2Answer"
 import { useBooleanStateControl } from "@/hooks"
 import { Label } from "@/components/core/Label"
 import { DebitWalletData } from "../misc/types"
+import { toast } from "sonner"
 
 const assignContestantSchema = z.object({
   constestants_attr: z.string().min(1, "Please select a contestant position"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   phone_number: z.string().min(10, "Phone number must be at least 10 digits").max(15, "Phone number is too long"),
-  contestant_photo:z.any()
+  contestant_photo: z.any()
 })
 
 type AssignContestantFormValues = z.infer<typeof assignContestantSchema>
@@ -75,12 +75,10 @@ export default function GameDetails() {
   const [creditSource, setCreditSource] = useState<"gameshow_float" | "contestants">()
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
- 
 
   const sendGameMessage = React.useCallback(
     async (eventCode: string, data: any = {}) => {
       if (!isConnected) {
-        toast.error("Not connected to server")
         return
       }
       setIsSending(true)
@@ -94,11 +92,10 @@ export default function GameDetails() {
           },
         }
         await sendMessage(message)
+        
         refetchContestants()
-        toast.success(`Sent: ${eventCode}`)
       } catch (error) {
         console.error("Failed to send message:", error)
-        toast.error("Failed to send message")
       } finally {
         setIsSending(false)
       }
@@ -125,7 +122,7 @@ export default function GameDetails() {
       removeMessageListener(handleMessage);
     };
 
-  }, [isConnected,  addMessageListener, removeMessageListener])
+  }, [isConnected, addMessageListener, removeMessageListener])
 
   const startGameEpisode = () => sendGameMessage("game_start")
 
@@ -136,26 +133,26 @@ export default function GameDetails() {
   } = useGetGameContestants(Number.parseInt(gameId))
 
   const assignContestantMutation = useAssignContestant()
- 
+
   const modalForm = useForm<AssignContestantFormValues>({
     resolver: zodResolver(assignContestantSchema),
     defaultValues: {
       constestants_attr: "",
       name: "",
       phone_number: "",
-      contestant_photo:null
+      contestant_photo: null
     },
   })
 
-const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (file) {
-    setSelectedFile(file);
-    modalForm.setValue("contestant_photo", e.target.files?.[0])
-  }
-  e.target.value = ""
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      modalForm.setValue("contestant_photo", e.target.files?.[0])
+    }
+    e.target.value = ""
   };
- 
+
   const onModalSubmit = async (values: AssignContestantFormValues) => {
     try {
       await assignContestantMutation.mutateAsync({
@@ -163,7 +160,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         constestants_attr: values.constestants_attr,
         name: values.name,
         phone_number: values.phone_number,
-        contestant_photo:values.contestant_photo
+        contestant_photo: values.contestant_photo
       })
 
       refetchContestants()
@@ -487,7 +484,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
           <DialogBody>
             <Form {...modalForm}>
-              <form  encType="multipart/form-data" onSubmit={modalForm.handleSubmit(onModalSubmit)} className="grid gap-2 mt-2">
+              <form encType="multipart/form-data" onSubmit={modalForm.handleSubmit(onModalSubmit)} className="grid gap-2 mt-2">
                 <FormField
                   control={modalForm.control}
                   name="constestants_attr"
@@ -536,31 +533,31 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   )}
                 />
                 <div className="w-full max-w-sm mx-auto p-4 bg-white rounded-xl shadow-md border border-gray-200 dark:bg-gray-900 dark:border-gray-700">
-      <label
-        htmlFor="fileInput"
-        className="flex flex-col items-center justify-center p-6 text-center cursor-pointer border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-      >
-        <Upload className="w-8 h-8 mb-2 text-gray-500 dark:text-gray-400" />
-        <p className="text-gray-600 dark:text-gray-300 text-sm">
-          Tap to upload or use your camera
-        </p>
-        <p className="text-xs text-gray-400 mt-1">JPEG, PNG, or take photo</p>
-        <input
-          id="fileInput"
-          type="file"
-          accept="image/*"
-          capture="environment" // "user" for front camera, "environment" for back camera
-          onChange={handleFileChange}
-          className="hidden"
-        />
-      </label>
+                  <label
+                    htmlFor="fileInput"
+                    className="flex flex-col items-center justify-center p-6 text-center cursor-pointer border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                  >
+                    <Upload className="w-8 h-8 mb-2 text-gray-500 dark:text-gray-400" />
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">
+                      Tap to upload or use your camera
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">JPEG, PNG, or take photo</p>
+                    <input
+                      id="fileInput"
+                      type="file"
+                      accept="image/*"
+                      capture="environment" // "user" for front camera, "environment" for back camera
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </label>
 
-      {selectedFile && (
-        <div className="mt-4 text-sm text-gray-700 dark:text-gray-300">
-          Selected: <strong>{selectedFile.name}</strong>
-        </div>
-      )}
-    </div>
+                  {selectedFile && (
+                    <div className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+                      Selected: <strong>{selectedFile.name}</strong>
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex justify-end gap-2 mt-2">
                   <Button

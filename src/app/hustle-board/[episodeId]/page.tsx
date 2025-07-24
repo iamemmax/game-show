@@ -91,6 +91,7 @@ const ContestantHomePage = () => {
       initializationRef.current = true;
 
       const savedStep = LastStepStorage.getLastStep();
+      console.log("Saved Step:", savedStep);
 
       setGameState((prevState) => ({
         ...prevState,
@@ -258,6 +259,13 @@ const ContestantHomePage = () => {
         }));
         break;
       case UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "questions",
+          showQuestions: true,
+        }));
+        break;
+      case UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_RESULT_REVEAL:
         setGameState((prev) => ({
           ...prev,
           currentStageStep: "questions",

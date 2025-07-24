@@ -6,7 +6,7 @@ import { AlertCircle, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
 import { useMQTT, useMQTTMultiSend } from "@/hooks/useMqttService" // Import useMQTTTopic
 import { useGetGameContestants, useHandleHustlePickTimeElapse } from "@/app/admin/misc/api"
-import { useEndStageThree, useInitStage2, useNotifyBackendStartQuestionTimer, useStartGame } from "../misc/api"
+import { useEndStageThree, useInitStage2, useInitStageFour, useNotifyBackendStartQuestionTimer, useStartGame } from "../misc/api"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import Stage1Questions from "./Stage1"
 import Stage2Questions from "./Stage2"
@@ -68,6 +68,7 @@ export default function HostPage() {
             window.removeEventListener("keydown", handleKeyDown)
         }
     }, [])
+
 
     // Update game state based on universal step
     const updateGameStateFromUniversalStep = (step: UniversalGameStep) => {
@@ -170,6 +171,31 @@ export default function HostPage() {
                 setGameState((prev) => ({
                     ...prev,
                     currentStageStep: "questions",
+                    currentStage: "STAGE_TWO",
+                    showQuestions: true,
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_REVEAL:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "questions",
+                    currentStage: "STAGE_TWO",
+                    showQuestions: true,
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_RESULT_REVEAL:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "questions",
+                    currentStage: "STAGE_TWO",
+                    showQuestions: true,
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE2_RESULTS:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStageStep: "results",
+                    currentStage: "STAGE_THREE",
                     showQuestions: true,
                 }))
                 break
@@ -181,11 +207,26 @@ export default function HostPage() {
                 }))
                 setActiveStage("stage3")
                 break
+            case UNIVERSAL_GAME_STEPS.STAGE3_PREP:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStage: "STAGE_THREE",
+                    currentStageStep: "game_s3_prep",
+                }))
+                setActiveStage("stage3")
+                break
             case UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START:
                 setGameState((prev) => ({
                     ...prev,
                     currentStage: "STAGE_THREE",
                     currentStageStep: "game_s3_start",
+                }))
+                break
+            case UNIVERSAL_GAME_STEPS.STAGE3_END:
+                setGameState((prev) => ({
+                    ...prev,
+                    currentStage: "STAGE_THREE",
+                    currentStageStep: "game_s3_end",
                 }))
                 break
             case UNIVERSAL_GAME_STEPS.STAGE4_INIT:
@@ -204,14 +245,6 @@ export default function HostPage() {
     // Initialize game data when contestants data is loaded
     useEffect(() => {
         if (!isLoadingContestants && contestantsData) {
-            const savedStep = LastStepStorage.getLastStep();
-            console.log("Saved Step:", savedStep)
-            setGameState((prevState) => ({
-                ...prevState,
-                currentStage: contestantsData.game.stage || "STAGE_ONE",
-                status: contestantsData.game.status,
-                contestants: contestantsData.data,
-            }))
 
 
             // Set active tab based on current stage
@@ -223,20 +256,23 @@ export default function HostPage() {
                     }))
                     setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP)
                 }
-                else {
-                    setCurrentUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE1_INIT)
-                    updateGameStateFromUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE1_INIT)
-                }
-            } else if (contestantsData.game.stage?.includes("STAGE_TWO")) {
-                setCurrentUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE2_INIT)
-                updateGameStateFromUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE2_INIT)
-            } else if (contestantsData.game.stage?.includes("STAGE_THREE")) {
-                setCurrentUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE3_INIT)
-                updateGameStateFromUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE3_INIT)
-            } else if (contestantsData.game.stage?.includes("STAGE_FOUR")) {
-                setCurrentUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE4_INIT)
-                updateGameStateFromUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE4_INIT)
+
             }
+            else {
+                const savedStep = LastStepStorage.getLastStep();
+                console.log("Saved Step:", savedStep)
+                if (savedStep && savedStep.gameEpisode == gameId) {
+                    // setGameState((prevState) => ({
+                    //     ...prevState,
+                    //     currentStage: contestantsData.game.stage || "STAGE_ONE",
+                    //     status: contestantsData.game.status,
+                    // }))
+                    setCurrentUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_SETUP)
+                    updateGameStateFromUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_SETUP)
+                }
+
+            }
+
         }
     }, [contestantsData, isLoadingContestants])
 
@@ -248,6 +284,11 @@ export default function HostPage() {
                 return
             }
             setIsSending(true)
+            LastStepStorage.setLastStep({
+                step: eventCode,
+                gameEpisode: gameId,
+
+            })
             try {
                 const message = {
                     event: eventCode,
@@ -412,7 +453,7 @@ export default function HostPage() {
                 currentStageStep: "questions",
             }))
             setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS)
-        } else if (eventCode === "game_s2_question_options_select_reveal") {
+        } else if (eventCode === "game_s2_question_options_select_reveal" || eventCode == "game_s2_question_answer") {
             setGameState((prev) => ({
                 ...prev,
                 lastAction: eventCode,
@@ -577,7 +618,43 @@ export default function HostPage() {
                 },
                 onError(error) {
                     console.error("Error ending stage 3:", error)
-                    toast.error("Failed to end stage 3")
+                    if (
+                        typeof error === "object" &&
+                        error !== null &&
+                        "response" in error &&
+                        typeof (error as any).response === "object" &&
+                        (error as any).response !== null &&
+                        "data" in (error as any).response &&
+                        typeof (error as any).response.data === "object" &&
+                        (error as any).response.data !== null &&
+                        "message" in (error as any).response.data &&
+                        (error as any).response.data.message === "Stage already ended"
+                    ) {
+                        toast.error("Failed to end stage 3")
+                    }
+                },
+            },
+        )
+    }
+
+
+    //////////////////////////////
+    //////////////////////////////
+    ////////    Stage 4 functions
+    //////////////////////////////
+    //////////////////////////////
+
+    const { mutate: handleInitStage4 } = useInitStageFour()
+    const initStage4 = () => {
+        handleInitStage4(
+            { episode: gameId },
+            {
+                onSuccess() {
+                    sendGameMessage("game_s4_init", { start_time: new Date().toISOString() })
+                },
+                onError(error) {
+                    console.error("Error initializing stage 4:", error)
+                    toast.error("Failed to initialize stage 4")
                 },
             },
         )
@@ -782,10 +859,9 @@ export default function HostPage() {
                             <div className="flex justify-center items-center">
                                 <img src="/images/question-badge.png" alt="Question" className="w-20 h-20" />
                             </div>
-                            <p className="text-white mb-4">Prep Stage 4 Questions</p>
-                            {/* <TrapeziumButton onClick={initStage2} variant="orange">
-                              INITIALIZE STAGE 2
-                          </TrapeziumButton> */}
+                            <TrapeziumButton onClick={initStage4} variant="orange">
+                                INITIALIZE STAGE 4
+                            </TrapeziumButton>
                         </div>
                     </div>
                 )
