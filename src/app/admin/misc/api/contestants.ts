@@ -88,6 +88,9 @@ export const assignContestant = async (data: AssignContestantRequest) => {
   formData.append("game_episode", String(data?.game_episode))
   formData.append("phone_number", data?.phone_number)
   formData.append("contestant_photo", data?.contestant_photo)
+  Object.entries(data).forEach(([key, value]) => {
+    formData.append(key, value)
+  })
 
   const response = await tokenlessAxios.post("api/accounts/assign_contestants/", formData, {
     headers: {
