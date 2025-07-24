@@ -146,7 +146,11 @@ export default function Stage1Questions({
               show_modal: true,
             })
           } else {
-            handleFetchNextQuestion()
+            sendGameMessage(`game_s1_question_bids_reveal`, {
+              answers_data: data.data,
+              question_index: currentQuestionData.data.question_index,
+              show_modal: false,
+            })
 
           }
           setSentAnswers((prev) => new Set(prev).add(questionId))
