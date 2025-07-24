@@ -232,6 +232,7 @@ interface prop {
     currentQuestion:any
   mqttAnswerData: Datum[];
   allocatedWinningAmount?:number
+  showBidRevealModal: boolean
   
   
 }
@@ -248,7 +249,8 @@ const HustleQuestionAnswerModal = ({
   currentQuestion,
   mqttAnswerData,
   showBid=true,
-  allocatedWinningAmount,showAllocatedAMount
+  allocatedWinningAmount,showAllocatedAMount,
+  showBidRevealModal
 }: prop) => {
   
   
@@ -372,7 +374,7 @@ const HustleQuestionAnswerModal = ({
         
        <div className="relative min-h-[40rem] h-full w-full">
   <div className=" inset-0 transition-opacity duration-300">
-    {!mqttAnswerData ? (
+    {!showBidRevealModal ? (
       <HustleBoardModal
         currentQuestion={currentQuestion}
         currentQuestionAnswerData={currentQuestionAnswerData}

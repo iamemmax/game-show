@@ -73,6 +73,7 @@ const ViewOnlyQuestionTwoScreen = () => {
   const [currentQuestionAnswerData, setCurrentQuestionAnswerData] = useState<
     any | null
   >(null);
+  const [showBidRevealModal, setShowBidRevealModal] = useState(false)
 
   // Add these new state variables after the existing state declarations
   const [questionStartTime, setQuestionStartTime] = useState<number | null>(
@@ -208,6 +209,8 @@ const ViewOnlyQuestionTwoScreen = () => {
         setShowResultModal(false);
         setCurrentQuestionAnswerData(null);
         setContestantOption({});
+           setShowBidRevealModal(false)
+
         // Set current index and question ID
         setCurrentQuestionIndex(questionData?.index);
 
@@ -226,6 +229,7 @@ const ViewOnlyQuestionTwoScreen = () => {
         ) {
           const answersData = payload?.answers_data?.answers;
           setCurrentQuestionAnswerData(answersData);
+           setShowBidRevealModal(true)
         }
       }
 
@@ -999,7 +1003,8 @@ const ViewOnlyQuestionTwoScreen = () => {
                           )}
                         </AnimatePresence>
                       </div>
-                      {contestantData?.game?.reveal_step_count === "DOUBLE" ||showResultModal && (
+                      {/* contestantData?.game?.reveal_step_count === "DOUBLE" || */}
+                      {showResultModal && (
                         <HustleQuestionAnswerModal
                           booster={mqttQuestionData?.question_booster}
                           showBooster={false}
@@ -1021,7 +1026,9 @@ const ViewOnlyQuestionTwoScreen = () => {
                           showAllocatedAMount={false}
                           allocatedWinningAmount={
                             mqttQuestionData?.allocated_winning_amount
+                            
                           }
+                            showBidRevealModal={showBidRevealModal}
                         />
                       )}
                     </>

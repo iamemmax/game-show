@@ -276,6 +276,9 @@ const HustleBoardNumberPicks = () => {
     return "black";
   };
 
+
+
+
   return (
     <>
       {/* Elimination Modal */}
@@ -404,6 +407,7 @@ const HustleBoardNumberPicks = () => {
                           height={90}
                           backgroundColor={numberColor}
                           active={isPicked}
+                          
                         />
                       </div>
                     );
@@ -423,6 +427,10 @@ const HustleBoardNumberPicks = () => {
             showHustlerCard={true}
             showEmptyCard={false}
             showHustleCardAmt={false}
+            showDot={true}
+            showPickCount={true}
+            pickCount={3}
+            hustlePicksData={hustlePicksData}
           />
         </div>
       </div>
