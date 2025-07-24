@@ -146,7 +146,8 @@ export default function Stage1Questions({
               show_modal: true,
             })
           } else {
-            sendGameMessage(`game_s1_question_bids_reveal_faux`)
+            handleFetchNextQuestion()
+
           }
           setSentAnswers((prev) => new Set(prev).add(questionId))
           setTimerActive(false)
@@ -280,7 +281,7 @@ export default function Stage1Questions({
       <div className="flex justify-center mt-6">
         {!loading && currentQuestionData && !questionsExhausted && (
           <>
-            {(lastAction === "game_s1_question_bids_reveal" || lastAction == "game_s1_question_bids_reveal_faux") ? (
+            {(lastAction === "game_s1_question_bids_reveal" || lastAction == "game_") ? (
               <TrapeziumButton onClick={() => refetchQuestionResultData()} variant="purple" data-remote-target="true">
                 REVEAL QUESTION RESULT
               </TrapeziumButton>
