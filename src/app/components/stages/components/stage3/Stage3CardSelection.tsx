@@ -1949,6 +1949,8 @@
 
 // export default Stage3CardSelection
 
+
+
 "use client"
 import Logo from "@/app/icons/Logo"
 import HeaderTitleContainer from "@/app/shared/HeaderContainer"
@@ -3323,11 +3325,14 @@ const Stage3CardSelection = () => {
                               : isMyTurn && !globalTimer.show && !missFlipState.showTimer
                                 ? "cursor-pointer hover:scale-105"
                                 : "cursor-not-allowed opacity-80",
-                            isSending || flippingCards.length > 0 || globalTimer.show || missFlipState.showTimer
+                            isSending || flippingCards.length > 0 || globalTimer?.show || missFlipState.showTimer
                               ? "cursor-wait pointer-events-none"
                               : "",
-                            isRecentlyUpdated ? "animate-pulse" : "",
+                            isRecentlyUpdated ? "animate-bounce" : "",
                           )}
+                          style={{
+                            animationIterationCount: isRecentlyUpdated ? "1" : "infinite"
+                          }}
                         >
                           <AnimatePresence mode="wait">
                             <motion.div
@@ -3351,6 +3356,44 @@ const Stage3CardSelection = () => {
                             </motion.div>
                           </AnimatePresence>
                         </div>
+                        // <div
+                        //   key={index}
+                        //   onClick={() => handleCardClick(index)}
+                        //   className={cn(
+                        //     "relative transition-transform h-[90px]",
+                        //     card.revealed
+                        //       ? "cursor-default pointer-events-none opacity-70"
+                        //       : isMyTurn && !globalTimer.show && !missFlipState.showTimer
+                        //         ? "cursor-pointer hover:scale-105"
+                        //         : "cursor-not-allowed opacity-80",
+                        //     isSending || flippingCards.length > 0 || globalTimer.show || missFlipState.showTimer
+                        //       ? "cursor-wait pointer-events-none"
+                        //       : "",
+                        //     isRecentlyUpdated ? "animate-pulse" : "",
+                        //   )}
+                        // >
+                        //   <AnimatePresence mode="wait">
+                        //     <motion.div
+                        //       key={`card-${index}-${card.revealed ? "revealed" : "hidden"}`}
+                        //       initial={isFlipping ? { rotateY: 0, opacity: 1 } : false}
+                        //       animate={isFlipping ? { rotateY: 180, opacity: 0 } : { rotateY: 0, opacity: 1 }}
+                        //       transition={{ duration: 0.3, ease: "easeInOut" }}
+                        //       style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
+                        //       className="relative"
+                        //     >
+                        //       <div className="relative">
+                        //         {card.revealed && (
+                        //           <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-20">
+                        //             <span className="font-bold text-black text-xs bg-white px-2 py-1 rounded">
+                        //               {displayName?.split(" ")[0]}
+                        //             </span>
+                        //           </div>
+                        //         )}
+                        //         <div className="relative w-full h-full">{renderCard(card, index)}</div>
+                        //       </div>
+                        //     </motion.div>
+                        //   </AnimatePresence>
+                        // </div>
                       )
                     })}
                   </div>
@@ -3371,17 +3414,7 @@ const Stage3CardSelection = () => {
         {/* Cash Modal */}
         {showCashModal && <CashModal amount={lastCashWon} onClose={() => setShowCashModal(false)} />}
         {/* Error Modal */}
-        {isErrorModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-[#13051E] border-2 border-[#D91FFF] p-6 rounded-lg max-w-md">
-              <h3 className="text-white text-xl font-bold mb-4">Error</h3>
-              <p className="text-white mb-4">{errorModalMessage}</p>
-              <Button onClick={() => setErrorModalState(false)} className="bg-[#D91FFF] text-white hover:bg-[#B017D7]">
-                Close
-              </Button>
-            </div>
-          </div>
-        )}
+     
 
         {/* Winner/Runner-up Modals */}
         {passFound && passFinderIsCurrentUser && (

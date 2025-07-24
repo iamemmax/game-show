@@ -3310,6 +3310,8 @@
 // export default Stage3CardSelectionScreens
 
 
+
+
 "use client"
 import Logo from "@/app/icons/Logo"
 import HeaderTitleContainer from "@/app/shared/HeaderContainer"
@@ -4295,8 +4297,11 @@ const Stage3CardSelectionScreens = () => {
                           className={cn(
                             "relative transition-transform h-[140px] w-full flex justify-center items-center",
                             "cursor-default pointer-events-none opacity-70",
-                            isRecentlyUpdated ? "animate-pulse" : "",
+                            isRecentlyUpdated ? "animate-bounce" : "",
                           )}
+                          style={{
+                            animationIterationCount: isRecentlyUpdated ? "1" : "infinite"
+                          }}
                         >
                           <AnimatePresence mode="wait">
                             <motion.div
