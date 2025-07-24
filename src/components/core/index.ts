@@ -23,6 +23,8 @@ export { ScrollArea, ScrollBar } from './ScrollArea';
 
 export { ComingSoon } from './ComingSoon';
 
+export { Toaster } from "./Sonner"
+
 export { FlipCountdown } from './FlipCountdown';
 
 export {

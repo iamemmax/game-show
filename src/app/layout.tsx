@@ -10,6 +10,7 @@ import ProtectedRouteGuard from "@/contexts/ProtectedRouteGuard";
 import { Suspense } from "react";
 import { Wrapper } from "@/contexts/Wrapper";
 import { MQTTProvider } from "@/contexts/MQTTProvider";
+import { Toaster } from "@/components/core";
 
 const anton = Anton({
   subsets: ["latin"],
@@ -76,6 +77,13 @@ export default function RootLayout({
               </MQTTProvider>
             </AuthProvider>
           </ReactQueryProvider>
+
+          <Toaster
+              duration={5000}
+              position="top-center"
+              richColors
+              closeButton
+            />
         </div>
       </body>
     </html>

@@ -259,14 +259,14 @@ export const useEndStageThree = () => {
 //////////////////////////////////////////////////////////
 ///////////             STAGE FOUR         ///////////////
 //////////////////////////////////////////////////////////
-const startEndStageFour = async ({ episode }: { episode: string | number }) => {
+const startStageFour = async ({ episode }: { episode: string | number }) => {
     const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/admin-controller/init_final_stage/${episode}`);
     return res.data;
 }
 
 export const useInitStageFour = () => {
     return useMutation({
-        mutationFn: startEndStageFour,
+        mutationFn: startStageFour,
         mutationKey: ["init-stage-4"],
     });
 }

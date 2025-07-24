@@ -666,22 +666,7 @@ const RafflePickReveal = () => {
                   setShowModal={setShowModal}
                 />
               )}
-            {/* {!currentResult?.hustle_match.is_extra_ball &&
-              currentResult?.hustle_match.is_match && (
-                <WinnerBallModal
-                  isOpen={true}
-                  data={{
-                    name: {
-                      balance_details: {
-                        current_balance:
-                          currentResult.hustle_match.balance_details
-                            .current_balance,
-                      },
-                    },
-                  }}
-                  setShowModal={setShowModal}
-                />
-              )} */}
+           
             {!currentResult?.hustle_match.is_extra_ball &&
               !currentResult?.hustle_match.is_match && (
                 <article

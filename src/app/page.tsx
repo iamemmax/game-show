@@ -31,7 +31,7 @@ const ContestantHomePage = () => {
     gameEpisode as number
   );
 
- 
+
 
 
   const { addMessageListener, removeMessageListener, isConnected } = useMQTT()
@@ -41,7 +41,7 @@ const ContestantHomePage = () => {
     const handleMQTTMessage = (message: any) => {
       if (message?.topic.includes("/game-sync")) return
       console.log(message.payload)
-      if (message.payload.source === "host") {
+      if (message.payload.source === "host" && Number(message.payload.game_episode as string) === Number(gameEpisode)) {
         console.log(message, "Hustleboard received message from host");
         LastStepStorage.setLastStep({
           step: message.event,
@@ -273,7 +273,7 @@ const ContestantHomePage = () => {
   }
 
   // Show loading state until properly initialized
-  if (!isInitialized ) {
+  if (!isInitialized) {
     return (
       <div className="fixed top-0 right-0 m-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>

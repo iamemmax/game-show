@@ -139,11 +139,15 @@ export default function Stage1Questions({
           sendGameMessage(`game_s1_timer_end_${currentQuestionData.data.question_index}`, {
             question_id: questionId,
           })
-          sendGameMessage(`game_s1_question_bids_reveal`, {
-            answers_data: data.data,
-            question_index: currentQuestionData.data.question_index,
-            show_modal: true,
-          })
+          if (contestantsData?.game.reveal_step_count == "DOUBLE") {
+            sendGameMessage(`game_s1_question_bids_reveal`, {
+              answers_data: data.data,
+              question_index: currentQuestionData.data.question_index,
+              show_modal: true,
+            })
+          } else {
+            sendGameMessage(`game_s1_question_bids_reveal_faux`)
+          }
           setSentAnswers((prev) => new Set(prev).add(questionId))
           setTimerActive(false)
           onQuestionComplete(currentQuestionData.data.question.question.question_id)
@@ -276,7 +280,7 @@ export default function Stage1Questions({
       <div className="flex justify-center mt-6">
         {!loading && currentQuestionData && !questionsExhausted && (
           <>
-            {lastAction === "game_s1_question_bids_reveal" ? (
+            {(lastAction === "game_s1_question_bids_reveal" || lastAction == "game_s1_question_bids_reveal_faux") ? (
               <TrapeziumButton onClick={() => refetchQuestionResultData()} variant="purple" data-remote-target="true">
                 REVEAL QUESTION RESULT
               </TrapeziumButton>
