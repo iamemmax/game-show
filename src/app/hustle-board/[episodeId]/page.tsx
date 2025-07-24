@@ -19,6 +19,7 @@ import StageTwoGetReadyStage from "../components/statge2/StageTwoGetReadyStage";
 import { useMQTT } from "@/hooks/useMqttService";
 import { LastStepStorage } from "@/lib/lastStep";
 import Stage3CardSelectionScreens from "../components/stage3/Stage3CardSelectionScreen";
+import WelcomeUserStory from "../components/WelcomeUserStory";
 
 const LOCAL_STORAGE_KEY = "hustle_board_last_step";
 
@@ -105,15 +106,15 @@ const ContestantHomePage = () => {
         if (contestantsData.game.status == "IN_ACTIVE") {
           setGameState((prevState) => ({
             ...prevState,
-            currentStageStep: "start",
+            currentStageStep: "setup",
           }));
           setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP);
         } else {
           setCurrentUniversalStep(
-            savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE1_INIT
+            savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_START
           );
           updateGameStateFromUniversalStep(
-            savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE1_INIT
+            savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_START
           );
         }
       } else if (contestantsData.game.stage?.includes("STAGE_TWO")) {
@@ -169,7 +170,7 @@ const ContestantHomePage = () => {
           ...prev,
           status: "IN_PROGRESS",
           currentStage: "STAGE_ONE",
-          currentStageStep: "init",
+          currentStageStep: "setup",
         }));
         break;
       case UNIVERSAL_GAME_STEPS.GAME_START:
@@ -304,6 +305,8 @@ const ContestantHomePage = () => {
         break;
     }
   };
+  console.log("Game State:", gameState);
+  console.log("Current Universal Step:", currentUniversalStep);
 
   if (!isInitialized || currentUniversalStep === null) {
     return (
@@ -315,26 +318,24 @@ const ContestantHomePage = () => {
 
   return (
     <div className="h-full relative">
-      {/* Clear Steps Button - positioned at top right */}
-      {/* <button
-        onClick={clearStoredSteps}
-        className="absolute top-4 right-4 !z-[999999999999999] bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
-        title="Clear saved progress and restart from step 1"
-      >
-        Reset
-      </button> */}
-
-      {/* Debug info
-      <div className="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs z-50">
-        Step: {step} | Episode: {gameEpisode} | Transitioning: {transitioningRef.current ? 'Yes' : 'No'}
-      </div> */}
+   
 
       <AnimatePresence mode="wait">
         {gameState.currentStage.includes("STAGE_ONE") && (
           <>
+            {(gameState.currentStageStep === "start"  ||
+              gameState.currentStageStep === "setup"
+            ) && (
+                <motion.div
+                  key={"welcome-user-story"}
+                  className="h-full"
+                  {...motionProps}
+                >
+                  <WelcomeUserStory />
+                </motion.div>
+              )}
             {(gameState.currentStageStep === "init" ||
-              gameState.currentStageStep === "hustle_pick" ||
-              gameState.currentStageStep === "start") && (
+              gameState.currentStageStep === "hustle_pick") && (
                 <motion.div
                   key={"number-pick"}
                   className="h-full"

@@ -554,7 +554,7 @@ const [stage, setStage] = useState(1)
                       textclassName={`${episodeId ? "text-[4.5rem]" : "text-[2.5rem]"} font-extrabold font-lucky`}
                       fillColor="#000"
                     >
-                      Stage tally
+                      Leaderboard
                     </GlowyStrokeText>
                   </div>
 

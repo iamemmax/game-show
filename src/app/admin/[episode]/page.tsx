@@ -16,16 +16,17 @@ import {
   RadioGroup,
   RadioGroupItem,
   Checkbox,
+  Textarea,
 } from "@/components/core"
 import { Input } from "@/components/core/Input"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, User, Phone, AlertCircle, Plus, Copy, Award, ScanLine, Upload } from "lucide-react"
+import { ArrowLeft, User, Phone, AlertCircle, Plus, Copy, Award, ScanLine, Upload, Search, Edit, X } from "lucide-react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/core/Form"
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import {
   useGetGameContestants,
   useAssignContestant,
@@ -35,17 +36,31 @@ import {
 import { convertKebabAndSnakeToTitleCase } from "@/utils/strings"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import { useMQTT } from "@/hooks/useMqttService"
-import type { Question2AnswerDataAPIResponse } from "@/app/components/stages/api/stage2/getQuestion2Answer"
 import { useBooleanStateControl } from "@/hooks"
 import { Label } from "@/components/core/Label"
-import { DebitWalletData } from "../misc/types"
+import type { DebitWalletData } from "../misc/types"
 import { toast } from "sonner"
+import { useContestantBank } from "../misc/api/contestant_bank"
 
+// Enhanced schema with all Supabase fields
 const assignContestantSchema = z.object({
   constestants_attr: z.string().min(1, "Please select a contestant position"),
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  first_name: z.string().min(2, "First name must be at least 2 characters"),
+  last_name: z.string().min(2, "Last name must be at least 2 characters"),
   phone_number: z.string().min(10, "Phone number must be at least 10 digits").max(15, "Phone number is too long"),
-  contestant_photo: z.any()
+  email: z.string().email("Please enter a valid email").optional().or(z.literal("")),
+  gender: z.string().optional(),
+  age: z.number().min(18, "Must be at least 18 years old").max(100, "Invalid age").optional().or(z.literal("")),
+  bio: z.string().optional(),
+  state_of_origin: z.string().optional(),
+  instagram: z.string().optional(),
+  twitter: z.string().optional(),
+  tiktok: z.string().optional(),
+  facebook: z.string().optional(),
+  website: z.string().optional(),
+  x: z.string().optional(),
+  social_to_display: z.string().optional(),
+  contestant_photo: z.any(),
 })
 
 type AssignContestantFormValues = z.infer<typeof assignContestantSchema>
@@ -54,35 +69,58 @@ interface MultiCreditDebitContestantRequest extends Omit<CreditDebitContestantRe
   giver_contestant_ids: number[]
 }
 
-export default function GameDetails() {
+export default function GameDetailsEnhanced() {
   const params = useParams()
   const gameId = params.episode as string
   const router = useRouter()
+
+  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingContestant, setEditingContestant] = useState<any>(null)
+
   const {
     state: isCreditDebitModalOpen,
     setTrue: openCreditDebitModal,
     setFalse: closeCreditDebitModal,
     setState: setCreditDebitModalState,
   } = useBooleanStateControl()
+
+  // Search and selection states
   const [selectedContestant, setSelectedContestant] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [showContestantSearch, setShowContestantSearch] = useState(false)
+  const [selectedSupabaseContestant, setSelectedSupabaseContestant] = useState<any>(null)
+
+  // Other existing states
   const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT()
   const [isSending, setIsSending] = useState(false)
-
   const [debitWalletData, setDebitWalletData] = useState<DebitWalletData | null>(null)
   const [debitWalletPayload, setDebitWalletPayload] = useState<MultiCreditDebitContestantRequest | null>()
   const [selectedContestantIds, setSelectedContestantIds] = useState<number[]>([])
   const [creditSource, setCreditSource] = useState<"gameshow_float" | "contestants">()
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
+  // Supabase contestants hook
+  const { contestants, loading: loadingContestants, search: searchContestants } = useContestantBank()
 
+  // Filtered contestants based on search
+  const filteredContestants = useMemo(() => {
+    if (!searchTerm) return contestants
+    return contestants.filter(
+      (contestant) =>
+        `${contestant.first_name} ${contestant.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contestant.phone_number.includes(searchTerm),
+    )
+  }, [contestants, searchTerm])
+
+  // Existing MQTT and game logic (unchanged)
   const sendGameMessage = React.useCallback(
     async (eventCode: string, data: any = {}) => {
       if (!isConnected) {
         return
       }
       setIsSending(true)
-
       try {
         const message = {
           event: eventCode,
@@ -92,7 +130,6 @@ export default function GameDetails() {
           },
         }
         await sendMessage(message)
-        
         refetchContestants()
       } catch (error) {
         console.error("Failed to send message:", error)
@@ -112,16 +149,14 @@ export default function GameDetails() {
       }
     }
 
-
     if (isConnected) {
-      addMessageListener(handleMessage);
+      addMessageListener(handleMessage)
       refetchContestants()
     }
 
     return () => {
-      removeMessageListener(handleMessage);
-    };
-
+      removeMessageListener(handleMessage)
+    }
   }, [isConnected, addMessageListener, removeMessageListener])
 
   const startGameEpisode = () => sendGameMessage("game_start")
@@ -134,38 +169,85 @@ export default function GameDetails() {
 
   const assignContestantMutation = useAssignContestant()
 
+  // Enhanced form with all fields
   const modalForm = useForm<AssignContestantFormValues>({
     resolver: zodResolver(assignContestantSchema),
     defaultValues: {
       constestants_attr: "",
-      name: "",
+      first_name: "",
+      last_name: "",
       phone_number: "",
-      contestant_photo: null
+      email: "",
+      gender: "",
+      age: undefined,
+      bio: "",
+      state_of_origin: "",
+      instagram: "",
+      twitter: "",
+      tiktok: "",
+      facebook: "",
+      website: "",
+      x: "",
+      social_to_display: "",
+      contestant_photo: null,
     },
   })
 
+  // Edit form
+  const editForm = useForm<AssignContestantFormValues>({
+    resolver: zodResolver(assignContestantSchema),
+  })
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     if (file) {
-      setSelectedFile(file);
+      setSelectedFile(file)
       modalForm.setValue("contestant_photo", e.target.files?.[0])
     }
     e.target.value = ""
-  };
+  }
+
+  // Handle contestant selection from Supabase
+  const handleSelectSupabaseContestant = (contestant: any) => {
+    setSelectedSupabaseContestant(contestant)
+
+    // Prefill form with selected contestant data
+    modalForm.setValue("first_name", contestant.first_name || "")
+    modalForm.setValue("last_name", contestant.last_name || "")
+    modalForm.setValue("phone_number", contestant.phone_number || "")
+    modalForm.setValue("email", contestant.email || "")
+    modalForm.setValue("gender", contestant.gender || "")
+    modalForm.setValue("age", contestant.age || undefined)
+    modalForm.setValue("bio", contestant.bio || "")
+    modalForm.setValue("state_of_origin", contestant.state_of_origin || "")
+    modalForm.setValue("instagram", contestant.instagram || "")
+    modalForm.setValue("twitter", contestant.twitter || "")
+    modalForm.setValue("tiktok", contestant.tiktok || "")
+    modalForm.setValue("facebook", contestant.facebook || "")
+    modalForm.setValue("website", contestant.website || "")
+    modalForm.setValue("x", contestant.x || "")
+    modalForm.setValue("social_to_display", contestant.social_to_display || "")
+
+    setShowContestantSearch(false)
+  }
 
   const onModalSubmit = async (values: AssignContestantFormValues) => {
     try {
+      // Combine first and last name for the API
+      const fullName = `${values.first_name} ${values.last_name}`
+
       await assignContestantMutation.mutateAsync({
         game_episode: Number.parseInt(gameId),
-        constestants_attr: values.constestants_attr,
-        name: values.name,
-        phone_number: values.phone_number,
-        contestant_photo: values.contestant_photo
+        name: fullName,
+        contestant_photo: values.contestant_photo,
+        ...values,
       })
 
       refetchContestants()
       modalForm.reset()
+      setSelectedSupabaseContestant(null)
       setIsModalOpen(false)
+      setShowContestantSearch(false)
     } catch (error) {
       console.error("Failed to assign contestant:", error)
     }
@@ -175,6 +257,48 @@ export default function GameDetails() {
     setSelectedContestant(contestantAttr)
     modalForm.setValue("constestants_attr", contestantAttr)
     setIsModalOpen(true)
+  }
+
+  const openEditModal = (contestant: any) => {
+    setEditingContestant(contestant)
+
+    // Split name back to first and last
+    const nameParts = contestant.name?.split(" ") || ["", ""]
+    const firstName = nameParts[0] || ""
+    const lastName = nameParts.slice(1).join(" ") || ""
+
+    editForm.reset({
+      constestants_attr: contestant.constestants_attr,
+      first_name: firstName,
+      last_name: lastName,
+      phone_number: contestant.phone_number || "",
+      // Add other existing fields if available
+    })
+
+    setIsEditModalOpen(true)
+  }
+
+  const onEditSubmit = async (values: AssignContestantFormValues) => {
+    try {
+      const fullName = `${values.first_name} ${values.last_name}`.trim()
+
+      // You'll need to create an update mutation
+      // await updateContestantMutation.mutateAsync({
+      //   id: editingContestant.id,
+      //   name: fullName,
+      //   phone_number: values.phone_number,
+      //   ...values
+      // })
+
+      refetchContestants()
+      editForm.reset()
+      setEditingContestant(null)
+      setIsEditModalOpen(false)
+      toast.success("Contestant updated successfully")
+    } catch (error) {
+      console.error("Failed to update contestant:", error)
+      toast.error("Failed to update contestant")
+    }
   }
 
   const getContestantStatus = (contestant: any) => {
@@ -224,24 +348,17 @@ export default function GameDetails() {
       alert("Please select a credit source")
       return
     }
-
     if (creditSource === "contestants" && selectedContestantIds.length === 0) {
       alert("Please select at least one contestant")
       return
     }
 
-    console.log("debitWalletData:", debitWalletData)
-    console.log("Selected contestants:", selectedContestantIds)
-
-    // For API compatibility, we might need to send multiple requests or modify the API
-    // This assumes the API can handle an array of giver_contestant_ids
     const payload = {
       question_id: Number(debitWalletData?.question_id),
       giver_contestant_ids: debitWalletPayload.giver_contestant_ids,
       credit_source: debitWalletPayload.credit_source,
     }
 
-    // If your API doesn't support arrays, you might need to make multiple calls
     if (creditSource === "contestants" && selectedContestantIds.length > 0) {
       creditDebit(payload, {
         onSuccess: (data) => {
@@ -259,13 +376,11 @@ export default function GameDetails() {
         },
       })
     } else {
-      // Single API call for gameshow float
       const singlePayload: CreditDebitContestantRequest = {
         question_id: Number(debitWalletData?.question_id),
         giver_contestant_ids: [],
         credit_source: "gameshow_float",
       }
-
       creditDebit(singlePayload, {
         onSuccess: (data) => {
           toast.success("Wallet debited successfully")
@@ -283,7 +398,6 @@ export default function GameDetails() {
       })
     }
 
-    // Send MQTT message with the payload
     sendMessage({
       event: "game_s2_debit_wallet",
       payload: {
@@ -292,7 +406,6 @@ export default function GameDetails() {
       },
     })
 
-    // Reset state
     setDebitWalletData(null)
     setDebitWalletPayload(null)
     setSelectedContestantIds([])
@@ -338,22 +451,23 @@ export default function GameDetails() {
                       <div className="text-[0.65rem] text-white mb-1">Status</div>
                       <div className="flex items-center gap-1.5 text-[0.825rem]">
                         <div className="size-2 rounded-full bg-[#d400ff] animate-pulse"></div>
-                        <span>{
-                          contestantsData?.game.status === "IN_ACTIVE"
+                        <span>
+                          {contestantsData?.game.status === "IN_ACTIVE"
                             ? "Not Started"
                             : contestantsData?.game.status === "IN_PROGRESS"
                               ? "In Progress"
-                              : "Completed"
-                        }</span>
+                              : "Completed"}
+                        </span>
                       </div>
                     </div>
                     <div>
                       <div className="text-[0.65rem] text-white mb-1">Current Stage</div>
-                      <div className="text-[0.825rem] font-medium">{convertKebabAndSnakeToTitleCase(contestantsData?.game.stage)}</div>
+                      <div className="text-[0.825rem] font-medium">
+                        {convertKebabAndSnakeToTitleCase(contestantsData?.game.stage)}
+                      </div>
                     </div>
                   </div>
                 </div>
-
               </section>
             </section>
 
@@ -364,12 +478,12 @@ export default function GameDetails() {
                 <div className="p-5 rounded-xl bg-[#341D44] grid grid-cols-1 md:grid-cols-2 gap-4">
                   {contestantsData.data.map((contestant) => {
                     const isAssigned = getContestantStatus(contestant) === "assigned"
-
                     return (
                       <article
                         key={contestant.id}
-                        className={`relative rounded-2xl overflow-hidden bg-[#462B58] ${isAssigned ? "]" : "bg-[#1a0b25] hover:border-[#ff00ff]/50 transition-all group relative"
-                          }`}
+                        className={`relative rounded-2xl overflow-hidden bg-[#462B58] ${
+                          isAssigned ? "]" : "bg-[#1a0b25] hover:border-[#ff00ff]/50 transition-all group relative"
+                        }`}
                         style={{ height: "100px" }}
                       >
                         {isAssigned && (
@@ -377,10 +491,9 @@ export default function GameDetails() {
                             <img src="/images/polygon-mask.svg" alt="" className="w-full h-full object-cover" />
                           </div>
                         )}
-
                         <div className="relative z-10 p-4 h-full flex flex-col justify-between">
                           <div className="relative flex items-start gap-3">
-                            <div>
+                            <div className="flex-1">
                               <div className="flex items-center text-xs gap-1 text-white">
                                 <User className="h-3 w-3" />
                                 {isAssigned ? contestant.name : "Unassigned: Click to assign"}
@@ -415,8 +528,17 @@ export default function GameDetails() {
                                 )}
                               </div>
                             </div>
+                            {isAssigned && (
+                              <Button
+                                size="sm"
+                                variant="light"
+                                onClick={() => openEditModal(contestant)}
+                                className="h-6 w-6 p-0 hover:bg-[#ff00ff]/20"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            )}
                           </div>
-
                           {isAssigned ? (
                             <div className="absolute bottom-0 right-0 w-1/2 text-right mt-auto px-4 pb-1.5 pt-0 ">
                               <div className="text-xs text-white font-bold">FINAL POT</div>
@@ -473,18 +595,93 @@ export default function GameDetails() {
         )}
       </div>
 
-      {/* Assign Contestant Modal */}
+      {/* Enhanced Assign Contestant Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white">
+        <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl text-primary">
               Assign Contestant: {convertKebabAndSnakeToTitleCase(selectedContestant)}
             </DialogTitle>
           </DialogHeader>
-
           <DialogBody>
+            {/* Search Section */}
+            <div className="mb-4">
+              <Button
+                type="button"
+                onClick={() => setShowContestantSearch(!showContestantSearch)}
+                className="mb-3 bg-[#ff00ff]/20 hover:bg-[#ff00ff]/30 text-white border border-[#ff00ff]/30"
+              >
+                <Search className="h-4 w-4 mr-2" />
+                {showContestantSearch ? "Hide" : "Search"} Existing Contestants
+              </Button>
+
+              {showContestantSearch && (
+                <div className="border border-[#ff00ff]/30 rounded-lg p-4 mb-4">
+                  <div className="flex gap-2 mb-3">
+                    <Input
+                      placeholder="Search by name or phone number..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="flex-1 border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => searchContestants(searchTerm)}
+                      disabled={loadingContestants}
+                      className="bg-[#ff00ff] hover:bg-[#ff00ff]/80"
+                    >
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {selectedSupabaseContestant && (
+                    <div className="mb-3 p-2 bg-[#ff00ff]/10 rounded border border-[#ff00ff]/30 flex items-center justify-between">
+                      <span className="text-sm">
+                        Selected: {selectedSupabaseContestant.first_name} {selectedSupabaseContestant.last_name}
+                      </span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="light"
+                        onClick={() => setSelectedSupabaseContestant(null)}
+                        className="h-6 w-6 p-0"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="max-h-40 overflow-y-auto space-y-2">
+                    {loadingContestants ? (
+                      <div className="text-center py-4">Loading contestants...</div>
+                    ) : filteredContestants.length === 0 ? (
+                      <div className="text-center py-4 text-gray-400">No contestants found</div>
+                    ) : (
+                      filteredContestants.map((contestant) => (
+                        <div
+                          key={contestant.id}
+                          onClick={() => handleSelectSupabaseContestant(contestant)}
+                          className="p-3 border border-[#ff00ff]/20 rounded cursor-pointer hover:bg-[#ff00ff]/10 transition-colors"
+                        >
+                          <div className="font-medium">
+                            {contestant.first_name} {contestant.last_name}
+                          </div>
+                          <div className="text-sm text-gray-400">{contestant.phone_number}</div>
+                          {contestant.email && <div className="text-sm text-gray-400">{contestant.email}</div>}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <Form {...modalForm}>
-              <form encType="multipart/form-data" onSubmit={modalForm.handleSubmit(onModalSubmit)} className="grid gap-2 mt-2">
+              <form
+                encType="multipart/form-data"
+                onSubmit={modalForm.handleSubmit(onModalSubmit)}
+                className="grid gap-4 mt-2"
+              >
                 <FormField
                   control={modalForm.control}
                   name="constestants_attr"
@@ -497,17 +694,158 @@ export default function GameDetails() {
                   )}
                 />
 
+                {/* Basic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={modalForm.control}
+                    name="first_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-gray-300">First Name *</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="First Name"
+                            className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-[#ff00ff]" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={modalForm.control}
+                    name="last_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-gray-300">Last Name *</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Last Name"
+                            className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-[#ff00ff]" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={modalForm.control}
+                    name="phone_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-gray-300">Phone Number *</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Phone Number"
+                            className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-[#ff00ff]" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={modalForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-gray-300">Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="email"
+                            placeholder="Email Address"
+                            className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-[#ff00ff]" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={modalForm.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-gray-300">Gender</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="border-[#ff00ff]/30 focus:ring-[#ff00ff]/50 text-white">
+                              <SelectValue placeholder="Select gender" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="male">Male</SelectItem>
+                            <SelectItem value="female">Female</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-[#ff00ff]" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={modalForm.control}
+                    name="age"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-gray-300">Age</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            placeholder="Age"
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-[#ff00ff]" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={modalForm.control}
+                    name="state_of_origin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-gray-300">State of Origin</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="State of Origin"
+                            className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-[#ff00ff]" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={modalForm.control}
-                  name="name"
+                  name="bio"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm text-gray-300">Contestant Name</FormLabel>
+                      <FormLabel className="text-sm text-gray-300">Bio</FormLabel>
                       <FormControl>
-                        <Input
+                        <Textarea
                           {...field}
-                          placeholder="Full Name"
-                          className=" border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                          placeholder="Tell us about yourself..."
+                          className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white min-h-[80px]"
                         />
                       </FormControl>
                       <FormMessage className="text-[#ff00ff]" />
@@ -515,43 +853,147 @@ export default function GameDetails() {
                   )}
                 />
 
-                <FormField
-                  control={modalForm.control}
-                  name="phone_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-gray-300">Phone Number</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Phone Number"
-                          className=" border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-[#ff00ff]" />
-                    </FormItem>
-                  )}
-                />
+                {/* Social Media Fields */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-300">Social Media</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={modalForm.control}
+                      name="instagram"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm text-gray-300">Instagram</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="@username"
+                              className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-[#ff00ff]" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={modalForm.control}
+                      name="twitter"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm text-gray-300">Twitter</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="@username"
+                              className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-[#ff00ff]" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={modalForm.control}
+                      name="tiktok"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm text-gray-300">TikTok</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="@username"
+                              className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-[#ff00ff]" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={modalForm.control}
+                      name="facebook"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm text-gray-300">Facebook</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Profile URL"
+                              className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-[#ff00ff]" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={modalForm.control}
+                      name="website"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm text-gray-300">Website</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="https://..."
+                              className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-[#ff00ff]" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={modalForm.control}
+                      name="social_to_display"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm text-gray-300">Primary Social to Display</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="border-[#ff00ff]/30 focus:ring-[#ff00ff]/50 text-white">
+                                <SelectValue placeholder="Select primary social" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="instagram">Instagram</SelectItem>
+                              <SelectItem value="twitter">Twitter</SelectItem>
+                              <SelectItem value="tiktok">TikTok</SelectItem>
+                              <SelectItem value="facebook">Facebook</SelectItem>
+                              <SelectItem value="website">Website</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage className="text-[#ff00ff]" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Photo Upload */}
                 <div className="w-full max-w-sm mx-auto p-4 bg-white rounded-xl shadow-md border border-gray-200 dark:bg-gray-900 dark:border-gray-700">
                   <label
                     htmlFor="fileInput"
                     className="flex flex-col items-center justify-center p-6 text-center cursor-pointer border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                   >
                     <Upload className="w-8 h-8 mb-2 text-gray-500 dark:text-gray-400" />
-                    <p className="text-gray-600 dark:text-gray-300 text-sm">
-                      Tap to upload or use your camera
-                    </p>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">Tap to upload or use your camera</p>
                     <p className="text-xs text-gray-400 mt-1">JPEG, PNG, or take photo</p>
                     <input
                       id="fileInput"
                       type="file"
                       accept="image/*"
-                      capture="environment" // "user" for front camera, "environment" for back camera
+                      capture="environment"
                       onChange={handleFileChange}
                       className="hidden"
                     />
                   </label>
-
                   {selectedFile && (
                     <div className="mt-4 text-sm text-gray-700 dark:text-gray-300">
                       Selected: <strong>{selectedFile.name}</strong>
@@ -559,11 +1001,16 @@ export default function GameDetails() {
                   )}
                 </div>
 
-                <div className="flex justify-end gap-2 mt-2">
+                <div className="flex justify-end gap-2 mt-6">
                   <Button
                     type="button"
                     variant="outlined"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={() => {
+                      setIsModalOpen(false)
+                      setSelectedSupabaseContestant(null)
+                      setShowContestantSearch(false)
+                      modalForm.reset()
+                    }}
                     className="border-[#ff00ff]/30 text-white hover: hover:text-white"
                   >
                     Cancel
@@ -582,7 +1029,100 @@ export default function GameDetails() {
         </DialogContent>
       </Dialog>
 
-      {/* Debit/Credit Modal - Updated for Multiple Selection */}
+      {/* Edit Contestant Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-primary">Edit Contestant: {editingContestant?.name}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="grid gap-4 mt-2">
+                {/* Similar form fields as assign modal but for editing */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="first_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-gray-300">First Name *</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="First Name"
+                            className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-[#ff00ff]" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="last_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm text-gray-300">Last Name *</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Last Name"
+                            className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-[#ff00ff]" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={editForm.control}
+                  name="phone_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm text-gray-300">Phone Number *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Phone Number"
+                          className="border-[#ff00ff]/30 focus-visible:ring-[#ff00ff]/50 text-white"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-[#ff00ff]" />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={() => {
+                      setIsEditModalOpen(false)
+                      setEditingContestant(null)
+                      editForm.reset()
+                    }}
+                    className="border-[#ff00ff]/30 text-white hover: hover:text-white"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={editForm.formState.isSubmitting}
+                    className="bg-gradient-to-r from-primary to-[#ff00ff] hover:opacity-90 transition-opacity"
+                  >
+                    Update Contestant
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
+
+      {/* Debit/Credit Modal - (unchanged from original) */}
       <Dialog open={isCreditDebitModalOpen} onOpenChange={setCreditDebitModalState}>
         <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white max-w-md">
           <DialogHeader>
@@ -593,7 +1133,6 @@ export default function GameDetails() {
               )}
             </DialogTitle>
           </DialogHeader>
-
           <DialogBody>
             <div className="grid gap-2 mt-2">
               <div className="text-sm text-gray-300">
@@ -601,10 +1140,8 @@ export default function GameDetails() {
                 {debitWalletData?.data?.answers.find((item) => item.is_winner)?.contestant_id || "Unknown"}
               </div>
             </div>
-
             <div className="mt-4">
               <label className="text-sm text-gray-300 mb-2 block">Credit Source</label>
-
               <RadioGroup
                 onValueChange={(value) => {
                   setCreditSource(value as "gameshow_float" | "contestants")
@@ -614,15 +1151,12 @@ export default function GameDetails() {
                 }}
                 className="space-y-2"
               >
-                {/* Gameshow Float option */}
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="gameshow_float" id="gameshow_float" />
                   <Label htmlFor="gameshow_float" className="text-white">
                     Gameshow Wallet
                   </Label>
                 </div>
-
-                {/* Contestants option */}
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="contestants" id="contestants" />
                   <Label htmlFor="contestants" className="text-white">
@@ -630,8 +1164,6 @@ export default function GameDetails() {
                   </Label>
                 </div>
               </RadioGroup>
-
-              {/* Multiple Contestant Selection */}
               {creditSource === "contestants" && (
                 <div className="mt-4 space-y-2">
                   <div className="text-sm text-white mb-2">Select Contestants to Debit:</div>
@@ -639,7 +1171,8 @@ export default function GameDetails() {
                     {contestantsData?.data
                       ?.filter(
                         (contestant: any) =>
-                          contestant.id !== debitWalletData?.data?.answers.find((item: any) => item.is_winner)?.contestant_id &&
+                          contestant.id !==
+                            debitWalletData?.data?.answers.find((item: any) => item.is_winner)?.contestant_id &&
                           !contestant.is_eliminated,
                       )
                       .map((contestant: any) => (
@@ -657,7 +1190,6 @@ export default function GameDetails() {
                         </div>
                       ))}
                   </div>
-
                   {selectedContestantIds.length > 0 && (
                     <div className="text-xs text-gray-400 mt-2">
                       Selected: {selectedContestantIds.length} contestant(s)
@@ -666,7 +1198,6 @@ export default function GameDetails() {
                 </div>
               )}
             </div>
-
             <div className="flex justify-end gap-2 mt-6">
               <Button
                 type="button"

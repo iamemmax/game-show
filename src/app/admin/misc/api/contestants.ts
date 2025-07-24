@@ -1,23 +1,35 @@
 import { tokenlessAxios } from "@/lib/axios"
 import { useMutation, useQuery } from "react-query"
 
+
+
+
 export interface Contestant {
-  id: number
-  constestant_attr: string
-  name: string | null
-  phone_number: string | null
-  final_pot: string
-  eliminated_stage: string | null
-  login_code: string | null
-  created_at: string
-  updated_at: string
-  is_eliminated: boolean
+  id: number;
+  constestant_attr: string;
+  name: string | null;
+  phone_number: string | null;
+  gender: null;
+  date_of_birth: string | null;
+  bio: string | null;
+  website: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  facebook: string | null;
+  x: string | null;
+  state_of_origin: string | null;
+  final_pot: string;
+  eliminated_stage: string | null;
+  is_eliminated: boolean;
+  contestant_hustle: string | null;
+  login_code: string | null;
+  created_at: string;
+  updated_at: string;
   actual_balance: string;
   book_balance: string;
-  wallet_balance: string;
-  contestant_photo_url: string | null
-  
+  contestant_photo_url: string | null;
 }
+
 
 interface GameInfo {
   game_episode: number

@@ -246,13 +246,12 @@ export default function HostPage() {
     useEffect(() => {
         if (!isLoadingContestants && contestantsData) {
 
-
             // Set active tab based on current stage
             if (contestantsData.game.stage?.includes("STAGE_ONE")) {
                 if (contestantsData.game.status == "IN_ACTIVE") {
                     setGameState((prevState) => ({
                         ...prevState,
-                        currentStageStep: "start",
+                        currentStageStep: "setup",
                     }))
                     setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP)
                 }
@@ -328,7 +327,16 @@ export default function HostPage() {
     const updateLocalStateAfterAction = (eventCode: string) => {
         if (!eventCode) return
 
-        if (eventCode === "game_start") {
+        if (eventCode === "game_setup") {
+            setGameState((prev) => ({
+                ...prev,
+                status: "IN_PROGRESS",
+                lastAction: "game_setup",
+                currentStage: "STAGE_ONE",
+                currentStageStep: "start",
+            }))
+            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_INIT)
+        } else if (eventCode === "game_start") {
             setGameState((prev) => ({
                 ...prev,
                 status: "IN_PROGRESS",
@@ -514,7 +522,7 @@ export default function HostPage() {
                             ...prev,
                             status: "IN_PROGRESS",
                             currentStage: "STAGE_ONE",
-                            currentStageStep: "init",
+                            currentStageStep: "start",
                         }))
                         refetchContestants()
                     }
@@ -531,6 +539,7 @@ export default function HostPage() {
     //////////////////////////////
     //////////////////////////////
 
+    const handleWelcomeContestant = () => sendGameMessage("welcome_contestant")
     const initStage1 = () => sendGameMessage("game_s1_init", { start_time: new Date().toISOString() })
     const { mutate: handleTimeElapse } = useHandleHustlePickTimeElapse()
     const endTimerHustlePick = () => {
@@ -687,16 +696,16 @@ export default function HostPage() {
                 return (
                     <div className="flex justify-center">
                         <TrapeziumButton onClick={startGame} color="green" data-remote-target="true">
-                            START GAME
+                            START EPISODE
+                            {isStartingGame && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
                         </TrapeziumButton>
                     </div>
                 )
             } else if (currentStageStep === "start") {
                 return (
                     <div className="flex justify-center">
-                        <TrapeziumButton onClick={startGame} color="green" data-remote-target="true">
-                            START EPISODE
-                            {isStartingGame && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+                        <TrapeziumButton onClick={initStage1} color="green" data-remote-target="true">
+                            WELCOME CONTESTANTS
                         </TrapeziumButton>
                     </div>
                 )
