@@ -99,7 +99,10 @@ const RafflePickFInalResultModal = ({ isOpen, data, setShowModal, contestant }: 
                     : "text-white border-green-500 bg-green-950"
             )}
             >
-               Final Balance ₦100,000,000
+               Final Balance:  
+               {
+                convertNumberToNaira(Number(contestant.actual_balance) || 0)
+               }
             </p>
         </article>
     )

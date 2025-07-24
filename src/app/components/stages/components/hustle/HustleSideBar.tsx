@@ -221,6 +221,10 @@ const findColor = (contestantId: number) => {
     const color = contestantsPicks?.find((contestant) => contestant.id === contestantId)?.color;
     return color || "#666666"; // Default to gray if not found
   };  
+const findPicks = (contestantId: number) => {
+    const picks = contestantsPicks?.find((contestant) => contestant.id === contestantId)?.picks;
+    return picks || "#666666"; // Default to gray if not found
+  };  
    
 
   return (
@@ -251,7 +255,7 @@ const findColor = (contestantId: number) => {
         </div>
 
         {/* Green Dot with pulse animation when balance changes */}
-        {showDot&&<div
+        {showDot&& findPicks(contestantInfo?.id)?.length > 0 && <div
           className={`z-[999999] -mt-2 absolute w-8 h-8 rounded-full transition-all duration-300 ${
             isBalanceChanging ? 'animate-pulse scale-125' : ''
           }`}
@@ -301,7 +305,7 @@ const findColor = (contestantId: number) => {
               {name}
             </GlowyStrokeText>
             
-{showPickCount && (
+{findPicks(contestantInfo?.id)?.length > 0 && (
   <div className="picks-display">
     {(() => {
       // Find picks for this specific contestant
@@ -328,7 +332,7 @@ const findColor = (contestantId: number) => {
           }`}
           fillColor="#fff"
         >
-           {pickCount}
+           {findPicks(contestantInfo?.id)?.length}
         </GlowyStrokeText>
       );  
     })()}
