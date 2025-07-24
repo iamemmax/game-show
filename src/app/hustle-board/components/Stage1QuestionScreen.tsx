@@ -359,8 +359,8 @@ if (receivedMessage?.event === "contestant_selected_option") {
           const answersData = payload?.answers_data?.answers;
           setCurrentQuestionAnswerData(answersData);
 
-          setShowResultModal(true)
-      setShowBidRevealModal(true)
+      //     setShowResultModal(true)
+      // setShowBidRevealModal(payload?.show_modal)
         }
       }
 
@@ -878,7 +878,7 @@ setShowBidRevealModal(false)
                                 General Booster
                                 </span>
                                 {mqttQuestionData?.question?.question
-                                  ?.owner_booster || "..."}{" "}
+                                  ?.question_booster || "..."}{" "}
                               </p>
                             </div>
                             

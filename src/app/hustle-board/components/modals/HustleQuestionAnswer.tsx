@@ -384,7 +384,7 @@ const HustleQuestionAnswerModal = ({
         
        <div className="relative min-h-[40rem] h-full w-full">
   <div className=" inset-0 transition-opacity duration-300">
-    {!showBidRevealModal ? (
+    {!mqttAnswerData ? (
       <HustleBoardModal
         currentQuestion={currentQuestion}
         currentQuestionAnswerData={currentQuestionAnswerData}
