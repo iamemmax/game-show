@@ -37,11 +37,11 @@ const WelcomeUserStory = () => {
                 </div>
 
                 {/* Contestants Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto grow">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto grow">
                     {contestants.map((contestant, index) => (
                         <Card
                             key={contestant.id}
-                            className="bg-black/40 backdrop-blur-sm border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(168,85,247,0.3)]"
+                            className="bg-[#18002C] backdrop-blur-sm border border-[#C400DD] transition-all duration-300 hover:shadow-[0_0_30px_rgba(168,85,247,0.3)] !font-montserrat font-2xl"
                         >
                             <CardContent className="p-6 flex flex-col">
                                 {/* Profile Section */}
@@ -63,7 +63,7 @@ const WelcomeUserStory = () => {
                                         </AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <h3 className="text-white font-semibold text-lg leading-tight">
+                                        <h3 className="text-white font-semibold text-2xl leading-tight font-montserrat">
                                             {contestant.name || "Contestant"}
                                         </h3>
                                     </div>
@@ -71,7 +71,7 @@ const WelcomeUserStory = () => {
 
                                 {/* Hustle Category */}
                                 <div className="mb-4">
-                                    <span className="text-purple-300 font-medium text-sm">
+                                    <span className="text-purple-300 font-medium text-xl">
                                         {contestant.contestant_hustle || "Digital Marketing"}
                                     </span>
                                 </div>
