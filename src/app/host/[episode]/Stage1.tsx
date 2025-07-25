@@ -111,6 +111,10 @@ export default function Stage1Questions({
         onError: (error) => {
           toast.error("Failed to reveal stage 1 results")
           console.error("Error revealing stage 1 results:", error)
+          if((error as any).response.data.message == "Stage already ended")
+            sendGameMessage("game_s1_results_reveal", {
+              game_id: gameId,
+            })
         },
       },
     )
