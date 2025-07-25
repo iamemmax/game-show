@@ -50,7 +50,7 @@ const assignContestantSchema = z.object({
   phone_number: z.string().min(10, "Phone number must be at least 10 digits").max(15, "Phone number is too long"),
   email: z.string().email("Please enter a valid email").optional().or(z.literal("")),
   gender: z.string().optional(),
-  age: z.number().min(18, "Must be at least 18 years old").max(100, "Invalid age").optional().or(z.literal("")),
+  age: z.number().min(18, "Must be at least 18 years old").max(100, "Invalid age").optional().or(z.literal(0)),
   bio: z.string().optional(),
   state_of_origin: z.string().optional(),
   instagram: z.string().optional(),
@@ -179,7 +179,7 @@ export default function GameDetailsEnhanced() {
       phone_number: "",
       email: "",
       gender: "",
-      age: undefined,
+      age: 0,
       bio: "",
       state_of_origin: "",
       instagram: "",
@@ -240,6 +240,17 @@ export default function GameDetailsEnhanced() {
         game_episode: Number.parseInt(gameId),
         name: fullName,
         contestant_photo: values.contestant_photo,
+        gender: values.gender ?? "MALE",
+        age: values.age ?? 0,
+        bio: values.bio ?? null,
+        state_of_origin: values.state_of_origin ?? null,
+        instagram: values.instagram ?? "",
+        tiktok: values.tiktok ?? "",
+        facebook: values.facebook ?? "",
+        website: values.website ?? "",
+        x: values.x ?? "",
+        contestant_hustle: "", // Provide a sensible default or get from form if available
+        date_of_birth: "", // Provide a sensible default or get from form if available
         ...values,
       })
 

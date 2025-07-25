@@ -72,7 +72,7 @@ const RafflePickReveal = () => {
   const { data: hustleMatchesData, isLoading: isLoadingMatches } = useGetHustleMatches(episodeId)
 
   // Fetch matched hustles data (already revealed balls)
-  const { data: matchedHustlesData, isLoading: isLoadingMatched } = useGetMatchedHustles(episodeId)
+  const { data: matchedHustlesData, isLoading: isLoadingMatched, refetch: refetchHustleMatches } = useGetMatchedHustles(episodeId)
 
   // 1. Fetch all contestants for the episode
   const { data: contestantsData, isLoading: isLoadingContestants } = useGetGameContestants(episodeId)
@@ -153,6 +153,7 @@ const RafflePickReveal = () => {
       const ballPickedResult = message as BallPickedResult
       if (ballPickedResult.event === "ball_picked") {
         const { hustle_match } = ballPickedResult.payload
+        refetchHustleMatches()
         animateBallReveal(hustle_match.number_pick, ballPickedResult.payload)
       }
     }

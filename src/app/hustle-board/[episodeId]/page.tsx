@@ -266,6 +266,20 @@ const ContestantHomePage = () => {
           showQuestions: true,
         }));
         break;
+      case UNIVERSAL_GAME_STEPS.STAGE2_OPTIONS_REVEAL:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "questions",
+          showQuestions: true,
+        }));
+        break;
+      case UNIVERSAL_GAME_STEPS.STAGE2_OPTIONS_REVEAL:
+        setGameState((prev) => ({
+          ...prev,
+          currentStageStep: "questions",
+          showQuestions: true,
+        }));
+        break;
       case UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_RESULT_REVEAL:
         setGameState((prev) => ({
           ...prev,
@@ -318,7 +332,7 @@ const ContestantHomePage = () => {
 
   return (
     <div className="h-full relative">
-   
+
 
       <AnimatePresence mode="wait">
         {gameState.currentStage.includes("STAGE_ONE") && (

@@ -23,7 +23,7 @@ const WelcomeUserStory = () => {
     return (
         <div className="h-screen relative overflow-hidden flex items-center justify-center">
             {/* Background Effects */}
-           
+
 
 
 
@@ -51,7 +51,7 @@ const WelcomeUserStory = () => {
                                             src={
                                                 contestant.contestant_photo_url ||
                                                 `/placeholder.svg?height=48&width=48&query=contestant-${index + 1}`
-                                            }                                            
+                                            }
                                             className="object-cover"
                                             alt={contestant.name || "Contestant"}
                                         />
@@ -72,15 +72,14 @@ const WelcomeUserStory = () => {
                                 {/* Hustle Category */}
                                 <div className="mb-4">
                                     <span className="text-[#CE64FF] font-medium text-2xl px-5 py-2 rounded-full bg-[#1D0048]">
-                                        {contestant?.contestant_hustle || "Digital Marketing"}
+                                        {contestant?.contestant_hustle || "-"}
                                     </span>
                                 </div>
 
                                 {/* Bio */}
                                 <div className="flex-1 mb-4">
                                     <p className="text-gray-300 text-2xl leading-relaxed">
-                                        {contestant.bio ||
-                                            "I help small businesses grow online by crafting campaigns that convert and tell powerful brand stories"}
+                                        {contestant.bio}
                                     </p>
                                 </div>
 

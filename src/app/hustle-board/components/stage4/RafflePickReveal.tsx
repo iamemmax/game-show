@@ -17,7 +17,7 @@ import { useGetLastContestantPick } from "@/app/components/stages/api/stage4/get
 import {
   type MatchedHustle,
   useGetGameContestants,
-  useGetHustleMatches,  
+  useGetHustleMatches,
   useGetMatchedHustles,
 } from "@/app/admin/misc/api"
 import { Ball } from "@/app/admin/misc/components/RaffleBall"
@@ -79,7 +79,7 @@ const RafflePickReveal = () => {
   const { data: hustleMatchesData, isLoading: isLoadingMatches } = useGetHustleMatches(episodeId)
 
   // Fetch matched hustles data (already revealed balls)
-  const { data: matchedHustlesData, isLoading: isLoadingMatched } = useGetMatchedHustles(episodeId)
+  const { data: matchedHustlesData, isLoading: isLoadingMatched, refetch: refetchMatchedPicks } = useGetMatchedHustles(episodeId)
 
   const { data: contestantsData, refetch, isLoading: isLoadingContestants } = useGetGameContestants(episodeId)
 
@@ -100,6 +100,7 @@ const RafflePickReveal = () => {
 
   // Initialize revealed numbers from matched hustles data
   useEffect(() => {
+    console.log(matchedHustlesData)
     if (matchedHustlesData?.data) {
       const alreadyRevealed = matchedHustlesData.data.map((hustle) => hustle.number_pick)
       setRevealedNumbers(alreadyRevealed)
@@ -113,10 +114,8 @@ const RafflePickReveal = () => {
   const matchedCount = useMemo(() => {
     if (!mynumbers || !revealedNumbers.length) return 0
     return revealedNumbers.filter((num) => mynumbers.includes(num)).length
-  }, [mynumbers, revealedNumbers])
+  }, [mynumbers, revealedNumbers, hustleMatchesData])
 
-  // If all numbers matched
-  const isWinner = matchedCount === mynumbers?.length
 
   // Highlight matched numbers
   const getNumberMatchStatus = (num: number | null, allRevealed: boolean) => {
@@ -143,7 +142,8 @@ const RafflePickReveal = () => {
     setCurrentResult(result)
     await new Promise((resolve) => setTimeout(resolve, 500))
     // Mark ball as revealed
-    setRevealedBalls((prev) => new Set([...prev, ballNumber]))
+    // setRevealedBalls((prev) => new Set([...prev, ballNumber]))
+    refetchMatchedPicks();
     setAnimatingBall(null)
     // Show appropriate modal
     setShowModal(true)

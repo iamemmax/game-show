@@ -1,53 +1,51 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import CrystalIcon from "@/app/icons/CrystalIcon"
-import { GlowyStrokeText, Dialog } from "@/components/core"
-import { Dispatch, SetStateAction, useEffect, useState } from "react"
-import { HustleMatch } from "@/app/admin/misc/api"
+import { motion } from "framer-motion";
+import CrystalIcon from "@/app/icons/CrystalIcon";
+import { GlowyStrokeText, Dialog } from "@/components/core";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { HustleMatch } from "@/app/admin/misc/api";
 import { Ball } from "@/app/admin/misc/components/RaffleBall";
-import { cn } from "@/utils/classNames"
-
+import { cn } from "@/utils/classNames";
 
 interface CrystalModalProps {
-  isOpen: boolean
+  isOpen: boolean;
   data: {
-    hustle_match: HustleMatch
-    number_revealed: number[]
-  }
-  setShowModal: Dispatch<SetStateAction<boolean>>
-
+    hustle_match: HustleMatch;
+    number_revealed: number[];
+  };
+  setShowModal: Dispatch<SetStateAction<boolean>>;
 }
 
 const CrystalModal = ({ isOpen, data, setShowModal }: CrystalModalProps) => {
-  const [animatedAmount, setAnimatedAmount] = useState(0)
-  const [showSparkle, setShowSparkle] = useState(false)
+  const [animatedAmount, setAnimatedAmount] = useState(0);
+  const [showSparkle, setShowSparkle] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       // Animate the gain amount
-      const targetAmount = data.hustle_match.balance_details?.amount_gained
-      if (typeof targetAmount !== "number" || isNaN(targetAmount)) return
-      let current = 0
-      const increment = targetAmount / 60
+      const targetAmount = data.hustle_match.balance_details?.amount_gained;
+      if (typeof targetAmount !== "number" || isNaN(targetAmount)) return;
+      let current = 0;
+      const increment = targetAmount / 60;
       const timer = setInterval(() => {
-        current += increment
+        current += increment;
         if (current >= targetAmount) {
-          setAnimatedAmount(targetAmount)
-          clearInterval(timer)
+          setAnimatedAmount(targetAmount);
+          clearInterval(timer);
           // Trigger sparkle effect
-          setShowSparkle(true)
-          setTimeout(() => setShowSparkle(false), 1000)
+          setShowSparkle(true);
+          setTimeout(() => setShowSparkle(false), 1000);
         } else {
-          setAnimatedAmount(Math.floor(current))
+          setAnimatedAmount(Math.floor(current));
         }
-      }, 25)
+      }, 25);
 
-      return () => clearInterval(timer)
+      return () => clearInterval(timer);
     }
-  }, [isOpen, data.hustle_match.balance_details?.amount_gained])
+  }, [isOpen, data.hustle_match.balance_details?.amount_gained]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={setShowModal}>
@@ -84,31 +82,39 @@ const CrystalModal = ({ isOpen, data, setShowModal }: CrystalModalProps) => {
 
         <div className="flex flex-col items-center text-center text-white space-y-6 relative z-10">
           {/* Icon with glow animation */}
-          <motion.div animate={showSparkle ? { scale: [1, 1.2, 1], rotate: [0, 360] } : {}} transition={{ duration: 1 }}>
+          <motion.div
+            animate={
+              showSparkle ? { scale: [1, 1.2, 1], rotate: [0, 360] } : {}
+            }
+            transition={{ duration: 1 }}
+          >
             <CrystalIcon />
           </motion.div>
-
           {/* Title with shimmer effect */}
           <motion.h2
             className="text-6xl font-anton text-[#04DA6A] mt-5 font-black"
             animate={
               showSparkle
                 ? {
-                  textShadow: ["0 0 10px #04DA6A", "0 0 30px #04DA6A", "0 0 10px #04DA6A"],
-                }
+                    textShadow: [
+                      "0 0 5px #04DA6A",
+                      "0 0 10px #04DA6A",
+                      "0 0 5px #04DA6A",
+                    ],
+                  }
                 : {}
             }
           >
             Crystal Ball!(+
             {data.hustle_match.extra_ball_details?.effect_desc?.includes("50")
               ? "50%"
-              : data.hustle_match.extra_ball_details?.effect_desc?.includes("30")
+              : data.hustle_match.extra_ball_details?.effect_desc?.includes(
+                  "30"
+                )
               ? "30%"
               : "20%"}
             )
-          
           </motion.h2>
-
           <Ball
             number={data.hustle_match.number_pick}
             variant={"regular"}
@@ -116,33 +122,13 @@ const CrystalModal = ({ isOpen, data, setShowModal }: CrystalModalProps) => {
             className={cn("transition-all duration-300 w-20 h-20")}
             textClassName="!font-semibold !text-3xl "
           />
-
           {/* Description */}
           <p className="text-lg text-white max-w-xl font-montserrat leading-relaxed">
             {data.hustle_match.extra_ball_details?.effect_desc ||
               `You just earned a ₦${data.hustle_match.balance_details?.amount_gained.toLocaleString()} bonus on top of your winnings! Sometimes the hustle brings unexpected gold. Well played!`}
           </p>
-
-          {/* Animated Amount Gain */}
-          <motion.div
-            className="px-8 py-4 bg-cyan-900/50 rounded-lg border border-cyan-400/30"
-            animate={showSparkle ? { scale: [1, 1.15, 1] } : {}}
-          >
-            <GlowyStrokeText
-              strokeWidth={3}
-              strokeColor="#04DA6A"
-              glowColor="#04DA6A"
-              glowIntensity="high"
-              textclassName="text-[2.5rem] font-black font-gilroyHeavy"
-              fillColor="#fff"
-            >
-              +₦{animatedAmount?.toLocaleString()}
-            </GlowyStrokeText>
-          </motion.div>
-
           <section>
-            <div className="text-lg font-bold text-cyan-300">
-              New Balance</div>
+            <div className="text-lg font-bold text-cyan-300">New Balance</div>
             <motion.div
               className="px-8 py-4 bg-cyan-900/50 rounded-lg border border-cyan-400/30"
               animate={showSparkle ? { scale: [1, 1.15, 1] } : {}}
@@ -155,14 +141,15 @@ const CrystalModal = ({ isOpen, data, setShowModal }: CrystalModalProps) => {
                 textclassName="text-[3.25rem] font-black font-gilroyHeavy"
                 fillColor="#fff"
               >
-                ₦{data.hustle_match.balance_details?.current_balance.toLocaleString()}
+                ₦
+                {data.hustle_match.balance_details?.current_balance.toLocaleString()}
               </GlowyStrokeText>
             </motion.div>
-          </section>        </div>
+          </section>{" "}
+        </div>
       </motion.div>
-
     </Dialog>
-  )
-}
+  );
+};
 
-export default CrystalModal
+export default CrystalModal;

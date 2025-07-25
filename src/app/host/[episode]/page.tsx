@@ -261,13 +261,13 @@ export default function HostPage() {
                 const savedStep = LastStepStorage.getLastStep();
                 console.log("Saved Step:", savedStep)
                 if (savedStep && savedStep.gameEpisode == gameId) {
-                    // setGameState((prevState) => ({
-                    //     ...prevState,
-                    //     currentStage: contestantsData.game.stage || "STAGE_ONE",
-                    //     status: contestantsData.game.status,
-                    // }))
-                    setCurrentUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_SETUP)
-                    updateGameStateFromUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_SETUP)
+                    setGameState((prevState) => ({
+                        ...prevState,
+                        currentStage: contestantsData.game.stage || "STAGE_ONE",
+                        status: contestantsData.game.status,
+                    }))
+                    // setCurrentUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_SETUP)
+                    // updateGameStateFromUniversalStep(savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_SETUP)
                 }
 
             }
