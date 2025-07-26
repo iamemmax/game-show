@@ -64,7 +64,7 @@ const KillerHustlePulledModal = ({ isOpen, data, setShowModal }: KillerModalProp
             number={data.hustle_match.number_pick}
             variant={"mismatched"}
             size="md"
-            className={cn("transition-all duration-300 w-30 h-30")}
+            className={cn("transition-all duration-300 w-32 h-32")}
             textClassName="!font-bold !text-4xl text-white"
           />
           <motion.h2
@@ -73,12 +73,12 @@ const KillerHustlePulledModal = ({ isOpen, data, setShowModal }: KillerModalProp
           >
             Crusher Ball!(-
             {
-            data.hustle_match.extra_ball_details?.effect_desc?.includes("70%")
+            data.hustle_match.extra_ball_details?.effect_desc?.includes("70 percent")
               ? "70%"
               :
-            data.hustle_match.extra_ball_details?.effect_desc?.includes("50%")
+            data.hustle_match.extra_ball_details?.effect_desc?.includes("50 percent")
               ? "50%"
-              : data.hustle_match.extra_ball_details?.effect_desc?.includes("30%")
+              : data.hustle_match.extra_ball_details?.effect_desc?.includes("30 percent")
                 ? "30%"
                 : "20%"}
             )

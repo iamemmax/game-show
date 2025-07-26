@@ -691,7 +691,7 @@ const RafflePickReveal = () => {
             <motion.div transition={{ duration: 0.5 }}>
               <KillerIcon width={200} height={200} />
             </motion.div>
-            <h2 className="text-9xl font-anton text-red-500">
+            <h2 className="text-8xl font-anton text-red-500 text-center">
               OFFER REJECTED!!!
             </h2>
           </article>

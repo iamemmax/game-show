@@ -14,6 +14,7 @@ import { GlowyStrokeText } from "@/components/core/GlowyText"
 import { FlipCountdown } from "@/components/core"
 import { ContestantsResponse } from "@/app/admin/misc/api"
 import { UNIVERSAL_GAME_STEPS } from "@/constants"
+import { useRevertQuestion } from "../misc/api/offer"
 
 interface Stage1QuestionsProps {
   gameEpisode: string | number
@@ -125,9 +126,9 @@ export default function HostStage1Questions({
           }
           toast.error("Failed to reveal stage 1 results")
           console.error("Error revealing stage 1 results:", error)
-          if((error as any).response.data.message == "Stage already ended")
+          if ((error as any).response.data.message == "Stage already ended")
             sendGameMessage("game_s1_results_reveal", {
-              game_id: gameId,
+              game_id: gameEpisode,
             })
         },
       },
@@ -181,6 +182,31 @@ export default function HostStage1Questions({
         },
       },
     )
+  }
+  const {mutate:revertQuestion, isLoading: isRevertingQuestion} = useRevertQuestion()
+  const handleRevertQuestion = () => {
+    if (!currentQuestionData) return
+    const questionId = currentQuestionData.data.question.question.question_id.toString()
+    revertQuestion(
+      { question_id: questionId, game_episode: Number.parseInt(gameEpisode.toString()) },
+      {
+        onSuccess: (data) => {
+          setCurrentQuestionData(null)
+          setTimerActive(false)
+          setTimerSeconds(10)
+          sendGameMessage("game_s1_question_revert", {
+            question_id: questionId,
+            data: data.data,
+          })
+          toast.success("Question reverted successfully")
+        },
+        onError: (error) => {
+          toast.error("Failed to revert question")
+          console.error("Error reverting question:", error)
+        },
+      },
+    )
+
   }
 
   return (
@@ -300,10 +326,15 @@ export default function HostStage1Questions({
       <div className="flex justify-center mt-6">
         {!loading && currentQuestionData && !questionsExhausted && (
           <>
-            {(lastAction === "game_s1_question_bids_reveal" || lastAction == "game_" ) ? (
-              <TrapeziumButton onClick={() => refetchQuestionResultData()} variant="purple" data-remote-target="true">
-                REVEAL QUESTION RESULT
-              </TrapeziumButton>
+            {(lastAction === "game_s1_question_bids_reveal" || lastAction == "game_") ? (
+              <div className="flex items-center gap-2">
+                <TrapeziumButton onClick={handleRevertQuestion} variant="purple" data-remote-target="true">
+                  REVERT QUESTION
+                </TrapeziumButton>
+                <TrapeziumButton onClick={() => refetchQuestionResultData()} variant="purple" data-remote-target="true">
+                  REVEAL QUESTION RESULT
+                </TrapeziumButton>
+              </div>
             ) :
               (step !== UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING && step !== UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL) ?
                 (

@@ -279,7 +279,21 @@ const HustleBoardPage = () => {
           <>
             {gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_RESULTS && (
               <motion.div
-                key={gameState.step}
+                key={"stage-2-results"}
+                className="h-full"
+                {...motionProps}
+              >
+                <HustleBoardStageTallyPage
+                  eliminationCount={0}
+                  removeCount={0}
+                  activeState={2}
+                  title={"Hustle Board"}
+                />
+              </motion.div>
+            )}
+            {gameState.step === UNIVERSAL_GAME_STEPS.STAGE3_INIT && (
+              <motion.div
+                key={"stage-2-results"}
                 className="h-full"
                 {...motionProps}
               >

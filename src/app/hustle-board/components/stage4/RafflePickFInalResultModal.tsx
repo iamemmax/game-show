@@ -61,7 +61,7 @@ const RafflePickFInalResultModal = ({ isOpen, data, setShowModal, contestant }: 
             </article>
 
             <h2 className={cn(
-                "text-5xl font-anton text-center font-balance",
+                "text-5xl font-anton text-center font-balance mt-5",
                 isGoldenCard
                     ? "text-black"
                     : "text-yellow-500"
@@ -70,7 +70,7 @@ const RafflePickFInalResultModal = ({ isOpen, data, setShowModal, contestant }: 
                     textShadow: "0 0 2px #FFD700, 0 0 12px #FFA500, 0 0 2px #FFD700"
                 } : {}}
             >
-                {contestant?.name || "Contestant"}'s Final Result
+                {contestant?.name || "Contestant"}
             </h2>
 
             <h5

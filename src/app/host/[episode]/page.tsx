@@ -237,14 +237,24 @@ export default function HostPage() {
                 lastAction: eventCode,
                 step: UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS,
             }))
-        } else if (eventCode === "game_s1_results_reveal") {
+        } 
+        else if (eventCode === "game_s1_results_reveal") {
             setGameState((prev) => ({
                 ...prev,
                 lastAction: eventCode,
                 stage: "STAGE_TWO",
                 step: UNIVERSAL_GAME_STEPS.STAGE2_INIT,
             }))
-        } else if (eventCode === "game_s2_init") {
+        } 
+        else if (eventCode === "game_s2_question_revert") {
+            setGameState((prev) => ({
+                ...prev,
+                lastAction: eventCode,
+                stage: "STAGE_TWO",
+                step: UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS,
+            }))
+        } 
+        else if (eventCode === "game_s2_init") {
             setGameState((prev) => ({
                 ...prev,
                 lastAction: eventCode,
