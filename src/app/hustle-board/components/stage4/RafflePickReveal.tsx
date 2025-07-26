@@ -2,9 +2,11 @@
 import { useMemo, useEffect, useState, useCallback } from "react"
 import { animate, motion } from "framer-motion"
 import { useParams } from "next/navigation"
+
+import NumberFlow from '@number-flow/react'
 import Logo from "@/app/icons/Logo"
 import HeaderTitleContainer from "@/app/shared/HeaderContainer"
-import { GlowyStrokeText } from "@/components/core"
+import { Dialog, DialogBody, DialogContent, DialogHeader, GlowyStrokeText } from "@/components/core"
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy"
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages"
 import NumberCardContainer from "@/app/shared/NumberContainer"
@@ -31,6 +33,9 @@ import Image from "next/image"
 import type { MQTTMessage } from "@/contexts/MQTTProvider"
 import RaffleRevealModalMatchSection from "./RaffleRevealModalMatchSection"
 import RafflePickFInalResultModal from "./RafflePickFInalResultModal"
+import AnimatedNumber from "@/utils/AnimatedNumber"
+import RafflePickRevealBankerOfferModal from "./RafflePickRevealBankerOfferModal"
+import KillerIcon from "@/app/icons/KillerIcon"
 
 // Types for MQTT data
 interface ExtraBallDetails {
@@ -73,6 +78,10 @@ const RafflePickReveal = () => {
   const [animatingBall, setAnimatingBall] = useState<number | null>(null)
   const [currentResult, setCurrentResult] = useState<BallPickedPayload | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [showOfferModal, setShowOfferModal] = useState(false)
+  const [showMOfferAcceptModal, setShowOfferAcceptModal] = useState(false)
+  const [showMOfferRejectModal, setShowOfferRejectModal] = useState(false)
+  const [offerValue, setOfferValue] = useState(0)
   const [ShowStage4Prep, setShowStage4Prep] = useState(true)
 
   // Fetch hustle matches data (what each ball contains)
@@ -94,9 +103,8 @@ const RafflePickReveal = () => {
   })
 
   const mynumbers = lastPickData && lastPickData[0]?.picks
-
-  // Fixed: Create a more comprehensive revealed numbers state
   const [revealedNumbers, setRevealedNumbers] = useState<number[]>([])
+
 
   // Initialize revealed numbers from matched hustles data
   useEffect(() => {
@@ -108,9 +116,7 @@ const RafflePickReveal = () => {
     }
   }, [matchedHustlesData])
 
-  console.log("revealedNumbers", revealedNumbers)
 
-  // Check how many numbers match - Fixed to use mynumbers and revealedNumbers correctly
   const matchedCount = useMemo(() => {
     if (!mynumbers || !revealedNumbers.length) return 0
     return revealedNumbers.filter((num) => mynumbers.includes(num)).length
@@ -133,7 +139,7 @@ const RafflePickReveal = () => {
         setDisplayCount(Math.round(latest))
       },
     })
-    return controls.stop // cleanup on unmount or value change
+    return controls.stop
   }, [matchedCount])
 
   // Ball animation and reveal logic
@@ -152,12 +158,17 @@ const RafflePickReveal = () => {
   // Handle MQTT messages
   useEffect(() => {
     const handleMQTTMessage = (message: MQTTMessage) => {
+
       const result = message.payload as BallPickedPayload
       if (message.event === "game_s4_start") {
         setShowStage4Prep(false)
       }
       if (message.event === "close_reveal_modal") {
         setShowModal(false)
+        setShowOfferModal(false)
+        setShowOfferAcceptModal(false)
+        setShowOfferRejectModal(false)
+        setFinalResult(null)
       }
       if (message.event === "ball_picked") {
         const { hustle_match } = result
@@ -169,6 +180,23 @@ const RafflePickReveal = () => {
         })
         animateBallReveal(hustle_match.number_pick, result)
         refetch()
+      }
+      if (message.event == "game_s4_make_offer") {
+        if (episodeId !== message.payload.game_episode) return
+        setOfferValue(message.payload.amount)
+        setShowOfferModal(true)
+      }
+      if (message.event == "game_s4_reject_offer") {
+        if (episodeId !== message.payload.game_episode) return
+        setOfferValue(message.payload.amount)
+        setShowOfferModal(false)
+        setShowOfferRejectModal(true)
+      }
+      if (message.event == "game_s4_accept_offer") {
+        if (episodeId !== message.payload.game_episode) return
+        setOfferValue(message.payload.amount)
+        setShowOfferModal(false)
+        setShowOfferAcceptModal(true)
       }
       if (message.event === "game_s4_final_result_reveal") {
         refetch()
@@ -442,9 +470,9 @@ const RafflePickReveal = () => {
                         animate={
                           animatingBall === ballNumber
                             ? {
-                                scale: [1, 2, 1],
-                                y: [0, -20, 0],
-                              }
+                              scale: [1, 2, 1],
+                              y: [0, -20, 0],
+                            }
                             : {}
                         }
                         transition={{ duration: 1, ease: "easeOut" }}
@@ -489,9 +517,9 @@ const RafflePickReveal = () => {
                         animate={
                           animatingBall === item?.number_pick
                             ? {
-                                scale: [1, 2, 1],
-                                y: [0, -20, 0],
-                              }
+                              scale: [1, 2, 1],
+                              y: [0, -20, 0],
+                            }
                             : {}
                         }
                         transition={{ duration: 1, ease: "easeOut" }}
@@ -591,16 +619,16 @@ const RafflePickReveal = () => {
                   number={currentResult?.hustle_match.number_pick}
                   variant={"mismatched"}
                   size="md"
-                  className={cn("transition-all duration-300 w-20 h-20")}
-                  textClassName="!font-semibold !text-3xl"
+                  className={cn("transition-all duration-300 w-32 h-32")}
+                  textClassName="!font-bold !text-5xl"
                 />
                 <div className="flex flex-col items-center text-center text-white space-y-6">
-                  <h2 className="text-6xl font-anton text-red-500">No Match</h2>
+                  <h2 className="text-7xl font-anton text-red-500">No Match</h2>
                   <RaffleRevealModalMatchSection
                     getNumberMatchStatus={getNumberMatchStatus}
                     mynumbers={mynumbers}
                     matchedHustlesData={matchedHustlesData}
-                    revealedNumbers={currentRevealedNumbers} // Fixed: Use currentRevealedNumbers
+                    revealedNumbers={currentRevealedNumbers}
                   />
                 </div>
               </article>
@@ -615,16 +643,16 @@ const RafflePickReveal = () => {
                   number={currentResult?.hustle_match.number_pick}
                   variant={"matched"}
                   size="md"
-                  className={cn("transition-all duration-300 w-20 h-20")}
-                  textClassName="!font-semibold !text-3xl"
+                  className={cn("transition-all duration-300 w-32 h-32")}
+                  textClassName="!font-bold !text-5xl"
                 />
                 <div className="flex flex-col items-center text-center text-white space-y-6">
-                  <h2 className="text-6xl font-anton text-green-500">Match</h2>
+                  <h2 className="text-7xl font-anton text-green-500">Match</h2>
                   <RaffleRevealModalMatchSection
                     getNumberMatchStatus={getNumberMatchStatus}
                     mynumbers={mynumbers}
                     matchedHustlesData={matchedHustlesData}
-                    revealedNumbers={currentRevealedNumbers} // Fixed: Use currentRevealedNumbers
+                    revealedNumbers={currentRevealedNumbers}
                   />
                 </div>
               </article>
@@ -650,6 +678,32 @@ const RafflePickReveal = () => {
         </div>
       )}
 
+
+
+
+      {showMOfferRejectModal && contestantsData?.data?.find((contestant) => contestant.id === lastContestantId) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm font-montserrat">
+          <article
+            className={cn(
+              "relative flex flex-col items-center justify-center max-w-2xl w-full px-4 rounded-2xl h-[70vh]",
+            )}
+          >
+            <motion.div transition={{ duration: 0.5 }}>
+              <KillerIcon width={200} height={200} />
+            </motion.div>
+            <h2 className="text-9xl font-anton text-red-500">
+              OFFER REJECTED!!!
+            </h2>
+          </article>
+        </div>
+      )}
+
+
+      <RafflePickRevealBankerOfferModal
+        isOpen={showOfferModal}
+        offerAmount={offerValue}
+        setShowModal={setShowOfferModal}
+      />
       {/* Loading Overlay */}
       {(isLoadingMatches || isLoadingMatched) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 !font-montserrat">

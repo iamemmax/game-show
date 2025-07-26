@@ -1,22 +1,20 @@
 "use client"
-import { type SetStateAction, useEffect, useRef } from "react"
+import { Dispatch, type SetStateAction, useEffect, useRef } from "react"
 import { useCallback } from "react"
 
 import { useMQTT, useMQTTTopic } from "@/hooks/useMqttService"
-import { UNIVERSAL_GAME_STEPS, type UniversalGameStep } from "@/constants"
+import { getStageFromStep, UNIVERSAL_GAME_STEPS, type UniversalGameStep } from "@/constants"
 import type { MQTTMessage } from "@/contexts/MQTTProvider"
+import { TEpisodeInfo } from "@/app/admin/misc/api"
 
 interface GameSynchroniserProps {
-  participantId: string
   gameId: string
+  participantId: string
   participantType: "contestant" | "host" | "audience"
   participantName: string
-  currentScreen: string
-  currentStep: UniversalGameStep
-  gameStage: string
-  contestantId?: number
-  setCurrentUniversalStep: (value: SetStateAction<UniversalGameStep>) => void
-  updateGameStateFromUniversalStep: (step: UniversalGameStep) => void
+  gameState: TEpisodeInfo
+  setGameState: Dispatch<SetStateAction<TEpisodeInfo>>
+  contestantId?: string
 }
 
 /**
@@ -28,35 +26,32 @@ export function GameSynchroniser({
   gameId,
   participantType,
   participantName,
-  currentScreen,
-  currentStep,
-  gameStage,
-  contestantId,
-  setCurrentUniversalStep,
-  updateGameStateFromUniversalStep,
+  gameState,
+  setGameState,
+  contestantId
 }: GameSynchroniserProps) {
   const { isConnected, sendMessage } = useMQTT()
-  const lastScreenRef = useRef(currentScreen)
-  const lastStepRef = useRef(currentStep)
+  const lastScreenRef = useRef(gameState.step)
+  const lastStepRef = useRef(gameState.step)
   const heartbeatIntervalRef = useRef<NodeJS.Timeout>()
 
   // Refs to hold the latest prop values for the heartbeat interval and message handler
-  const currentScreenPropRef = useRef(currentScreen)
-  const currentStepPropRef = useRef(currentStep)
-  const gameStagePropRef = useRef(gameStage)
+  const currentScreenPropRef = useRef(gameState.step)
+  const currentStepPropRef = useRef(gameState.step)
+  const gameStagePropRef = useRef(gameState.step)
 
   // Update refs whenever props change
   useEffect(() => {
-    currentScreenPropRef.current = currentScreen
-  }, [currentScreen])
+    currentScreenPropRef.current = gameState.step
+  }, [gameState.step])
 
   useEffect(() => {
-    currentStepPropRef.current = currentStep
-  }, [currentStep])
+    currentStepPropRef.current = gameState.step
+  }, [gameState.step])
 
   useEffect(() => {
-    gameStagePropRef.current = gameStage
-  }, [gameStage])
+    gameStagePropRef.current = gameState.stage
+  }, [gameState.stage])
 
   // Send connection status when connection state changes or periodically
   useEffect(() => {
@@ -114,7 +109,7 @@ export function GameSynchroniser({
 
   // Send screen change notification when screen changes
   useEffect(() => {
-    if (lastScreenRef.current !== currentScreen && isConnected) {
+    if (lastScreenRef.current !== gameState.step && isConnected) {
       sendMessage(
         {
           event: "participant_screen_change",
@@ -122,19 +117,19 @@ export function GameSynchroniser({
             participant_id: participantId,
             participant_type: participantType,
             previous_screen: lastScreenRef.current,
-            current_screen: currentScreen,
+            current_screen: gameState.step,
             timestamp: new Date().toISOString(),
           },
         },
         `/game-sync/${gameId}`,
       ).catch(console.error)
-      lastScreenRef.current = currentScreen
+      lastScreenRef.current = gameState.step
     }
-  }, [currentScreen, isConnected, participantId, participantType, sendMessage, gameId])
+  }, [gameState.step, isConnected, participantId, participantType, sendMessage, gameId])
 
   // Send step change notification when universal step changes
   useEffect(() => {
-    if (lastStepRef.current !== currentStep && isConnected) {
+    if (lastStepRef.current !== gameState.step && isConnected) {
       sendMessage(
         {
           event: "participant_step_change",
@@ -142,15 +137,15 @@ export function GameSynchroniser({
             participant_id: participantId,
             participant_type: participantType,
             previous_step: lastStepRef.current,
-            current_step: currentStep,
+            current_step: gameState.step,
             timestamp: new Date().toISOString(),
           },
         },
         `/game-sync/${gameId}`,
       ).catch(console.error)
-      lastStepRef.current = currentStep
+      lastStepRef.current = gameState.step
     }
-  }, [currentStep, isConnected, participantId, participantType, sendMessage, gameId])
+  }, [gameState.step, isConnected, participantId, participantType, sendMessage, gameId])
 
   // Listen for commands from super admin using useMQTTTopic
   useMQTTTopic(
@@ -159,92 +154,158 @@ export function GameSynchroniser({
       (message: MQTTMessage) => {
         switch (message.event) {
           case "game_start":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_INIT)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_INIT)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE1_INIT,
+              stage: "STAGE_ONE",
+            }))
             break
           case "game_s1_init":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK,
+              stage: "STAGE_ONE",
+            }))
             break
           case "game_s1_hustle_pick_time_elapse":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_REVEAL)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_REVEAL)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_REVEAL,
+              stage: "STAGE_ONE",
+            }))
             break
           case "game_s1_hustle_reveal":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS_PREP)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS_PREP)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS_PREP,
+              stage: "STAGE_ONE",
+            }))
             break
           case "game_s1_questions_prep":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS,
+              stage: "STAGE_ONE",
+            }))
             break
           case "game_s1_question_reveal":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL,
+              stage: "STAGE_ONE",
+            }))
             break
           case "game_s1_timer_start":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING,
+              stage: "STAGE_ONE",
+            }))
             break
           case "game_s1_question_bids_reveal":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL)
-            break         
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL,
+              stage: "STAGE_ONE",
+            }))
+            break
           case "game_s1_results_reveal":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_RESULTS)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE1_RESULTS)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE1_RESULTS,
+              stage: "STAGE_ONE",
+            }))
             break
           case "game_s2_init":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_PREP)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_PREP)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE2_PREP,
+              stage: "STAGE_TWO",
+            }))
             break
           case "game_s2_prep":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS,
+              stage: "STAGE_TWO",
+            }))
             break
           case "game_s2_question_reveal":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_REVEAL)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_REVEAL)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_REVEAL,
+              stage: "STAGE_TWO",
+            }))
             break
           case "game_s2_timer_start":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_TIMER_RUNNING)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_TIMER_RUNNING)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE2_TIMER_RUNNING,
+              stage: "STAGE_TWO",
+            }))
             break
           case "game_s2_results_reveal":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_RESULTS)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE2_RESULTS)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE2_RESULTS,
+              stage: "STAGE_TWO",
+            }))
             break
           case "game_s3_init":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PREP)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PREP)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE3_PREP,
+              stage: "STAGE_THREE",
+            }))
             break
           case "game_s3_prep":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START,
+              stage: "STAGE_THREE",
+            }))
             break
           case "game_s3_start":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START,
+              stage: "STAGE_THREE",
+            }))
             break
           case "game_s3_end":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_END)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE3_END)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE3_END,
+              stage: "STAGE_THREE",
+            }))
             break
           case "game_s4_init":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_INIT)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE4_INIT,
+              stage: "STAGE_FOUR",
+            }))
             break
           case "game_s4_prep":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_PREP)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_PREP)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE4_PREP,
+              stage: "STAGE_FOUR",
+            }))
             break
           case "game_s4_raffle":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_RAFFLE)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.STAGE4_RAFFLE)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.STAGE4_RAFFLE,
+              stage: "STAGE_FOUR",
+            }))
             break
           case "game_end":
-            setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_END)
-            updateGameStateFromUniversalStep(UNIVERSAL_GAME_STEPS.GAME_END)
+            setGameState((prevState) => ({
+              ...prevState,
+              step: UNIVERSAL_GAME_STEPS.GAME_END,
+              stage: "GAME_END",
+            }))
             break
           case "system_heartbeat_request":
             sendMessage(
@@ -282,10 +343,13 @@ export function GameSynchroniser({
             }
             break
           case "universal_step_change":
-            console.log("Universal step change received:", message.payload)
             const { new_universal_step } = message.payload
-            setCurrentUniversalStep(new_universal_step)
-            updateGameStateFromUniversalStep(new_universal_step)
+
+            setGameState((prevState) => ({
+              ...prevState,
+              step: new_universal_step as UniversalGameStep,
+              stage: getStageFromStep(new_universal_step),
+            }))
             break
           default:
             break
@@ -297,8 +361,8 @@ export function GameSynchroniser({
         participantName,
         contestantId,
         sendMessage,
-        setCurrentUniversalStep,
-        updateGameStateFromUniversalStep,
+        setGameState,
+        getStageFromStep,
         gameId,
       ],
     ),

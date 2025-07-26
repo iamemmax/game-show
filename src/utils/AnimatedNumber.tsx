@@ -5,9 +5,11 @@ import { useEffect, useState } from "react";
 interface AnimatedNumberProps {
   value: number;
   prefix?: string;
+  className?: string;
+  
 }
 
-export default function AnimatedNumber({ value, prefix = "₦" }: AnimatedNumberProps) {
+export default function AnimatedNumber({ value, prefix = "₦", className }: AnimatedNumberProps) {
   const spring = useSpring(value, { stiffness: 100, damping: 20 });
   const transformed = useTransform(spring, (latest) =>
     Math.floor(latest).toLocaleString()
@@ -24,7 +26,7 @@ export default function AnimatedNumber({ value, prefix = "₦" }: AnimatedNumber
   }, [value]);
 
   return (
-    <motion.span>
+    <motion.span className={className}>
       {prefix}
       {display}
     </motion.span>

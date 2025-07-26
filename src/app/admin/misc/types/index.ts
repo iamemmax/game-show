@@ -6,6 +6,7 @@ export interface DebitWalletData {
   data: Data;
   question_index: number;
   show_modal: boolean;
+  from_reveal: boolean;
 }
 
 interface Data {

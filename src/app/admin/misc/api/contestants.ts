@@ -31,19 +31,24 @@ export interface Contestant {
 }
 
 
-interface GameInfo {
+export type TGameInfo = {
   game_episode: number
   game_nick: string
   status: string
   stage: string
   reveal_step_count: "SINGLE" | "DOUBLE"
 }
+export type TEpisodeInfo = TGameInfo & {
+  lastAction: string;
+  showQuestions: boolean;
+  step: string;
+}
 
 export interface ContestantsResponse {
   status: string
   message: string
   data: Contestant[]
-  game: GameInfo
+  game: TGameInfo
 }
 
 interface AssignContestantRequest {

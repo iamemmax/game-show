@@ -1,33 +1,27 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { tokenStorage } from "@/utils/auth";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
-import { useGetGameContestants } from "@/app/admin/misc/api";
+import { TEpisodeInfo, useGetGameContestants } from "@/app/admin/misc/api";
 import HustleBoardNumberPicks from "../components/HustleBoardNumberPicks";
 import ReviewHustle from "../components/ReviewHustle";
 import Stage1QuestionScreen from "../components/Stage1QuestionScreen";
 import ViewOnlyQuestionTwoScreen from "../components/statge2/StageTwoQuestionScreen";
 import Stage3BoardGetReadyPage from "../components/stage3/Stage3GetReadyScreen";
-import Stage4BoardGetReadyPage from "../components/stage4/ShowStage4Prep";
 import RafflePickReveal from "../components/stage4/RafflePickReveal";
 import { GameSynchroniser } from "@/components/gameplay/Heartbeat";
-import { UNIVERSAL_GAME_STEPS, UniversalGameStep } from "@/constants";
-import GetHustleBoardReadyScreen from "../components/GettHustleBoardReadyScreen";
+import { getStageFromStep, UNIVERSAL_GAME_STEPS, UniversalGameStep } from "@/constants";
 import HustleBoardStageTallyPage from "../components/HustleBoardStageTally";
-import StageTwoGetReadyStage from "../components/statge2/StageTwoGetReadyStage";
 import { useMQTT } from "@/hooks/useMqttService";
 import { LastStepStorage } from "@/lib/lastStep";
 import Stage3CardSelectionScreens from "../components/stage3/Stage3CardSelectionScreen";
 import WelcomeUserStory from "../components/WelcomeUserStory";
 
-const LOCAL_STORAGE_KEY = "hustle_board_last_step";
 
-const ContestantHomePage = () => {
+const HustleBoardPage = () => {
   const params = useParams();
   const [isInitialized, setIsInitialized] = useState(false);
   const initializationRef = useRef(false);
-
 
 
   const gameEpisode = params?.episodeId;
@@ -40,16 +34,21 @@ const ContestantHomePage = () => {
     // Add message listener for game sync events
     const handleMQTTMessage = (message: any) => {
       if (message?.topic.includes("/game-sync")) return;
-      console.log(message.payload);
       if (message.payload.source === "host" && Number(message.payload.game_episode as string) === Number(gameEpisode)) {
-        console.log(message, "Hustleboard received message from host");
+        console.log(
+          "host received message from host:", message
+        )
+        setGameState((prev) => ({
+          ...prev,
+          step: message.event as string,
+          stage: getStageFromStep(message.event)
+        }))
         LastStepStorage.setLastStep({
           step: message.event,
           gameEpisode: Array.isArray(gameEpisode)
             ? gameEpisode[0]
             : gameEpisode,
         });
-        updateGameStateFromUniversalStep(message.event as UniversalGameStep);
       }
     };
 
@@ -92,237 +91,49 @@ const ContestantHomePage = () => {
       initializationRef.current = true;
 
       const savedStep = LastStepStorage.getLastStep();
-      console.log("Saved Step:", savedStep);
+      const savedStepStage = getStageFromStep(savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_START);
 
-      setGameState((prevState) => ({
-        ...prevState,
-        currentStage: contestantsData.game.stage || "STAGE_ONE",
-        status: contestantsData.game.status,
-        contestants: contestantsData.data,
-      }));
-
-      // Set active tab based on current stage
-      if (contestantsData.game.stage?.includes("STAGE_ONE")) {
-        if (contestantsData.game.status == "IN_ACTIVE") {
-          setGameState((prevState) => ({
-            ...prevState,
-            currentStageStep: "setup",
-          }));
-          setCurrentUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP);
-        } else {
-          setCurrentUniversalStep(
-            savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_START
-          );
-          updateGameStateFromUniversalStep(
-            savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_START
-          );
-        }
-      } else if (contestantsData.game.stage?.includes("STAGE_TWO")) {
-        setCurrentUniversalStep(
-          savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE2_INIT
-        );
-        updateGameStateFromUniversalStep(
-          savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE2_INIT
-        );
-      } else if (contestantsData.game.stage?.includes("STAGE_THREE")) {
-        setCurrentUniversalStep(
-          savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE3_INIT
-        );
-        updateGameStateFromUniversalStep(
-          savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE3_INIT
-        );
-      } else if (contestantsData.game.stage?.includes("STAGE_FOUR")) {
-        setCurrentUniversalStep(
-          savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE4_INIT
-        );
-        updateGameStateFromUniversalStep(
-          savedStep?.step || UNIVERSAL_GAME_STEPS.STAGE4_INIT
-        );
+      if (savedStepStage !== contestantsData.game.stage) {
+        LastStepStorage.setLastStep({
+          step: UNIVERSAL_GAME_STEPS.GAME_SETUP,
+          gameEpisode: gameEpisode as string,
+        });
       }
+      else {
+        LastStepStorage.setLastStep({
+          step: savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_START,
+          gameEpisode: gameEpisode as string,
+        });
+        setGameState((prevState) => ({
+          ...prevState,
+          step: savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_START,
+          stage: contestantsData.game.stage || "STAGE_ONE",
+          game_episode: Number(gameEpisode),
+          game_nick: contestantsData.game.game_nick || "",
+          status: contestantsData.game.status || "IN_ACTIVE",
+          reveal_step_count: contestantsData.game.reveal_step_count || "SINGLE",
+        }));
+      }
+
       setIsInitialized(true);
     }
   }, [contestantsData, isLoadingContestants, isLoading, gameEpisode]);
 
-  const [currentUniversalStep, setCurrentUniversalStep] =
-    useState<UniversalGameStep>(UNIVERSAL_GAME_STEPS.GAME_SETUP);
-  const [gameState, setGameState] = useState<{
-    currentStage: string;
-    status: string;
-    lastAction: string;
-    currentQuestion: number;
-    contestants: any[];
-    showQuestions: boolean;
-    currentStageStep: string;
-  }>({
-    currentStage: "STAGE_ONE",
-    status: "",
+
+  const [gameState, setGameState] = useState<TEpisodeInfo>({
+    game_episode: Number(gameEpisode),
+    game_nick: "",
+    status: "IN_ACTIVE",
+    stage: "STAGE_ONE",
+    reveal_step_count: "SINGLE",
     lastAction: "",
-    currentQuestion: 0,
-    contestants: [],
     showQuestions: false,
-    currentStageStep: "init",
+    step: UNIVERSAL_GAME_STEPS.GAME_SETUP,
   });
 
-  const updateGameStateFromUniversalStep = (step: UniversalGameStep) => {
-    switch (step) {
-      case UNIVERSAL_GAME_STEPS.GAME_SETUP:
-        setGameState((prev) => ({
-          ...prev,
-          status: "IN_PROGRESS",
-          currentStage: "STAGE_ONE",
-          currentStageStep: "setup",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.GAME_START:
-        setGameState((prev) => ({
-          ...prev,
-          status: "IN_PROGRESS",
-          currentStage: "STAGE_ONE",
-          currentStageStep: "start",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE1_INIT:
-        setGameState((prev) => ({
-          ...prev,
-          currentStage: "STAGE_ONE",
-          currentStageStep: "init",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "hustle_pick",
-          currentStage: "STAGE_ONE",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_REVEAL:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "hustle_reveal",
-          currentStage: "STAGE_ONE",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS_PREP:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "prep_questions",
-          currentStage: "STAGE_ONE",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "questions",
-          showQuestions: true,
-          currentStage: "STAGE_ONE",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "question_reveal",
-          currentStage: "STAGE_ONE",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "timer_running",
-          currentStage: "STAGE_ONE",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "bids_reveal",
-          currentStage: "STAGE_ONE",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE1_RESULTS:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "results",
-          currentStage: "STAGE_ONE",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE2_INIT:
-        setGameState((prev) => ({
-          ...prev,
-          currentStage: "STAGE_TWO",
-          currentStageStep: "init",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE2_PREP:
-        setGameState((prev) => ({
-          ...prev,
-          currentStage: "STAGE_TWO",
-          currentStageStep: "prep_questions",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "questions",
-          showQuestions: true,
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE2_OPTIONS_REVEAL:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "questions",
-          showQuestions: true,
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE2_OPTIONS_REVEAL:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "questions",
-          showQuestions: true,
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_RESULT_REVEAL:
-        setGameState((prev) => ({
-          ...prev,
-          currentStageStep: "questions",
-          showQuestions: true,
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE3_INIT:
-        setGameState((prev) => ({
-          ...prev,
-          currentStage: "STAGE_THREE",
-          currentStageStep: "init",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START:
-        setGameState((prev) => ({
-          ...prev,
-          currentStage: "STAGE_THREE",
-          currentStageStep: "dud_or_pass_picks_start",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE4_INIT:
-        setGameState((prev) => ({
-          ...prev,
-          currentStage: "STAGE_FOUR",
-          currentStageStep: "init",
-        }));
-        break;
-      case UNIVERSAL_GAME_STEPS.STAGE4_RAFFLE:
-        setGameState((prev) => ({
-          ...prev,
-          currentStage: "STAGE_FOUR",
-          currentStageStep: "game_s4_start",
-        }));
-        break;
-      default:
-        break;
-    }
-  };
-  console.log("Game State:", gameState);
-  console.log("Current Universal Step:", currentUniversalStep);
 
-  if (!isInitialized || currentUniversalStep === null) {
+
+  if (!isInitialized || gameState.step === null) {
     return (
       <div className="fixed top-0 right-0 m-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
@@ -335,10 +146,10 @@ const ContestantHomePage = () => {
 
 
       <AnimatePresence mode="wait">
-        {gameState.currentStage.includes("STAGE_ONE") && (
+        {gameState.stage.includes("STAGE_ONE") && (
           <>
             {(
-              gameState.currentStageStep === "setup"
+              gameState.step === UNIVERSAL_GAME_STEPS.GAME_SETUP
             ) && (
                 <motion.div
                   key={"welcome-user-story"}
@@ -348,9 +159,13 @@ const ContestantHomePage = () => {
                   <WelcomeUserStory />
                 </motion.div>
               )}
-            {(gameState.currentStageStep === "init" ||
-            gameState.currentStageStep === "start"  ||
-              gameState.currentStageStep === "hustle_pick") && (
+            {(
+              (
+                gameState.step === UNIVERSAL_GAME_STEPS.GAME_START ||
+                gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_INIT ||
+                gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK ||
+                gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK_TIME_ELAPSE
+              )) && (
                 <motion.div
                   key={"number-pick"}
                   className="h-full"
@@ -358,10 +173,11 @@ const ContestantHomePage = () => {
                 >
                   <HustleBoardNumberPicks />
                 </motion.div>
-              )}
-            {gameState.currentStageStep === "hustle_reveal" && (
+              )
+            }
+            {gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_REVEAL && (
               <motion.div
-                key={gameState.currentStageStep}
+                key={gameState.step}
                 className="h-full"
                 {...motionProps}
               >
@@ -369,12 +185,17 @@ const ContestantHomePage = () => {
               </motion.div>
             )}
 
-            {(gameState.currentStageStep === "prep_questions" ||
-              gameState.currentStageStep === "questions" ||
-              gameState.currentStageStep === "question_reveal" ||
-              gameState.currentStageStep === "timer_running" ||
-              gameState.currentStageStep === "bids_reveal" ||
-              gameState.currentStageStep === "question_result_reveal") && (
+            {
+              (
+                (
+                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS_PREP ||
+                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS ||
+                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL ||
+                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING ||
+                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL ||
+                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_RESULT_REVEAL
+                )
+              ) && (
                 <motion.div
                   key={"question-section"}
                   className="h-full"
@@ -383,9 +204,9 @@ const ContestantHomePage = () => {
                   <Stage1QuestionScreen />
                 </motion.div>
               )}
-            {gameState.currentStageStep === "results" && (
+            {gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_RESULTS && (
               <motion.div
-                key={gameState.currentStageStep}
+                key={gameState.step}
                 className="h-full"
                 {...motionProps}
               >
@@ -399,11 +220,11 @@ const ContestantHomePage = () => {
             )}
           </>
         )}
-        {gameState.currentStage.includes("STAGE_TWO") && (
+        {gameState.stage.includes("STAGE_TWO") && (
           <>
-            {gameState.currentStageStep === "init" && (
+            {gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_INIT && (
               <motion.div
-                key={gameState.currentStageStep}
+                key={gameState.step}
                 className="h-full"
                 {...motionProps}
               >
@@ -416,15 +237,19 @@ const ContestantHomePage = () => {
               </motion.div>
             )}
 
-            {(gameState.currentStageStep === "prep_questions" ||
-              gameState.currentStageStep === "questions" ||
-              gameState.currentStageStep === "question_reveal" ||
-              gameState.currentStageStep === "timer_running" ||
-              gameState.currentStageStep === "bids_reveal" ||
-              gameState.currentStageStep === "question_result_reveal") && (
+            {(
+              (
+                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_PREP ||
+                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS ||
+                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_REVEAL ||
+                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_TIMER_RUNNING ||
+                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_RESULT_REVEAL ||
+                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_OPTIONS_SELECT_REVEAL
+              )
+            ) && (
                 <motion.div
                   key={
-                    gameState.currentStageStep === "prep_questions"
+                    gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_PREP
                       ? "stage-2-prep"
                       : "question-section"
                   }
@@ -434,7 +259,7 @@ const ContestantHomePage = () => {
                   <ViewOnlyQuestionTwoScreen />
                 </motion.div>
               )}
-            {gameState.currentStageStep === "results" && (
+            {gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_RESULTS && (
               <motion.div
                 key={"stage-2-results"}
                 className="h-full"
@@ -450,11 +275,11 @@ const ContestantHomePage = () => {
             )}
           </>
         )}
-        {gameState.currentStage.includes("STAGE_THREE") && (
+        {gameState.stage.includes("STAGE_THREE") && (
           <>
-            {gameState.currentStageStep === "init" && (
+            {gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_RESULTS && (
               <motion.div
-                key={gameState.currentStageStep}
+                key={gameState.step}
                 className="h-full"
                 {...motionProps}
               >
@@ -466,18 +291,18 @@ const ContestantHomePage = () => {
                 />
               </motion.div>
             )}
-            {gameState.currentStageStep === "game_s3_prep" && (
+            {gameState.step === UNIVERSAL_GAME_STEPS.STAGE3_PREP && (
               <motion.div
-                key={gameState.currentStageStep}
+                key={gameState.step}
                 className="h-full"
                 {...motionProps}
               >
                 <Stage3BoardGetReadyPage />
               </motion.div>
             )}
-            {gameState.currentStageStep === "dud_or_pass_picks_start" && (
+            {gameState.step === UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START && (
               <motion.div
-                key={gameState.currentStageStep}
+                key={gameState.step}
                 className="h-full"
                 {...motionProps}
               >
@@ -485,23 +310,10 @@ const ContestantHomePage = () => {
               </motion.div>
             )}
 
-            {gameState.currentStageStep === "results" && (
-              <motion.div
-                key={"stage-2-results"}
-                className="h-full"
-                {...motionProps}
-              >
-                <HustleBoardStageTallyPage
-                  eliminationCount={2}
-                  removeCount={2}
-                  title={"Hustle Board"}
-                  activeState={2}
-                />
-              </motion.div>
-            )}
+
           </>
         )}
-        {gameState.currentStage.includes("STAGE_FOUR") && (
+        {gameState.stage.includes("STAGE_FOUR") && (
           <>
             <motion.div key="step6" className="h-full" {...motionProps}>
               <RafflePickReveal />
@@ -515,13 +327,8 @@ const ContestantHomePage = () => {
         participantId={`audience-${gameEpisode}`}
         participantType="audience"
         participantName="Game Audience"
-        currentScreen={gameState.currentStageStep || "init"}
-        currentStep={currentUniversalStep}
-        gameStage={
-          gameState.currentStage || contestantsData?.game?.stage || "STAGE_ONE"
-        }
-        setCurrentUniversalStep={setCurrentUniversalStep}
-        updateGameStateFromUniversalStep={updateGameStateFromUniversalStep}
+        gameState={gameState}
+        setGameState={setGameState}
       />
     </div>
   );
@@ -539,4 +346,4 @@ const motionProps = {
   },
 };
 
-export default ContestantHomePage;
+export default HustleBoardPage;
