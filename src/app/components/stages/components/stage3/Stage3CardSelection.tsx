@@ -481,7 +481,7 @@ const Stage3CardSelection = () => {
           ? user?.name || "You"
           : otherContestantName;
 
-      startGlobalTimer(2, "Turn switching back...", originalPlayerName);
+      startGlobalTimer(2, "", originalPlayerName);
       setTimeout(() => {
         setCurrentTurn(originalPlayer as any);
         setIsMyTurn(originalPlayer === user?.contestant_id);
@@ -998,7 +998,7 @@ const Stage3CardSelection = () => {
               ) {
                 handleMissFlipTurnComplete();
               } else {
-                startGlobalTimer(3, "Turn switching...", otherContestantName);
+                startGlobalTimer(3, ".", otherContestantName);
                 setTimeout(() => {
                   setCurrentTurn(otherContestantId);
                   setIsMyTurn(false);
@@ -1223,7 +1223,7 @@ const Stage3CardSelection = () => {
                 }, 2000);
               } else {
                 // Normal turn switching
-                startGlobalTimer(3, "Turn switching...", user?.name || "You");
+                startGlobalTimer(3, "", user?.name || "You");
                 setTimeout(() => {
                   setCurrentTurn(user?.contestant_id || null);
                   setIsMyTurn(true);
