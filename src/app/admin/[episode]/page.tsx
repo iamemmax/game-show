@@ -518,10 +518,10 @@ export default function GameDetailsEnhanced() {
   // ///////////////////////////////////////////////////////////////////////
   // ///////////////////////////////////////////////////////////////////////
   // ///////////////////////////////////////////////////////////////////////
-  const { data: madeOffers, refetch: refetchMadeOffers } = useGetMadeOffers(gameId);
+  const { data: madeOffers, isLoading: isMadeOffersLoading, refetch: refetchMadeOffers } = useGetMadeOffers(gameId);
   useEffect(() => {
-    setMadeOfferstHistory(madeOffersHistory)
-  }, [madeOffers])
+    setMadeOfferstHistory(madeOffers?.data || [])
+  }, [madeOffers, isMadeOffersLoading])
 
   const { mutate: offerContestant, isLoading: isMakingOffer } = useMakeOffer();
   const handleConfirmOffer = () => {
@@ -541,6 +541,7 @@ export default function GameDetailsEnhanced() {
     }, {
       onSuccess: () => {
         toast.success("Offer made successfully")
+        refetchMadeOffers()
         sendGameMessage("game_s4_make_offer", {
           game_episode: Number.parseInt(gameId),
           contestant_id,
