@@ -19,9 +19,24 @@ import HustleStages from "../hustle/HustleStages";
 import Logo from "@/app/icons/Logo";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
-import {motion} from "framer-motion"
+import { motion } from "framer-motion";
 import { useContestantFlipCard } from "../../api/stage3/contestantCardFlip";
+import { useMQTT } from "@/hooks/useMqttService";
+import { MQTTMessage } from "@/contexts/MQTTProvider";
+import { CardFlipRevealModal } from "./Srage3CardSelectionRevealModal";
+import NumberFlow from "@number-flow/react";
 
+interface DudPassMQTTData {
+  type: string;
+  position: number;
+  contestant: FlipContestant;
+  next_turn: string;
+}
+export interface FlipContestant {
+  id: number;
+  name: string;
+  contestant_attr: string;
+}
 type CardType = {
   position: number;
   type: string | undefined | null;
@@ -39,14 +54,22 @@ const Stage3CardSelection = () => {
     const contestant = contestantsData?.data.find((c) => c.id === contestantId);
     return contestant;
   };
-  const {mutate:handleCardFlip} = useContestantFlipCard()
+  const [showCountdown, setShowCoundown] = useState(false);
+  const [countTimer, setCountdownTimer] = useState(3);
+
+  const { mutate: handleCardFlip } = useContestantFlipCard();
 
   const cardIcons = [PickCard1, PickCard2, PickCard3];
-  const { data, isLoading } = useGetFlipData(String(user?.game_episode));
+  const {
+    data,
+    isLoading,
+    refetch: refetchAlreadyFlippedCards,
+  } = useGetFlipData(String(user?.game_episode));
   const [allCards, setAllCards] = useState<CardType[]>(
     Array.from({ length: 24 }, (_, i) => ({
-      position: data?.find((card) => card.position == i + 1)?.position || i,
-      type: data?.find((card) => card.position == i + 1)?.type || null,
+      position:
+        data?.data.find((card) => card.position == i + 1)?.position || i,
+      type: data?.data.find((card) => card.position == i + 1)?.type || null,
       contestant_id: null,
     }))
   );
@@ -55,32 +78,69 @@ const Stage3CardSelection = () => {
     if (!isLoading && !!data) {
       setAllCards(
         Array.from({ length: 24 }, (_, i) => ({
-          position: data?.find((card) => card.position == i + 1)?.position || i,
-          type: data?.find((card) => card.position == i + 1)?.type || null,
+          position:
+            data?.data.find((card) => card.position == i + 1)?.position || i,
+          type: data?.data.find((card) => card.position == i + 1)?.type || null,
           contestant_id: null,
         }))
       );
     }
   }, [isLoading, data]);
 
-const handleCardClick = (position: number) => {
-   handleCardFlip({
-    contestant_id:Number(user?.contestant_id),
-    game_episode:Number(user?.game_episode),
-    position:position},{
-    onSuccess:(data)=>{
-console.log(data);
-
-    }
-   })
+  const handleCardClick = (position: number) => {
+    handleCardFlip(
+      {
+        contestant_id: Number(user?.contestant_id),
+        game_episode: Number(user?.game_episode),
+        position: position,
+      },
+      {
+        onSuccess: (data) => {
+          console.log(data);
+        },
+      }
+    );
   };
 
+  const { addMessageListener, removeMessageListener, isConnected } = useMQTT();
 
+  useEffect(() => {
+    // {"event": "dud_pass_picks", "data": {"type": "DUD", "position": 4, "contestant": {"id": 37, "name": "Rosemary Ndubueze", "contestant_attr": "contestant_1"}, "next_turn": ""}}
+    const handleMQTTMessage = (message: MQTTMessage) => {
+      if (message.topic !== "test/topic/local") return;
+      console.log(message, "mqqt dud messaghe");
+      if (message.event === "dud_pass_picks") {
+        const data = message.payload.data as DudPassMQTTData;
+        setCardFLipModalInfo(data);
+        setShowCardFlipModal(true);
+        // const newCards = allCards.map((card, index) => ({
+        //   ...card,
 
+        // }));
+        refetchAlreadyFlippedCards();
+        let countdownIntrerval;
+        setTimeout(() => {
+          setShowCoundown(true);
+          countdownIntrerval = setInterval(() => {
+            setCountdownTimer(countTimer - 1);
+          }, 1000);
+        }, 1000);
+
+        if (countTimer == 0) {
+          clearInterval(countdownIntrerval);
+          setShowCoundown(false);
+          setShowCardFlipModal(false);
+        }
+      }
+    };
+
+    addMessageListener(handleMQTTMessage);
+    if (isConnected) {
+      return removeMessageListener(handleMQTTMessage);
+    }
+  }, [isConnected, addMessageListener, removeMessageListener]);
 
   const renderCard = (card: CardType, position: number) => {
-    console.log(card);
-
     // Render revealed cards based on type
     const cardElement = (() => {
       switch (card.type) {
@@ -118,7 +178,6 @@ console.log(data);
       }
     })();
 
-
     // // Add timer overlay for bonus cards - works for both current user and opponent
     // if (card.type === CARD_TYPES.BONUS_FLIP && bonusCardTimers[index] > 0) {
     //   const isCurrentUserCard = card.contestant_id === user?.contestant_id;
@@ -150,11 +209,33 @@ console.log(data);
     // }
     return <div className="justify-self-center">{cardElement}</div>;
   };
+
+  const [
+    cardFlipModalInfo,
+    setCardFLipModalInfo,
+  ] = useState<DudPassMQTTData | null>(null);
+  const [showCardFlipModal, setShowCardFlipModal] = useState(false);
+  const CardFlipModal = () => {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.5, opacity: 0 }}
+          className="text-center max-w-lg w-full mx-4"
+        >
+          <p className="text-6xl font-anton text-white">
+            {cardFlipModalInfo?.type}
+          </p>
+        </motion.div>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return <>loading...</>;
   }
 
-  
   return (
     <div className="grid grid-cols-[1.2fr_5fr_1fr] h-full relative">
       {/* Left Sidebar */}
@@ -224,10 +305,10 @@ console.log(data);
                     strokeColor="#D91FFF"
                     glowColor="#13051E"
                     glowIntensity="low"
-                    textclassName="text-[2.125rem] font-extrabold font-gilroyBold"
+                    textclassName="text-[2.125rem] font-extrabold font-lucky"
                     fillColor="#000"
                   >
-                    Stage 3: Card Collection Showdown
+                    Stage 3: Flip and Pass Showdown
                   </GlowyStrokeText>
                 </div>
               </div>
@@ -239,7 +320,9 @@ console.log(data);
               ) : (
                 <div className="grid grid-cols-6 justify-center gap-4">
                   {allCards?.map((card, index) => (
-                    <div onClick={() => handleCardClick(index+1)}>{renderCard(card, index + 1)}</div>
+                    <div onClick={() => handleCardClick(index + 1)}>
+                      {renderCard(card, index + 1)}
+                    </div>
                   ))}
                 </div>
               )}
@@ -256,13 +339,36 @@ console.log(data);
           eliminated={4}
         />
       </div>
+
+      {showCardFlipModal && (
+        <CardFlipRevealModal
+          cardType={cardFlipModalInfo?.type}
+          onClose={() => {
+            setCardFLipModalInfo(null);
+            setShowCardFlipModal(false);
+          }}
+          contestant={cardFlipModalInfo?.contestant!}
+        />
+      )}
+      {showCountdown && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.5, opacity: 0 }}
+            className="text-center max-w-lg w-full mx-4 text-9xl font-semibold "
+          >
+            <NumberFlow value={countTimer} />
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Stage3CardSelection;
 
-const CARD_TYPES = {
+export const CARD_TYPES = {
   DUD: "DUD",
   FIVE_K: "FIVE_K",
   TEN_K: "TEN_K",
