@@ -96,7 +96,7 @@ export default function HostStage2Questions({
         data: questionResultData?.data,
         question_index: currentQuestionData?.data.index,
         show_modal: (currentQuestionData?.data.index ?? 0) > 3 ? false : true,
-        from_reveal: (currentQuestionData?.data.index ?? 0) > 3 ? false : true,
+        from_reveal: (currentQuestionData?.data.index ?? 0) > 3 ? true : false,
       })
     }
   }, [refetchQuestionResultData, questionResultData, isLoadingQuestionResultData])

@@ -101,10 +101,7 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
         pickBall(pickData, {
           onSuccess: (data) => {
             sendGameMessage("ball_picked", data)
-            const isPositiveResult = data.hustle_match.is_extra_ball
-              ? data.hustle_match.balance_details?.is_gain
-              : data.hustle_match.is_match
-
+            const isPositiveResult =  data.hustle_match.balance_details?.is_gain || data.hustle_match.is_match
             setRevealedBalls((prev) => new Map([...prev, [pickData.number_pick, isPositiveResult ? "matched" : "mismatched"]]))
             refetchMatchedHustles()
           },
@@ -129,7 +126,7 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
 
   const handleFinalResultRevealModal = () => {
     if(!matchedHustlesData?.data) return
-  
+
     sendGameMessage("game_s4_final_result_reveal", {
       episode: gameEpisode,
       matched_hustles: matchedHustlesData?.data,

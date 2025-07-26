@@ -41,7 +41,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/core/Form"
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import {
   useGetGameContestants,
   useAssignContestant,
@@ -56,8 +56,9 @@ import { Label } from "@/components/core/Label"
 import type { DebitWalletData } from "../misc/types"
 import { toast } from "sonner"
 import { useContestantBank } from "../misc/api/contestant_bank"
-import { useMakeOffer } from "@/app/hustle-board/misc/api/postMakeOffer"
+import { useAcceptOffer, useMakeOffer } from "@/app/hustle-board/misc/api/postMakeOffer"
 import { convertNumberToNaira } from "@/utils/currency"
+import { BankerOffer, useGetMadeOffers } from "@/app/host/misc/api/stage4"
 
 // Enhanced schema with all Supabase fields
 const assignContestantSchema = z.object({
@@ -137,9 +138,11 @@ export default function GameDetailsEnhanced() {
   const [isSending, setIsSending] = useState(false)
   const [debitWalletData, setDebitWalletData] = useState<DebitWalletData | null>(null)
 
-  // New state for history management
+  // state for history management
   const [debitWalletHistory, setDebitWalletHistory] = useState<DebitWalletData[]>([])
-  const [showHistory, setShowHistory] = useState(false)
+  const [showDebitHistory, setShowDebitHistory] = useState(false)
+  const [madeOffersHistory, setMadeOfferstHistory] = useState<BankerOffer[]>([])
+  const [showOfferHistory, setShowOfferHistory] = useState(false)
 
   const [debitWalletPayload, setDebitWalletPayload] = useState<MultiCreditDebitContestantRequest | null>()
   const [selectedContestantIds, setSelectedContestantIds] = useState<number[]>([])
@@ -158,6 +161,7 @@ export default function GameDetailsEnhanced() {
         contestant.phone_number.includes(searchTerm),
     )
   }, [contestants, searchTerm])
+
 
   // Filter history to show only payable items (from_reveal: true)
   const payableHistory = useMemo(() => {
@@ -340,7 +344,6 @@ export default function GameDetailsEnhanced() {
       first_name: firstName,
       last_name: lastName,
       phone_number: contestant.phone_number || "",
-      // Add other existing fields if available
     })
     setIsEditModalOpen(true)
   }
@@ -511,6 +514,14 @@ export default function GameDetailsEnhanced() {
     setCreditSource(undefined)
   }
 
+  // ///////////////////////////////////////////////////////////////////////
+  // ///////////////////////////////////////////////////////////////////////
+  // ///////////////////////////////////////////////////////////////////////
+  // ///////////////////////////////////////////////////////////////////////
+  const { data: madeOffers, isLoading: isMadeOffersLoading, refetch: refetchMadeOffers } = useGetMadeOffers(gameId);
+  useEffect(() => {
+    setMadeOfferstHistory(madeOffers?.data || [])
+  }, [madeOffers, isMadeOffersLoading])
 
   const { mutate: offerContestant, isLoading: isMakingOffer } = useMakeOffer();
   const handleConfirmOffer = () => {
@@ -530,6 +541,7 @@ export default function GameDetailsEnhanced() {
     }, {
       onSuccess: () => {
         toast.success("Offer made successfully")
+        refetchMadeOffers()
         sendGameMessage("game_s4_make_offer", {
           game_episode: Number.parseInt(gameId),
           contestant_id,
@@ -546,20 +558,34 @@ export default function GameDetailsEnhanced() {
     })
   }
 
+  const { mutate: acceptOffer } = useAcceptOffer()
   const handleAcceptOffer = () => {
     const contestant_id = contestantsData?.data.find(c => !c?.is_eliminated)?.id
     if (!contestant_id) {
       toast.error("No contestant available to accept offer")
       return
     }
-    sendGameMessage("game_s4_accept_offer", {
+    acceptOffer({
       game_episode: Number.parseInt(gameId),
       contestant_id,
       amount: offerAmount,
+    }, {
+      onSuccess: ()=>{
+        sendGameMessage("game_s4_accept_offer", {
+          game_episode: Number.parseInt(gameId),
+          contestant_id,
+          amount: offerAmount,
+        })
+        setOfferAmount(0)
+        closeConfirmAcceptOfferModal()
+        closeConfirmOfferModal()
+
+      }
     })
-    setOfferAmount(0)
-    closeConfirmOfferModal()
   }
+
+
+
 
   const handleRejectOffer = () => {
     const contestant_id = contestantsData?.data.find(c => !c?.is_eliminated)?.id
@@ -643,15 +669,15 @@ export default function GameDetailsEnhanced() {
                     <Button
                       size="sm"
                       variant="light"
-                      onClick={() => setShowHistory(!showHistory)}
+                      onClick={() => setShowDebitHistory(!showDebitHistory)}
                       className="h-6 px-2 text-xs"
                     >
                       <History className="h-3 w-3 mr-1" />
-                      {showHistory ? "Hide" : "Show"} ({payableHistory.length})
+                      {showDebitHistory ? "Hide" : "Show"} ({payableHistory.length})
                     </Button>
                   </div>
 
-                  {showHistory && (
+                  {showDebitHistory && (
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {payableHistory.map((item, index) => (
                         <div
@@ -664,6 +690,50 @@ export default function GameDetailsEnhanced() {
                               <div className="text-xs text-white font-medium">Question #{item.question_index}</div>
                               <div className="text-xs text-gray-400">
                                 Winner: {item.data?.answers.find((a) => a.is_winner)?.contestant_name || "Unknown"}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3 text-yellow-400" />
+                              <span className="text-xs text-yellow-400">Pending</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {madeOffersHistory.length > 0 && (
+                <section className="bg-[#341D44] p-5 rounded-xl">
+                  <div className="flex items-center justify-between mb-3">
+                    <header className="font-bold text-sm text-white">MADE OFFERS</header>
+                    <Button
+                      size="sm"
+                      variant="light"
+                      onClick={() => setShowOfferHistory(!showOfferHistory)}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <History className="h-3 w-3 mr-1" />
+                      {showOfferHistory ? "Hide" : "Show"} ({madeOffersHistory.length})
+                    </Button>
+                  </div>
+
+                  {showOfferHistory && (
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {madeOffersHistory.map((item, index) => (
+                        <div
+                          key={`${item.amount}-${index}`}
+                          className="p-3 bg-[#462B58] rounded-lg border border-[#ff00ff]/20 hover:border-[#ff00ff]/40 transition-colors cursor-pointer"
+                          onClick={() => {
+                            setOfferAmount(item.amount)
+                            openConfirmAcceptOfferModal()
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-xs text-gray-400">
+                                Offer Amount: {item.amount || "0"}
                               </div>
                             </div>
                             <div className="flex items-center gap-1">

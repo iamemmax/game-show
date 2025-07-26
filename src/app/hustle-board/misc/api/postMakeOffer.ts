@@ -17,7 +17,16 @@ const makeOffer = async (data: Payload) => {
     return res.data;
 }
 export const useMakeOffer = () => {
-        return useMutation({
-            mutationFn: makeOffer,
-        });
-    }
+    return useMutation({
+        mutationFn: makeOffer,
+    });
+}
+const acceptOffer = async (data: Payload) => {
+    const res = await tokenlessAxios.post("/api/admin-controller/accept_banker_offer", data);
+    return res.data;
+}
+export const useAcceptOffer = () => {
+    return useMutation({
+        mutationFn: acceptOffer,
+    });
+}
