@@ -14,7 +14,7 @@ import { GlowyStrokeText } from "@/components/core/GlowyText"
 import { FlipCountdown } from "@/components/core"
 import { ContestantsResponse } from "@/app/admin/misc/api"
 import { UNIVERSAL_GAME_STEPS } from "@/constants"
-import { useRevertQuestion } from "../misc/api/offer"
+import { useRevertQuestion } from "../misc/api/stage4"
 
 interface Stage1QuestionsProps {
   gameEpisode: string | number;
