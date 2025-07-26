@@ -9,12 +9,15 @@ interface UniversalStepControlProps {
   currentUniversalStep: UniversalGameStep
   changeUniversalStep: (newStep: UniversalGameStep, targetParticipants?: string[]) => void
   progressToNextStep: () => void
+  clearAllSteps: () => void
+
 }
 
 export function UniversalStepControl({
   currentUniversalStep,
   changeUniversalStep,
   progressToNextStep,
+  clearAllSteps
 }: UniversalStepControlProps) {
   return (
     <Card className="bg-[#341D44] border-[#ff00ff]/20">
@@ -50,7 +53,7 @@ export function UniversalStepControl({
             Next Step
           </Button>
           <Button
-            onClick={() => changeUniversalStep(UNIVERSAL_GAME_STEPS.GAME_SETUP)}
+            onClick={clearAllSteps}
             variant="outlined"
             className="border-[#ff00ff]/30"
           >
