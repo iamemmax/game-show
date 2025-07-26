@@ -2,7 +2,7 @@
 
 import { cn } from "@/utils/classNames"
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, useMemo, useRef } from "react"
 
 interface FlipDigitProps {
   digit: number
@@ -61,37 +61,43 @@ export const FlipCountdown: React.FC<FlipCountdownProps> = ({
   const [timeLeft, setTimeLeft] = useState(seconds)
   const [flipping, setFlipping] = useState<Record<string, boolean>>({})
   const [previousValues, setPreviousValues] = useState<Record<string, number | null>>({})
-  const [hasCompleted, setHasCompleted] = useState(false)
+  const hasCompletedRef = useRef(false)
+  const flipTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Calculate time units
-  const days = Math.floor(timeLeft / (24 * 60 * 60))
-  const hours = Math.floor((timeLeft % (24 * 60 * 60)) / (60 * 60))
-  const minutes = Math.floor((timeLeft % (60 * 60)) / 60)
-  const secs = Math.floor(timeLeft % 60)
+  // Memoize time calculations
+  const timeUnits = useMemo(() => {
+    const days = Math.floor(timeLeft / (24 * 60 * 60))
+    const hours = Math.floor((timeLeft % (24 * 60 * 60)) / (60 * 60))
+    const minutes = Math.floor((timeLeft % (60 * 60)) / 60)
+    const secs = Math.floor(timeLeft % 60)
 
-  // Format time units to always have two digits
-  const formatTimeUnit = (unit: number) => unit.toString().padStart(2, "0")
+    const formatTimeUnit = (unit: number) => unit.toString().padStart(2, "0")
 
-  const daysFormatted = formatTimeUnit(days)
-  const hoursFormatted = formatTimeUnit(hours)
-  const minutesFormatted = formatTimeUnit(minutes)
-  const secondsFormatted = formatTimeUnit(secs)
-
-  useEffect(() => {
-    // Reset the completion flag when seconds prop changes
-    if (seconds !== timeLeft && timeLeft === seconds) {
-      setHasCompleted(false)
+    return {
+      daysFormatted: formatTimeUnit(days),
+      hoursFormatted: formatTimeUnit(hours),
+      minutesFormatted: formatTimeUnit(minutes),
+      secondsFormatted: formatTimeUnit(secs),
     }
+  }, [timeLeft])
 
+  const { daysFormatted, hoursFormatted, minutesFormatted, secondsFormatted } = timeUnits
+
+  // Memoize onComplete to prevent unnecessary re-renders
+  const memoizedOnComplete = useCallback(() => {
+    if (onComplete && !hasCompletedRef.current) {
+      onComplete()
+      hasCompletedRef.current = true
+    }
+  }, [onComplete])
+
+  // Timer effect
+  useEffect(() => {
     if (timeLeft <= 0) {
-      if (onComplete && !hasCompleted) {
-        onComplete()
-        setHasCompleted(true)
-      }
+      memoizedOnComplete()
       return
     }
 
-    // Only run the timer if isActive is true
     if (!isActive) return
 
     const timer = setTimeout(() => {
@@ -99,125 +105,92 @@ export const FlipCountdown: React.FC<FlipCountdownProps> = ({
     }, 1000)
 
     return () => clearTimeout(timer)
-  }, [timeLeft, onComplete, isActive, seconds, hasCompleted])
+  }, [timeLeft, isActive, memoizedOnComplete])
 
+  // Reset when seconds prop changes
   useEffect(() => {
-    setTimeLeft(seconds)
-    setHasCompleted(false)
+    if (seconds !== timeLeft) {
+      setTimeLeft(seconds)
+      hasCompletedRef.current = false
+    }
   }, [seconds])
 
+  // Handle digit flipping - separated into its own effect with proper dependencies
   useEffect(() => {
-    // Track which digits are flipping
+    // Clear existing timeout
+    if (flipTimeoutRef.current) {
+      clearTimeout(flipTimeoutRef.current)
+    }
+
+    const currentDigits = {
+      ...(showDays && {
+        day1: parseInt(daysFormatted[0]),
+        day2: parseInt(daysFormatted[1]),
+      }),
+      ...(showHours && {
+        hour1: parseInt(hoursFormatted[0]),
+        hour2: parseInt(hoursFormatted[1]),
+      }),
+      min1: parseInt(minutesFormatted[0]),
+      min2: parseInt(minutesFormatted[1]),
+      sec1: parseInt(secondsFormatted[0]),
+      sec2: parseInt(secondsFormatted[1]),
+    }
+
     const newFlipping: Record<string, boolean> = {}
-    const newPreviousValues: Record<string, number | null> = { ...previousValues }
+    const newPreviousValues: Record<string, number | null> = {}
+    let hasChanges = false
 
-    // Check each time unit to see if it changed
-    if (showDays) {
-      const day1 = Number.parseInt(daysFormatted[0])
-      const day2 = Number.parseInt(daysFormatted[1])
+    // Check each digit for changes
+    Object.keys(currentDigits).forEach((key) => {
+      const currentValue = currentDigits[key as keyof typeof currentDigits]
+      const previousValue = previousValues[key]
 
-      if (previousValues.day1 !== undefined && previousValues.day1 !== day1) {
-        newFlipping.day1 = true
-        newPreviousValues.day1 = previousValues.day1
+      if (previousValue !== undefined && previousValue !== currentValue) {
+        newFlipping[key] = true
+        newPreviousValues[key] = previousValue
+        hasChanges = true
       } else {
-        newFlipping.day1 = false
+        newFlipping[key] = false
       }
 
-      if (previousValues.day2 !== undefined && previousValues.day2 !== day2) {
-        newFlipping.day2 = true
-        newPreviousValues.day2 = previousValues.day2
-      } else {
-        newFlipping.day2 = false
+      newPreviousValues[key] = currentValue ?? null
+    })
+
+    // Only update state if there are actual changes
+    if (hasChanges || Object.keys(previousValues).length === 0) {
+      setFlipping(newFlipping)
+      setPreviousValues(newPreviousValues)
+
+      // Reset flipping state after animation completes
+      flipTimeoutRef.current = setTimeout(() => {
+        setFlipping({})
+      }, 500)
+    }
+  }, [daysFormatted, hoursFormatted, minutesFormatted, secondsFormatted, showDays, showHours])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (flipTimeoutRef.current) {
+        clearTimeout(flipTimeoutRef.current)
       }
-
-      newPreviousValues.day1 = day1
-      newPreviousValues.day2 = day2
     }
-
-    if (showHours) {
-      const hour1 = Number.parseInt(hoursFormatted[0])
-      const hour2 = Number.parseInt(hoursFormatted[1])
-
-      if (previousValues.hour1 !== undefined && previousValues.hour1 !== hour1) {
-        newFlipping.hour1 = true
-        newPreviousValues.hour1 = previousValues.hour1
-      } else {
-        newFlipping.hour1 = false
-      }
-
-      if (previousValues.hour2 !== undefined && previousValues.hour2 !== hour2) {
-        newFlipping.hour2 = true
-        newPreviousValues.hour2 = previousValues.hour2
-      } else {
-        newFlipping.hour2 = false
-      }
-
-      newPreviousValues.hour1 = hour1
-      newPreviousValues.hour2 = hour2
-    }
-
-    const min1 = Number.parseInt(minutesFormatted[0])
-    const min2 = Number.parseInt(minutesFormatted[1])
-    const sec1 = Number.parseInt(secondsFormatted[0])
-    const sec2 = Number.parseInt(secondsFormatted[1])
-
-    if (previousValues.min1 !== undefined && previousValues.min1 !== min1) {
-      newFlipping.min1 = true
-      newPreviousValues.min1 = previousValues.min1
-    } else {
-      newFlipping.min1 = false
-    }
-
-    if (previousValues.min2 !== undefined && previousValues.min2 !== min2) {
-      newFlipping.min2 = true
-      newPreviousValues.min2 = previousValues.min2
-    } else {
-      newFlipping.min2 = false
-    }
-
-    if (previousValues.sec1 !== undefined && previousValues.sec1 !== sec1) {
-      newFlipping.sec1 = true
-      newPreviousValues.sec1 = previousValues.sec1
-    } else {
-      newFlipping.sec1 = false
-    }
-
-    if (previousValues.sec2 !== undefined && previousValues.sec2 !== sec2) {
-      newFlipping.sec2 = true
-      newPreviousValues.sec2 = previousValues.sec2
-    } else {
-      newFlipping.sec2 = false
-    }
-
-    newPreviousValues.min1 = min1
-    newPreviousValues.min2 = min2
-    newPreviousValues.sec1 = sec1
-    newPreviousValues.sec2 = sec2
-
-    setFlipping(newFlipping)
-    setPreviousValues(newPreviousValues)
-
-    // Reset flipping state after animation completes
-    const flipTimeout = setTimeout(() => {
-      setFlipping({})
-    }, 500)
-
-    return () => clearTimeout(flipTimeout)
-  }, [daysFormatted, hoursFormatted, minutesFormatted, secondsFormatted, previousValues, showDays, showHours])
+  }, [])
 
   return (
     <div className={cn("flex items-center justify-center gap-2", className)}>
       {showDays && (
         <>
           <FlipDigit
-            digit={Number.parseInt(daysFormatted[0])}
-            previousDigit={previousValues.day1}
+            digit={parseInt(daysFormatted[0])}
+            previousDigit={previousValues.day1 ?? null}
             isFlipping={flipping.day1 || false}
             className={digitClassName}
           />
           <FlipDigit
-            digit={Number.parseInt(daysFormatted[1])}
-            previousDigit={previousValues.day2}
+            digit={parseInt(daysFormatted[1])}
+            previousDigit={previousValues.day2 ?? null}
             isFlipping={flipping.day2 || false}
             className={digitClassName}
           />
@@ -228,14 +201,14 @@ export const FlipCountdown: React.FC<FlipCountdownProps> = ({
       {showHours && (
         <>
           <FlipDigit
-            digit={Number.parseInt(hoursFormatted[0])}
-            previousDigit={previousValues.hour1}
+            digit={parseInt(hoursFormatted[0])}
+            previousDigit={previousValues.hour1 ?? null}
             isFlipping={flipping.hour1 || false}
             className={digitClassName}
           />
           <FlipDigit
-            digit={Number.parseInt(hoursFormatted[1])}
-            previousDigit={previousValues.hour2}
+            digit={parseInt(hoursFormatted[1])}
+            previousDigit={previousValues.hour2 ?? null}
             isFlipping={flipping.hour2 || false}
             className={digitClassName}
           />
@@ -244,14 +217,14 @@ export const FlipCountdown: React.FC<FlipCountdownProps> = ({
       )}
 
       <FlipDigit
-        digit={Number.parseInt(minutesFormatted[0])}
-        previousDigit={previousValues.min1}
+        digit={parseInt(minutesFormatted[0])}
+        previousDigit={previousValues.min1 ?? null}
         isFlipping={flipping.min1 || false}
         className={digitClassName}
       />
       <FlipDigit
-        digit={Number.parseInt(minutesFormatted[1])}
-        previousDigit={previousValues.min2}
+        digit={parseInt(minutesFormatted[1])}
+        previousDigit={previousValues.min2 ?? null}
         isFlipping={flipping.min2 || false}
         className={digitClassName}
       />
@@ -259,14 +232,14 @@ export const FlipCountdown: React.FC<FlipCountdownProps> = ({
       <div className={cn("text-[#231c2d] text-2xl font-bold mx-1", separatorClassName)}>:</div>
 
       <FlipDigit
-        digit={Number.parseInt(secondsFormatted[0])}
-        previousDigit={previousValues.sec1}
+        digit={parseInt(secondsFormatted[0])}
+        previousDigit={previousValues.sec1 ?? null}
         isFlipping={flipping.sec1 || false}
         className={digitClassName}
       />
       <FlipDigit
-        digit={Number.parseInt(secondsFormatted[1])}
-        previousDigit={previousValues.sec2}
+        digit={parseInt(secondsFormatted[1])}
+        previousDigit={previousValues.sec2 ?? null}
         isFlipping={flipping.sec2 || false}
         className={digitClassName}
       />

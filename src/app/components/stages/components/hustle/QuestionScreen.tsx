@@ -245,6 +245,8 @@ const QuestionScreen = () => {
     if (!isConnected) return;
 
     const handleMQTTMessage = (receivedMessage: any) => {
+      if (!!receivedMessage.payload.game_episode && Number(receivedMessage.payload.game_episode as string) !== Number(tokenStorage.getUser()?.game_episode)) return
+
       // Handle prep page event
       if (receivedMessage?.event === "game_s1_question_reveal") {
         setShowPrepPage(false);
@@ -278,10 +280,10 @@ const QuestionScreen = () => {
         if (spendBreakdown && user?.contestant_id) {
           const userData = Array.isArray(spendBreakdown)
             ? spendBreakdown.find(
-                (contestant: any) =>
-                  String(contestant.contestant_id) ===
-                  String(user.contestant_id)
-              )
+              (contestant: any) =>
+                String(contestant.contestant_id) ===
+                String(user.contestant_id)
+            )
             : spendBreakdown;
 
           if (userData?.spend_breakdown) {
@@ -855,18 +857,18 @@ const QuestionScreen = () => {
                                 className="object-cover rounded-full"
                               />
                             </div>
-<div className=" max-w-[100px] overflow-hidden whitespace-nowrap truncate">
-  <GlowyStrokeText
-    strokeWidth={3}
-    strokeColor="#7E3CE0"
-    glowColor="#04DA6A"
-    textclassName="text-xs text-white font-extrabold font-gilroyBold text-center font-gilroyHeavy"
-    fillColor="#fff"
-    glowIntensity="none"
-  >
-    {contestant?.contestant_name?.split(" ")[0]} 
-  </GlowyStrokeText>
-</div>
+                            <div className=" max-w-[100px] overflow-hidden whitespace-nowrap truncate">
+                              <GlowyStrokeText
+                                strokeWidth={3}
+                                strokeColor="#7E3CE0"
+                                glowColor="#04DA6A"
+                                textclassName="text-xs text-white font-extrabold font-gilroyBold text-center font-gilroyHeavy"
+                                fillColor="#fff"
+                                glowIntensity="none"
+                              >
+                                {contestant?.contestant_name?.split(" ")[0]}
+                              </GlowyStrokeText>
+                            </div>
 
                           </div>
                         </div>
@@ -1036,7 +1038,7 @@ const QuestionScreen = () => {
                                         // Correct answer highlight after submission
                                         mqttAnswerData &&
                                           currentQuestions?.correct_option ===
-                                            convertOptionToLetter(option)
+                                          convertOptionToLetter(option)
                                           ? "!bg-[#003218] !border-[#04DA6A] !text-[#04DA6A] font-bold !opacity-100"
                                           : ""
                                       )}
@@ -1063,7 +1065,7 @@ const QuestionScreen = () => {
                                 <div className="flex flex-1 items-center">
                                   <div className="flex gap-2">
                                     {userBidAmounts &&
-                                    Object.keys(userBidAmounts).length > 0 ? (
+                                      Object.keys(userBidAmounts).length > 0 ? (
                                       // Map through the bid amounts
                                       Object.entries(userBidAmounts).map(
                                         ([amountKey, bidValue], index) => {
@@ -1092,16 +1094,14 @@ const QuestionScreen = () => {
                                                     timeLeft <= 0 || // Disable when time has elapsed
                                                     isSubmitted // Disable when already submitted
                                                   }
-                                                  className={`px-3 py-2 rounded-lg text-base font-bold transition-all ${
-                                                    selectedAmount === amount
+                                                  className={`px-3 py-2 rounded-lg text-base font-bold transition-all ${selectedAmount === amount
                                                       ? "bg-[#04DA6A] text-black"
                                                       : "bg-[#011B0D] text-[#04DA6A] border-dashed border-[0.5px] border-[#04DA6A]"
-                                                  }
-${
-  timeLeft <= 0 || isSubmitted // Only disable styling when time elapsed or submitted
-    ? "opacity-50 cursor-not-allowed"
-    : "hover:bg-[#035D2E] hover:text-white"
-}`}
+                                                    }
+${timeLeft <= 0 || isSubmitted // Only disable styling when time elapsed or submitted
+                                                      ? "opacity-50 cursor-not-allowed"
+                                                      : "hover:bg-[#035D2E] hover:text-white"
+                                                    }`}
                                                 >
                                                   ₦
                                                   {(
@@ -1161,7 +1161,7 @@ ${
                             isOpen={!!mqttAnswerData}
                             data={mqttAnswerData}
                             questions={mqttQuestionData?.question?.question}
-                            // setIsOpen={setIsOpen}
+                          // setIsOpen={setIsOpen}
                           />
                         )}
                         {/* ))} */}
@@ -1191,7 +1191,7 @@ ${
             eliminated={0}
             mqttAnswerData={mqttAnswerBalanceData}
             balanceData={null}
-            // mqttAnswerBalanceData={mqttAnswerBalanceData}
+          // mqttAnswerBalanceData={mqttAnswerBalanceData}
           />
         </div>
       </div>

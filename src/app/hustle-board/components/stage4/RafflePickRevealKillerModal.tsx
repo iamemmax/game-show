@@ -51,45 +51,43 @@ const KillerHustlePulledModal = ({ isOpen, data, setShowModal }: KillerModalProp
 
     <Dialog open={isOpen} onOpenChange={setShowModal}>
       <motion.div
-        initial={{ scale: 0, opacity: 0, rotate: -180 }}
+        initial={{ scale: 0, opacity: 0, rotate: -50 }}
         animate={{ scale: 1, opacity: 1, rotate: 0 }}
-        exit={{ scale: 0, opacity: 0, rotate: 180 }}
+        exit={{ scale: 0, opacity: 0, rotate: 50 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="bg-gradient-to-br from-red-900/90 to-black/90 backdrop-blur-lg rounded-2xl p-8 border-2 border-red-500/50 shadow-2xl max-w-2xl"
       >
         <div className="flex flex-col items-center text-center text-white space-y-6">
-          {/* Icon with shake animation */}
-          <motion.div animate={showGlitch ? { x: [-5, 5, -5, 5, 0] } : {}} transition={{ duration: 0.5 }}>
-            <KillerIcon />
-          </motion.div>
+  
 
           <Ball
             number={data.hustle_match.number_pick}
             variant={"mismatched"}
             size="md"
-            className={cn("transition-all duration-300 w-20 h-20")}
-            textClassName="!font-semibold !text-3xl"
+            className={cn("transition-all duration-300 w-30 h-30")}
+            textClassName="!font-bold !text-4xl text-white"
           />
           <motion.h2
-            className={`text-6xl font-anton text-[#EB001B] mt-5 font-black ${showGlitch ? "animate-pulse" : ""}`}
-            animate={showGlitch ? { textShadow: ["0 0 10px #EB001B", "0 0 20px #EB001B", "0 0 10px #EB001B"] } : {}}
+            className={`text-8xl font-anton text-[#EB001B] mt-5 font-black ${showGlitch ? "animate-pulse" : ""}`}
+            animate={showGlitch ? { textShadow: ["0 0 8px #EB001B", "0 0 15px #EB001B", "0 0 10px #EB001B"] } : {}}
           >
-            Crusher Ball!(+
-            {data.hustle_match.extra_ball_details?.effect_desc?.includes("50")
+            Crusher Ball!(-
+            {
+            data.hustle_match.extra_ball_details?.effect_desc?.includes("70%")
+              ? "70%"
+              :
+            data.hustle_match.extra_ball_details?.effect_desc?.includes("50%")
               ? "50%"
-              : data.hustle_match.extra_ball_details?.effect_desc?.includes("30")
+              : data.hustle_match.extra_ball_details?.effect_desc?.includes("30%")
                 ? "30%"
                 : "20%"}
             )
           </motion.h2>
 
-          {/* Ball Number */}
-          <div className="text-2xl font-bold text-white/80">Ball #{data.hustle_match.number_pick}</div>
-
           {/* Description */}
           <p className="text-lg text-white max-w-xl font-montserrat leading-relaxed">
             {data.hustle_match.extra_ball_details?.effect_desc ||
-              "The hustle turned deadly! You've hit a killer ball that reduces your balance. Sometimes the risk doesn't pay off."}
+              "The hustle turned deadly!. Sometimes the risk doesn't pay off."}
           </p>
 
           {/* Animated Amount Loss */}

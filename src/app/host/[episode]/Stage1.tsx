@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react"
+import React, { useMemo, useState } from "react"
 import { CircleCheck, Loader2 } from "lucide-react"
 import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
 import { toast } from "react-hot-toast"
@@ -13,24 +13,25 @@ import {
 import { GlowyStrokeText } from "@/components/core/GlowyText"
 import { FlipCountdown } from "@/components/core"
 import { ContestantsResponse } from "@/app/admin/misc/api"
+import { UNIVERSAL_GAME_STEPS } from "@/constants"
 
 interface Stage1QuestionsProps {
-  gameId: string | number
+  gameEpisode: string | number
   onQuestionComplete: (questionId: number) => void
   onTimerStart: (questionId: string, startTime: string, questionType: string) => void
   sendGameMessage: (eventCode: string, data?: any) => Promise<void>
-  currentStageStep: string
+  step: string
   lastAction?: string
   contestantsData: ContestantsResponse
   isLoadingContestants: boolean
 }
 
-export default function Stage1Questions({
-  gameId,
+export default function HostStage1Questions({
+  gameEpisode,
   onQuestionComplete,
   onTimerStart,
   sendGameMessage,
-  currentStageStep,
+  step,
   lastAction,
   contestantsData,
   isLoadingContestants
@@ -48,6 +49,14 @@ export default function Stage1Questions({
     refetch: refetchQuestionResultData,
   } = useGetHustleQuestionResult(currentQuestionData?.data.question.question.question_id)
   const { mutate: endStageOne } = useEndStageOne()
+
+  const isQuestionSection = useMemo(() =>
+    // step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL ||
+    step === UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING ||
+    step === UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL ||
+    step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_RESULT_REVEAL
+
+    , [step])
 
   React.useEffect(() => {
     if (hustleQuestionsData) {
@@ -70,7 +79,7 @@ export default function Stage1Questions({
   const handleFetchNextQuestion = async () => {
     setLoading(true)
     fetchNextQuestion(
-      { episode: gameId },
+      { episode: gameEpisode },
       {
         onSuccess: (data) => {
           setCurrentQuestionData(data)
@@ -89,6 +98,7 @@ export default function Stage1Questions({
           if (error?.response?.data?.code === "700") {
             setQuestionsExhausted(true)
           }
+
           setLoading(false)
           toast.error("Failed to fetch next question")
           console.error("Error fetching next question:", error)
@@ -99,16 +109,20 @@ export default function Stage1Questions({
 
   const handleRevealStage1Result = () => {
     endStageOne(
-      { episode: gameId },
+      { episode: gameEpisode },
       {
         onSuccess: (data) => {
-          toast.success("Stage 1 results revealed successfully")
           setQuestionsExhausted(false)
           sendGameMessage("game_s1_results_reveal", {
-            game_id: gameId,
+            game_id: gameEpisode,
           })
         },
         onError: (error) => {
+          if ((error as any).response.data.message == "Stage already ended") {
+            sendGameMessage("game_s1_results_reveal", {
+              game_id: gameEpisode,
+            })
+          }
           toast.error("Failed to reveal stage 1 results")
           console.error("Error revealing stage 1 results:", error)
         },
@@ -136,9 +150,6 @@ export default function Stage1Questions({
       { question_id: questionId, timestamp: new Date().toISOString() },
       {
         onSuccess: (data) => {
-          sendGameMessage(`game_s1_timer_end_${currentQuestionData.data.question_index}`, {
-            question_id: questionId,
-          })
           if (contestantsData?.game.reveal_step_count == "DOUBLE") {
             sendGameMessage(`game_s1_question_bids_reveal`, {
               answers_data: data.data,
@@ -175,7 +186,7 @@ export default function Stage1Questions({
           <Loader2 className="h-8 w-8 text-[#ff00ff] animate-spin" />
           <span className="ml-2 text-white">Loading question...</span>
         </div>
-      ) : questionsExhausted ? (
+      ) : (questionsExhausted || step == UNIVERSAL_GAME_STEPS.STAGE1_RESULTS) ? (
         <div className="flex flex-col items-center justify-center mt-8">
           <TrapeziumButton onClick={handleRevealStage1Result} variant="purple" data-remote-target="true">
             REVEAL STAGE RESULTS
@@ -251,14 +262,14 @@ export default function Stage1Questions({
                 </span>
               </div>
             </div>
-            {currentStageStep === "question_reveal" && (
+            {step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL && (
               <div className="flex justify-center">
                 <TrapeziumButton onClick={startQuestionTimer} size="sm" variant="green" data-remote-target="true">
                   START TIMER
                 </TrapeziumButton>
               </div>
             )}
-            {currentStageStep === "timer_running" && (
+            {step === UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING && (
               <div className="flex justify-center">
                 <div className="text-center">
                   <FlipCountdown
@@ -285,12 +296,12 @@ export default function Stage1Questions({
       <div className="flex justify-center mt-6">
         {!loading && currentQuestionData && !questionsExhausted && (
           <>
-            {(lastAction === "game_s1_question_bids_reveal" || lastAction == "game_") ? (
+            {(lastAction === "game_s1_question_bids_reveal" || lastAction == "game_" ) ? (
               <TrapeziumButton onClick={() => refetchQuestionResultData()} variant="purple" data-remote-target="true">
                 REVEAL QUESTION RESULT
               </TrapeziumButton>
             ) :
-              currentStageStep === "questions" ?
+              (step !== UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING && step !== UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL) ?
                 (
                   <TrapeziumButton onClick={handleFetchNextQuestion} variant="orange" data-remote-target="true">
                     FETCH NEXT QUESTION

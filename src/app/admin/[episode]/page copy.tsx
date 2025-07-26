@@ -20,22 +20,7 @@ import {
 } from "@/components/core"
 import { Input } from "@/components/core/Input"
 import { useParams, useRouter } from "next/navigation"
-import {
-  ArrowLeft,
-  User,
-  Phone,
-  AlertCircle,
-  Plus,
-  Copy,
-  Award,
-  ScanLine,
-  Upload,
-  Search,
-  Edit,
-  X,
-  Clock,
-  History,
-} from "lucide-react"
+import { ArrowLeft, User, Phone, AlertCircle, Plus, Copy, Award, ScanLine, Upload, Search, Edit, X } from "lucide-react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -56,8 +41,6 @@ import { Label } from "@/components/core/Label"
 import type { DebitWalletData } from "../misc/types"
 import { toast } from "sonner"
 import { useContestantBank } from "../misc/api/contestant_bank"
-import { useMakeOffer } from "@/app/hustle-board/misc/api/postMakeOffer"
-import { convertNumberToNaira } from "@/utils/currency"
 
 // Enhanced schema with all Supabase fields
 const assignContestantSchema = z.object({
@@ -94,37 +77,14 @@ export default function GameDetailsEnhanced() {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false)
-  const [offerAmount, setOfferAmount] = useState(0)
   const [editingContestant, setEditingContestant] = useState<any>(null)
+
   const {
     state: isCreditDebitModalOpen,
     setTrue: openCreditDebitModal,
     setFalse: closeCreditDebitModal,
     setState: setCreditDebitModalState,
   } = useBooleanStateControl()
-
-  const {
-    state: isConfirmationModalOpen,
-    setTrue: openConfirmationModal,
-    setFalse: closeConfirmationModal,
-  } = useBooleanStateControl()
-  const {
-    state: isConfirmOfferModalOpen,
-    setTrue: openConfirmOfferModal,
-    setFalse: closeConfirmOfferModal,
-  } = useBooleanStateControl()
-  const {
-    state: isConfirmAcceptOfferModalOpen,
-    setTrue: openConfirmAcceptOfferModal,
-    setFalse: closeConfirmAcceptOfferModal,
-  } = useBooleanStateControl()
-  const {
-    state: isConfirmRejectOfferModalOpen,
-    setTrue: openConfirmRejectOfferModal,
-    setFalse: closeConfirmRejectOfferModal,
-  } = useBooleanStateControl()
-
 
   // Search and selection states
   const [selectedContestant, setSelectedContestant] = useState("")
@@ -136,11 +96,6 @@ export default function GameDetailsEnhanced() {
   const { isConnected, sendMessage, addMessageListener, removeMessageListener } = useMQTT()
   const [isSending, setIsSending] = useState(false)
   const [debitWalletData, setDebitWalletData] = useState<DebitWalletData | null>(null)
-
-  // New state for history management
-  const [debitWalletHistory, setDebitWalletHistory] = useState<DebitWalletData[]>([])
-  const [showHistory, setShowHistory] = useState(false)
-
   const [debitWalletPayload, setDebitWalletPayload] = useState<MultiCreditDebitContestantRequest | null>()
   const [selectedContestantIds, setSelectedContestantIds] = useState<number[]>([])
   const [creditSource, setCreditSource] = useState<"gameshow_float" | "contestants">()
@@ -159,12 +114,7 @@ export default function GameDetailsEnhanced() {
     )
   }, [contestants, searchTerm])
 
-  // Filter history to show only payable items (from_reveal: true)
-  const payableHistory = useMemo(() => {
-    return debitWalletHistory.filter((item) => item.from_reveal === true)
-  }, [debitWalletHistory])
-
-  // Existing MQTT and game logic (updated to save to history)
+  // Existing MQTT and game logic (unchanged)
   const sendGameMessage = React.useCallback(
     async (eventCode: string, data: any = {}) => {
       if (!isConnected) {
@@ -195,20 +145,7 @@ export default function GameDetailsEnhanced() {
       console.log("Received message:", message)
       if (message.event === "game_s2_question_answer") {
         console.log(message, "debitWalletData")
-        const newDebitData = message.payload
-
-        // Add to history
-        setDebitWalletHistory((prev) => {
-          // Check if this question already exists in history
-          const exists = prev.some((item) => item.question_id === newDebitData.question_id)
-          if (!exists) {
-            return [...prev, newDebitData]
-          }
-          return prev
-        })
-
-        // Set current data for immediate processing
-        setDebitWalletData(newDebitData)
+        setDebitWalletData(message.payload)
       }
     }
 
@@ -273,6 +210,7 @@ export default function GameDetailsEnhanced() {
   // Handle contestant selection from Supabase
   const handleSelectSupabaseContestant = (contestant: any) => {
     setSelectedSupabaseContestant(contestant)
+
     // Prefill form with selected contestant data
     modalForm.setValue("first_name", contestant.first_name || "")
     modalForm.setValue("last_name", contestant.last_name || "")
@@ -289,6 +227,7 @@ export default function GameDetailsEnhanced() {
     modalForm.setValue("website", contestant.website || "")
     modalForm.setValue("x", contestant.x || "")
     modalForm.setValue("social_to_display", contestant.social_to_display || "")
+
     setShowContestantSearch(false)
   }
 
@@ -296,6 +235,7 @@ export default function GameDetailsEnhanced() {
     try {
       // Combine first and last name for the API
       const fullName = `${values.first_name} ${values.last_name}`
+
       await assignContestantMutation.mutateAsync({
         game_episode: Number.parseInt(gameId),
         name: fullName,
@@ -313,6 +253,7 @@ export default function GameDetailsEnhanced() {
         date_of_birth: "", // Provide a sensible default or get from form if available
         ...values,
       })
+
       refetchContestants()
       modalForm.reset()
       setSelectedSupabaseContestant(null)
@@ -331,10 +272,12 @@ export default function GameDetailsEnhanced() {
 
   const openEditModal = (contestant: any) => {
     setEditingContestant(contestant)
+
     // Split name back to first and last
     const nameParts = contestant.name?.split(" ") || ["", ""]
     const firstName = nameParts[0] || ""
     const lastName = nameParts.slice(1).join(" ") || ""
+
     editForm.reset({
       constestants_attr: contestant.constestants_attr,
       first_name: firstName,
@@ -342,12 +285,14 @@ export default function GameDetailsEnhanced() {
       phone_number: contestant.phone_number || "",
       // Add other existing fields if available
     })
+
     setIsEditModalOpen(true)
   }
 
   const onEditSubmit = async (values: AssignContestantFormValues) => {
     try {
       const fullName = `${values.first_name} ${values.last_name}`.trim()
+
       // You'll need to create an update mutation
       // await updateContestantMutation.mutateAsync({
       //   id: editingContestant.id,
@@ -355,6 +300,7 @@ export default function GameDetailsEnhanced() {
       //   phone_number: values.phone_number,
       //   ...values
       // })
+
       refetchContestants()
       editForm.reset()
       setEditingContestant(null)
@@ -408,14 +354,7 @@ export default function GameDetailsEnhanced() {
     }
   }, [creditSource, selectedContestantIds, debitWalletData])
 
-  // New function to handle opening credit/debit modal from history
-  const handleOpenCreditDebitFromHistory = (historyItem: DebitWalletData) => {
-    setDebitWalletData(historyItem)
-    openCreditDebitModal()
-  }
-
-  // Modified function to show confirmation first
-  const handleDebitWalletConfirmation = () => {
+  const handleDebitWallet = () => {
     if (!debitWalletPayload) {
       alert("Please select a credit source")
       return
@@ -424,15 +363,6 @@ export default function GameDetailsEnhanced() {
       alert("Please select at least one contestant")
       return
     }
-
-    // Close credit/debit modal and open confirmation modal
-    closeCreditDebitModal()
-    openConfirmationModal()
-  }
-
-  // Actual debit wallet function (called after confirmation)
-  const handleDebitWallet = () => {
-    if (!debitWalletPayload) return
 
     const payload = {
       question_id: Number(debitWalletData?.question_id),
@@ -450,12 +380,6 @@ export default function GameDetailsEnhanced() {
             question_index: Number(debitWalletData?.question_index),
             show_modal: true,
           })
-
-          // Clear history on success
-          setDebitWalletHistory([])
-
-          // Reset states
-          resetDebitStates()
         },
         onError: (error) => {
           console.error(`Failed to debit wallet for contestant `, error)
@@ -477,12 +401,6 @@ export default function GameDetailsEnhanced() {
             question_index: Number(debitWalletData?.question_index),
             show_modal: true,
           })
-
-          // Clear history on success
-          setDebitWalletHistory([])
-
-          // Reset states
-          resetDebitStates()
         },
         onError: (error) => {
           console.error("Failed to debit wallet:", error)
@@ -499,85 +417,13 @@ export default function GameDetailsEnhanced() {
       },
     })
 
-    closeConfirmationModal()
-    refetchContestants()
-  }
-
-  // Helper function to reset debit-related states
-  const resetDebitStates = () => {
     setDebitWalletData(null)
     setDebitWalletPayload(null)
     setSelectedContestantIds([])
     setCreditSource(undefined)
+    closeCreditDebitModal()
+    refetchContestants()
   }
-
-
-  const { mutate: offerContestant, isLoading: isMakingOffer } = useMakeOffer();
-  const handleConfirmOffer = () => {
-    const contestant_id = contestantsData?.data.find(c => !c?.is_eliminated)?.id
-    if (!contestant_id) {
-      toast.error("No contestant available to make an offer")
-      return
-    }
-    if (offerAmount <= 0) {
-      toast.error("Offer amount must be greater than zero")
-      return
-    }
-    offerContestant({
-      game_episode: Number.parseInt(gameId),
-      contestant_id,
-      amount: offerAmount,
-    }, {
-      onSuccess: () => {
-        toast.success("Offer made successfully")
-        sendGameMessage("game_s4_make_offer", {
-          game_episode: Number.parseInt(gameId),
-          contestant_id,
-          amount: offerAmount,
-        })
-
-        closeConfirmOfferModal()
-        refetchContestants()
-      },
-      onError: (error) => {
-        console.error("Failed to make offer:", error)
-        toast.error("Failed to make offer")
-      },
-    })
-  }
-
-  const handleAcceptOffer = () => {
-    const contestant_id = contestantsData?.data.find(c => !c?.is_eliminated)?.id
-    if (!contestant_id) {
-      toast.error("No contestant available to accept offer")
-      return
-    }
-    sendGameMessage("game_s4_accept_offer", {
-      game_episode: Number.parseInt(gameId),
-      contestant_id,
-      amount: offerAmount,
-    })
-    setOfferAmount(0)
-    closeConfirmOfferModal()
-  }
-
-  const handleRejectOffer = () => {
-    const contestant_id = contestantsData?.data.find(c => !c?.is_eliminated)?.id
-    if (!contestant_id) {
-      toast.error("No contestant available to reject offer")
-      return
-    }
-    sendGameMessage("game_s4_reject_offer", {
-      game_episode: Number.parseInt(gameId),
-      contestant_id,
-      amount: offerAmount,
-    })
-    setOfferAmount(0)
-    closeConfirmOfferModal()
-  }
-
-
-
 
   return (
     <div className="min-h-full text-white !font-montserrat">
@@ -634,49 +480,6 @@ export default function GameDetailsEnhanced() {
                   </div>
                 </div>
               </section>
-
-              {/* Question History Section */}
-              {payableHistory.length > 0 && (
-                <section className="bg-[#341D44] p-5 rounded-xl">
-                  <div className="flex items-center justify-between mb-3">
-                    <header className="font-bold text-sm text-white">UNPAID QUESTIONS</header>
-                    <Button
-                      size="sm"
-                      variant="light"
-                      onClick={() => setShowHistory(!showHistory)}
-                      className="h-6 px-2 text-xs"
-                    >
-                      <History className="h-3 w-3 mr-1" />
-                      {showHistory ? "Hide" : "Show"} ({payableHistory.length})
-                    </Button>
-                  </div>
-
-                  {showHistory && (
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {payableHistory.map((item, index) => (
-                        <div
-                          key={`${item.question_id}-${index}`}
-                          className="p-3 bg-[#462B58] rounded-lg border border-[#ff00ff]/20 hover:border-[#ff00ff]/40 transition-colors cursor-pointer"
-                          onClick={() => handleOpenCreditDebitFromHistory(item)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="text-xs text-white font-medium">Question #{item.question_index}</div>
-                              <div className="text-xs text-gray-400">
-                                Winner: {item.data?.answers.find((a) => a.is_winner)?.contestant_name || "Unknown"}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3 text-yellow-400" />
-                              <span className="text-xs text-yellow-400">Pending</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-              )}
             </section>
 
             {/* Right Column - Contestants */}
@@ -689,8 +492,9 @@ export default function GameDetailsEnhanced() {
                     return (
                       <article
                         key={contestant.id}
-                        className={`relative rounded-2xl overflow-hidden bg-[#462B58] ${isAssigned ? "]" : "bg-[#1a0b25] hover:border-[#ff00ff]/50 transition-all group relative"
-                          }`}
+                        className={`relative rounded-2xl overflow-hidden bg-[#462B58] ${
+                          isAssigned ? "]" : "bg-[#1a0b25] hover:border-[#ff00ff]/50 transition-all group relative"
+                        }`}
                         style={{ height: "100px" }}
                       >
                         {isAssigned && (
@@ -779,7 +583,9 @@ export default function GameDetailsEnhanced() {
                   })}
                 </div>
                 <div className="flex justify-center gap-4 mt-8 mb-4">
-
+                  <TrapeziumButton variant="red" size="sm" backgroundColor="#ff00ff" onClick={startGameEpisode}>
+                    START EPISODE
+                  </TrapeziumButton>
                   {debitWalletData !== null && !!debitWalletData?.data && (
                     <TrapeziumButton
                       variant="yellow"
@@ -790,24 +596,8 @@ export default function GameDetailsEnhanced() {
                       DEBIT WALLET FOR QUESTION
                     </TrapeziumButton>
                   )}
-                  <TrapeziumButton variant="yellow" size="sm" backgroundColor="#ff00ff"
-                    onClick={() => setIsOfferModalOpen(true)}
-                  >
-                    MAKE OFFER
-                  </TrapeziumButton>
-                  <TrapeziumButton variant="green" size="sm" backgroundColor="#ff00ff"
-                    onClick={handleAcceptOffer}
-                    className="disabled:opacity-50"
-                    disabled={offerAmount <= 0}
-                  >
-                    ACCEPT OFFER
-                  </TrapeziumButton>
-                  <TrapeziumButton variant="red" size="sm" backgroundColor="#ff00ff"
-                    onClick={handleRejectOffer}
-                    className="disabled:opacity-50"
-                    disabled={offerAmount <= 0}
-                  >
-                    REJECT OFFER
+                  <TrapeziumButton variant="green" size="sm" backgroundColor="#ff00ff">
+                    END EPISODE
                   </TrapeziumButton>
                 </div>
               </div>
@@ -934,6 +724,7 @@ export default function GameDetailsEnhanced() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={modalForm.control}
                     name="last_name"
@@ -971,6 +762,7 @@ export default function GameDetailsEnhanced() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={modalForm.control}
                     name="email"
@@ -1014,6 +806,7 @@ export default function GameDetailsEnhanced() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={modalForm.control}
                     name="age"
@@ -1033,6 +826,7 @@ export default function GameDetailsEnhanced() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={modalForm.control}
                     name="state_of_origin"
@@ -1091,6 +885,7 @@ export default function GameDetailsEnhanced() {
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={modalForm.control}
                       name="twitter"
@@ -1108,6 +903,7 @@ export default function GameDetailsEnhanced() {
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={modalForm.control}
                       name="tiktok"
@@ -1125,6 +921,7 @@ export default function GameDetailsEnhanced() {
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={modalForm.control}
                       name="facebook"
@@ -1143,6 +940,7 @@ export default function GameDetailsEnhanced() {
                       )}
                     />
                   </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={modalForm.control}
@@ -1161,6 +959,7 @@ export default function GameDetailsEnhanced() {
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={modalForm.control}
                       name="social_to_display"
@@ -1269,6 +1068,7 @@ export default function GameDetailsEnhanced() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={editForm.control}
                     name="last_name"
@@ -1287,6 +1087,7 @@ export default function GameDetailsEnhanced() {
                     )}
                   />
                 </div>
+
                 <FormField
                   control={editForm.control}
                   name="phone_number"
@@ -1304,6 +1105,7 @@ export default function GameDetailsEnhanced() {
                     </FormItem>
                   )}
                 />
+
                 <div className="flex justify-end gap-2 mt-6">
                   <Button
                     type="button"
@@ -1331,7 +1133,7 @@ export default function GameDetailsEnhanced() {
         </DialogContent>
       </Dialog>
 
-      {/* Debit/Credit Modal */}
+      {/* Debit/Credit Modal - (unchanged from original) */}
       <Dialog open={isCreditDebitModalOpen} onOpenChange={setCreditDebitModalState}>
         <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white max-w-md">
           <DialogHeader>
@@ -1344,7 +1146,6 @@ export default function GameDetailsEnhanced() {
           </DialogHeader>
           <DialogBody>
             <div className="grid gap-2 mt-2">
-              <div className="text-sm text-gray-300">Question #{debitWalletData?.question_index}</div>
               <div className="text-sm text-gray-300">
                 Contestant ID:
                 {debitWalletData?.data?.answers.find((item) => item.is_winner)?.contestant_id || "Unknown"}
@@ -1374,7 +1175,6 @@ export default function GameDetailsEnhanced() {
                   </Label>
                 </div>
               </RadioGroup>
-
               {creditSource === "contestants" && (
                 <div className="mt-4 space-y-2">
                   <div className="text-sm text-white mb-2">Select Contestants to Debit:</div>
@@ -1383,7 +1183,7 @@ export default function GameDetailsEnhanced() {
                       ?.filter(
                         (contestant: any) =>
                           contestant.id !==
-                          debitWalletData?.data?.answers.find((item: any) => item.is_winner)?.contestant_id &&
+                            debitWalletData?.data?.answers.find((item: any) => item.is_winner)?.contestant_id &&
                           !contestant.is_eliminated,
                       )
                       .map((contestant: any) => (
@@ -1424,256 +1224,20 @@ export default function GameDetailsEnhanced() {
               </Button>
               <Button
                 type="button"
-                disabled={!creditSource || (creditSource === "contestants" && selectedContestantIds.length === 0)}
-                onClick={handleDebitWalletConfirmation}
+                disabled={
+                  isCreditDebitLoading ||
+                  !creditSource ||
+                  (creditSource === "contestants" && selectedContestantIds.length === 0)
+                }
+                onClick={handleDebitWallet}
                 className="bg-gradient-to-r from-primary to-[#ff00ff] hover:opacity-90 transition-opacity"
               >
-                Continue
+                {isCreditDebitLoading ? "Processing..." : "Debit Wallet"}
               </Button>
             </div>
           </DialogBody>
         </DialogContent>
       </Dialog>
-
-      {/* Confirmation Modal */}
-      <Dialog open={isConfirmationModalOpen} onOpenChange={closeConfirmationModal}>
-        <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl text-primary flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              Confirm Payment
-            </DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <div className="space-y-4">
-              <div className="p-4 bg-[#ff00ff]/10 rounded-lg border border-[#ff00ff]/30">
-                <h3 className="font-medium text-white mb-2">Payment Details:</h3>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="text-gray-300">Question:</span>{" "}
-                    <span className="text-white">#{debitWalletData?.question_index}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-300">Winner:</span>{" "}
-                    <span className="text-white">
-                      {debitWalletData?.data?.answers.find((item) => item.is_winner)?.contestant_name || "Unknown"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-300">Credit Source:</span>{" "}
-                    <span className="text-white">
-                      {creditSource === "gameshow_float" ? "Gameshow Wallet" : "Contestant Wallets"}
-                    </span>
-                  </div>
-                  {creditSource === "contestants" && selectedContestantIds.length > 0 && (
-                    <div>
-                      <span className="text-gray-300">Debiting from:</span>{" "}
-                      <span className="text-white">{selectedContestantIds.length} contestant(s)</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="text-sm text-gray-300">
-                Are you sure you want to process this payment? This action cannot be undone.
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={closeConfirmationModal}
-                className="border-[#ff00ff]/30 text-white hover: hover:text-white"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                disabled={isCreditDebitLoading}
-                onClick={handleDebitWallet}
-                className="bg-gradient-to-r from-red-500 to-red-600 hover:opacity-90 transition-opacity"
-              >
-                {isCreditDebitLoading ? "Processing..." : "Confirm Payment"}
-              </Button>
-            </div>
-          </DialogBody>
-        </DialogContent>
-      </Dialog>
-
-
-      {/* ///////////////////////////////////////////////////////////////////////////// */}
-      {/* ///////////////////////////////////////////////////////////////////////////// */}
-      {/* ///////////////////            OFFER MODALS       ///////////////////// */}
-      {/* ///////////////////////////////////////////////////////////////////////////// */}
-      {/* ///////////////////////////////////////////////////////////////////////////// */}
-      <Dialog open={isOfferModalOpen} onOpenChange={() => setIsOfferModalOpen(false)}>
-        <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl text-primary flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              Make Offer
-            </DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <div className="flex flex-col items-center space-y-4">
-              <div className="text-sm text-gray-300">
-                Enter an offer Amount.
-              </div>
-
-              <Input
-
-                type="number"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={offerAmount === 0 ? "" : offerAmount}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setOfferAmount(val === "" ? 0 : Number(val));
-                }}
-                placeholder="Enter offer amount"
-                className="bg-white/20 border-none outline-none h-max text-4xl font-anton p-4"
-              />
-              <p className="text-7xl font-anton text-[#ff00ff] text-center mt-4">
-                {convertNumberToNaira(offerAmount)}
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-
-              <TrapeziumButton
-                variant="green"
-                onClick={openConfirmOfferModal}
-              >
-                Make Offer
-              </TrapeziumButton>
-            </div>
-          </DialogBody>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isConfirmOfferModalOpen} onOpenChange={closeConfirmOfferModal}>
-        <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl text-primary flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              Confirm Offer
-            </DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <div className="space-y-4">
-
-
-              <div className="text-base text-gray-300">
-                Are you sure you want to make this offer.
-              </div>
-
-              <p className="text-6xl font-anton text-[#ff00ff] text-center mt-4">
-                {convertNumberToNaira(offerAmount)}
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <TrapeziumButton
-                type="button"
-                variant="red"
-                onClick={closeConfirmOfferModal}
-              >
-                Cancel
-              </TrapeziumButton>
-              <TrapeziumButton
-                variant="green"
-                disabled={isMakingOffer}
-                onClick={handleConfirmOffer}
-              >
-                {isMakingOffer ? "Processing..." : "Confirm Offer"}
-              </TrapeziumButton>
-            </div>
-          </DialogBody>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isConfirmAcceptOfferModalOpen} onOpenChange={closeConfirmAcceptOfferModal}>
-        <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl text-primary flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              Accept Offer
-            </DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <div className="space-y-4">
-
-
-              <div className="text-base text-gray-300">
-                Are you sure you want to accept this offer.
-              </div>
-
-              <p className="text-6xl font-anton text-[#ff00ff] text-center mt-4">
-                {convertNumberToNaira(offerAmount)}
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <TrapeziumButton
-                type="button"
-                variant="red"
-                onClick={closeConfirmAcceptOfferModal}
-              >
-                Cancel
-              </TrapeziumButton>
-              <TrapeziumButton
-                variant="green"
-                disabled={isMakingOffer}
-                onClick={handleAcceptOffer}
-              >
-                {isMakingOffer ? "Processing..." : "Accept Offer"}
-              </TrapeziumButton>
-            </div>
-          </DialogBody>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isConfirmRejectOfferModalOpen} onOpenChange={closeConfirmRejectOfferModal}>
-        <DialogContent className="bg-[#2a1a35] border-[#ff00ff]/20 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl text-primary flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              Reject Offer
-            </DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <div className="space-y-4">
-
-
-              <div className="text-base text-gray-300">
-                Are you sure you want to reject this offer.
-              </div>
-
-              <p className="text-6xl font-anton text-[#ff00ff] text-center mt-4">
-                {convertNumberToNaira(offerAmount)}
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <TrapeziumButton
-                type="button"
-                variant="red"
-                onClick={closeConfirmRejectOfferModal}
-              >
-                Cancel
-              </TrapeziumButton>
-              <TrapeziumButton
-                variant="green"
-                disabled={isMakingOffer}
-                onClick={handleRejectOffer}
-              >
-                {isMakingOffer ? "Processing..." : "Accept Offer"}
-              </TrapeziumButton>
-            </div>
-          </DialogBody>
-        </DialogContent>
-      </Dialog>
-
-
     </div>
   )
 }
