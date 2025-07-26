@@ -1165,6 +1165,10 @@ setShowBidRevealModal(false)
                     booster={
                       mqttQuestionData?.question?.question?.question_booster
                     }
+                    ownerBooster={
+                      mqttQuestionData?.question?.question
+                                  ?.owner_booster
+                    }
                     showBooster={true}
                     currentQuestionOptions={{
                       option_a: mqttQuestionData?.question?.question?.option_a,

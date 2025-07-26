@@ -17,7 +17,7 @@ import { Contestant } from "@/app/super-admin/misc/types";
 import Stage3Reward from "@/app/hustle-board/components/stage3/Stage3Reward";
 import { useGetStage3WiningAmount } from "../../api/stage3/fetchWInningAmt";
 import { hustlePicksProps } from "../../api/stage1/getAllHustlePicks";
-import { contestantPicks } from "../mocks/contestantPicks";
+// import { contestantPicks } from "../mocks/contestantPicks";
 
 interface prop {
   showJackpot?: boolean;
@@ -40,6 +40,7 @@ interface prop {
     picks: number[];
     color: string;
 }[]
+picksByContestant?: Record<number, number[]>
   // mqttAnswerBalanceData?: any;
   
 }
@@ -75,15 +76,6 @@ interface Questions {
   question_booster: string;
 }
 
- const contestantColors: Record<number | 'default', string> = {
-    1: "#FEC124", // Yellow/Gold
-    2: "#FF5733", // Orange/Red
-    3: "#33FF57", // Green
-    4: "#3357FF", // Blue
-    5: "#FF33F5", // Pink/Magenta
-    6: "#33FFF5", // Cyan
-    default: "#666666" // Gray (default)
-  };
 
 // Animation hook for counting up/down numbers with sound
 const useAnimatedBalance = (targetValue: number, duration: number = 1000) => {
@@ -169,7 +161,9 @@ const ContestantCard = ({
   pickCount,
   showPickCount,
   hustlePicksData,
-  contestantsPicks
+  contestantsPicks,
+  picksByContestant
+
 
 }: {
   contestant: Contestant;
@@ -191,6 +185,7 @@ const ContestantCard = ({
     color: string;
 }[] | undefined
   hustlePicksData?: hustlePicksProps | null | undefined;
+  picksByContestant: Record<number, number[]> | undefined
 }) => {
   const animatedBalance = useAnimatedBalance(balance, 800);
   const [isBalanceChanging, setIsBalanceChanging] = useState(false);
@@ -268,7 +263,7 @@ const findPicks = (contestantId: number) => {
 
         {/* Balance & Name */}
         <div
-          className={`relative w-full ${isBoardRoute ? "mt-4" : ""}`}
+          className={`relative w-full mt-4`}
         >
           <div className="flex flex-col justify-center gap-0 mt-3 items-center w-full">
             {showHustleCardAmt && (
@@ -315,6 +310,7 @@ const findPicks = (contestantId: number) => {
       
       const pickCount = contestantPicks?.picks?.length || 0;
       
+      
       return (
         <GlowyStrokeText
           truncate
@@ -323,7 +319,7 @@ const findPicks = (contestantId: number) => {
           glowColor="#ce45eb"
           glowIntensity="low" 
           textclassName={`
-            ${pickCount === 0 ? "hidden" : ""}
+            ${findPicks(contestantInfo?.id)?.length === 0 ? "" : ""}
             ${
             isBoardRoute ? "text-[2rem] max-w-[160px]" : "text-[16px] max-w-[110px]"
           } font-extrabold font-gilroyHeavy text-white  transition-all duration-300 ${
@@ -332,7 +328,9 @@ const findPicks = (contestantId: number) => {
           }`}
           fillColor="#fff"
         >
-           {findPicks(contestantInfo?.id)?.length || pickCount} 
+           {/* {findPicks(contestantInfo?.id)?.length}  */}
+
+           {picksByContestant?.[contestantInfo?.id]?.length}
         </GlowyStrokeText>
       );  
     })()}
@@ -364,7 +362,8 @@ const HustleSideBar = ({
   showPickCount,
   pickCount=0,
   hustlePicksData,
-  contestantsPicks
+  contestantsPicks,
+  picksByContestant
 }: prop) => {
   const user = tokenStorage.getUser();
   const params = useParams();
@@ -383,7 +382,7 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
     return allconstestant;
   };
 
-  console.log(hustlePicksData);
+  // console.log(hustlePicksData);
   
   // Helper function to calculate balance with fallback logic
   const calculateBalance = (contestant: any, contestantInfo: any) => {
@@ -496,6 +495,8 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
                     pickCount={pickCount}
                     hustlePicksData={hustlePicksData}
                     contestantsPicks={contestantsPicks}
+                    picksByContestant={picksByContestant}
+
                   />
                 );
               })}

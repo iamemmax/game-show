@@ -54,6 +54,7 @@ interface FastestFingerResultProps {
   contestantBids?: {
     [contestantId: string]: ContestantBid;
   } | null;
+  width?:number
 }
 
 interface AnimatedAmountProps {
@@ -86,6 +87,7 @@ const FastestFingerResult = ({
   resultArray,
   timeElapsed,
   contestantBids,
+  width
 }: FastestFingerResultProps) => {
   const [bidSlots, setBidSlots] = useState<(ContestantBid | null)[]>(Array(6).fill(null));
   const [animatingSlot, setAnimatingSlot] = useState<number | null>(null);
@@ -398,7 +400,7 @@ useEffect(() => {
                   borderColor="#FFC125"
                   iconText=""
                   showIcon={false}
-                  width={isBoardRoute ? 230 : 130}
+                  width={isBoardRoute ? 230 : width}
                   height={isBoardRoute ? 80 : 53}
                   className="2xl:w-[260px] opacity-50"
                 />
