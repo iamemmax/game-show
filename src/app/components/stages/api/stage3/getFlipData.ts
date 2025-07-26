@@ -15,12 +15,14 @@ interface Contestant {
   anme: string;
 }
 
-export const getFlipData = async () => {
-  const response = await tokenlessAxios.get(`api/game/test_return_contestant`);
+export const getFlipData = async (episodeId:string) => {
+  const response = await tokenlessAxios.get(`api/game/get_dud_pass_state?game_episode=${episodeId}`);
   return response?.data as flipDataTypes[];
 };
 
-export const useGetFlipData = () =>
+export const useGetFlipData = (episodeId:string) =>
   useQuery({
-    queryFn:  getFlipData,
+    queryFn: ()=> getFlipData(episodeId),
+    queryKey: ["get-flip-data",episodeId],
+    enabled:!!episodeId,
   });

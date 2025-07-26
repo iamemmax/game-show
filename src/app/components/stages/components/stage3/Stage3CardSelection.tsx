@@ -20,6 +20,7 @@ import Logo from "@/app/icons/Logo";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
 import {motion} from "framer-motion"
+import { useContestantFlipCard } from "../../api/stage3/contestantCardFlip";
 
 type CardType = {
   position: number;
@@ -38,9 +39,10 @@ const Stage3CardSelection = () => {
     const contestant = contestantsData?.data.find((c) => c.id === contestantId);
     return contestant;
   };
+  const {mutate:handleCardFlip} = useContestantFlipCard()
 
   const cardIcons = [PickCard1, PickCard2, PickCard3];
-  const { data, isLoading } = useGetFlipData();
+  const { data, isLoading } = useGetFlipData(String(user?.game_episode));
   const [allCards, setAllCards] = useState<CardType[]>(
     Array.from({ length: 24 }, (_, i) => ({
       position: data?.find((card) => card.position == i + 1)?.position || i,
@@ -61,7 +63,20 @@ const Stage3CardSelection = () => {
     }
   }, [isLoading, data]);
 
-  console.log(allCards);
+const handleCardClick = (position: number) => {
+   handleCardFlip({
+    contestant_id:Number(user?.contestant_id),
+    game_episode:Number(user?.game_episode),
+    position:position},{
+    onSuccess:(data)=>{
+console.log(data);
+
+    }
+   })
+  };
+
+
+
 
   const renderCard = (card: CardType, position: number) => {
     console.log(card);
@@ -102,6 +117,8 @@ const Stage3CardSelection = () => {
           );
       }
     })();
+
+
     // // Add timer overlay for bonus cards - works for both current user and opponent
     // if (card.type === CARD_TYPES.BONUS_FLIP && bonusCardTimers[index] > 0) {
     //   const isCurrentUserCard = card.contestant_id === user?.contestant_id;
@@ -222,7 +239,7 @@ const Stage3CardSelection = () => {
               ) : (
                 <div className="grid grid-cols-6 justify-center gap-4">
                   {allCards?.map((card, index) => (
-                    <>{renderCard(card, index + 1)}</>
+                    <div onClick={() => handleCardClick(index+1)}>{renderCard(card, index + 1)}</div>
                   ))}
                 </div>
               )}
