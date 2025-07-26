@@ -127,7 +127,7 @@ export default function HostStage1Questions({
           console.error("Error revealing stage 1 results:", error)
           if((error as any).response.data.message == "Stage already ended")
             sendGameMessage("game_s1_results_reveal", {
-              game_id: gameId,
+              game_id: gameEpisode,
             })
         },
       },
