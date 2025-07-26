@@ -1,12 +1,11 @@
 import { GameHeader } from '@/components/core/GameHeader'
 import React from 'react'
+import Stage3CardSelection from '../components/stages/components/stage3/Stage3CardSelection'
 
 const page = () => {
   return (
     <div>
-        <GameHeader
-        text='Holaaaa'
-        />
+        <Stage3CardSelection/>
     </div>
   )
 }
