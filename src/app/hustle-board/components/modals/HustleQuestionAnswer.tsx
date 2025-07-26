@@ -218,6 +218,7 @@ interface Profitloss {
 
 interface prop {
   booster?: string;
+  ownerBooster?: string;
   showBooster?: boolean;
   showBid?:boolean
   showAllocatedAMount?:boolean
@@ -241,6 +242,7 @@ interface prop {
 
 
 const HustleQuestionAnswerModal = ({
+  ownerBooster,
   booster,
   showBooster = false,
   questionIndex,
@@ -305,7 +307,7 @@ const HustleQuestionAnswerModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50  mx-auto flex items-center w-[83.25rem]  justify-center bg-black/80">
+    <div className="fixed inset-0 z-50  mx-auto flex items-center w-[84.25rem]  justify-center bg-black/80">
       <div className="px-8">
 
       <div className="bg-[#15052B] grid grid-cols-[1fr_1.5fr]  items-start gap-[2.1875rem] rounded-[30px] text-white w-full border border-[#7E3CE0] p-[1.875rem]">
@@ -317,32 +319,57 @@ const HustleQuestionAnswerModal = ({
             </p>
           </div>
 
-          <div className="bg-[#000] border-[.125rem] border-[#7E3CE0] mt-3 rounded-[20px] px-4 py-10 flex justify-center items-center flex-col">
+          <div className="bg-[#000] border-[.125rem] border-[#7E3CE0] mt-3 rounded-[20px] px-4 pt-10 pb-4 flex justify-center items-center flex-col">
             <p className="text-white text-center text-3xl font-gilroyBold font-semibold">
               {question || "What is the Biggest market in West Africa?"}
          
             </p>
 
             {showBooster && (
-              <div className="bg-[#011B0D] mt-5 rounded-[12px] py-2 px-8">
+              <div className='flex items-center gap-4'>
+              
+              <div className="bg-[#011B0D] flex flex-col mt-5 rounded-[12px] py-2 px-4">
+                  <span
+                    className="text-xl pl-3 font-outfit font-normal text-[#04DA6A]"
+                    style={{
+                      WebkitTextStroke: "0px",
+                      textShadow: "none",
+                    }}
+                  >
+                   Owner  Booster
+                  </span>
                 <p
-                  className="text-3xl text-white font-extrabold text-center"
+                  className="text-xl text-white font-extrabold text-center"
+                  style={{
+                    WebkitTextStroke: "1px #04DA6A",
+                    textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
+                  }}
+                >
+                  {ownerBooster}
+                
+                </p>
+              </div>
+              <div className="bg-[#011B0D] flex flex-col mt-5 rounded-[12px] py-2 px-4">
+                <span
+                    className="text-xl pl-3 font-outfit font-normal text-[#04DA6A]"
+                    style={{
+                      WebkitTextStroke: "0px",
+                      textShadow: "none",
+                    }}
+                  >
+                  General  Booster
+                  </span>
+                <p
+                  className="text-xl text-white font-extrabold text-center"
                   style={{
                     WebkitTextStroke: "1px #04DA6A",
                     textShadow: "0px 2px 4px rgba(4, 218, 106, 0.5)",
                   }}
                 >
                   {booster}
-                  <span
-                    className="text-3xl pl-3 font-outfit font-normal text-[#04DA6A]"
-                    style={{
-                      WebkitTextStroke: "0px",
-                      textShadow: "none",
-                    }}
-                  >
-                    Booster
-                  </span>
+                  
                 </p>
+              </div>
               </div>
             )}
             {/* {showAllocatedAMount&&( */}

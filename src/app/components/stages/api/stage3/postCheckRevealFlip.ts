@@ -3,15 +3,17 @@ import { useMutation, useQuery } from 'react-query';
 
 
 
-interface stageThree {
-  game_episode: number;
-  contestant_id: number;
+interface dataTypes {
+  data: Data;
 }
 
+interface Data {
+  pass_found: boolean;
+}
 
 export const checkWhetherToRevealPass = async ({data}:{data:any}) => {
   const response = await salaryAxios.post(`api/game/request_for_pass`);
-  return response?.data ;
+  return response?.data as dataTypes ;
 };
 
 export const useCheckWhetherToRevealPass = () =>

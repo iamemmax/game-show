@@ -24,6 +24,7 @@ import Stage2GetReadyPage from "./Stage2GetReadyPage";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import GameResultModal from "../ResultBalnceModal";
 import { formatAmount } from "@/utils/currency";
+import { getDynamicFontSize } from "@/app/shared/getFunctionSize";
 
 // Add new interface for attempted options
 interface AttemptedOption {
@@ -592,7 +593,7 @@ useEffect(() => {
               <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
               <div className="relative">
                 <div className="flex justify-between items-center ">
-                  <div>
+                  {/* <div>
                     <GlowyStrokeText
                       strokeWidth={2}
                       strokeColor="#D91FFF"
@@ -603,29 +604,14 @@ useEffect(() => {
                     >
                       Stage 2: Prove your hustle
                     </GlowyStrokeText>
-                    {/* <p className="text-sm font-normal text-[#D5B9FF]">
-                      Select minimum of 2 number to determine the trivia
-                      questions for this round
-                    </p> */}
-                  </div>
+                    
+                  </div> */}
 
-                  {timerActive && (
-                    <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
-                      <span
-                        className="text-[20px] font-extrabold font-verdana text-white"
-                        style={{
-                          WebkitTextStroke: "1.5px #C76000",
-                          textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
-                        }}
-                      >
-                        {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
-                      </span>
-                    </div>
-                  )}
+                
                 </div>
 
-                <div className="grid mt-5 gap-3 grid-cols-[1fr_4fr_1.3fr] items-start">
-                  <div className="flex gap-2 flex-col">
+                <div className="grid py-3 gap-4 grid-cols-[60px_4fr_1.3fr] items-start">
+                  <div className="flex gap-5 flex-col">
                     {/* Remove the mapping over selectedQuestions since we're not using it anymore */}
                     {Array.from({ length: 6 }, (_, index) => (
                       <div className="" key={index}>
@@ -733,7 +719,7 @@ useEffect(() => {
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.2, duration: 0.4 }}
                             >
-                              <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
+                              <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-base text-[#04DA6A] font-outfit">
                                 Question {currentQuestionIndex}
                               </p>
                             </motion.div>
@@ -756,7 +742,7 @@ useEffect(() => {
     >
       <h2 
         ref={textRef}
-        className={`text-white ${fontSize} text-center font-gilroyMedium font-extrabold line-clamp-2`}
+        className={`text-white  text-center font-gilroyMedium font-extrabold  ${getDynamicFontSize(mqttQuestionData?.question, "question")}`}
       >
         {mqttQuestionData?.question || "Waiting for question..."}
       </h2>
@@ -888,7 +874,7 @@ useEffect(() => {
                                     }
                                   >
                                     {optionLetter}:
-                                    <span className="ml-2">
+                                    <span className={`ml-2 ${getDynamicFontSize(mqttQuestionData[option], "option")}`}>
                                       {mqttQuestionData[option] || `...`}
                                     </span>
                                   </motion.button>
@@ -925,7 +911,22 @@ useEffect(() => {
 )}
                     </>
                   )}
-                  <div className="">
+                  <div className="flex flex-col  gap-y-3 w-full">
+                      {timerActive && (
+                    <div className="flex justify-center items-center">
+                      <div className="flex max-w-[100px]  items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+                      <span
+                        className="text-[20px] font-extrabold font-verdana text-white"
+                        style={{
+                          WebkitTextStroke: "1.5px #C76000",
+                          textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
+                        }}
+                      >
+                        {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
+                      </span>
+                    </div>
+                    </div>
+                  )}
                     <FastestFingerResult
                       key={`${user?.contestant_id}-${currentQuestionIndex}-${currentQuestionId}`}
                       resultArray={
@@ -936,6 +937,7 @@ useEffect(() => {
                       mqttAnswerData={mqttAnswerData}
                       timeElapsed={timeLeft <= 0 || !timerActive}
                       currentQuestionId={currentQuestionId}
+                      width={120}
                     />
                   </div>
                 </div>

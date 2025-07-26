@@ -558,88 +558,7 @@ const [stage, setStage] = useState(1)
                     </GlowyStrokeText>
                   </div>
 
-                  {/* <motion.div
-                    className={`flex items-center gap-1 ${allContestsant && allContestsant?.data?.length <= 4 ? "gap-3" : "gap-1"} 2xl:gap-2 flex-col`}
-                    initial="hidden"
-                    animate="visible"
-                    variants={{
-                      visible: {
-                        transition: {
-                          staggerChildren: 0.8, // Increased stagger time for better sound timing
-                        },
-                      },
-                    }}
-                  >
-                    {sortedContestants.map((tally, idx: number) => (
-                      <motion.div
-                        key={`${tally.id}-${idx}`}
-                        variants={{
-                          hidden: { opacity: 0, y: 20, scale: 0.8 },
-                          visible: {
-                            opacity: 1,
-                            y: 0,
-                            scale: 1,
-                            transition: {
-                              duration: 0.6,
-                              ease: "easeOut",
-                            },
-                          },
-                        }}
-                        onAnimationComplete={() => handleItemReveal(idx, tally.is_eliminated)}
-                        className={`flex justify-center gap-[.6875rem] 2xl:gap-1 items-center ${tally.is_eliminated ? "opacity-50" : ""}`}
-                      >
-                        <div
-                          className={`${cn(`${episodeId ? "!h-[6rem] !pt-4 !w-[12.8125rem]" : "h-[3.125rem] w-[7.8125rem]"} gap-3  grid grid-cols-[1fr_3fr] 2xl:grid-cols-[1fr_2fr]  bg-[#1C0240] 2xl:h-[3.8rem] p-2 border-[.0531rem] border-opacity-55 border-[${borderArray[idx]}] rounded-[.4594rem]`)} `}
-                        >
-                          <div className="shrink-0">
-                            <Image
-                              alt=""
-                              src={contestantImages[idx]}
-                              width={18}
-                              height={18}
-                              className={`rounded-full shrink-0 ${episodeId ? "w-[80px] h-[60px]" : "2xl:w-[60px] 2xl:h-[30px]"} `}
-                            />
-                          </div>
-                          <div className={`${cn(` flex flex-col`)}`}>
-                            <p
-                              className={`${episodeId ? "text-2xl" : "text-xs 2xl:text-xl"}  font-gilroyMedium truncate font-normal text-white`}
-                            >
-                              {tally.name?.split(" ")[0]}
-                            </p>
-                            <p className="text-xs 2xl:text-lg font-gilroyMedium font-normal text-white">
-                              {`₦${addCommasToNumber(Number(Math.ceil(Number(tally?.actual_balance) / 1000) * 1000)) ?? 0}`}
-                             
-                            </p>
-                          </div>
-                        </div>
-                        <div className="">
-                          <StageTallyCard
-                            text={
-                              tally.is_eliminated
-                                ? "ELIMINATED"
-                                : tallyArray[idx]
-                            }
-                            fontSize={40}
-                            className={`font-lucky text-center ${episodeId ? "w-full h-[120px]" : "2xl:w-[700px] 2xl:h-[90px]"} `}
-                            color="#fff"
-                            amount={`N${addCommasToNumber(Number(Math.ceil(Number(tally?.actual_balance) / 1000) * 1000)) ?? 0}`}
-                            badgeColor={
-                              tally.is_eliminated ? "#760F1B" : "#035D2E"
-                            }
-                            backgroundGradient={{
-                              endColor: tally.is_eliminated
-                                ? "#980306"
-                                : "#03984A",
-                              startColor: tally.is_eliminated
-                                ? "#FE8E8E"
-                                : "#8EFE9B",
-                            }}
-                            gradientId={`gradient-${idx}-${tally.id}`}
-                          />
-                        </div>
-                      </motion.div>
-                    ))}
-                  </motion.div> */}
+              
 
 <motion.div
   className={`flex items-center gap-1 ${allContestsant && allContestsant?.data?.length <= 4 ? "gap-3" : "gap-1"} 2xl:gap-2 flex-col`}
@@ -680,9 +599,9 @@ const [stage, setStage] = useState(1)
     >
       {/* Rest of your existing content remains the same */}
       <div
-        className={`${cn(`${episodeId ? "!h-[6rem] !pt-4 !w-[12.8125rem]" : "h-[3.125rem] w-[7.8125rem]"} gap-3  grid grid-cols-[1fr_3fr] 2xl:grid-cols-[1fr_2fr]  bg-[#1C0240] 2xl:h-[3.8rem] p-2 border-[.0531rem] border-opacity-55 border-[${borderArray[idx]}] rounded-[.4594rem]`)} `}
+        className={`${cn(`${episodeId ? "!h-[6rem]  !w-[12.8125rem]" : "h-[3.125rem] w-[7.8125rem]"} gap-3  grid grid-cols-[1fr_3fr] 2xl:grid-cols-[1fr_2fr]  bg-[#1C0240] 2xl:h-[3.8rem] p-2 border-[.0531rem] border-opacity-55 border-[${borderArray[idx]}] rounded-[.4594rem]`)} `}
       >
-        <div className="shrink-0">
+        {/* <div className="shrink-0">
           <Image
             alt=""
             src={tally?.contestant_photo_url??"/images/userImage.png"}
@@ -690,14 +609,14 @@ const [stage, setStage] = useState(1)
             height={18}
             className={`rounded-full shrink-0 ${episodeId ? "w-[80px] h-[60px]" : "2xl:w-[60px] 2xl:h-[30px]"} `}
           />
-        </div>
+        </div> */}
         <div className={`${cn(` flex flex-col`)}`}>
           <p
-            className={`${episodeId ? "text-2xl" : "text-xs 2xl:text-xl"}  font-gilroyMedium truncate font-normal text-white`}
+            className={`text-3xl font-gilroyMedium truncate font-normal text-white`}
           >
             {tally.name?.split(" ")[0]}
           </p>
-          <p className="text-xs 2xl:text-lg font-gilroyMedium font-normal text-white">
+          <p className="text-3xl font-gilroyMedium font-normal text-white">
               {`₦${addCommasToNumber(Number(tally?.actual_balance || 0))}`}
           </p>
         </div>

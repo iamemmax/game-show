@@ -32,6 +32,7 @@ import {
 } from "../animation/animateQuestions";
 import { formatAmount } from "@/utils/currency";
 import EliminatedModal from "@/app/shared/EliminatedModal";
+import { getDynamicFontSize } from "@/app/shared/getFunctionSize";
 
 // Add debug log to track component imports
 
@@ -647,9 +648,15 @@ const QuestionScreen = () => {
   if (showPrepPage) {
     return <GetReadyScreen />;
   }
+  console.log(questionData);
+  
 
+const text = "At every buzzing Lagos owambe, the DJ’s playlist feels random, but it’s all planned. From old-school jams to trending street anthems, there’s a pattern to when he drops each banger, shifting energy levels to control the dance floor and signal when it’s time to spray cash. What is a classic strategy DJs use to trigger money rain?"
 
-
+const getBoosterOwner = (id:string)=>{
+  const getOwner = questionData?.find((contestant) => String(contestant?.contestant_id) === id);
+  return getOwner
+}
   return (
     <>
       {/* Elimination Modal */}
@@ -666,6 +673,7 @@ const QuestionScreen = () => {
           )}
         />
       )}
+ 
 
       <div className="grid grid-cols-[1.2fr_5fr_1fr] items-start   h-full">
         {/* Left Sidebar */}
@@ -731,82 +739,10 @@ const QuestionScreen = () => {
               {/* Content container - increased border width from 5px to 8px for bolder appearance */}
               <div className="absolute inset-[8px] bg-[#13051E] rounded-[.675rem]" />
               <div className="relative">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className="text-[2.75rem] font-extrabold outline-text text-black"></h2>
-                    <GlowyStrokeText
-                      className="text-[2rem] font-extrabold"
-                      glowColor="D91FFF"
-                      glowIntensity="low"
-                      fillColor="black"
-                      strokeColor="#d91fff"
-                      strokeWidth={2}
-                    >
-                      Stage 1:Hustle kick off
-                    </GlowyStrokeText>
-                  </div>
+               
 
-                  {timerActive && (
-                    <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
-                      <span
-                        className="text-[20px] font-extrabold font-verdana text-white"
-                        style={{
-                          WebkitTextStroke: "1.5px #C76000",
-                          textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
-                        }}
-                      >
-                        {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
-                      </span>
-                    </div>
-                  )}
-                  {/* Bid Prompt Overlay */}
-                  {showBidPrompt && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      className=" inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-[.75rem]"
-                    >
-                      <motion.div
-                        animate={{
-                          scale: [1, 1.05, 1],
-                          boxShadow: [
-                            "0 0 20px rgba(255, 193, 37, 0.5)",
-                            "0 0 40px rgba(255, 193, 37, 0.8)",
-                            "0 0 20px rgba(255, 193, 37, 0.5)",
-                          ],
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                        className="bg-gradient-to-r from-[#FFC125] via-[#FFCC11] to-[#C23A00] p-4 rounded-xl border-4 w-full border-[#FFC125] shadow-2xl"
-                      >
-                        <div className="text-center">
-                          <motion.div
-                            animate={{ rotate: [0, 10, -10, 0] }}
-                            transition={{
-                              duration: 0.5,
-                              repeat: Infinity,
-                              repeatDelay: 1,
-                            }}
-                            className="text-2xl "
-                          ></motion.div>
-                          <p className="text-black text-lg font-extrabold font-gilroyBold">
-                            Lock Your Hustle
-                          </p>
-                          {/* <p className="text-black/80 text-sm font-medium mt-1">
-                                      Choose your answer & wager amount
-                                    </p> */}
-                        </div>
-                      </motion.div>
-                    </motion.div>
-                  )}
-                </div>
-
-                <div className="grid mt-5 gap-2 w-full  grid-cols-[1fr_3fr_1fr] items-start">
-                  <div className="flex gap-4 flex-col">
+                <div className="grid  gap-6 w-full grid-cols-[5rem_1fr_8rem] items-start">
+                  <div className="flex max-w-[1rem]  gap-4 flex-col">
                     {questionData?.map((contestant, idx: number) => (
                       <div className="flex gap-2 items-center" key={idx}>
                         <div className="">
@@ -834,8 +770,8 @@ const QuestionScreen = () => {
                                   ? "#04DA6A"
                                   : "black"
                             }
-                            width={34}
-                            height={40}
+                            width={40}
+                            height={50}
                             active={
                               mqttQuestionData?.question?.hustle_reveal
                                 ?.hustle_number > contestant?.hustle_number
@@ -844,7 +780,8 @@ const QuestionScreen = () => {
                             iconSize={30}
                           />
                         </div>
-                        <div className="flex items-center gap-2">
+                        
+                        {/* <div className="flex items-center gap-2">
                           <div className="flex items-center gap-2">
                             <div className="h-[1.2rem] w-[1.2rem]  relative">
                               <Image
@@ -871,7 +808,7 @@ const QuestionScreen = () => {
                             </div>
 
                           </div>
-                        </div>
+                        </div> */}
                       </div>
                     ))}
                   </div>
@@ -896,34 +833,68 @@ const QuestionScreen = () => {
                               variants={questionElementVariants}
                               className="border-[.3125rem] relative border-[#D71BFA] flex-col flex gap-4 px-[2.12rem] items-center justify-start py-[1rem] rounded-[1.5rem] bg-[#000000]"
                             >
-                              <motion.div
+                             <div className="flex items-center gap-x-4">
+                              
+                               <motion.div
                                 variants={questionElementVariants}
                                 className=""
                               >
-                                <p className="bg-[#011B0D] rounded-10 px-3 py-2 text-xs text-[#04DA6A] font-outfit">
-                                  Question{" "}
+                                <p className="text-base bg-[#011B0D] rounded-10 px-3 py-2 font-outfit font-normal text-[#04DA6A]"
+                                      style={{
+                                        WebkitTextStroke: "0px",
+                                        textShadow: "none",
+                                      }}>
+                                 Question{" "}
                                   {mqttQuestionData?.question_index || "..."}
                                 </p>
                               </motion.div>
-
-                              <motion.div
+                               <motion.div
                                 variants={questionElementVariants}
                                 className=""
                               >
-                                {mqttQuestionData?.question?.question
-                                  ?.question ? (
-                                  <h2 className="text-white text-lg 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                                    {
-                                      mqttQuestionData.question.question
-                                        .question
-                                    }
-                                  </h2>
-                                ) : (
-                                  <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
-                                    Waiting for question from host...
-                                  </h2>
-                                )}
+                                <p   className="text-base bg-[#011B0D] rounded-10 px-3 py-2 font-outfit font-normal text-[#04DA6A]"
+                                      style={{
+                                        WebkitTextStroke: "0px",
+                                        textShadow: "none",
+                                      }}>
+                               {mqttQuestionData?.question?.contestant?.contestant_name} {" "}
+                                  {mqttQuestionData?.question?.question
+                                  ?.owner_booster}
+                                </p>
                               </motion.div>
+
+                              {/* <div className="bg-[#011B0D] rounded-[12px] py-1  w-full">
+                                  <p
+                                    className="text-[25px] text-white font-extrabold font- text-center"
+                                   
+                                    >
+                                        {mqttQuestionData?.question?.contestant?.contestant_name} {" "}
+                                    
+                                    <span className=""  style={{
+                                      WebkitTextStroke: "2px #04DA6A",
+                                      textShadow:
+                                        "0px 2px 4px rgba(4, 218, 106, 0.5)",
+                                      }}>
+                                     
+                                    </span>
+                                    {mqttQuestionData?.question?.question
+                                  ?.owner_booster}
+                                    
+                                  </p>
+                                </div> */}
+                             </div>
+
+                            <motion.div variants={questionElementVariants} className="">
+      {mqttQuestionData?.question?.question?.question ? (
+        <h2 className={`text-white text-center font-gilroyMedium font-extrabold ${getDynamicFontSize(mqttQuestionData?.question?.question?.question, "question")}`}>
+          {mqttQuestionData?.question?.question?.question}
+        </h2>
+      ) : (
+        <h2 className="text-white text-xl 2xl:text-2xl text-center font-gilroyMedium font-extrabold">
+          Waiting for question from host...
+        </h2>
+      )}
+    </motion.div>
 
                               <motion.div
                                 variants={questionElementVariants}
@@ -1044,7 +1015,7 @@ const QuestionScreen = () => {
                                       )}
                                     >
                                       {optionLetter}:
-                                      <span className="ml-2">
+                                      <span className={`ml-2 ${getDynamicFontSize(currentQuestions[option], "option")}`}>
                                         {currentQuestions[option] || `...`}
                                       </span>
                                     </motion.button>
@@ -1169,12 +1140,90 @@ ${timeLeft <= 0 || isSubmitted // Only disable styling when time elapsed or subm
                     )}
                   </>
                   {/* Pass mqttAnswerData and currentQuestionId to FastestFingerResult */}
-                  <div className=" ">
+                  <div className="flex flex-col gap-y-3 ">
+                     
+                     <div className="flex justify-end items-center">
+                      <div className="flex justify-between items-center">
+                  {/* <div>
+                    <h2 className="text-[2.75rem] font-extrabold outline-text text-black"></h2>
+                    <GlowyStrokeText
+                      className="text-[2rem] font-extrabold"
+                      glowColor="D91FFF"
+                      glowIntensity="low"
+                      fillColor="black"
+                      strokeColor="#d91fff"
+                      strokeWidth={2}
+                    >
+                      Stage 1:Hustle kick off
+                    </GlowyStrokeText>
+                  </div> */}
+
+                  {timerActive && (
+                    <div className="flex items-center justify-center bg-gradient-to-r from-amber-500 to-yellow-500 border-[2px] border-[#C76000] rounded-xl px-3 py-1.5 shadow-md">
+                      <span
+                        className="text-[20px] font-extrabold font-verdana text-white"
+                        style={{
+                          WebkitTextStroke: "1.5px #C76000",
+                          textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
+                        }}
+                      >
+                        {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
+                      </span>
+                    </div>
+                  )}
+                  {/* Bid Prompt Overlay */}
+                  {showBidPrompt && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className=" inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-[.75rem]"
+                    >
+                      <motion.div
+                        animate={{
+                          scale: [1, 1.05, 1],
+                          boxShadow: [
+                            "0 0 20px rgba(255, 193, 37, 0.5)",
+                            "0 0 40px rgba(255, 193, 37, 0.8)",
+                            "0 0 20px rgba(255, 193, 37, 0.5)",
+                          ],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                        className="bg-gradient-to-r from-[#FFC125] via-[#FFCC11] to-[#C23A00] p-4 rounded-xl border-4 w-full border-[#FFC125] shadow-2xl"
+                      >
+                        <div className="text-center">
+                          <motion.div
+                            animate={{ rotate: [0, 10, -10, 0] }}
+                            transition={{
+                              duration: 0.5,
+                              repeat: Infinity,
+                              repeatDelay: 1,
+                            }}
+                            className="text-2xl "
+                          ></motion.div>
+                          <p className="text-black text-lg font-extrabold font-gilroyBold">
+                            Lock Your Hustle
+                          </p>
+                          {/* <p className="text-black/80 text-sm font-medium mt-1">
+                                      Choose your answer & wager amount
+                                    </p> */}
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </div>
+                     </div>
                     <FastestFingerResult
                       resultArray={mqttAnswerData}
                       mqttAnswerData={mqttAnswerData}
                       timeElapsed={timeLeft <= 0 || showNextButton}
                       currentQuestionId={currentQuestionId}
+                      width={100}
+
                     />
                   </div>
                 </div>

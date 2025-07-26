@@ -491,12 +491,12 @@ const HustleBoardInvestCapitall = ({ hustleReveal }: Prop) => {
               {/* Bottom section with text */}
               <div className="flex flex-col mt-2 items-start">
                 <motion.p 
-                  className="text-white text-base font-medium leading-tight mb-1"
+                  className="text-white text-xl truncate font-medium leading-tight mb-1"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: contestantIdx * 0.05 + 0.2 }} // Faster
                 >
-                  {contestant.contestant_details?.name}
+                  {contestant?.contestant_details?.name?.split(" ")[0]}
                 </motion.p>
                 <motion.p 
                   className="text-white text-2xl font-bold leading-tight"
