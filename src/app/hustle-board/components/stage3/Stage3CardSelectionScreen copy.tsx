@@ -344,87 +344,87 @@
 // //     return allContestant
 // //   }
 
-// //   // Fixed Turn Indicator Component
-// //   const TurnIndicator = () => {
-// //     console.log(
-// //       `🎯 TurnIndicator: remainingContestants=${remainingContestants.length}, currentTurn=${currentTurn}, passFound=${passFound}`,
-// //     )
-// //     // // Only hide if game actually ended (pass found)
-// //     if (passFound) {
-// //       console.log(`🎯 TurnIndicator hidden: passFound=${passFound}`)
-// //       return null
-// //     }
+  // // Fixed Turn Indicator Component
+  // const TurnIndicator = () => {
+  //   console.log(
+  //     `🎯 TurnIndicator: remainingContestants=${remainingContestants.length}, currentTurn=${currentTurn}, passFound=${passFound}`,
+  //   )
+  //   // // Only hide if game actually ended (pass found)
+  //   if (passFound) {
+  //     console.log(`🎯 TurnIndicator hidden: passFound=${passFound}`)
+  //     return null
+  //   }
 
-// //     // Show loading state if contestants haven't loaded yet
-// //     if (remainingContestants.length === 0) {
-// //       return (
-// //         <div className="flex items-center justify-center gap-6 p-4 w-full">
-// //           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-// //           <span className="text-white">Loading contestants...</span>
-// //         </div>
-// //       )
-// //     }
+  //   // Show loading state if contestants haven't loaded yet
+  //   if (remainingContestants.length === 0) {
+  //     return (
+  //       <div className="flex items-center justify-center gap-6 p-4 w-full">
+  //         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+  //         <span className="text-white">Loading contestants...</span>
+  //       </div>
+  //     )
+  //   }
 
-// //     return (
-// //       <div className="flex items-center justify-center gap-6 p-4 w-full">
-// //         {/* Main container with contestants */}
-// //         <div className="flex items-center justify-center w-full ">
-// //           {remainingContestants?.map((contestant, index) => {
-// //             const missFlipInfo = missFlipTimers[contestant.id]
-// //             const isCurrentTurn = currentTurn === contestant.id
-// //             return (
-// //               <React.Fragment key={contestant.id}>
-// //                 {/* Contestant card */}
-// //                 <div
-// //                   className={`
-// //                   flex items-center border-[0.5px] border-opacity-70 bg-transparent justify-center gap-4 px-4 py-3 rounded-lg min-w-[200px]
-// //                    ${isCurrentTurn ? " border-[#04DA6A]" : " border-[#EB001B]"}
-// //                 `}
-// //                 >
-// //                   <div className="flex items-center gap-6">
-// //                     <span
-// //                       className={`
-// //                       font-bold text-2xl capitalize tracking-wide
-// //                       ${isCurrentTurn ? "text-white" : "text-gray-300"}
-// //                     `}
-// //                     >
-// //                       {contestant.name?.split(" ")[0]}
-// //                     </span>
-// //                     {isCurrentTurn && !missFlipInfo && (
-// //                       <div className="flex items-center gap-3 bg-[#053F20] py-[7px] px-4 rounded-xl border border-[#04DA6A]">
-// //                         <span className="text-2xl font-semibold font-verdana text-[#04DA6A]">Your turn</span>
-// //                         <div className="w-3 h-3 rounded-full bg-[#04DA6A] animate-pulse"></div>
-// //                       </div>
-// //                     )}
-// //                     {isCurrentTurn && missFlipInfo && (
-// //                       <div className="flex items-center gap-3 bg-[#4A1A00] py-[7px] px-4 rounded-xl border border-[#FF8C00]">
-// //                         <span className="text-2xl font-semibold font-verdana text-[#FF8C00]">
-// //                           Extra Flips: {missFlipInfo.flipsRemaining}
-// //                         </span>
-// //                         <div className="text-[#FF8C00] text-2xl font-bold">{missFlipInfo.timer}s</div>
-// //                       </div>
-// //                     )}
-// //                     {!isCurrentTurn && (
-// //                       <div className="flex items-center gap-3 bg-[#38040A] py-[7px] px-4 rounded-xl">
-// //                         <span className="text-2xl font-semibold font-verdana text-[#FF495E]">Waiting</span>
-// //                         <div className="w-3 h-3 rounded-full bg-[#FF495E]"></div>
-// //                       </div>
-// //                     )}
-// //                   </div>
-// //                 </div>
-// //                 {/* VS indicator between contestants */}
-// //                 {index === 0 && remainingContestants.length > 1 && (
-// //                   <div className="px-6">
-// //                     <VersusIcon />
-// //                   </div>
-// //                 )}
-// //               </React.Fragment>
-// //             )
-// //           })}
-// //         </div>
-// //       </div>
-// //     )
-// //   }
+  //   return (
+  //     <div className="flex items-center justify-center gap-6 p-4 w-full">
+  //       {/* Main container with contestants */}
+  //       <div className="flex items-center justify-center w-full ">
+  //         {remainingContestants?.map((contestant, index) => {
+  //           const missFlipInfo = missFlipTimers[contestant.id]
+  //           const isCurrentTurn = currentTurn === contestant.id
+  //           return (
+  //             <React.Fragment key={contestant.id}>
+  //               {/* Contestant card */}
+  //               <div
+  //                 className={`
+  //                 flex items-center border-[0.5px] border-opacity-70 bg-transparent justify-center gap-4 px-4 py-3 rounded-lg min-w-[200px]
+  //                  ${isCurrentTurn ? " border-[#04DA6A]" : " border-[#EB001B]"}
+  //               `}
+  //               >
+  //                 <div className="flex items-center gap-6">
+  //                   <span
+  //                     className={`
+  //                     font-bold text-2xl capitalize tracking-wide
+  //                     ${isCurrentTurn ? "text-white" : "text-gray-300"}
+  //                   `}
+  //                   >
+  //                     {contestant.name?.split(" ")[0]}
+  //                   </span>
+  //                   {isCurrentTurn && !missFlipInfo && (
+  //                     <div className="flex items-center gap-3 bg-[#053F20] py-[7px] px-4 rounded-xl border border-[#04DA6A]">
+  //                       <span className="text-2xl font-semibold font-verdana text-[#04DA6A]">Your turn</span>
+  //                       <div className="w-3 h-3 rounded-full bg-[#04DA6A] animate-pulse"></div>
+  //                     </div>
+  //                   )}
+  //                   {isCurrentTurn && missFlipInfo && (
+  //                     <div className="flex items-center gap-3 bg-[#4A1A00] py-[7px] px-4 rounded-xl border border-[#FF8C00]">
+  //                       <span className="text-2xl font-semibold font-verdana text-[#FF8C00]">
+  //                         Extra Flips: {missFlipInfo.flipsRemaining}
+  //                       </span>
+  //                       <div className="text-[#FF8C00] text-2xl font-bold">{missFlipInfo.timer}s</div>
+  //                     </div>
+  //                   )}
+  //                   {!isCurrentTurn && (
+  //                     <div className="flex items-center gap-3 bg-[#38040A] py-[7px] px-4 rounded-xl">
+  //                       <span className="text-2xl font-semibold font-verdana text-[#FF495E]">Waiting</span>
+  //                       <div className="w-3 h-3 rounded-full bg-[#FF495E]"></div>
+  //                     </div>
+  //                   )}
+  //                 </div>
+  //               </div>
+  //               {/* VS indicator between contestants */}
+  //               {index === 0 && remainingContestants.length > 1 && (
+  //                 <div className="px-6">
+  //                   <VersusIcon />
+  //                 </div>
+  //               )}
+  //             </React.Fragment>
+  //           )
+  //         })}
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
 // //   // Enhanced Global Timer Component with better visibility
 // //   const GlobalTimer = () => {
@@ -2207,9 +2207,9 @@
 //           <React.Fragment key={contestant.id}>
 //             {/* Contestant card */}
 //             <div className={`
-//               flex items-center border-[0.5px] border-opacity-70 bg-transparent justify-center gap-4 px-4 py-3 rounded-lg 
-//               ${currentTurn === contestant?.id 
-//                 ? ' border-[#04DA6A]' 
+//               flex items-center border-[0.5px] border-opacity-70 bg-transparent justify-center gap-4 px-4 py-3 rounded-lg
+//               ${currentTurn === contestant?.id
+//                 ? ' border-[#04DA6A]'
 //                 : ' border-[#EB001B]'
 //               }
 //             `}>
@@ -2234,7 +2234,7 @@
 //                 )}
 //               </div>
 //             </div>
-            
+
 //             {/* VS indicator between contestants */}
 //             {index === 0 && (
 //              <div className="px-6"> <VersusIcon/></div>
@@ -2246,7 +2246,7 @@
 //   );
 // };
 
-  
+
 //   const CelebrationAnimation = ({ isVisible, finderName }: { isVisible: boolean, finderName?: string }) => {
 //     if (!isVisible) return null;
 
@@ -2298,7 +2298,7 @@
 
 //         {/* Celebration content */}
 //       <StageThreeWinnerModal name={passFinderName} balance={String(getContestantInfo(Number(passFinderId))?.actual_balance ??0)} imgUrl={String(getContestantInfo(Number(passFinderId))?.contestant_photo_url ??"/")}/>
-     
+
 //       </div>
 //     );
 //   };
@@ -2471,14 +2471,14 @@
 //                   </div>
 //                 </div>
 //               </div>
- 
+
 //               {isLoadingContestants ? (
 //                 <div className="flex justify-center items-center h-full w-full">
 //                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
 //                 </div>
 //               ) : (
 //                 <>
-       
+
 
 // <div className="grid grid-cols-6 gap-y-3 justify-center items-center">
 //   {cards.map((card, index) => {
@@ -2577,7 +2577,7 @@
 
 
 //                 </>
-              
+
 //               )}
 //             </div>
 //           </div>
@@ -2921,7 +2921,7 @@
 //               {/* Contestant card */}
 //               <div
 //                 className={`
-//               flex items-center border-[0.5px] border-opacity-70 bg-transparent justify-center gap-4 px-4 py-3 rounded-lg 
+//               flex items-center border-[0.5px] border-opacity-70 bg-transparent justify-center gap-4 px-4 py-3 rounded-lg
 //               ${currentTurn === contestant?.id ? " border-[#04DA6A]" : " border-[#EB001B]"}
 //             `}
 //               >
@@ -3184,7 +3184,7 @@
 //                       {!gameEnded && <TurnIndicator />}
 //                     </div>
 
-                 
+
 //                   </div>
 //                 </div>
 
@@ -4891,7 +4891,7 @@
 //             {/* Top text for cash cards */}
 //             {cardType.includes("K") && (
 //               <div className="text-green-400 text-2xl font-bold mb-6 text-shadow-lg">{cardDisplay.title}
-              
+
 //               </div>
 //             )}
 //             {/* Miss flip special text */}

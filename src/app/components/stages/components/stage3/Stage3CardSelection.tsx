@@ -51,12 +51,16 @@ const Stage3CardSelection = () => {
     isLoading: isLoadingContestants,
     refetch,
   } = useGetGameContestants(user?.game_episode as number);
-  const getContestantData = (contestantId: number) => {
-    const contestant = contestantsData?.data.find((c) => c.id === contestantId);
-    return contestant;
+  const getRemainingContestant = () => {
+    const remainingConst = contestantsData?.data?.filter(
+      (x) => !x?.is_eliminated
+    );
+    return remainingConst;
   };
   const getOtherContestantData = (contestantId: number) => {
-    const contestant = contestantsData?.data.find((c) => c.id !== contestantId);
+    const contestant = getRemainingContestant()?.find(
+      (c) => c.id !== contestantId
+    );
     return contestant;
   };
   const [showCountdown, setShowCoundown] = useState(false);
@@ -70,6 +74,7 @@ const Stage3CardSelection = () => {
     data,
     isLoading,
     refetch: refetchAlreadyFlippedCards,
+    isFetching,
   } = useGetFlipData(String(user?.game_episode));
   const [allCards, setAllCards] = useState<CardType[]>(
     Array.from({ length: 24 }, (_, i) => ({
@@ -94,7 +99,7 @@ const Stage3CardSelection = () => {
   }, [isLoading, data]);
 
   const handleCardClick = (position: number) => {
-    if (data?.who_next !== user?.contestant_id) return;
+    if (data?.who_next.toString() !== user?.contestant_id.toString()) return;
     handleCardFlip(
       {
         contestant_id: Number(user?.contestant_id),
@@ -132,24 +137,28 @@ const Stage3CardSelection = () => {
         const data = message.payload.data as DudPassMQTTData;
         setCardFLipModalInfo(data);
         setShowCardFlipModal(true);
-        // const newCards = allCards.map((card, index) => ({
-        //   ...card,
 
-        // }));
         refetchAlreadyFlippedCards();
-        let countdownIntrerval;
-        setTimeout(() => {
+        if (data.type !== CARD_TYPES.PASS) {
           setShowCoundown(true);
-          countdownIntrerval = setInterval(() => {
-            setCountdownTimer(countTimer - 1);
+        } else {
+          setShowCoundown(false);
+        }
+        let countdownInterval: NodeJS.Timeout;
+        setCountdownTimer(3);
+        setTimeout(() => {
+          countdownInterval = setInterval(() => {
+            setCountdownTimer((prev) => {
+              if (prev <= 1) {
+                clearInterval(countdownInterval);
+                setShowCoundown(false);
+                setShowCardFlipModal(false);
+                return 0;
+              }
+              return prev - 1;
+            });
           }, 1000);
         }, 1000);
-
-        if (countTimer == 0) {
-          clearInterval(countdownIntrerval);
-          setShowCoundown(false);
-          setShowCardFlipModal(false);
-        }
       }
     };
 
@@ -234,26 +243,11 @@ const Stage3CardSelection = () => {
     setCardFLipModalInfo,
   ] = useState<DudPassMQTTData | null>(null);
   const [showCardFlipModal, setShowCardFlipModal] = useState(false);
-  const CardFlipModal = () => {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.5, opacity: 0 }}
-          className="text-center max-w-lg w-full mx-4"
-        >
-          <p className="text-6xl font-anton text-white">
-            {cardFlipModalInfo?.type}
-          </p>
-        </motion.div>
-      </div>
-    );
-  };
 
   const TurnIndicator = () => {
-    // if (passFound) return null;
-    const isMyTurn = data?.who_next === user?.contestant_id;
+    const isMyTurn = isFetching
+      ? cardFlipModalInfo?.next_turn === user?.contestant_id.toString()
+      : data?.who_next.toString() === user?.contestant_id.toString();
 
     return (
       <div className="">
@@ -388,7 +382,10 @@ const Stage3CardSelection = () => {
                   <div className="grid grid-cols-6 justify-center gap-4">
                     {allCards?.map((card, index) => (
                       <button
-                        disabled={data?.who_next !== user?.contestant_id}
+                        disabled={
+                          data?.who_next?.toString() !==
+                          user?.contestant_id.toString()
+                        }
                         onClick={() => handleCardClick(index + 1)}
                       >
                         {renderCard(card, index + 1)}
@@ -422,12 +419,12 @@ const Stage3CardSelection = () => {
         />
       )}
       {showCountdown && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50">
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
-            className="text-center max-w-lg w-full mx-4 text-9xl font-semibold "
+            className="text-center max-w-lg w-full mx-4 text-9xl font-semibold text-white/50 "
           >
             <NumberFlow value={countTimer} />
           </motion.div>

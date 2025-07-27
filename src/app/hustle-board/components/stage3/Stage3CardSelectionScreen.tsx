@@ -25,6 +25,7 @@ import { CardFlipRevealModal } from "@/app/components/stages/components/stage3/S
 import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideBar";
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
 import { useParams } from "next/navigation";
+import VersusIcon from "@/app/icons/Versus";
 
 interface DudPassMQTTData {
   type: string;
@@ -50,6 +51,13 @@ const Stage3CardSelectionScreens = () => {
     isLoading: isLoadingContestants,
     refetch,
   } = useGetGameContestants(Number(gameEpisode));
+
+  const getRemainingContestant = () => {
+    const remainingConst = contestantsData?.data?.filter(
+      (x) => !x?.is_eliminated
+    );
+    return remainingConst;
+  };
 
   const [showCountdown, setShowCoundown] = useState(false);
   const [countTimer, setCountdownTimer] = useState(3);
@@ -94,19 +102,26 @@ const Stage3CardSelectionScreens = () => {
         setCardFLipModalInfo(data);
         setShowCardFlipModal(true);
         refetchAlreadyFlippedCards();
-        let countdownIntrerval;
-        setTimeout(() => {
+        let countdownInterval: NodeJS.Timeout;
+        setCountdownTimer(3);
+        if (data.type !== CARD_TYPES.PASS) {
           setShowCoundown(true);
-          countdownIntrerval = setInterval(() => {
-            setCountdownTimer(countTimer - 1);
+        } else {
+          setShowCoundown(false);
+        }
+        setTimeout(() => {
+          countdownInterval = setInterval(() => {
+            setCountdownTimer((prev) => {
+              if (prev <= 1) {
+                clearInterval(countdownInterval);
+                setShowCoundown(false);
+                setShowCardFlipModal(false);
+                return 0;
+              }
+              return prev - 1;
+            });
           }, 1000);
         }, 1000);
-
-        if (countTimer == 0) {
-          clearInterval(countdownIntrerval);
-          setShowCoundown(false);
-          setShowCardFlipModal(false);
-        }
       }
     };
 
@@ -115,6 +130,81 @@ const Stage3CardSelectionScreens = () => {
       return removeMessageListener(handleMQTTMessage);
     }
   }, [isConnected, addMessageListener, removeMessageListener]);
+
+  // Fixed Turn Indicator Component
+  const TurnIndicator = () => {
+    // if (data?.who_next?.toString()) return null;
+    const getContestant = getRemainingContestant()?.find(
+      (x) => x.id.toString() === data?.who_next.toString()
+    );
+
+    // // Only hide if game actually ended (pass found)
+    // if (passFound) {
+    //   console.log(`🎯 TurnIndicator hidden: passFound=${passFound}`)
+    //   return null
+    // }
+
+    // Show loading state if contestants haven't loaded yet
+    if (getRemainingContestant()?.length === 0) {
+      return (
+        <div className="flex items-center justify-center gap-6 p-4 w-full">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+          <span className="text-white">Loading contestants...</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-center gap-6 p-4 w-full">
+        {/* Main container with contestants */}
+        <div className="flex items-center justify-center w-full ">
+          {getRemainingContestant()?.map((contestant, index) => {
+            const isCurrentTurn =
+              data?.who_next?.toString() === contestant.id.toString();
+            return (
+              <React.Fragment key={contestant.id}>
+                {/* Contestant card */}
+                <div
+                  className={`
+                    flex items-center border-[0.5px] border-opacity-70 bg-transparent justify-center gap-4 px-4 py-3 rounded-lg min-w-[200px]
+                     ${
+                       isCurrentTurn ? " border-[#04DA6A]" : " border-[#EB001B]"
+                     }
+                  `}
+                >
+                  <div className="flex items-center gap-6">
+                    <span
+                      className={`
+                        font-bold text-2xl capitalize tracking-wide
+                        ${isCurrentTurn ? "text-white" : "text-gray-300"}
+                      `}
+                    >
+                      {contestant.name?.split(" ")[0]}
+                    </span>
+
+                    {!isCurrentTurn && (
+                      <div className="flex items-center gap-3 bg-[#38040A] py-[7px] px-4 rounded-xl">
+                        <span className="text-2xl font-semibold font-verdana text-[#FF495E]">
+                          Waiting
+                        </span>
+                        <div className="w-3 h-3 rounded-full bg-[#FF495E]"></div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* VS indicator between contestants */}
+                {index === 0 && (getRemainingContestant()?.length ?? 0) > 1 && (
+                  <div className="px-6">
+                    <VersusIcon />
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   const renderCard = (card: CardType, position: number) => {
     // Render revealed cards based on type
@@ -265,10 +355,13 @@ const Stage3CardSelectionScreens = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                 </div>
               ) : (
-                <div className="grid grid-cols-6 justify-center gap-4">
-                  {allCards?.map((card, index) => (
-                    <div>{renderCard(card, index + 1)}</div>
-                  ))}
+                <div>
+                  <TurnIndicator />
+                  <div className="grid grid-cols-6 justify-center gap-4">
+                    {allCards?.map((card, index) => (
+                      <div>{renderCard(card, index + 1)}</div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -297,12 +390,12 @@ const Stage3CardSelectionScreens = () => {
         />
       )}
       {showCountdown && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50">
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
-            className="text-center max-w-lg w-full mx-4 text-9xl font-semibold "
+            className="text-center max-w-lg w-full mx-4 text-9xl font-semibold text-white/50"
           >
             <NumberFlow value={countTimer} />
           </motion.div>
