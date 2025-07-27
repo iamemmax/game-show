@@ -66,10 +66,8 @@ const Stage3CardSelection = () => {
 const handleCardClick = (position: number) => {
    handleCardFlip({
     contestant_id:Number(user?.contestant_id),
-    game_episode:Number(user?.game_episode),
-    position:position},{
-    onSuccess:(data)=>{
-console.log(data);
+    game_episode:Number(user?.game_episode),position:position},{
+    onSuccess:()=>{
 
     }
    })

@@ -1,7 +1,5 @@
 import { salaryAxios, tokenlessAxios } from '@/lib/axios';
-import { useMutation, useQuery } from 'react-query';
-
-
+import {  useQuery } from 'react-query';
 
 interface flipDataTypes {
   type: string;
