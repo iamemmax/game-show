@@ -6,6 +6,7 @@ import InstantCashout from "@/app/icons/cards/InstantCashout";
 import { motion } from "framer-motion";
 import { tokenStorage } from "@/utils/auth";
 import { cn } from "@/utils/classNames";
+import BonusFlip from "@/app/icons/cards/BonusFlip";
 
 export const CardFlipRevealModal = ({
   cardType,
@@ -18,8 +19,10 @@ export const CardFlipRevealModal = ({
   contestant: FlipContestant;
   isHustleBoard?: boolean;
 }) => {
-  const currentContestant = tokenStorage.getUser()?.contestant_id;
+  const currentContestant = tokenStorage.getUser();
   const whoFlipped = contestant.id;
+
+  // const otherContestantName =
 
   const getCardDisplay = () => {
     switch (cardType) {
@@ -47,10 +50,12 @@ export const CardFlipRevealModal = ({
       case CARD_TYPES.MISS_FLIP:
         return {
           title: `${
-            currentContestant == whoFlipped
-              ? "You get"
-              : `${contestant.name} gets`
-          }  2 extra turns before your next turn`,
+            isHustleBoard
+              ? `${contestant.name} gets`
+              : currentContestant?.contestant_id == whoFlipped
+              ? `${contestant.name} gets`
+              : `You get`
+          }  2 extra turns before next turn`,
           Icon: <MissCardFlip width={300} height={300} />,
           bgColor: "bg-gradient-to-br from-purple-600 to-purple-800",
           cardBg: "bg-purple-600",
@@ -65,7 +70,7 @@ export const CardFlipRevealModal = ({
       case CARD_TYPES.BONUS_FLIP:
         return {
           title: "BONUS",
-          Icon: <PassCard width={300} height={300} />,
+          Icon: <BonusFlip width={300} height={300} />,
           bgColor: "bg-gradient-to-br from-yellow-400 to-yellow-600",
           cardBg: "bg-yellow-400",
         };
@@ -131,15 +136,16 @@ export const CardFlipRevealModal = ({
                 ? "bg-[#38040a] text-red-600 border-[#38040a]  "
                 : CARD_TYPES.BONUS_FLIP
                 ? "bg-purple-800 text-white border-purple-500"
-                : " px-6 py-3"
+                : CARD_TYPES.BONUS_FLIP ?
+                 "bg-green-200 text-green-500 px-6 py-3"
+                : "bg-green-200 text-green-500 px-6 py-3"
             )}
           >
             {isHustleBoard
               ? contestant.name
               : contestant.id.toString() === currentContestant?.toString()
               ? "You"
-              : contestant.name
-              }
+              : contestant.name}
           </div>
         )}
       </motion.div>

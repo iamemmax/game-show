@@ -193,39 +193,39 @@
 // //     return allconstestant;
 // //   };
 
-// //   const TurnIndicator = () => {
-// //   if (passFound) return null;
+//   const TurnIndicator = () => {
+//   if (passFound) return null;
 
-// //   return (
-// //     <div className="">
+//   return (
+//     <div className="">
 
-// //       {/* Turn Status */}
-// //       <div className={cn(
-// //         "mt-2 p-2 rounded-lg text-center",
-// //         isMyTurn
-// //           ? "bg-green-600 bg-opacity-20 border border-green-400"
-// //           : "bg-red-600 bg-opacity-20 border border-red-400"
-// //       )}>
-// //         <div className="flex items-center justify-center gap-2">
-// //           <div className={cn(
-// //             "w-3 h-3 rounded-full animate-pulse",
-// //             isMyTurn ? "bg-green-400" : "bg-red-400"
-// //           )}></div>
-// //           <span className={cn(
-// //             "font-gilroyBold text-sm",
-// //             isMyTurn ? "text-green-400" : "text-red-400"
-// //           )}>
-// //             {isMyTurn ? "Your turn to flip" : `${otherContestantName}'s turn`}
-// //           </span>
-// //           <div className={cn(
-// //             "w-3 h-3 rounded-full animate-pulse",
-// //             isMyTurn ? "bg-green-400" : "bg-red-400"
-// //           )}></div>
-// //         </div>
-// //       </div>
-// //     </div>
-// //   );
-// // };
+//       {/* Turn Status */}
+//       <div className={cn(
+//         "mt-2 p-2 rounded-lg text-center",
+//         isMyTurn
+//           ? "bg-green-600 bg-opacity-20 border border-green-400"
+//           : "bg-red-600 bg-opacity-20 border border-red-400"
+//       )}>
+//         <div className="flex items-center justify-center gap-2">
+//           <div className={cn(
+//             "w-3 h-3 rounded-full animate-pulse",
+//             isMyTurn ? "bg-green-400" : "bg-red-400"
+//           )}></div>
+//           <span className={cn(
+//             "font-gilroyBold text-sm",
+//             isMyTurn ? "text-green-400" : "text-red-400"
+//           )}>
+//             {isMyTurn ? "Your turn to flip" : `${otherContestantName}'s turn`}
+//           </span>
+//           <div className={cn(
+//             "w-3 h-3 rounded-full animate-pulse",
+//             isMyTurn ? "bg-green-400" : "bg-red-400"
+//           )}></div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 // //   // Elimination Modal Component
 
 // //   // Celebration Animation Component

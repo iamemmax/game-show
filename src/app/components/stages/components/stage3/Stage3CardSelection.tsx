@@ -4,7 +4,7 @@ import PickCard2 from "@/app/icons/cards/PickCard2";
 import PickCard3 from "@/app/icons/cards/PickCard3";
 import PickCardContainer from "@/app/shared/PickCardContainer";
 import { cn } from "@/utils/classNames";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useGetFlipData } from "../../api/stage3/getFlipData";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import { tokenStorage } from "@/utils/auth";
@@ -25,6 +25,9 @@ import { useMQTT } from "@/hooks/useMqttService";
 import { MQTTMessage } from "@/contexts/MQTTProvider";
 import { CardFlipRevealModal } from "./Srage3CardSelectionRevealModal";
 import NumberFlow from "@number-flow/react";
+import { useCardSelection } from "../../api/stage3/sendCardSelection";
+import StageThreeWinnerModal from "../StageThreeWinnerModal";
+import EliminatedModal from "@/app/shared/EliminatedModal";
 
 interface DudPassMQTTData {
   type: string;
@@ -50,20 +53,36 @@ const Stage3CardSelection = () => {
     isLoading: isLoadingContestants,
     refetch,
   } = useGetGameContestants(user?.game_episode as number);
+  const getRemainingContestant = () => {
+    const remainingConst = contestantsData?.data?.filter(
+      (x) => !x?.is_eliminated
+    );
+    return remainingConst;
+  };
   const getContestantData = (contestantId: number) => {
-    const contestant = contestantsData?.data.find((c) => c.id === contestantId);
+    const contestant = getRemainingContestant()?.find(
+      (c) => c.id == contestantId
+    );
+    return contestant;
+  };
+  const getOtherContestantData = (contestantId: number) => {
+    const contestant = getRemainingContestant()?.find(
+      (c) => c.id !== contestantId
+    );
     return contestant;
   };
   const [showCountdown, setShowCoundown] = useState(false);
   const [countTimer, setCountdownTimer] = useState(3);
-
+  const [passFound, setPassFound] = useState(false);
   const { mutate: handleCardFlip } = useContestantFlipCard();
 
   const cardIcons = [PickCard1, PickCard2, PickCard3];
+  const { mutate: handleCard } = useCardSelection();
   const {
     data,
     isLoading,
     refetch: refetchAlreadyFlippedCards,
+    isFetching,
   } = useGetFlipData(String(user?.game_episode));
   const [allCards, setAllCards] = useState<CardType[]>(
     Array.from({ length: 24 }, (_, i) => ({
@@ -88,6 +107,7 @@ const Stage3CardSelection = () => {
   }, [isLoading, data]);
 
   const handleCardClick = (position: number) => {
+    if (data?.who_next.toString() !== user?.contestant_id.toString()) return;
     handleCardFlip(
       {
         contestant_id: Number(user?.contestant_id),
@@ -96,7 +116,19 @@ const Stage3CardSelection = () => {
       },
       {
         onSuccess: (data) => {
-          console.log(data);
+          handleCard(
+            {
+              contestant_id: data?.contestant?.id,
+              game_episode: Number(user?.game_episode),
+              pick: data?.type?.toUpperCase(),
+            },
+            {
+              onSuccess: () => {
+                refetch();
+                refetchAlreadyFlippedCards();
+              },
+            }
+          );
         },
       }
     );
@@ -104,42 +136,74 @@ const Stage3CardSelection = () => {
 
   const { addMessageListener, removeMessageListener, isConnected } = useMQTT();
 
+
+
+
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
   useEffect(() => {
-    // {"event": "dud_pass_picks", "data": {"type": "DUD", "position": 4, "contestant": {"id": 37, "name": "Rosemary Ndubueze", "contestant_attr": "contestant_1"}, "next_turn": ""}}
     const handleMQTTMessage = (message: MQTTMessage) => {
-      if (message.topic !== "test/topic/local") return;
-      console.log(message, "mqqt dud messaghe");
+      if (message.topic !== "test/topic/local") return
+      console.log(message, "mqtt dud message")
+
       if (message.event === "dud_pass_picks") {
-        const data = message.payload.data as DudPassMQTTData;
-        setCardFLipModalInfo(data);
-        setShowCardFlipModal(true);
-        // const newCards = allCards.map((card, index) => ({
-        //   ...card,
+        const data = message.payload.data as DudPassMQTTData
 
-        // }));
-        refetchAlreadyFlippedCards();
-        let countdownIntrerval;
-        setTimeout(() => {
-          setShowCoundown(true);
-          countdownIntrerval = setInterval(() => {
-            setCountdownTimer(countTimer - 1);
-          }, 1000);
-        }, 1000);
-
-        if (countTimer == 0) {
-          clearInterval(countdownIntrerval);
-          setShowCoundown(false);
-          setShowCardFlipModal(false);
+        // Clear any existing countdown
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current)
         }
+
+        // Step 1: Show card flip modal immediately
+        setCardFLipModalInfo(data)
+        setShowCardFlipModal(true)
+        refetchAlreadyFlippedCards()
+
+        // Step 2: After 1 second, show countdown (only for non-PASS types)
+        setTimeout(() => {
+          if (data.type !== CARD_TYPES.PASS) {
+            setShowCoundown(true)
+            setCountdownTimer(3) // Start countdown from 3
+
+            // Step 3: Start 3-second countdown
+            countdownIntervalRef.current = setInterval(() => {
+              setCountdownTimer((prev) => {
+                if (prev <= 1) {
+                  // Countdown finished - close both modals
+                  clearInterval(countdownIntervalRef.current!)
+                  setShowCoundown(false)
+                  setShowCardFlipModal(false)
+                  return 0
+                }
+                return prev - 1
+              })
+            }, 1000)
+          } else {
+            // For PASS type, close after 3 seconds without showing countdown
+            setTimeout(() => {
+              setShowCardFlipModal(false)
+            }, 3000)
+          }
+        }, 1000)
       }
-    };
-
-    addMessageListener(handleMQTTMessage);
-    if (isConnected) {
-      return removeMessageListener(handleMQTTMessage);
     }
-  }, [isConnected, addMessageListener, removeMessageListener]);
 
+    addMessageListener(handleMQTTMessage)
+
+    // Cleanup function
+    return () => {
+      removeMessageListener(handleMQTTMessage)
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
+      }
+    }
+  }, [
+    isConnected,
+    addMessageListener,
+    removeMessageListener,
+    setShowCoundown,
+    setCountdownTimer,
+    refetchAlreadyFlippedCards,
+  ])
   const renderCard = (card: CardType, position: number) => {
     // Render revealed cards based on type
     const cardElement = (() => {
@@ -177,36 +241,6 @@ const Stage3CardSelection = () => {
           );
       }
     })();
-
-    // // Add timer overlay for bonus cards - works for both current user and opponent
-    // if (card.type === CARD_TYPES.BONUS_FLIP && bonusCardTimers[index] > 0) {
-    //   const isCurrentUserCard = card.contestant_id === user?.contestant_id;
-    //   const playerName = card.contestant_id
-    //     ? getContestantName(card.contestant_id)?.name
-    //     : "Unknown";
-    //   return (
-    //     <div className="relative">
-    //       {cardElement}
-    //       <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg border-2 border-yellow-400">
-    //         <div className="text-center">
-    //           <div className="text-yellow-400 text-xs font-bold mb-1">
-    //             BONUS FLIP
-    //           </div>
-    //           <div className="text-yellow-400 text-2xl font-bold animate-pulse">
-    //             {bonusCardTimers[index]}
-    //           </div>
-    //           <div className="text-white text-xs font-bold">
-    //             {isCurrentUserCard
-    //               ? "You can flip again!"
-    //               : `${playerName?.split(" ")[0]} can flip again!`}
-    //           </div>
-    //           {/* Add pulsing border effect */}
-    //           <div className="absolute inset-0 border-2 border-yellow-400 rounded-lg animate-pulse"></div>
-    //         </div>
-    //       </div>
-    //     </div>
-    //   );
-    // }
     return <div className="justify-self-center">{cardElement}</div>;
   };
 
@@ -215,19 +249,48 @@ const Stage3CardSelection = () => {
     setCardFLipModalInfo,
   ] = useState<DudPassMQTTData | null>(null);
   const [showCardFlipModal, setShowCardFlipModal] = useState(false);
-  const CardFlipModal = () => {
+
+  const TurnIndicator = () => {
+    const isMyTurn = isFetching
+      ? cardFlipModalInfo?.next_turn === user?.contestant_id.toString()
+      : data?.who_next.toString() === user?.contestant_id.toString();
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.5, opacity: 0 }}
-          className="text-center max-w-lg w-full mx-4"
+      <div className="max-w-max mx-auto">
+        {/* Turn Status */}
+        <div
+          className={cn(
+            " p-2 rounded-lg text-center mx-auto",
+            isMyTurn
+              ? "bg-green-600 bg-opacity-20 border border-green-400"
+              : "bg-red-600 bg-opacity-20 border border-red-400"
+          )}
         >
-          <p className="text-6xl font-anton text-white">
-            {cardFlipModalInfo?.type}
-          </p>
-        </motion.div>
+          <div className="flex items-center justify-center gap-2">
+            <div
+              className={cn(
+                "w-3 h-3 rounded-full animate-pulse",
+                isMyTurn ? "bg-green-400" : "bg-red-400"
+              )}
+            ></div>
+            <span
+              className={cn(
+                "font-gilroyBold text-sm",
+                isMyTurn ? "text-green-400" : "text-red-400"
+              )}
+            >
+              {isMyTurn
+                ? "Your turn to flip"
+                : `${getContestantData(Number(data?.who_next))?.name}'s turn`}
+            </span>
+            <div
+              className={cn(
+                "w-3 h-3 rounded-full animate-pulse",
+                isMyTurn ? "bg-green-400" : "bg-red-400"
+              )}
+            ></div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -318,13 +381,22 @@ const Stage3CardSelection = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                 </div>
               ) : (
-                <div className="grid grid-cols-6 justify-center gap-4">
-                  {allCards?.map((card, index) => (
-                    <div onClick={() => handleCardClick(index + 1)}>
-                      {renderCard(card, index + 1)}
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <TurnIndicator />
+                  <div className="grid grid-cols-6 justify-center gap-2">
+                    {allCards?.map((card, index) => (
+                      <button
+                        disabled={
+                          data?.who_next?.toString() !==
+                          user?.contestant_id.toString()
+                        }
+                        onClick={() => handleCardClick(index + 1)}
+                      >
+                        {renderCard(card, index + 1)}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -351,16 +423,61 @@ const Stage3CardSelection = () => {
         />
       )}
       {showCountdown && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50">
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
-            className="text-center max-w-lg w-full mx-4 text-9xl font-semibold "
+            className="text-center max-w-lg w-full mx-4 text-9xl font-semibold text-white/50 "
           >
             <NumberFlow value={countTimer} />
           </motion.div>
         </div>
+      )}
+
+      {cardFlipModalInfo?.type == "PASS" && (
+        <>
+          {cardFlipModalInfo.contestant.id.toString() ==
+          user?.contestant_id.toString() ? (
+            <div className="fixed inset-0 bg-black flex justify-center items-center h-screen w-full z-[9999999999]">
+              <StageThreeWinnerModal
+                name={cardFlipModalInfo.contestant.name}
+                balance={String(
+                  getContestantData(
+                    Number(
+                      getRemainingContestant()?.find(
+                        (c) => c.name === cardFlipModalInfo.contestant.name
+                      )?.id
+                    )
+                  )?.actual_balance ?? 0
+                )}
+                imgUrl={String(
+                  getContestantData(
+                    Number(
+                      getRemainingContestant()?.find(
+                        (c) => c.name === cardFlipModalInfo.contestant.name
+                      )?.id
+                    )
+                  )?.contestant_photo_url || "/"
+                )}
+              />
+            </div>
+          ) : (
+            <div className="fixed inset-0 bg-black flex justify-center items-center h-screen w-full z-[9999999999]">
+              <EliminatedModal
+                setShowEliminationModal={() => {}}
+                showEliminationModal={true}
+                balance={Number(
+                  getContestantData(Number(user?.contestant_id))?.actual_balance
+                )}
+                image_url={String(
+                  getContestantData(Number(user?.contestant_id))
+                    ?.contestant_photo_url ?? "/"
+                )}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

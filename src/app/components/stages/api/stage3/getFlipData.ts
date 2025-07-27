@@ -1,23 +1,38 @@
 import { salaryAxios, tokenlessAxios } from '@/lib/axios';
 import {  useQuery } from 'react-query';
 
+// interface flipDataTypes {
+//   type: string;
+//   next_turn: number;
+//   position: number;
+//   contestant: Contestant;
+// }
+
+// interface Contestant {
+//   id: number;
+//   anme: string;
+// }
+// type APIResponse = {
+//   message:string;
+//   data: flipDataTypes[]
+// }
+
+
+interface APIResponse {
+  message: string;
+  data: flipDataTypes[];
+  who_next: number;
+}
 interface flipDataTypes {
   type: string;
-  next_turn: number;
   position: number;
   contestant: Contestant;
 }
-
 interface Contestant {
   id: number;
-  anme: string;
+  name: string;
+  contestant_attr: string;
 }
-type APIResponse = {
-  message:string;
-  data: flipDataTypes[]
-}
-
-
 
 export const getFlipData = async (episodeId:string) => {
   const response = await tokenlessAxios.get(`api/game/get_dud_pass_state?game_episode=${episodeId}`);
