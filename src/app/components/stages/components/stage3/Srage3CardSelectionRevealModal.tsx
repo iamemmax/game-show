@@ -19,8 +19,10 @@ export const CardFlipRevealModal = ({
   contestant: FlipContestant;
   isHustleBoard?: boolean;
 }) => {
-  const currentContestant = tokenStorage.getUser()?.contestant_id;
+  const currentContestant = tokenStorage.getUser();
   const whoFlipped = contestant.id;
+
+  // const otherContestantName =
 
   const getCardDisplay = () => {
     switch (cardType) {
@@ -50,10 +52,10 @@ export const CardFlipRevealModal = ({
           title: `${
             isHustleBoard
               ? `${contestant.name} gets`
-              : currentContestant == whoFlipped
-              ? "You get"
-              : `${contestant.name} gets`
-          }  2 extra turns before your next turn`,
+              : currentContestant?.contestant_id == whoFlipped
+              ? `${contestant.name} gets`
+              : `You get`
+          }  2 extra turns before next turn`,
           Icon: <MissCardFlip width={300} height={300} />,
           bgColor: "bg-gradient-to-br from-purple-600 to-purple-800",
           cardBg: "bg-purple-600",

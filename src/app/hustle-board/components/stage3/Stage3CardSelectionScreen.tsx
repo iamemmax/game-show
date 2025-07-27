@@ -4,7 +4,7 @@ import PickCard2 from "@/app/icons/cards/PickCard2";
 import PickCard3 from "@/app/icons/cards/PickCard3";
 import PickCardContainer from "@/app/shared/PickCardContainer";
 import { cn } from "@/utils/classNames";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import { tokenStorage } from "@/utils/auth";
 import DudCards from "@/app/icons/cards/DudCard";
@@ -93,44 +93,71 @@ const Stage3CardSelectionScreens = () => {
 
   const { addMessageListener, removeMessageListener, isConnected } = useMQTT();
 
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     const handleMQTTMessage = (message: MQTTMessage) => {
       if (message.topic !== "test/topic/local") return;
-      console.log(message, "mqqt dud messaghe");
+      console.log(message, "mqtt dud message");
+
       if (message.event === "dud_pass_picks") {
         const data = message.payload.data as DudPassMQTTData;
+
+        // Clear any existing countdown
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+        }
+
+        // Step 1: Show card flip modal immediately
         setCardFLipModalInfo(data);
         setShowCardFlipModal(true);
         refetchAlreadyFlippedCards();
-        let countdownInterval: NodeJS.Timeout;
-        setCountdownTimer(3);
-        if (data.type !== CARD_TYPES.PASS) {
-          setShowCoundown(true);
-        } else {
-          setShowCoundown(false);
-        }
+
+        // Step 2: After 1 second, show countdown (only for non-PASS types)
         setTimeout(() => {
-          countdownInterval = setInterval(() => {
-            setCountdownTimer((prev) => {
-              if (prev <= 1) {
-                clearInterval(countdownInterval);
-                setShowCoundown(false);
-                setShowCardFlipModal(false);
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
+          if (data.type !== CARD_TYPES.PASS) {
+            setShowCoundown(true);
+            setCountdownTimer(3); // Start countdown from 3
+
+            // Step 3: Start 3-second countdown
+            countdownIntervalRef.current = setInterval(() => {
+              setCountdownTimer((prev) => {
+                if (prev <= 1) {
+                  // Countdown finished - close both modals
+                  clearInterval(countdownIntervalRef.current!);
+                  setShowCoundown(false);
+                  setShowCardFlipModal(false);
+                  return 0;
+                }
+                return prev - 1;
+              });
+            }, 1000);
+          } else {
+            // For PASS type, close after 3 seconds without showing countdown
+            setTimeout(() => {
+              setShowCardFlipModal(false);
+            }, 3000);
+          }
         }, 1000);
       }
     };
 
     addMessageListener(handleMQTTMessage);
-    if (isConnected) {
-      return removeMessageListener(handleMQTTMessage);
-    }
-  }, [isConnected, addMessageListener, removeMessageListener]);
 
+    // Cleanup function
+    return () => {
+      removeMessageListener(handleMQTTMessage);
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, [
+    isConnected,
+    addMessageListener,
+    removeMessageListener,
+    setShowCoundown,
+    setCountdownTimer,
+    refetchAlreadyFlippedCards,
+  ]);
   // Fixed Turn Indicator Component
   const TurnIndicator = () => {
     // if (data?.who_next?.toString()) return null;
@@ -147,7 +174,7 @@ const Stage3CardSelectionScreens = () => {
     // Show loading state if contestants haven't loaded yet
     if (getRemainingContestant()?.length === 0) {
       return (
-        <div className="flex items-center justify-center gap-6 p-4 w-full">
+        <div className="flex items-center justify-center gap-6 p-4 w-full mx-auto ">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
           <span className="text-white">Loading contestants...</span>
         </div>
@@ -307,7 +334,7 @@ const Stage3CardSelectionScreens = () => {
             />
           </div>
 
-          <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] max-xl:max-w-[46.5rem] 2xl:max-w-[65rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
+          <div className="relative w-full py-[2rem] 2xl:py-[2.5rem] px-6 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
             {/* Animated border */}
             <div className="absolute inset-0">
               <motion.div
@@ -355,7 +382,7 @@ const Stage3CardSelectionScreens = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                 </div>
               ) : (
-                <div>
+                <div className="">
                   <TurnIndicator />
                   <div className="grid grid-cols-6 justify-center gap-4">
                     {allCards?.map((card, index) => (

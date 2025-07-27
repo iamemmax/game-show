@@ -4,7 +4,7 @@ import PickCard2 from "@/app/icons/cards/PickCard2";
 import PickCard3 from "@/app/icons/cards/PickCard3";
 import PickCardContainer from "@/app/shared/PickCardContainer";
 import { cn } from "@/utils/classNames";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useGetFlipData } from "../../api/stage3/getFlipData";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import { tokenStorage } from "@/utils/auth";
@@ -26,6 +26,8 @@ import { MQTTMessage } from "@/contexts/MQTTProvider";
 import { CardFlipRevealModal } from "./Srage3CardSelectionRevealModal";
 import NumberFlow from "@number-flow/react";
 import { useCardSelection } from "../../api/stage3/sendCardSelection";
+import StageThreeWinnerModal from "../StageThreeWinnerModal";
+import EliminatedModal from "@/app/shared/EliminatedModal";
 
 interface DudPassMQTTData {
   type: string;
@@ -57,6 +59,12 @@ const Stage3CardSelection = () => {
     );
     return remainingConst;
   };
+  const getContestantData = (contestantId: number) => {
+    const contestant = getRemainingContestant()?.find(
+      (c) => c.id == contestantId
+    );
+    return contestant;
+  };
   const getOtherContestantData = (contestantId: number) => {
     const contestant = getRemainingContestant()?.find(
       (c) => c.id !== contestantId
@@ -65,7 +73,7 @@ const Stage3CardSelection = () => {
   };
   const [showCountdown, setShowCoundown] = useState(false);
   const [countTimer, setCountdownTimer] = useState(3);
-
+  const [passFound, setPassFound] = useState(false);
   const { mutate: handleCardFlip } = useContestantFlipCard();
 
   const cardIcons = [PickCard1, PickCard2, PickCard3];
@@ -128,46 +136,74 @@ const Stage3CardSelection = () => {
 
   const { addMessageListener, removeMessageListener, isConnected } = useMQTT();
 
+
+
+
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
   useEffect(() => {
-    // {"event": "dud_pass_picks", "data": {"type": "DUD", "position": 4, "contestant": {"id": 37, "name": "Rosemary Ndubueze", "contestant_attr": "contestant_1"}, "next_turn": ""}}
     const handleMQTTMessage = (message: MQTTMessage) => {
-      if (message.topic !== "test/topic/local") return;
-      console.log(message, "mqqt dud messaghe");
+      if (message.topic !== "test/topic/local") return
+      console.log(message, "mqtt dud message")
+
       if (message.event === "dud_pass_picks") {
-        const data = message.payload.data as DudPassMQTTData;
-        setCardFLipModalInfo(data);
-        setShowCardFlipModal(true);
+        const data = message.payload.data as DudPassMQTTData
 
-        refetchAlreadyFlippedCards();
-        if (data.type !== CARD_TYPES.PASS) {
-          setShowCoundown(true);
-        } else {
-          setShowCoundown(false);
+        // Clear any existing countdown
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current)
         }
-        let countdownInterval: NodeJS.Timeout;
-        setCountdownTimer(3);
+
+        // Step 1: Show card flip modal immediately
+        setCardFLipModalInfo(data)
+        setShowCardFlipModal(true)
+        refetchAlreadyFlippedCards()
+
+        // Step 2: After 1 second, show countdown (only for non-PASS types)
         setTimeout(() => {
-          countdownInterval = setInterval(() => {
-            setCountdownTimer((prev) => {
-              if (prev <= 1) {
-                clearInterval(countdownInterval);
-                setShowCoundown(false);
-                setShowCardFlipModal(false);
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        }, 1000);
+          if (data.type !== CARD_TYPES.PASS) {
+            setShowCoundown(true)
+            setCountdownTimer(3) // Start countdown from 3
+
+            // Step 3: Start 3-second countdown
+            countdownIntervalRef.current = setInterval(() => {
+              setCountdownTimer((prev) => {
+                if (prev <= 1) {
+                  // Countdown finished - close both modals
+                  clearInterval(countdownIntervalRef.current!)
+                  setShowCoundown(false)
+                  setShowCardFlipModal(false)
+                  return 0
+                }
+                return prev - 1
+              })
+            }, 1000)
+          } else {
+            // For PASS type, close after 3 seconds without showing countdown
+            setTimeout(() => {
+              setShowCardFlipModal(false)
+            }, 3000)
+          }
+        }, 1000)
       }
-    };
-
-    addMessageListener(handleMQTTMessage);
-    if (isConnected) {
-      return removeMessageListener(handleMQTTMessage);
     }
-  }, [isConnected, addMessageListener, removeMessageListener]);
 
+    addMessageListener(handleMQTTMessage)
+
+    // Cleanup function
+    return () => {
+      removeMessageListener(handleMQTTMessage)
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
+      }
+    }
+  }, [
+    isConnected,
+    addMessageListener,
+    removeMessageListener,
+    setShowCoundown,
+    setCountdownTimer,
+    refetchAlreadyFlippedCards,
+  ])
   const renderCard = (card: CardType, position: number) => {
     // Render revealed cards based on type
     const cardElement = (() => {
@@ -205,36 +241,6 @@ const Stage3CardSelection = () => {
           );
       }
     })();
-
-    // // Add timer overlay for bonus cards - works for both current user and opponent
-    // if (card.type === CARD_TYPES.BONUS_FLIP && bonusCardTimers[index] > 0) {
-    //   const isCurrentUserCard = card.contestant_id === user?.contestant_id;
-    //   const playerName = card.contestant_id
-    //     ? getContestantName(card.contestant_id)?.name
-    //     : "Unknown";
-    //   return (
-    //     <div className="relative">
-    //       {cardElement}
-    //       <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-lg border-2 border-yellow-400">
-    //         <div className="text-center">
-    //           <div className="text-yellow-400 text-xs font-bold mb-1">
-    //             BONUS FLIP
-    //           </div>
-    //           <div className="text-yellow-400 text-2xl font-bold animate-pulse">
-    //             {bonusCardTimers[index]}
-    //           </div>
-    //           <div className="text-white text-xs font-bold">
-    //             {isCurrentUserCard
-    //               ? "You can flip again!"
-    //               : `${playerName?.split(" ")[0]} can flip again!`}
-    //           </div>
-    //           {/* Add pulsing border effect */}
-    //           <div className="absolute inset-0 border-2 border-yellow-400 rounded-lg animate-pulse"></div>
-    //         </div>
-    //       </div>
-    //     </div>
-    //   );
-    // }
     return <div className="justify-self-center">{cardElement}</div>;
   };
 
@@ -250,11 +256,11 @@ const Stage3CardSelection = () => {
       : data?.who_next.toString() === user?.contestant_id.toString();
 
     return (
-      <div className="">
+      <div className="max-w-max mx-auto">
         {/* Turn Status */}
         <div
           className={cn(
-            "mt-2 p-2 rounded-lg text-center",
+            " p-2 rounded-lg text-center mx-auto",
             isMyTurn
               ? "bg-green-600 bg-opacity-20 border border-green-400"
               : "bg-red-600 bg-opacity-20 border border-red-400"
@@ -275,9 +281,7 @@ const Stage3CardSelection = () => {
             >
               {isMyTurn
                 ? "Your turn to flip"
-                : `${
-                    getOtherContestantData(Number(data?.who_next))?.name
-                  }'s turn`}
+                : `${getContestantData(Number(data?.who_next))?.name}'s turn`}
             </span>
             <div
               className={cn(
@@ -379,7 +383,7 @@ const Stage3CardSelection = () => {
               ) : (
                 <>
                   <TurnIndicator />
-                  <div className="grid grid-cols-6 justify-center gap-4">
+                  <div className="grid grid-cols-6 justify-center gap-2">
                     {allCards?.map((card, index) => (
                       <button
                         disabled={
@@ -429,6 +433,51 @@ const Stage3CardSelection = () => {
             <NumberFlow value={countTimer} />
           </motion.div>
         </div>
+      )}
+
+      {cardFlipModalInfo?.type == "PASS" && (
+        <>
+          {cardFlipModalInfo.contestant.id.toString() ==
+          user?.contestant_id.toString() ? (
+            <div className="fixed inset-0 bg-black flex justify-center items-center h-screen w-full z-[9999999999]">
+              <StageThreeWinnerModal
+                name={cardFlipModalInfo.contestant.name}
+                balance={String(
+                  getContestantData(
+                    Number(
+                      getRemainingContestant()?.find(
+                        (c) => c.name === cardFlipModalInfo.contestant.name
+                      )?.id
+                    )
+                  )?.actual_balance ?? 0
+                )}
+                imgUrl={String(
+                  getContestantData(
+                    Number(
+                      getRemainingContestant()?.find(
+                        (c) => c.name === cardFlipModalInfo.contestant.name
+                      )?.id
+                    )
+                  )?.contestant_photo_url || "/"
+                )}
+              />
+            </div>
+          ) : (
+            <div className="fixed inset-0 bg-black flex justify-center items-center h-screen w-full z-[9999999999]">
+              <EliminatedModal
+                setShowEliminationModal={() => {}}
+                showEliminationModal={true}
+                balance={Number(
+                  getContestantData(Number(user?.contestant_id))?.actual_balance
+                )}
+                image_url={String(
+                  getContestantData(Number(user?.contestant_id))
+                    ?.contestant_photo_url ?? "/"
+                )}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
