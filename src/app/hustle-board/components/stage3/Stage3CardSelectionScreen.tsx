@@ -26,6 +26,7 @@ import HustleSideBar from "@/app/components/stages/components/hustle/HustleSideB
 import HustleStages from "@/app/components/stages/components/hustle/HustleStages";
 import { useParams } from "next/navigation";
 import VersusIcon from "@/app/icons/Versus";
+import StageThreeWinnerModal from "@/app/components/stages/components/StageThreeWinnerModal";
 
 interface DudPassMQTTData {
   type: string;
@@ -49,7 +50,7 @@ const Stage3CardSelectionScreens = () => {
   const {
     data: contestantsData,
     isLoading: isLoadingContestants,
-    refetch,
+    refetch:refetchContestantDatat,
   } = useGetGameContestants(Number(gameEpisode));
 
   const getRemainingContestant = () => {
@@ -59,6 +60,12 @@ const Stage3CardSelectionScreens = () => {
     return remainingConst;
   };
 
+  const getContestantData = (contestantId: number) => {
+    const contestant = getRemainingContestant()?.find(
+      (c) => c.id == contestantId
+    );
+    return contestant;
+  };
   const [showCountdown, setShowCoundown] = useState(false);
   const [countTimer, setCountdownTimer] = useState(3);
 
@@ -97,9 +104,8 @@ const Stage3CardSelectionScreens = () => {
   useEffect(() => {
     const handleMQTTMessage = (message: MQTTMessage) => {
       if (message.topic !== "test/topic/local") return;
-      console.log(message, "mqtt dud message");
-
       if (message.event === "dud_pass_picks") {
+        refetchContestantDatat()
         const data = message.payload.data as DudPassMQTTData;
 
         // Clear any existing countdown
@@ -414,6 +420,7 @@ const Stage3CardSelectionScreens = () => {
           }}
           contestant={cardFlipModalInfo?.contestant!}
           isHustleBoard
+          otherContestantName={getContestantData(data?.who_next!)?.name!}
         />
       )}
       {showCountdown && (
@@ -426,6 +433,32 @@ const Stage3CardSelectionScreens = () => {
           >
             <NumberFlow value={countTimer} />
           </motion.div>
+        </div>
+      )}
+
+      {cardFlipModalInfo?.type == "PASS" && (
+        <div className="fixed inset-0 bg-black flex justify-center items-center h-screen w-full z-[9999999999]">
+          <StageThreeWinnerModal
+            name={cardFlipModalInfo.contestant.name}
+            balance={String(
+              getContestantData(
+                Number(
+                  getRemainingContestant()?.find(
+                    (c) => c.name === cardFlipModalInfo.contestant.name
+                  )?.id
+                )
+              )?.actual_balance ?? 0
+            )}
+            imgUrl={String(
+              getContestantData(
+                Number(
+                  getRemainingContestant()?.find(
+                    (c) => c.name === cardFlipModalInfo.contestant.name
+                  )?.id
+                )
+              )?.contestant_photo_url || "/"
+            )}
+          />
         </div>
       )}
     </div>

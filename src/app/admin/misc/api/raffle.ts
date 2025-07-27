@@ -95,12 +95,12 @@ export const getMatchedHustles = async (gameEpisode: number) => {
     return response?.data as MatchedHustlesResponse
 }
 
-export const useGetMatchedHustles = (gameEpisode: number) =>
+export const useGetMatchedHustles = (gameEpisode: number, slowRefetch?:boolean) =>
     useQuery({
         queryKey: ["matched-hustles", gameEpisode],
         queryFn: () => getMatchedHustles(gameEpisode),
         enabled: !!gameEpisode,
         staleTime: 0,
         refetchOnWindowFocus: true,
-        refetchInterval: 1000,
+        refetchInterval: slowRefetch ? 60000 : 2000,
     })

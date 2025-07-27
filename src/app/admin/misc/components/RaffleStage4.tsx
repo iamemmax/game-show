@@ -1,49 +1,70 @@
-"use client"
-import type React from "react"
-import { useState, useCallback } from "react"
-import { Loader2 } from "lucide-react"
-import { useMQTT } from "@/hooks/useMqttService"
-import { Ball } from "./RaffleBall"
-import { IBallPickData, useGetGameContestants, useGetMatchedHustles, useHandleBallPick } from "../api"
-import { useParams } from "next/navigation"
-import { useInitStageFour } from "@/app/host/misc/api"
-import { TrapeziumButton } from "@/components/core/ButtonTrapezium"
-import { SmallSpinner } from "@/icons/core"
-import toast from "react-hot-toast"
+"use client";
+import type React from "react";
+import { useState, useCallback, useMemo } from "react";
+import { Loader2 } from "lucide-react";
+import { useMQTT } from "@/hooks/useMqttService";
+import { Ball } from "./RaffleBall";
+import {
+  IBallPickData,
+  useGetGameContestants,
+  useGetHustleMatches,
+  useGetMatchedHustles,
+  useHandleBallPick,
+} from "../api";
+import { useParams } from "next/navigation";
+import { useInitStageFour } from "@/app/host/misc/api";
+import { TrapeziumButton } from "@/components/core/ButtonTrapezium";
+import { SmallSpinner } from "@/icons/core";
+import toast from "react-hot-toast";
+import { useGetLastContestantPick } from "@/app/components/stages/api/stage4/getLastContestantPick";
 
 interface PickViewProps {
-  onPickResult?: (result: any) => void
+  onPickResult?: (result: any) => void;
 }
 
 const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
-  const [selectedBall, setSelectedBall] = useState<number | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [revealedBalls, setRevealedBalls] = useState<Map<number, "matched" | "mismatched">>(new Map())
-  const { isConnected, sendMessage } = useMQTT()
-  const [isLoading, setIsSending] = useState(false)
+  const [isRealDeal, setIsRealDeal] = useState(true);
+  const [selectedBall, setSelectedBall] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [revealedBalls, setRevealedBalls] = useState<
+    Map<number, "matched" | "mismatched">
+  >(new Map());
+  const { isConnected, sendMessage } = useMQTT();
+  const [isLoading, setIsSending] = useState(false);
 
-
-
-  const params = useParams()
-  const gameEpisode = params.episode as string
+  const params = useParams();
+  const gameEpisode = params.episode as string;
   const {
     data: contestantsData,
     isLoading: isLoadingContestants,
     refetch: refetchContestants,
-  } = useGetGameContestants(Number.parseInt(gameEpisode))
-  const { mutate: pickBall } = useHandleBallPick()
-  const { mutate: initStage, isLoading: isStartingStage } = useInitStageFour()
+  } = useGetGameContestants(Number.parseInt(gameEpisode));
+  const { mutate: pickBall } = useHandleBallPick();
+  const { mutate: initStage, isLoading: isStartingStage } = useInitStageFour();
 
-  const { data: matchedHustlesData, isLoading: isLoadingMatched, refetch: refetchMatchedHustles } =
-    useGetMatchedHustles(Number.parseInt(gameEpisode));
+  const {
+    data: matchedHustlesData,
+    isLoading: isLoadingMatched,
+    refetch: refetchMatchedHustles,
+  } = useGetMatchedHustles(Number.parseInt(gameEpisode), true);
+  const lastContestantId = useMemo(() => {
+    const data = contestantsData?.data?.find(
+      (contestant) => contestant?.is_eliminated !== true
+    );
+    return data?.id;
+  }, [contestantsData]);
 
+  const { data: lastPickData } = useGetLastContestantPick({
+    contestant_id: Number(lastContestantId),
+    episode_id: Number(gameEpisode),
+  });
   const sendGameMessage = useCallback(
     async (eventCode: string, data: any = {}) => {
       if (!isConnected) {
-        toast.error("Not connected to server")
-        return
+        toast.error("Not connected to server");
+        return;
       }
-      setIsSending(true)
+      setIsSending(true);
       try {
         const message = {
           event: eventCode,
@@ -51,115 +72,168 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
             game_episode: Number.parseInt(gameEpisode),
             ...data,
           },
-        }
-        console.log("Sending message in admin raffle:", message)
+        };
+        console.log("Sending message in admin raffle:", message);
 
-
-        sendMessage(message)
-
+        sendMessage(message);
       } catch (error) {
-        console.error("Failed to send message:", error)
-        toast.error("Failed to send message")
+        console.error("Failed to send message:", error);
+        toast.error("Failed to send message");
       } finally {
-        setIsSending(false)
+        setIsSending(false);
       }
     },
-    [isConnected, sendMessage, gameEpisode, refetchContestants],
-  )
+    [isConnected, sendMessage, gameEpisode, refetchContestants]
+  );
   const handleStartStageFour = useCallback(() => {
-    if (!gameEpisode) return
-    initStage({ episode: gameEpisode }, {
-      onSuccess: (data) => {
-        console.log("Stage Four initialized successfully:", data)
-        sendGameMessage("game_s4_start", { episode: gameEpisode })
-      },
-      onError: (error) => {
-        console.error("Failed to initialize Stage Four:", error)
-        if ((error as any)?.response?.data.data.includes("Unable to create Stage progress for contestant") ||
-          (error as any)?.response?.data.data.includes("Unable to create Stage progress")
-        ) {
-          sendGameMessage("game_s4_start", { episode: gameEpisode })
-        }
-      },
-    })
-  }, [gameEpisode, initStage, sendMessage])
+    if (!gameEpisode) return;
+    initStage(
+      { episode: gameEpisode },
+      {
+        onSuccess: (data) => {
+          console.log("Stage Four initialized successfully:", data);
+          sendGameMessage("game_s4_start", { episode: gameEpisode });
+        },
+        onError: (error) => {
+          console.error("Failed to initialize Stage Four:", error);
+          if (
+            (error as any)?.response?.data.data.includes(
+              "Unable to create Stage progress for contestant"
+            ) ||
+            (error as any)?.response?.data.data.includes(
+              "Unable to create Stage progress"
+            )
+          ) {
+            sendGameMessage("game_s4_start", { episode: gameEpisode });
+          }
+        },
+      }
+    );
+  }, [gameEpisode, initStage, sendMessage]);
+
+  const {
+    data: hustleMatchesData,
+    isLoading: isLoadingMatches,
+  } = useGetHustleMatches(Number(gameEpisode));
 
   const handleBallClick = useCallback(
     async (ballNumber: number) => {
-      if (isSubmitting || revealedBalls.has(ballNumber)) return
-      setSelectedBall(ballNumber)
-      setIsSubmitting(true)
-      console.log(contestantsData?.data, "contestantsData")
-      const lastContestant = contestantsData?.data.find(contestant => !contestant.is_eliminated) || { id: 0 }
+      if (isSubmitting || revealedBalls.has(ballNumber)) return;
+      setSelectedBall(ballNumber);
+      setIsSubmitting(true);
+      console.log(contestantsData?.data, "contestantsData");
+      const lastContestant = contestantsData?.data.find(
+        (contestant) => !contestant.is_eliminated
+      ) || { id: 0 };
+
       try {
         const pickData = {
           game_episode: gameEpisode,
           contestant_id: lastContestant.id,
           number_pick: ballNumber,
-        }
+        };
+        if (isRealDeal) {
+          pickBall(pickData, {
+            onSuccess: (data) => {
+              sendGameMessage("ball_picked", data);
+              const isPositiveResult =
+                data.hustle_match.balance_details?.is_gain ||
+                data.hustle_match.is_match;
+              setRevealedBalls(
+                (prev) =>
+                  new Map([
+                    ...prev,
+                    [
+                      pickData.number_pick,
+                      isPositiveResult ? "matched" : "mismatched",
+                    ],
+                  ])
+              );
+              refetchMatchedHustles();
+            },
+            onError: (error) => {
+              console.error("API call failed:", error);
+              throw error;
+            },
+          });
+        } else {
+          // export interface HustleMatch {
+          //     contestant_id?: number
+          //     number_pick: number
+          //     is_match?: boolean
+          //     is_extra_ball: boolean
+          //     extra_ball_details?: ExtraBallDetails | null
+          //     balance_details?: BalanceDetails
+          //     extra_ball_name?: string | null
+          //     extra_ball_type?: string | null
+          //     extra_ball_effect_action?: string | null
+          //     extra_ball_effect_desc?: string | null
+          // }
 
-        pickBall(pickData, {
-          onSuccess: (data) => {
-            sendGameMessage("ball_picked", data)
-            const isPositiveResult =  data.hustle_match.balance_details?.is_gain || data.hustle_match.is_match
-            setRevealedBalls((prev) => new Map([...prev, [pickData.number_pick, isPositiveResult ? "matched" : "mismatched"]]))
-            refetchMatchedHustles()
-          },
-          onError: (error) => {
-            console.error("API call failed:", error)
-            throw error
-          },
-        })
+          // export interface BallPickAPIResponse {
+          //     hustle_match: HustleMatch
+          //     number_revealed: number[]
+          // }
+          const data = {
+            number_revealed: revealedBalls,
+            hustle_match: {
+              contestant_id: contestantsData?.data.find(
+                (c) => !c.is_eliminated
+              ),
+              number_pick: ballNumber,
+              is_match: lastPickData?.[0].picks.some(
+                (pick) => pick == ballNumber
+              ),
+              is_extra_ball: ballNumber > 49,
+              
+            },
+          };
+          sendGameMessage("ball_picked", data);
+        }
       } catch (error) {
-        console.error("Error picking ball:", error)
+        console.error("Error picking ball:", error);
       } finally {
-        setIsSubmitting(false)
-        setSelectedBall(null)
+        setIsSubmitting(false);
+        setSelectedBall(null);
       }
     },
-    [gameEpisode, isSubmitting, revealedBalls, sendGameMessage, onPickResult],
-  )
+    [gameEpisode, isSubmitting, revealedBalls, sendGameMessage, onPickResult]
+  );
 
   const handCloseRevealModal = () => {
-    sendGameMessage("close_reveal_modal")
-  }
+    sendGameMessage("close_reveal_modal");
+  };
 
   const handleFinalResultRevealModal = () => {
-    if(!matchedHustlesData?.data) return
+    if (!matchedHustlesData?.data) return;
 
     sendGameMessage("game_s4_final_result_reveal", {
       episode: gameEpisode,
       matched_hustles: matchedHustlesData?.data,
-    })
-  }
+    });
+  };
 
-
-  const getBallVariant = (ballNumber: number): "regular" | "matched" | "mismatched" | "selected" => {
+  const getBallVariant = (
+    ballNumber: number
+  ): "regular" | "matched" | "mismatched" | "selected" => {
     if (selectedBall === ballNumber && isSubmitting) {
-      return "selected"
+      return "selected";
     }
 
-    const result = revealedBalls.get(ballNumber)
+    const result = revealedBalls.get(ballNumber);
     if (result) {
-      return result
+      return result;
     }
 
-    return "regular"
-  }
-
+    return "regular";
+  };
 
   return (
     <div className="h-full flex flex-col w-full justify-center items-center p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-
-          <TrapeziumButton
-            onClick={handleStartStageFour}
-          >
-            INIT STAGE 4
-            {
-              isStartingStage && <SmallSpinner className="ml-2" />
-            }
+          <TrapeziumButton onClick={handleStartStageFour}>
+            INIT STAGE 4{isStartingStage && <SmallSpinner className="ml-2" />}
           </TrapeziumButton>
           <TrapeziumButton
             onClick={handleFinalResultRevealModal}
@@ -167,11 +241,14 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
           >
             SHOW FINAL RESULT
           </TrapeziumButton>
-          <TrapeziumButton
-            onClick={handCloseRevealModal}
-            variant={"orange"}
-          >
+          <TrapeziumButton onClick={handCloseRevealModal} variant={"orange"}>
             CLOSE REVEAL MODAL
+          </TrapeziumButton>
+          <TrapeziumButton
+            onClick={() => setIsRealDeal(!isRealDeal)}
+            variant={"red"}
+          >
+            {isRealDeal ? "RISK" : "ACCEPTED OFFER"}
           </TrapeziumButton>
         </div>
 
@@ -185,8 +262,16 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
                 size="lg"
                 onClick={() => handleBallClick(ballNumber)}
                 className={`
-                  ${revealedBalls.has(ballNumber) ? "cursor-not-allowed opacity-75" : "cursor-pointer"}
-                  ${selectedBall === ballNumber && isSubmitting ? "animate-pulse" : ""}
+                  ${
+                    revealedBalls.has(ballNumber)
+                      ? "cursor-not-allowed opacity-75"
+                      : "cursor-pointer"
+                  }
+                  ${
+                    selectedBall === ballNumber && isSubmitting
+                      ? "animate-pulse"
+                      : ""
+                  }
                 `}
                 textClassName="text-lg font-black"
               />
@@ -199,21 +284,25 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
           ))}
         </div>
 
-
         {/* Recent Picks */}
         {revealedBalls.size > 0 && (
           <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-lg p-6 max-w-2xl mx-auto">
             <h3 className="text-white font-semibold mb-4">Recent Picks</h3>
             <div className="flex flex-wrap gap-2">
-              {Array.from(revealedBalls.entries()).map(([ballNumber, result]) => (
-                <span
-                  key={ballNumber}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${result === "matched" ? "bg-green-600 text-green-100" : "bg-red-600 text-red-100"
+              {Array.from(revealedBalls.entries()).map(
+                ([ballNumber, result]) => (
+                  <span
+                    key={ballNumber}
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      result === "matched"
+                        ? "bg-green-600 text-green-100"
+                        : "bg-red-600 text-red-100"
                     }`}
-                >
-                  {ballNumber} {result === "matched" ? "✓" : "✗"}
-                </span>
-              ))}
+                  >
+                    {ballNumber} {result === "matched" ? "✓" : "✗"}
+                  </span>
+                )
+              )}
             </div>
           </div>
         )}
@@ -225,12 +314,14 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
           <div className="bg-purple-900/90 backdrop-blur-sm p-8 rounded-lg flex flex-col items-center">
             <Loader2 className="w-12 h-12 text-yellow-400 animate-spin mb-4" />
             <div className="text-white text-lg">Processing your pick...</div>
-            <div className="text-white/70 text-sm mt-2">Ball #{selectedBall}</div>
+            <div className="text-white/70 text-sm mt-2">
+              Ball #{selectedBall}
+            </div>
           </div>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default PickView
+export default PickView;
