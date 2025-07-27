@@ -4,6 +4,7 @@ import { useGetGameContestants } from "@/app/admin/misc/api"
 import { useParams } from "next/navigation"
 import { Facebook, Instagram, Twitter } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage, Card, CardContent } from "@/components/core"
+import { convertToTitleCase } from "@/utils/strings"
 
 const WelcomeUserStory = () => {
     const gameEpisode = useParams().episodeId
@@ -64,7 +65,7 @@ const WelcomeUserStory = () => {
                                     </Avatar>
                                     <div>
                                         <h3 className="text-white font-semibold text-4xl leading-tight font-montserrat">
-                                            {contestant?.name || "Contestant"}
+                                            {convertToTitleCase(contestant?.name) || "Contestant"}
                                         </h3>
                                     </div>
                                 </div>

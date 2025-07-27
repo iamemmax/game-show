@@ -18,9 +18,9 @@
 
 // const Stage3BoardGetReadyPage = () => {
 //     const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
-  
+
 //     const [showCardRevealScreen, setShowCardRevealScreen] = useState(false)
-  
+
 //   // Animation variants
 //   const containerVariants = {
 //     hidden: { opacity: 0 },
@@ -58,7 +58,7 @@
 
 
 
- 
+
 //   return (
 //     <AnimatePresence mode="wait">
 //       <motion.div
@@ -166,20 +166,20 @@
 //                     variants={itemVariants}
 //                   >
 //                                     Contestants will select  <span className="font-semibold text-[#d91fff] px-1">Dud or Opportunity cards.</span>   The system will automatically handle the selections.
- 
-                 
-                 
+
+
+
 //                     </motion.p>
 
-                                  
-//                   <motion.p 
+
+//                   <motion.p
 //                    className="text-4xl font-outfit text-white"
 //                     variants={itemVariants}
 //                   >
-//                     At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">1 contestants with the lowest scores</span> 
+//                     At the end of this round, the <span className="font-semibold text-[#d91fff] pr-2 pl-1">1 contestants with the lowest scores</span>
 //                     will be <strong>eliminated</strong> from the competition. So bring your A-game — every second and every point counts!
 //                   </motion.p>
-             
+
 
 //                 </motion.div>
 //               </div>
@@ -371,7 +371,16 @@ const Stage3BoardGetReadyPage = () => {
           1 PASS Card
         </motion.li>
         <motion.li className="text-[#d91fff]" variants={listItemVariants}>
-          23 DUD Cards
+          15 DUD Cards
+        </motion.li>
+        <motion.li className="text-[#d91fff]" variants={listItemVariants}>
+          3 BONUS FLIP Cards
+        </motion.li>
+        <motion.li className="text-[#d91fff]" variants={listItemVariants}>
+          2 MISSED TURN Cards
+        </motion.li>
+        <motion.li className="text-[#d91fff]" variants={listItemVariants}>
+          3 EXTRA CASH Cards
         </motion.li>
         <motion.li variants={listItemVariants}>
           Contestants take turns flipping cards, one at a time.
