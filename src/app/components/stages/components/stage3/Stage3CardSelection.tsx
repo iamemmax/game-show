@@ -25,6 +25,7 @@ import { useMQTT } from "@/hooks/useMqttService";
 import { MQTTMessage } from "@/contexts/MQTTProvider";
 import { CardFlipRevealModal } from "./Srage3CardSelectionRevealModal";
 import NumberFlow from "@number-flow/react";
+import { useCardSelection } from "../../api/stage3/sendCardSelection";
 
 interface DudPassMQTTData {
   type: string;
@@ -54,12 +55,17 @@ const Stage3CardSelection = () => {
     const contestant = contestantsData?.data.find((c) => c.id === contestantId);
     return contestant;
   };
+  const getOtherContestantData = (contestantId: number) => {
+    const contestant = contestantsData?.data.find((c) => c.id !== contestantId);
+    return contestant;
+  };
   const [showCountdown, setShowCoundown] = useState(false);
   const [countTimer, setCountdownTimer] = useState(3);
 
   const { mutate: handleCardFlip } = useContestantFlipCard();
 
   const cardIcons = [PickCard1, PickCard2, PickCard3];
+  const { mutate: handleCard } = useCardSelection();
   const {
     data,
     isLoading,
@@ -88,6 +94,7 @@ const Stage3CardSelection = () => {
   }, [isLoading, data]);
 
   const handleCardClick = (position: number) => {
+    if (data?.who_next !== user?.contestant_id) return;
     handleCardFlip(
       {
         contestant_id: Number(user?.contestant_id),
@@ -96,7 +103,19 @@ const Stage3CardSelection = () => {
       },
       {
         onSuccess: (data) => {
-          console.log(data);
+          handleCard(
+            {
+              contestant_id: data?.contestant?.id,
+              game_episode: Number(user?.game_episode),
+              pick: data?.type?.toUpperCase(),
+            },
+            {
+              onSuccess: () => {
+                refetch();
+                refetchAlreadyFlippedCards();
+              },
+            }
+          );
         },
       }
     );
@@ -232,6 +251,52 @@ const Stage3CardSelection = () => {
     );
   };
 
+  const TurnIndicator = () => {
+    // if (passFound) return null;
+    const isMyTurn = data?.who_next === user?.contestant_id;
+
+    return (
+      <div className="">
+        {/* Turn Status */}
+        <div
+          className={cn(
+            "mt-2 p-2 rounded-lg text-center",
+            isMyTurn
+              ? "bg-green-600 bg-opacity-20 border border-green-400"
+              : "bg-red-600 bg-opacity-20 border border-red-400"
+          )}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <div
+              className={cn(
+                "w-3 h-3 rounded-full animate-pulse",
+                isMyTurn ? "bg-green-400" : "bg-red-400"
+              )}
+            ></div>
+            <span
+              className={cn(
+                "font-gilroyBold text-sm",
+                isMyTurn ? "text-green-400" : "text-red-400"
+              )}
+            >
+              {isMyTurn
+                ? "Your turn to flip"
+                : `${
+                    getOtherContestantData(Number(data?.who_next))?.name
+                  }'s turn`}
+            </span>
+            <div
+              className={cn(
+                "w-3 h-3 rounded-full animate-pulse",
+                isMyTurn ? "bg-green-400" : "bg-red-400"
+              )}
+            ></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return <>loading...</>;
   }
@@ -318,13 +383,19 @@ const Stage3CardSelection = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                 </div>
               ) : (
-                <div className="grid grid-cols-6 justify-center gap-4">
-                  {allCards?.map((card, index) => (
-                    <div onClick={() => handleCardClick(index + 1)}>
-                      {renderCard(card, index + 1)}
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <TurnIndicator />
+                  <div className="grid grid-cols-6 justify-center gap-4">
+                    {allCards?.map((card, index) => (
+                      <button
+                        disabled={data?.who_next !== user?.contestant_id}
+                        onClick={() => handleCardClick(index + 1)}
+                      >
+                        {renderCard(card, index + 1)}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>

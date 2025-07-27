@@ -47,7 +47,9 @@ export const CardFlipRevealModal = ({
       case CARD_TYPES.MISS_FLIP:
         return {
           title: `${
-            currentContestant == whoFlipped
+            isHustleBoard
+              ? `${contestant.name} gets`
+              : currentContestant == whoFlipped
               ? "You get"
               : `${contestant.name} gets`
           }  2 extra turns before your next turn`,
@@ -138,8 +140,7 @@ export const CardFlipRevealModal = ({
               ? contestant.name
               : contestant.id.toString() === currentContestant?.toString()
               ? "You"
-              : contestant.name
-              }
+              : contestant.name}
           </div>
         )}
       </motion.div>
