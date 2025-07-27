@@ -12,10 +12,16 @@ interface Contestant {
   id: number;
   anme: string;
 }
+type APIResponse = {
+  message:string;
+  data: flipDataTypes[]
+}
+
+
 
 export const getFlipData = async (episodeId:string) => {
   const response = await tokenlessAxios.get(`api/game/get_dud_pass_state?game_episode=${episodeId}`);
-  return response?.data as flipDataTypes[];
+  return response?.data as APIResponse;
 };
 
 export const useGetFlipData = (episodeId:string) =>

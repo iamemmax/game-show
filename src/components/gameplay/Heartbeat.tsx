@@ -6,6 +6,7 @@ import { useMQTT, useMQTTTopic } from "@/hooks/useMqttService"
 import { getStageFromStep, UNIVERSAL_GAME_STEPS, type UniversalGameStep } from "@/constants"
 import type { MQTTMessage } from "@/contexts/MQTTProvider"
 import { TEpisodeInfo } from "@/app/admin/misc/api"
+import { LastStepStorage } from "@/lib/lastStep"
 
 interface GameSynchroniserProps {
   gameId: string
@@ -306,6 +307,9 @@ export function GameSynchroniser({
               step: UNIVERSAL_GAME_STEPS.GAME_END,
               stage: "GAME_END",
             }))
+            break
+          case "clear_saved_steps":
+            LastStepStorage.clearLastStep()
             break
           case "system_heartbeat_request":
             sendMessage(

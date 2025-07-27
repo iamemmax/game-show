@@ -448,6 +448,9 @@ export default function SuperAdminDashboard() {
           currentUniversalStep={currentUniversalStep}
           changeUniversalStep={changeUniversalStep}
           progressToNextStep={progressToNextStep}
+          clearAllSteps={()=> {
+            sendGameMessage("clear_saved_steps")
+          }}
         />
 
         <Tabs defaultValue="monitor" className="w-full">
