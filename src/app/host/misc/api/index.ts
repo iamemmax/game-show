@@ -243,7 +243,7 @@ export const useGetAllStage2Questions = (episode_id: number) =>
 ///////////             STAGE THREE        ///////////////
 //////////////////////////////////////////////////////////
 const postInitStageThree = async (data: { game_episode: string | number }) => {
-    const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/admin-controller/init_stage_three/`, data);
+    const res = await tokenlessAxios.post<IGetHustleQuestionAPIResponse>(`/api/admin-controller/init_stage_three/${data.game_episode}`, data);
     return res.data;
 }
 

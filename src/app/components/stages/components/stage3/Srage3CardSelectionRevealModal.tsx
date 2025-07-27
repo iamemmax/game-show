@@ -13,11 +13,13 @@ export const CardFlipRevealModal = ({
   onClose,
   contestant,
   isHustleBoard = false,
+  otherContestantName
 }: {
   cardType?: string;
   onClose: () => void;
   contestant: FlipContestant;
   isHustleBoard?: boolean;
+  otherContestantName: string | null | undefined
 }) => {
   const currentContestant = tokenStorage.getUser();
   const whoFlipped = contestant.id;
@@ -51,7 +53,7 @@ export const CardFlipRevealModal = ({
         return {
           title: `${
             isHustleBoard
-              ? `${contestant.name} gets`
+              ? `${otherContestantName} gets`
               : currentContestant?.contestant_id == whoFlipped
               ? `${contestant.name} gets`
               : `You get`

@@ -136,66 +136,62 @@ const Stage3CardSelection = () => {
 
   const { addMessageListener, removeMessageListener, isConnected } = useMQTT();
 
-
-
-
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     const handleMQTTMessage = (message: MQTTMessage) => {
-      if (message.topic !== "test/topic/local") return
-      console.log(message, "mqtt dud message")
+      if (message.topic !== "test/topic/local") return;
 
       if (message.event === "dud_pass_picks") {
-        const data = message.payload.data as DudPassMQTTData
+        refetch();
+        const data = message.payload.data as DudPassMQTTData;
 
-        // Clear any existing countdown
         if (countdownIntervalRef.current) {
-          clearInterval(countdownIntervalRef.current)
+          clearInterval(countdownIntervalRef.current);
         }
 
         // Step 1: Show card flip modal immediately
-        setCardFLipModalInfo(data)
-        setShowCardFlipModal(true)
-        refetchAlreadyFlippedCards()
+        setCardFLipModalInfo(data);
+        setShowCardFlipModal(true);
+        refetchAlreadyFlippedCards();
 
         // Step 2: After 1 second, show countdown (only for non-PASS types)
         setTimeout(() => {
           if (data.type !== CARD_TYPES.PASS) {
-            setShowCoundown(true)
-            setCountdownTimer(3) // Start countdown from 3
+            setShowCoundown(true);
+            setCountdownTimer(3); // Start countdown from 3
 
             // Step 3: Start 3-second countdown
             countdownIntervalRef.current = setInterval(() => {
               setCountdownTimer((prev) => {
                 if (prev <= 1) {
                   // Countdown finished - close both modals
-                  clearInterval(countdownIntervalRef.current!)
-                  setShowCoundown(false)
-                  setShowCardFlipModal(false)
-                  return 0
+                  clearInterval(countdownIntervalRef.current!);
+                  setShowCoundown(false);
+                  setShowCardFlipModal(false);
+                  return 0;
                 }
-                return prev - 1
-              })
-            }, 1000)
+                return prev - 1;
+              });
+            }, 1000);
           } else {
             // For PASS type, close after 3 seconds without showing countdown
             setTimeout(() => {
-              setShowCardFlipModal(false)
-            }, 3000)
+              setShowCardFlipModal(false);
+            }, 3000);
           }
-        }, 1000)
+        }, 1000);
       }
-    }
+    };
 
-    addMessageListener(handleMQTTMessage)
+    addMessageListener(handleMQTTMessage);
 
     // Cleanup function
     return () => {
-      removeMessageListener(handleMQTTMessage)
+      removeMessageListener(handleMQTTMessage);
       if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current)
+        clearInterval(countdownIntervalRef.current);
       }
-    }
+    };
   }, [
     isConnected,
     addMessageListener,
@@ -203,7 +199,7 @@ const Stage3CardSelection = () => {
     setShowCoundown,
     setCountdownTimer,
     refetchAlreadyFlippedCards,
-  ])
+  ]);
   const renderCard = (card: CardType, position: number) => {
     // Render revealed cards based on type
     const cardElement = (() => {
@@ -388,7 +384,7 @@ const Stage3CardSelection = () => {
                       <button
                         disabled={
                           data?.who_next?.toString() !==
-                          user?.contestant_id.toString()
+                            user?.contestant_id.toString() || !!card.type
                         }
                         onClick={() => handleCardClick(index + 1)}
                       >
@@ -420,6 +416,7 @@ const Stage3CardSelection = () => {
             setShowCardFlipModal(false);
           }}
           contestant={cardFlipModalInfo?.contestant!}
+          otherContestantName={getContestantData(data?.who_next!)?.name!}
         />
       )}
       {showCountdown && (
