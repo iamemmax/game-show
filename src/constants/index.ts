@@ -132,10 +132,12 @@ export const getStageFromStep = (step: UniversalGameStep): string => {
     case UNIVERSAL_GAME_STEPS.STAGE3_INIT:
     case UNIVERSAL_GAME_STEPS.STAGE3_PREP:
     case UNIVERSAL_GAME_STEPS.STAGE3_PICKS_START:
+    case UNIVERSAL_GAME_STEPS.STAGE3_END:
       return "STAGE_THREE";
 
     case UNIVERSAL_GAME_STEPS.STAGE4_INIT:
     case UNIVERSAL_GAME_STEPS.STAGE4_PREP:
+    case UNIVERSAL_GAME_STEPS.STAGE4_RAFFLE:
       return "STAGE_FOUR";
 
     default:

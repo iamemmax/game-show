@@ -53,6 +53,8 @@ export default function HostPage() {
     lastAction: "",
     showQuestions: false,
     step: UNIVERSAL_GAME_STEPS.GAME_SETUP,
+    finale_type: contestantsData?.game.finale_type || "GRAND_PRIZE",
+    is_golden_match_active: false
   });
 
   const [isSending, setIsSending] = useState(false);
@@ -547,9 +549,25 @@ export default function HostPage() {
   //////////////////////////////
 
   const { mutate: handleInitStage4 } = useInitStageFour();
-  const initStage4 = () => {
+  const initStage4GoldenMatch = () => {
     handleInitStage4(
-      { episode: gameEpisode },
+      { episode: gameEpisode, round_four_type: "GOLDEN_MATCH" },
+      {
+        onSuccess() {
+          sendGameMessage("game_s4_init", {
+            start_time: new Date().toISOString(),
+          });
+        },
+        onError(error) {
+          console.error("Error initializing stage 4:", error);
+          toast.error("Failed to initialize stage 4");
+        },
+      }
+    );
+  };
+  const initStage4GrandPrize = () => {
+    handleInitStage4(
+      { episode: gameEpisode, round_four_type: "GRAND_PRIZE" },
       {
         onSuccess() {
           sendGameMessage("game_s4_init", {
@@ -826,8 +844,11 @@ export default function HostPage() {
                   className="w-20 h-20"
                 />
               </div>
-              <TrapeziumButton onClick={initStage4} variant="orange">
-                INITIALIZE STAGE 4
+              <TrapeziumButton onClick={initStage4GoldenMatch} variant="orange">
+                INITIALIZE STAGE 4 - GOLDEN MATCH
+              </TrapeziumButton>
+              <TrapeziumButton onClick={initStage4GrandPrize} variant="orange">
+                INITIALIZE STAGE 4 - GRAND PRIZE
               </TrapeziumButton>
             </div>
           </div>

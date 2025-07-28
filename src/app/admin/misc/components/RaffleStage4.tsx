@@ -9,7 +9,8 @@ import {
   useGetGameContestants,
   useGetHustleMatches,
   useGetMatchedHustles,
-  useHandleBallPick,
+  useGoldenBallPick,
+  useGrandPrizeBallPick,
 } from "../api";
 import { useParams } from "next/navigation";
 import { useInitStageFour } from "@/app/host/misc/api";
@@ -39,7 +40,8 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
     isLoading: isLoadingContestants,
     refetch: refetchContestants,
   } = useGetGameContestants(Number.parseInt(gameEpisode));
-  const { mutate: pickBall } = useHandleBallPick();
+  const { mutate: pickGrandPrizeBall } = useGrandPrizeBallPick();
+  const { mutate: pickGoldenBall } = useGoldenBallPick();
   const { mutate: initStage, isLoading: isStartingStage } = useInitStageFour();
 
   const {
@@ -88,7 +90,7 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
   const handleStartStageFour = useCallback(() => {
     if (!gameEpisode) return;
     initStage(
-      { episode: gameEpisode },
+      { episode: gameEpisode, round_four_type: "GOLDEN_MATCH" },
       {
         onSuccess: (data) => {
           console.log("Stage Four initialized successfully:", data);
@@ -132,8 +134,8 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
           contestant_id: lastContestant.id,
           number_pick: ballNumber,
         };
-        if (isRealDeal) {
-          pickBall(pickData, {
+        if (contestantsData?.game.finale_type == "GRAND_PRIZE") {
+          pickGrandPrizeBall(pickData, {
             onSuccess: (data) => {
               sendGameMessage("ball_picked", data);
               const isPositiveResult =
@@ -157,38 +159,29 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
             },
           });
         } else {
-          // export interface HustleMatch {
-          //     contestant_id?: number
-          //     number_pick: number
-          //     is_match?: boolean
-          //     is_extra_ball: boolean
-          //     extra_ball_details?: ExtraBallDetails | null
-          //     balance_details?: BalanceDetails
-          //     extra_ball_name?: string | null
-          //     extra_ball_type?: string | null
-          //     extra_ball_effect_action?: string | null
-          //     extra_ball_effect_desc?: string | null
-          // }
-
-          // export interface BallPickAPIResponse {
-          //     hustle_match: HustleMatch
-          //     number_revealed: number[]
-          // }
-          const data = {
-            number_revealed: revealedBalls,
-            hustle_match: {
-              contestant_id: contestantsData?.data.find(
-                (c) => !c.is_eliminated
-              ),
-              number_pick: ballNumber,
-              is_match: lastPickData?.[0].picks.some(
-                (pick) => pick == ballNumber
-              ),
-              is_extra_ball: ballNumber > 49,
-              
+          pickGoldenBall(pickData, {
+            onSuccess: (data) => {
+              sendGameMessage("ball_picked", data);
+              const isPositiveResult =
+                data.hustle_match.balance_details?.is_gain ||
+                data.hustle_match.is_match;
+              setRevealedBalls(
+                (prev) =>
+                  new Map([
+                    ...prev,
+                    [
+                      pickData.number_pick,
+                      isPositiveResult ? "matched" : "mismatched",
+                    ],
+                  ])
+              );
+              refetchMatchedHustles();
             },
-          };
-          sendGameMessage("ball_picked", data);
+            onError: (error) => {
+              console.error("API call failed:", error);
+              throw error;
+            },
+          });
         }
       } catch (error) {
         console.error("Error picking ball:", error);
@@ -243,12 +236,6 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
           </TrapeziumButton>
           <TrapeziumButton onClick={handCloseRevealModal} variant={"orange"}>
             CLOSE REVEAL MODAL
-          </TrapeziumButton>
-          <TrapeziumButton
-            onClick={() => setIsRealDeal(!isRealDeal)}
-            variant={"red"}
-          >
-            {isRealDeal ? "RISK" : "ACCEPTED OFFER"}
           </TrapeziumButton>
         </div>
 

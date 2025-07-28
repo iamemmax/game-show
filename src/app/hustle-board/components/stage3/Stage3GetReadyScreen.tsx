@@ -274,22 +274,10 @@ const Stage3BoardGetReadyPage = () => {
           {/* Top section */}
           <div className="flex flex-col w-full items-center">
             <motion.div
-              className="w-full h-[100px] flex items-center justify-center"
+              className="w-full h-[50px] flex items-center justify-center"
               variants={itemVariants}
             >
-              <HeaderTitleContainer
-                backgroundColor="#791192"
-                color="#ed99ff"
-                text="Hustle Board"
-                textGradientEnd="#8E17AA"
-                textGradientStart="#8E17AA"
-                borderGradientStart="#f78fc"
-                borderGradientEnd="#e151fe"
-                fontSize={45}
-                fontFamily="Verdana"
-                textStrokeColor="#a219c1"
-                textStrokeWidth={4.4}
-              />
+
             </motion.div>
 
             <motion.div
@@ -380,7 +368,7 @@ const Stage3BoardGetReadyPage = () => {
           2 MISSED TURN Cards
         </motion.li>
         <motion.li className="text-[#d91fff]" variants={listItemVariants}>
-          3 EXTRA CASH Cards
+          3 INSTANT CASH Cards
         </motion.li>
         <motion.li variants={listItemVariants}>
           Contestants take turns flipping cards, one at a time.

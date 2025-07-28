@@ -9,8 +9,8 @@ import { cn } from "@/utils/classNames";
 import CheckIcon from "@/app/icons/CheckIcon";
 import ErrorIcon from "@/app/icons/ErrorIcon";
 import { tokenStorage } from "@/utils/auth";
-import { GlowyStrokeText } from "@/components/core";
-import Image from "next/image";
+// import { GlowyStrokeText } from "@/components/core";
+// import Image from "next/image";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
 // import { Dialog } from "@/components/ui/dialog";
@@ -21,8 +21,8 @@ import { contestantImages } from "@/app/components/stages/components/mocks/conte
 import GetHustleBoardReadyScreen from "./GettHustleBoardReadyScreen";
 import { useGetAllHustleQuestions } from "@/app/components/stages/api/stage1/question/getHustleQuestion";
 // import { useGetQuestionAnswer } from "@/app/components/stages/api/stage1/question/getQuestionAnswer";
-import FastestFingerResult from "@/app/components/stages/components/hustle/FastestFingerResult";
-import HustleBoardStageTallyPage from "./HustleBoardStageTally";
+// import FastestFingerResult from "@/app/components/stages/components/hustle/FastestFingerResult";
+// import HustleBoardStageTallyPage from "./HustleBoardStageTally";
 import HustleQuestionAnswerModal from "./modals/HustleQuestionAnswer";
 import AnimatedText from "@/app/shared/AnimatedText";
 import { ContestantSpend } from "@/app/components/type";
@@ -258,11 +258,11 @@ const playOptionSelectedSound = () => {
               const firstAmount = parseFloat(bidKeys[0]);
               // setSelectedAmount(firstAmount);
             }
-          } 
+          }
         }
       }
 
-    
+
 if (receivedMessage?.event === "contestant_bid_selected") {
   const payload = receivedMessage.payload || {};
   const {
@@ -280,7 +280,7 @@ if (receivedMessage?.event === "contestant_bid_selected") {
     if (question_id === currentQuestionId) {
       // Play sound effect for bid selection
       playBidSelectedSound();
-      
+
       setContestantBids((prevBids) => {
         const updatedBids = {
           ...prevBids,
@@ -303,9 +303,9 @@ if (receivedMessage?.event === "contestant_bid_selected") {
 }
 
 if (receivedMessage?.event === "contestant_selected_option") {
-  
+
   const payload = receivedMessage.payload || {};
-  
+
   const {
     contestant_id,
     contestant_name,
@@ -314,7 +314,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
     question_id,
   } = payload;
 
-  
+
 
 
   if (contestant_id && contestant_name) {
@@ -322,7 +322,7 @@ if (receivedMessage?.event === "contestant_selected_option") {
     if (Number(question_id) === Number(currentQuestionId)) {
       // Play sound effect for option selection
       playOptionSelectedSound();
-      
+
       setContestantOption((prevOpt) => {
         const updatedBids = {
           ...prevOpt,
@@ -569,7 +569,7 @@ setShowBidRevealModal(false)
             textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
           }}
         >
-          
+
             {`0:${Math.max(0, timeLeft).toString().padStart(2, "0")}`}
         </span>
       </div>}
@@ -584,15 +584,15 @@ setShowBidRevealModal(false)
             textShadow: "0px 1px 2px rgba(199, 96, 0, 0.5)",
           }}
         >
-          
+
            Lock in Hustle
         </span>
       </div>}
-            
+
                 </div>
 
                 <div className="grid mt-8 gap-6 items-start grid-cols-[1fr_2.5fr_1fr]">
-                 
+
 
                     <div className="flex w-full  gap-4 mt-1">
   {/* Left Column: First 3 contestants */}
@@ -620,7 +620,7 @@ setShowBidRevealModal(false)
 
     // Determine if answer option is selected
     const isAnswerOptionSelected = !!selectedOption;
-    
+
     // Determine if bid is selected but option is not
     const isBidSelectedButOptionNot = !!selectedBid && !selectedOption;
 
@@ -631,12 +631,12 @@ setShowBidRevealModal(false)
       const allBidAmounts = Object.keys(spend.spend_breakdown)
         .map(key => Math.ceil(Number(key) / 100) * 100)
         .sort((a, b) => a - b);
-      
+
       const selectedBidAmount = Math.ceil(Number(selectedBid.bid_amount) / 100) * 100;
-      
+
       // Find the position of selected bid (0-based index)
       const bidPosition = allBidAmounts.findIndex(amount => amount === selectedBidAmount);
-      
+
       // Convert to 1-4 stars (lowest bid = 1 star, highest bid = 4 stars)
       numberOfStars = bidPosition + 1;
     }
@@ -649,7 +649,7 @@ setShowBidRevealModal(false)
       <div
         key={spend.contestant_id}
         className={`text-left py-4 px-3  w-full rounded-10 transition-all duration-300 ${
-          isAnswerOptionSelected 
+          isAnswerOptionSelected
             ? "bg-[#011B0D]" // Green background when answer option is selected
             : "bg-[#0F002E]" // Purple background default
         }`}
@@ -738,7 +738,7 @@ setShowBidRevealModal(false)
           >
             <div
               className={`text-[1.375rem] font-verdana transition-all ${
-                isAnswerOptionSelected 
+                isAnswerOptionSelected
                   ? "text-[#00FF47]" // Green text when answer option is selected
                   : isBidSelectedButOptionNot
                     ? "text-[#FFB800]" // Yellow/orange text when bid selected but option not
@@ -748,7 +748,7 @@ setShowBidRevealModal(false)
               {isAnswerOptionSelected ? "To Win:" : isBidSelectedButOptionNot && "To Win:"}
             </div>
             <div className={`text-[1.375rem] font-verdana font-bold transition-all ${
-              isAnswerOptionSelected 
+              isAnswerOptionSelected
                 ? "text-[#00FF47]" // Green amount when answer option is selected
                 : isBidSelectedButOptionNot
                   ? "text-[#FFB800]" // Yellow/orange amount when bid selected but option not
@@ -799,7 +799,7 @@ setShowBidRevealModal(false)
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.4 }}
                           >
-                            <p className="bg-[#011B0D] rounded-10 px-6 py-2 text-2xl text-[#30ff7c] font-gilroyMedium">
+                            <p className="bg-[#011B0D] rounded-10 px-6 py-2 capitalize text-2xl text-[#30ff7c] font-gilroyMedium">
                             Owner: {mqttQuestionData?.question?.contestant?.contestant_name?.split((" ")[0])}
                             </p>
                           </motion.div>
@@ -817,7 +817,7 @@ setShowBidRevealModal(false)
                               <>
                                 <AnimatedText
                                   text={
-                                    mqttQuestionData.question.question.question 
+                                    mqttQuestionData.question.question.question
 
                                   }
                                   // fontSize={fontSize}
@@ -836,7 +836,7 @@ setShowBidRevealModal(false)
                             transition={{ duration: 0.6 }}
                             className="flex justify-center  absolute  -bottom-9 items-center w-full gap-8"
                           >
-                            
+
                             <div className="bg-[#011B0D] rounded-[12px] py-3 px-8 max-xl:max-w-[170px]">
                               <p
                                 className="text-3xl flex flex-col text-white font-extrabold text-center"
@@ -881,8 +881,8 @@ setShowBidRevealModal(false)
                                   ?.question_booster || "..."}{" "}
                               </p>
                             </div>
-                            
-                           
+
+
                           </motion.div>
                         </motion.div>
 
@@ -989,7 +989,7 @@ setShowBidRevealModal(false)
                     </>
                   )}
 
-              
+
 
  {/* Right Column: Last 3 contestants */}
 <div className="flex flex-col gap-4 w-full">
@@ -1013,7 +1013,7 @@ setShowBidRevealModal(false)
 
     // Determine if answer option is selected
     const isAnswerOptionSelected = !!selectedOption;
-    
+
     // Determine if bid is selected but option is not
     const isBidSelectedButOptionNot = !!selectedBid && !selectedOption;
 
@@ -1024,12 +1024,12 @@ setShowBidRevealModal(false)
       const allBidAmounts = Object.keys(spend.spend_breakdown)
         .map(key => Math.ceil(Number(key) / 100) * 100)
         .sort((a, b) => a - b);
-      
+
       const selectedBidAmount = Math.ceil(Number(selectedBid.bid_amount) / 100) * 100;
-      
+
       // Find the position of selected bid (0-based index)
       const bidPosition = allBidAmounts.findIndex(amount => amount === selectedBidAmount);
-      
+
       // Convert to 1-4 stars (lowest bid = 1 star, highest bid = 4 stars)
       numberOfStars = bidPosition + 1;
     }
@@ -1042,7 +1042,7 @@ setShowBidRevealModal(false)
       <div
         key={spend.contestant_id}
         className={`text-left py-4 px-3  w-full rounded-10 transition-all duration-300 ${
-          isAnswerOptionSelected 
+          isAnswerOptionSelected
             ? "bg-[#011B0D]" // Green background when answer option is selected
             : "bg-[#0F002E]" // Purple background default
         }`}
@@ -1131,7 +1131,7 @@ setShowBidRevealModal(false)
           >
             <div
               className={`text-[1.375rem] font-verdana transition-all ${
-                isAnswerOptionSelected 
+                isAnswerOptionSelected
                   ? "text-[#00FF47]" // Green text when answer option is selected
                   : isBidSelectedButOptionNot
                     ? "text-[#FFB800]" // Yellow/orange text when bid selected but option not
@@ -1141,7 +1141,7 @@ setShowBidRevealModal(false)
               {isAnswerOptionSelected ? "To Win:" : isBidSelectedButOptionNot && "To Win:"}
             </div>
             <div className={`text-[1.375rem] font-verdana font-bold transition-all ${
-              isAnswerOptionSelected 
+              isAnswerOptionSelected
                 ? "text-[#00FF47]" // Green amount when answer option is selected
                 : isBidSelectedButOptionNot
                   ? "text-[#FFB800]" // Yellow/orange amount when bid selected but option not
@@ -1188,7 +1188,7 @@ setShowBidRevealModal(false)
                   />
                 )}
 
-             
+
               </div>
 
 <div className="">
@@ -1245,7 +1245,7 @@ setShowBidRevealModal(false)
                       </div>
                     ))}
               </div>
-              
+
 
 </div>
               </div>
