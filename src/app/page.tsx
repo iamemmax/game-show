@@ -39,6 +39,8 @@ const ContestantHomePage = () => {
     lastAction: "",
     showQuestions: false,
     step: UNIVERSAL_GAME_STEPS.GAME_SETUP,
+    finale_type: "GRAND_PRIZE",
+    is_golden_match_active: false
   });
 
 

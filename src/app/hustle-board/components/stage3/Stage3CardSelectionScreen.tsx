@@ -4,7 +4,7 @@ import PickCard2 from "@/app/icons/cards/PickCard2";
 import PickCard3 from "@/app/icons/cards/PickCard3";
 import PickCardContainer from "@/app/shared/PickCardContainer";
 import { cn } from "@/utils/classNames";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGetGameContestants } from "@/app/admin/misc/api";
 import { tokenStorage } from "@/utils/auth";
 import DudCards from "@/app/icons/cards/DudCard";
@@ -50,16 +50,18 @@ const Stage3CardSelectionScreens = () => {
   const {
     data: contestantsData,
     isLoading: isLoadingContestants,
-    refetch:refetchContestantDatat,
+    refetch: refetchContestantDatat,
+    isFetching
   } = useGetGameContestants(Number(gameEpisode));
 
-  const getRemainingContestant = () => {
+  const getRemainingContestantFn = () => {
     const remainingConst = contestantsData?.data?.filter(
       (x) => !x?.is_eliminated
     );
     return remainingConst;
   };
 
+  const getRemainingContestant = useCallback(getRemainingContestantFn, [contestantsData, isLoadingContestants, isFetching])
   const getContestantData = (contestantId: number) => {
     const contestant = getRemainingContestant()?.find(
       (c) => c.id == contestantId
@@ -104,8 +106,9 @@ const Stage3CardSelectionScreens = () => {
   useEffect(() => {
     const handleMQTTMessage = (message: MQTTMessage) => {
       if (message.topic !== "test/topic/local") return;
+
       if (message.event === "dud_pass_picks") {
-        refetchContestantDatat()
+        refetchContestantDatat();
         const data = message.payload.data as DudPassMQTTData;
 
         // Clear any existing countdown
@@ -138,6 +141,7 @@ const Stage3CardSelectionScreens = () => {
               });
             }, 1000);
           } else {
+            refetchContestantDatat();
             // For PASS type, close after 3 seconds without showing countdown
             setTimeout(() => {
               setShowCardFlipModal(false);
@@ -408,6 +412,7 @@ const Stage3CardSelectionScreens = () => {
           showEmptyCard={false}
           showHustlerCard={true}
           eliminated={4}
+          showStage3Reward={true}
         />
       </div>
 
@@ -444,7 +449,7 @@ const Stage3CardSelectionScreens = () => {
               getContestantData(
                 Number(
                   getRemainingContestant()?.find(
-                    (c) => c.name === cardFlipModalInfo.contestant.name
+                    (c) => c?.id.toString() === cardFlipModalInfo?.contestant.id.toString()
                   )?.id
                 )
               )?.actual_balance ?? 0

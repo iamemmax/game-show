@@ -181,10 +181,10 @@ export default function HostStage2Questions({
 
   if (questionsError) {
     console.log("Error :", questionsError)
-    console.log("Error loading questions:", (questionsError as any).response.data.message)
+    console.log("Error loading questions:", (questionsError as any).response?.data.message)
     return (
       <>
-        {(questionsError as any).response.data.code === "700" ? (
+        {(questionsError as any).response?.data.code === "700" ? (
           <div className="flex flex-col items-center justify-center mt-8">
             <div className="text-center mb-4">
               <p className="text-white mb-2">All Stage 2 questions completed!</p>

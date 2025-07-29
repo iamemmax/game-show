@@ -36,6 +36,7 @@ import RafflePickFInalResultModal from "./RafflePickFInalResultModal"
 import AnimatedNumber from "@/utils/AnimatedNumber"
 import RafflePickRevealBankerOfferModal from "./RafflePickRevealBankerOfferModal"
 import KillerIcon from "@/app/icons/KillerIcon"
+import GoldenMatchButton from "@/components/core/ButtonGoldenMatch"
 
 // Types for MQTT data
 interface ExtraBallDetails {
@@ -174,7 +175,7 @@ const RafflePickReveal = () => {
         const { hustle_match } = result
         // Fixed: Update revealed numbers immediately and ensure it's available for the modal
         setRevealedNumbers((prev) => {
-          const newRevealed = [...prev, hustle_match.number_pick]
+          const newRevealed = [...prev, hustle_match?.number_pick]
           console.log("Updated revealed numbers:", newRevealed)
           return newRevealed
         })
@@ -317,264 +318,252 @@ const RafflePickReveal = () => {
   }, [revealedNumbers, currentResult])
 
   return (
-    <div className="min-h-screen grid grid-cols-[1fr_4fr_1fr] h-full relative">
+    <div className="h-screen grid grid-cols-[1fr_4fr_1fr] items-center justify-center relative">
+      <div className="absolute bg-black/80 w-full h-full top-0 bottom-0 left-0 right-0" />
       {/* Left Sidebar */}
-      <div className="flex flex-col justify-between">
-        <div className="flex justify-center items-center h-3.5 w-full mt-8">
+      <div className="flex flex-col items-center justify-between h-full z-[3] gap-12 pt-10">
+        <div className="flex justify-center items-center h-3.5 w-full mb-6">
           <Logo />
         </div>
-        <div>
-          <HustleStages activeStage={4} />
-        </div>
+        <section className="grow flex flex-col items-center gap-10">
+
+          {
+            (contestantsData?.game.finale_type == "GOLDEN_MATCH" && contestantsData.game.is_golden_match_active) ?
+              <>
+                <h2 style={{
+                }}
+                  className="text-white font-black font-display text-5xl text-center stroke-[2px] stroke-[#C12B00] text-[#FCF4B9]">
+                  GOLDEN MATCH
+                </h2>
+                <GoldenMatchButton className="text-white font-display fomt- text-[#FCF4B9] text-3xl font-black" variant="ORANGE">
+                  400,000
+                </GoldenMatchButton>
+
+              </>
+              :
+
+              <HustleStages />
+          }
+
+        </section>
+
         <div className="pb-4">
           <Salary4LifeTrophy className="max-xl:h-[13.25rem]" />
         </div>
       </div>
 
-      {/* Center Content */}
-      <div className="flex flex-col justify-between items-center min-h-full">
-        {/* Top section */}
-        <div className="flex flex-col w-full items-center">
-          <div className="w-full h-[100px] flex items-center justify-center">
-            <HeaderTitleContainer
-              backgroundColor="#791192"
-              color="#ed99ff"
-              text="Hustle Board"
-              textGradientEnd="#8E17AA"
-              textGradientStart="#8E17AA"
-              borderGradientStart="#f712fc"
-              borderGradientEnd="#e151fe"
-              fontSize={45}
-              fontFamily="Verdana"
-              textStrokeColor="#a219c1"
-              textStrokeWidth={4.4}
+
+      <section className="relative flex flex-col w-full items-center z-[999]"
+        style={{
+          zIndex: 1,
+          pointerEvents: 'none',
+          boxShadow: '0 0 30px 20px #D91FFF',
+          borderRadius: '1.5rem',
+          opacity: 0.7,
+        }}
+      >
+        <div className="relative flex flex-col justify-between w-full flex-grow px-6 py-[2.5rem] -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
+          {/* Animated border */}
+          <div className="absolute inset-0">
+            <motion.div
+              className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY }}
             />
           </div>
-          <div className="relative flex flex-col justify-between w-full flex-grow px-6 py-[2.5rem] -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
-            {/* Animated border */}
-            <div className="absolute inset-0">
-              <motion.div
-                className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
-                style={{
-                  background: `conic-gradient(from 0deg at 50% 50%,
-                     #d91fff 0deg,
-                     #d91fff 120deg,
-                     #00ffff 100deg,
-                     #00ffff 240deg,
-                     #FFD700 220deg,
-                     #FFD700 360deg,
-                     #d91fff 340deg
-                   )`,
-                }}
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY }}
-              />
+
+          {/* Content Container */}
+          <div className="absolute inset-[8px] py-[2.75rem] bg-[#13051E] bg-[url('/images/host-bg.png')] bg-no-repeat bg-cover rounded-[1.5rem]" />
+          {/* Actual Content */}
+          <div className="relative z-10 flex flex-col justify-between h-full w-full">
+            <div className="flex justify-center items-center">
+              <GlowyStrokeText
+                strokeWidth={2}
+                strokeColor="#D91FFF"
+                glowColor="#13051E"
+                glowIntensity="low"
+                textclassName="text-[3.125rem] font-extrabold font-lucky [@media(min-width:2000px)]:text-[5rem]"
+                fillColor="#000"
+              >
+                Golden Hustle Match
+              </GlowyStrokeText>
             </div>
-            <div className="absolute inset-0">
-              <motion.div
-                className="w-[200%] h-[200%] absolute -left-1/2 -top-1/2"
-                style={{
-                  background: `conic-gradient(from 0deg at 50% 50%,
-                     #d91fff 0deg,
-                     #d91fff 120deg,
-                     #00ffff 100deg,
-                     #00ffff 240deg,
-                     #FFD700 220deg,
-                     #FFD700 360deg,
-                     #d91fff 340deg
-                   )`,
-                }}
-              />
-            </div>
-            {/* Content Container */}
-            <div className="absolute inset-[8px] py-[2.75rem] bg-[#13051E] bg-[url('/images/host-bg.png')] bg-no-repeat bg-cover rounded-[.675rem]" />
-            {/* Actual Content */}
-            <div className="relative z-10 flex flex-col justify-between h-full w-full">
-              <div className="flex justify-center items-center">
-                <GlowyStrokeText
-                  strokeWidth={2}
-                  strokeColor="#D91FFF"
-                  glowColor="#13051E"
-                  glowIntensity="low"
-                  textclassName="text-[3.125rem] font-extrabold font-lucky [@media(min-width:2000px)]:text-[5rem]"
-                  fillColor="#000"
-                >
-                  Golden Hustle Match
-                </GlowyStrokeText>
-              </div>
-              {/* Top: Hustle Picks */}
-              <div className="flex justify-center items-center gap-6 mt-4">
-                <div className="flex items-center justify-center flex-col">
-                  <h3 className="text-white text-2xl font-gilroyMedium mb-2">Your pick</h3>
-                  <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[5.35px] px-3 border-[#CE64FF]">
-                    {mynumbers?.map((num) => {
-                      const { matched, showRed } = getNumberMatchStatus(num, revealedNumbers?.length === 5)
-                      return (
-                        <div key={num} className="px-4">
-                          <NumberCardContainer
-                            text={String(num)}
-                            textColor={matched ? "#fff" : showRed ? "#fff" : "#F2C94C"}
-                            active={matched || showRed}
-                            width={75}
-                            height={80}
-                            className="cursor-pointer transition-transform hover:scale-105"
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-                {matchedHustlesData && matchedHustlesData?.data?.length > 0 && (
-                  <>
-                    <div className="size-[5.5rem] shrink-0 py-1  bg-white rounded-full flex mt-10 justify-center flex-col items-center font-display text-black">
-                      <p className="text-2xl font-extrabold font-display">{displayCount}/5</p>
-                      <p className="block text-lg font-display font-bold uppercase text-black">match</p>
-                    </div>
-                    <div className="flex justify-center items-center flex-col">
-                      <h3 className="text-white text-xl font-gilroyMedium  mb-2">Match</h3>
-                      <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[5.35px] px-3 border-[#CE64FF]">
-                        {matchedHustlesData?.data?.map((x, idx: number) => {
-                          const isRevealed = x !== null
-                          const isMatched = isRevealed && mynumbers?.includes(x?.number_pick)
-                          return (
-                            <div key={idx} className="px-4 flex items-center flex-col justify-center">
-                              <NumberCardContainer
-                                text={isRevealed ? String(x?.number_pick) : ""}
-                                textColor="#fff"
-                                backgroundColor={isMatched ? "#04DA6A" : !isMatched ? "#EB001B" : ""}
-                                width={75}
-                                height={80}
-                                active={isMatched || !isMatched}
-                                className="cursor-pointer transition-transform hover:scale-105"
-                              />
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-              {/* 60 Ball Grid - Much Bigger */}
-              <div className="flex justify-center mt-6 w-full ">
-                <div className="flex items-center flex-wrap justify-center gap-6  w-full max-w-[1250px] ">
-                  {Array.from({ length: 49 }, (_, i) => i + 1).map((ballNumber) => {
-                    const ballIndicator = getBallIndicator(ballNumber)
-                    const isExtraBall = ballNumber >= 50 && ballNumber <= 60
-                    const ballInfo = getBallInfo(ballNumber)
-                    const isRevealed = revealedBalls.has(ballNumber)
+            {/* Top: Hustle Picks */}
+            <div className="flex justify-center items-center gap-6 mt-4">
+              <div className="flex items-center justify-center flex-col">
+                <h3 className="text-white text-2xl font-gilroyMedium mb-2">Your pick</h3>
+                <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[5.35px] px-3 border-[#CE64FF]">
+                  {mynumbers?.map((num) => {
+                    const { matched, showRed } = getNumberMatchStatus(num, revealedNumbers?.length === 5)
                     return (
-                      <motion.div
-                        key={ballNumber}
-                        className="flex justify-center relative"
-                        animate={
-                          animatingBall === ballNumber
-                            ? {
-                              scale: [1, 2, 1],
-                              y: [0, -20, 0],
-                            }
-                            : {}
-                        }
-                        transition={{ duration: 1, ease: "easeOut" }}
-                      >
-                        <Ball
-                          number={ballNumber}
-                          variant={getBallVariant(ballNumber)}
-                          size="lg"
-                          className={cn(
-                            "transition-all duration-300 w-14 h-14", // Even bigger balls
-                            animatingBall === ballNumber && "z-50",
-                            isExtraBall && ballInfo?.is_extra_ball && "",
-                          )}
-                          textClassName="text-2xl font-black" // Much bigger text
+                      <div key={num} className="px-4">
+                        <NumberCardContainer
+                          text={String(num)}
+                          textColor={matched ? "#fff" : showRed ? "#fff" : "#F2C94C"}
+                          active={matched || showRed}
+                          width={75}
+                          height={80}
+                          className="cursor-pointer transition-transform hover:scale-105"
                         />
-                        {/* Enhanced Ball Type Indicator for balls 50-60 */}
-                        {isExtraBall && ballInfo?.is_extra_ball && !isRevealed && (
-                          <div className="absolute -top-2 -right-2 z-10">
-                            <div className=" rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
-                              <span className="text-2xl">{ballIndicator}</span>
-                            </div>
-                          </div>
-                        )}
-                        {/* Regular indicator for other balls */}
-                        {!isExtraBall && ballIndicator && !isRevealed && (
-                          <div className="absolute -top-1 -right-1 text-sm bg-black/80 rounded-full w-6 h-6 flex items-center justify-center border border-white/20">
-                            {ballIndicator}
-                          </div>
-                        )}
-                      </motion.div>
+                      </div>
                     )
                   })}
                 </div>
               </div>
-              <div className="grid grid-cols-5 max-w-[1200px] w-full mt-8 gap-5 mx-auto justify-center items-center">
-                {hustleMatchesData?.data?.slice(-11)?.map((item, idx) => {
-                  const isRevealed = revealedBalls.has(item?.number_pick)
+              {matchedHustlesData && matchedHustlesData?.data?.length > 0 && (
+                <>
+                  <div className="size-[5.5rem] shrink-0 py-1  bg-white rounded-full flex mt-10 justify-center flex-col items-center font-display text-black">
+                    <p className="text-2xl font-extrabold font-display">{displayCount}/5</p>
+                    <p className="block text-lg font-display font-bold uppercase text-black">match</p>
+                  </div>
+                  <div className="flex justify-center items-center flex-col">
+                    <h3 className="text-white text-xl font-gilroyMedium  mb-2">Match</h3>
+                    <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[5.35px] px-3 border-[#CE64FF]">
+                      {matchedHustlesData?.data?.map((x, idx: number) => {
+                        const isRevealed = x !== null
+                        const isMatched = isRevealed && mynumbers?.includes(x?.number_pick)
+                        return (
+                          <div key={idx} className="px-4 flex items-center flex-col justify-center">
+                            <NumberCardContainer
+                              text={isRevealed ? String(x?.number_pick) : ""}
+                              textColor="#fff"
+                              backgroundColor={isMatched ? "#04DA6A" : !isMatched ? "#EB001B" : ""}
+                              width={75}
+                              height={80}
+                              active={isMatched || !isMatched}
+                              className="cursor-pointer transition-transform hover:scale-105"
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            {/* 60 Ball Grid - Much Bigger */}
+            <div className="flex justify-center mt-6 w-full ">
+              <div className="flex items-center flex-wrap justify-center gap-6  w-full max-w-[1250px] ">
+                {Array.from({ length: 49 }, (_, i) => i + 1).map((ballNumber) => {
+                  const ballIndicator = getBallIndicator(ballNumber)
+                  const isExtraBall = ballNumber >= 50 && ballNumber <= 60
+                  const ballInfo = getBallInfo(ballNumber)
+                  const isRevealed = revealedBalls.has(ballNumber)
                   return (
-                    <div className="flex flex-col items-center gap-2" key={item?.number_pick + idx}>
-                      <motion.div
-                        className="flex justify-center relative"
-                        animate={
-                          animatingBall === item?.number_pick
-                            ? {
-                              scale: [1, 2, 1],
-                              y: [0, -20, 0],
-                            }
-                            : {}
-                        }
-                        transition={{ duration: 1, ease: "easeOut" }}
-                      >
-                        <Ball
-                          number={item?.number_pick}
-                          variant={getBallVariant(item?.number_pick)}
-                          size="md"
-                          className={cn(
-                            "transition-all duration-300 w-14 h-14", // Even bigger balls
-                            animatingBall === item?.number_pick && "z-50",
-                          )}
-                          textClassName="text-xl font-black" // Much bigger text
-                        />
-                      </motion.div>
-                      {/* Effect Label - Only show if not revealed */}
-                      {getEffectLabel(item) && (
-                        <div
-                          className={`px-4 py-[.4375rem] ${isRevealed ? "opacity-40" : ""} rounded-[3.125rem] flex items-center border justify-center text-xl font-extrabold font-display  ${getLabelColor(item)}`}
-                        >
-                          {getEffectLabel(item)}
+                    <motion.div
+                      key={ballNumber}
+                      className="flex justify-center relative"
+                      animate={
+                        animatingBall === ballNumber
+                          ? {
+                            scale: [1, 2, 1],
+                            y: [0, -20, 0],
+                          }
+                          : {}
+                      }
+                      transition={{ duration: 1, ease: "easeOut" }}
+                    >
+                      <Ball
+                        number={ballNumber}
+                        variant={getBallVariant(ballNumber)}
+                        size="lg"
+                        className={cn(
+                          "transition-all duration-300 w-14 h-14", // Even bigger balls
+                          animatingBall === ballNumber && "z-50",
+                          isExtraBall && ballInfo?.is_extra_ball && "",
+                        )}
+                        textClassName="text-2xl font-black" // Much bigger text
+                      />
+                      {/* Enhanced Ball Type Indicator for balls 50-60 */}
+                      {isExtraBall && ballInfo?.is_extra_ball && !isRevealed && (
+                        <div className="absolute -top-2 -right-2 z-10">
+                          <div className=" rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
+                            <span className="text-2xl">{ballIndicator}</span>
+                          </div>
                         </div>
                       )}
-                    </div>
+                      {/* Regular indicator for other balls */}
+                      {!isExtraBall && ballIndicator && !isRevealed && (
+                        <div className="absolute -top-1 -right-1 text-sm bg-black/80 rounded-full w-6 h-6 flex items-center justify-center border border-white/20">
+                          {ballIndicator}
+                        </div>
+                      )}
+                    </motion.div>
                   )
                 })}
-                <div className="col-span-4">
-                  <Stage4ProfileCard contestantsData={contestantsData} />
-                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-5 max-w-[1200px] w-full mt-8 gap-5 mx-auto justify-center items-center">
+              {hustleMatchesData?.data?.slice(-11)?.map((item, idx) => {
+                const isRevealed = revealedBalls.has(item?.number_pick)
+                return (
+                  <div className="flex flex-col items-center gap-2" key={item?.number_pick + idx}>
+                    <motion.div
+                      className="flex justify-center relative"
+                      animate={
+                        animatingBall === item?.number_pick
+                          ? {
+                            scale: [1, 2, 1],
+                            y: [0, -20, 0],
+                          }
+                          : {}
+                      }
+                      transition={{ duration: 1, ease: "easeOut" }}
+                    >
+                      <Ball
+                        number={item?.number_pick}
+                        variant={getBallVariant(item?.number_pick)}
+                        size="md"
+                        className={cn(
+                          "transition-all duration-300 w-14 h-14", // Even bigger balls
+                          animatingBall === item?.number_pick && "z-50",
+                        )}
+                        textClassName="text-xl font-black" // Much bigger text
+                      />
+                    </motion.div>
+                    {/* Effect Label - Only show if not revealed */}
+                    {getEffectLabel(item) && (
+                      <div
+                        className={`px-4 py-[.4375rem] ${isRevealed ? "opacity-40" : ""} rounded-[3.125rem] flex items-center border justify-center text-xl font-extrabold font-display  ${getLabelColor(item)}`}
+                      >
+                        {getEffectLabel(item)}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+              <div className="col-span-4">
+                <Stage4ProfileCard contestantsData={contestantsData} />
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
 
       {/* Right Sidebar */}
-      <div className="flex justify-between items-center flex-col py-10">
-        {/* Reserved for top right content if needed */}
-        <div className=""></div>
-        {/* Dynamic Match Amount Containers */}
-        <div className="flex items-center flex-col gap-3">
-          {[
-            { amount: "₦500,000", matches: 2 },
-            { amount: "₦3,500,000", matches: 3 },
-            { amount: "₦10,000,000", matches: 4 },
-            { amount: "₦100,000,000", matches: 5 },
-          ].map((tier, index) => (
-            <Stage4MatchAmountContainer
-              key={index}
-              mainText={tier.amount}
-              circleText={`${tier.matches}/5`}
-              isActive={matchedCount === tier.matches}
-            />
-          ))}
-        </div>
+      <div className="flex justify-between items-center flex-col py-10 h-full z-[3]">
+        <section className="flex flex-col gap-8">
+          <h2 className="text-white font-black font-display text-5xl text-center">
+            GRAND PRIZE
+          </h2>
+          <div className="flex items-center flex-col gap-3">
+            {[
+              { amount: "₦500,000", matches: 2 },
+              { amount: "₦3,500,000", matches: 3 },
+              { amount: "₦10,000,000", matches: 4 },
+              { amount: "₦100,000,000", matches: 5 },
+            ].map((tier, index) => (
+              <Stage4MatchAmountContainer
+                key={index}
+                mainText={tier.amount}
+                circleText={`${tier.matches}/5`}
+                isActive={matchedCount === tier.matches}
+              />
+            ))}
+          </div>
+
+        </section>
         {/* Extra Ball Icons */}
         <div className="flex flex-col items-center gap-y-3">
           <div>

@@ -60,18 +60,18 @@ const UserBadge = ({
   textGradient,
   ...props
 }: UserBadgeProps) => {
-  const width = 157;
+  const width = 180;
   const height = 53;
   const radius = 26;
   const clipId = React.useId();
   const bgGradientId = React.useId();
   const textGradientId = React.useId();
-  
+
   // Avatar dimensions and position
   const avatarSize = 36;
   const avatarX = width - avatarSize - 14;
   const avatarY = (height - avatarSize) / 2;
-  
+
   // Fallback styles based on active/inactive
   const activeColor = color || "#FFFFFF";
   const inactiveColor = "#AAAAAA";
@@ -79,11 +79,11 @@ const UserBadge = ({
   const inactiveBorder = "#5d400b";
   const activeBg = backgroundFill || "rgba(255, 255, 255, 0.1)";
   const inactiveBg = "rgba(255, 255, 255, 0.05)";
-  
+
   // Determine if we're using gradients - only apply when active
   const useBackgroundGradient = isActive && backgroundGradient;
   const useTextGradient = isActive && textGradient;
-  
+
   // Calculate dot position with defaults
   const dotX = dotPosition.x ?? 22;
   const dotY = dotPosition.y ?? height * 0.64;
@@ -104,13 +104,13 @@ const UserBadge = ({
             <stop offset="0%" stopColor="#FFA500" />
             <stop offset="100%" stopColor="#FF4500" />
           </linearGradient>
-          
+
           {useBackgroundGradient && (
-            <linearGradient 
-              id={bgGradientId} 
-              x1="0%" 
-              y1={backgroundGradient.direction === "vertical" ? "0%" : "50%"} 
-              x2={backgroundGradient.direction === "vertical" ? "50%" : "100%"} 
+            <linearGradient
+              id={bgGradientId}
+              x1="0%"
+              y1={backgroundGradient.direction === "vertical" ? "0%" : "50%"}
+              x2={backgroundGradient.direction === "vertical" ? "50%" : "100%"}
               y2={backgroundGradient.direction === "vertical" ? "100%" : "50%"}
             >
               <stop offset="0%" stopColor={backgroundGradient.startColor} />
@@ -120,20 +120,20 @@ const UserBadge = ({
               <stop offset="100%" stopColor={backgroundGradient.endColor} />
             </linearGradient>
           )}
-          
+
           {useTextGradient && (
-            <linearGradient 
-              id={textGradientId} 
-              x1="0%" 
-              y1={textGradient.direction === "vertical" ? "0%" : "50%"} 
-              x2={textGradient.direction === "vertical" ? "50%" : "100%"} 
+            <linearGradient
+              id={textGradientId}
+              x1="0%"
+              y1={textGradient.direction === "vertical" ? "0%" : "50%"}
+              x2={textGradient.direction === "vertical" ? "50%" : "100%"}
               y2={textGradient.direction === "vertical" ? "100%" : "50%"}
             >
               <stop offset="0%" stopColor={textGradient.startColor} />
               <stop offset="100%" stopColor={textGradient.endColor} />
             </linearGradient>
           )}
-          
+
           <clipPath id={clipId}>
             <circle cx={avatarX + avatarSize/2} cy={height/2} r={avatarSize/2} />
           </clipPath>
@@ -164,16 +164,16 @@ const UserBadge = ({
         strokeWidth={borderWidth}
         fill="none"
       />
-      
+
       {/* Username */}
-      <foreignObject x={20} y={height * 0.3 - 10} width={width - avatarSize - 40} height={20}>
-        <div 
+      <foreignObject x={20} y={height * 0.3 - 10} width={width - avatarSize - 10} height={20}>
+        <div
           className={cn(
             "text-sm font-medium overflow-hidden text-ellipsis whitespace-nowrap",
             isActive ? "text-[#9D8AA8]" : "text-[#AAAAAA]",
             usernameClassName
           )}
-          style={{ 
+          style={{
             fontFamily: "Arial, sans-serif",
             lineHeight: "1",
             color: isActive ? activeColor : inactiveColor,
@@ -182,16 +182,16 @@ const UserBadge = ({
           {username}
         </div>
       </foreignObject>
-      
+
       {/* Amount */}
       <foreignObject className="" x={35} y={height * 0.8 - 15} width={route === "hustle-board" ? width : width - avatarSize - 60} height={30}>
-        <div 
+        <div
           className={cn(
             `text-base font-bold ${route === "hustle-board" ? "" : "overflow-hidden"} overflow-hidden text-ellipsis whitespace-nowrap`,
             isActive ? "text-white" : "text-[#AAAAAA]",
             amountClassName
           )}
-          style={{ 
+          style={{
             fontFamily: "Arial, sans-serif",
             lineHeight: "1",
             color: isActive ? "#FFFFFF" : inactiveColor,
@@ -200,19 +200,19 @@ const UserBadge = ({
           {amount}
         </div>
       </foreignObject>
-      
+
       {/* Online indicator - only render if showDot is true */}
       {showDot && (
-        <circle 
-          cx={dotX} 
-          cy={dotY} 
-          r={dotRadius} 
-          fill={correctAnswerColor} 
+        <circle
+          cx={dotX}
+          cy={dotY}
+          r={dotRadius}
+          fill={correctAnswerColor}
         />
       )}
-      
+
       {/* Avatar */}
-    
+
     </svg>
   );
 };

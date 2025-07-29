@@ -46,10 +46,22 @@ const pickBall = async (data: IBallPickData) => {
     return res.data as BallPickAPIResponse;
 }
 
-export const useHandleBallPick = () => {
+export const useGrandPrizeBallPick = () => {
     return useMutation({
         mutationFn: pickBall,
         mutationKey: "handleBallPick",
+    });
+}
+
+const goldenBallPick = async (data: IBallPickData) => {
+    const res = await tokenlessAxios.post("api/admin-controller/golden_hustle_match", data);
+    return res.data as BallPickAPIResponse;
+}
+
+export const useGoldenBallPick = () => {
+    return useMutation({
+        mutationFn: goldenBallPick,
+        mutationKey: "handleGoldenBallPick",
     });
 }
 
