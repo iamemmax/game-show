@@ -37,6 +37,8 @@ export type TGameInfo = {
   status: string
   stage: string
   reveal_step_count: "SINGLE" | "DOUBLE"
+  finale_type: "GRAND_PRIZE" | "GOLDEN_MATCH"
+  is_golden_match_active: boolean
 }
 export type TEpisodeInfo = TGameInfo & {
   lastAction: string;

@@ -39,6 +39,8 @@ const ContestantHomePage = () => {
     lastAction: "",
     showQuestions: false,
     step: UNIVERSAL_GAME_STEPS.GAME_SETUP,
+    finale_type: "GRAND_PRIZE",
+    is_golden_match_active: false
   });
 
 
@@ -145,9 +147,9 @@ const ContestantHomePage = () => {
 
   return (
     <div className="h-full relative">
-      <div className="z-[500] absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded text-sm">
+      {/* <div className="z-[500] absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded text-sm">
         Stage: {gameState.stage},  Step: {gameState.step}
-      </div>
+      </div> */}
 
       <AnimatePresence mode="wait">
 

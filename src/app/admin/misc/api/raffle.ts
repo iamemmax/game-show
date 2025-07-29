@@ -46,10 +46,22 @@ const pickBall = async (data: IBallPickData) => {
     return res.data as BallPickAPIResponse;
 }
 
-export const useHandleBallPick = () => {
+export const useGrandPrizeBallPick = () => {
     return useMutation({
         mutationFn: pickBall,
         mutationKey: "handleBallPick",
+    });
+}
+
+const goldenBallPick = async (data: IBallPickData) => {
+    const res = await tokenlessAxios.post("api/admin-controller/golden_hustle_match", data);
+    return res.data as BallPickAPIResponse;
+}
+
+export const useGoldenBallPick = () => {
+    return useMutation({
+        mutationFn: goldenBallPick,
+        mutationKey: "handleGoldenBallPick",
     });
 }
 
@@ -95,12 +107,12 @@ export const getMatchedHustles = async (gameEpisode: number) => {
     return response?.data as MatchedHustlesResponse
 }
 
-export const useGetMatchedHustles = (gameEpisode: number) =>
+export const useGetMatchedHustles = (gameEpisode: number, slowRefetch?:boolean) =>
     useQuery({
         queryKey: ["matched-hustles", gameEpisode],
         queryFn: () => getMatchedHustles(gameEpisode),
         enabled: !!gameEpisode,
         staleTime: 0,
         refetchOnWindowFocus: true,
-        refetchInterval: 1000,
+        refetchInterval: slowRefetch ? 60000 : 2000,
     })

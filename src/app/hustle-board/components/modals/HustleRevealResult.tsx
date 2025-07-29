@@ -77,7 +77,7 @@ const HustleRevealResult = ({ currentQuestion, mqttAnswerData,showBid }: Props) 
   };
   const params = useParams()
 const { data: allContestsant, isLoading } = useGetGameContestants(
-   
+
       Number(params?.episodeId)
   );
   const [visibleItems, setVisibleItems] = useState<number>(0);
@@ -90,12 +90,12 @@ const { data: allContestsant, isLoading } = useGetGameContestants(
     try {
       // Reset audio to beginning
       soundRef.current.currentTime = 0;
-      
+
       // Try to play the sound
       await soundRef.current.play();
     } catch (error) {
       console.warn("Sound play failed:", error);
-      
+
       // If failed, try to enable audio on next user interaction
       const enableAudio = () => {
         if (soundRef.current) {
@@ -104,7 +104,7 @@ const { data: allContestsant, isLoading } = useGetGameContestants(
         document.removeEventListener('click', enableAudio);
         document.removeEventListener('keydown', enableAudio);
       };
-      
+
       document.addEventListener('click', enableAudio);
       document.addEventListener('keydown', enableAudio);
     }
@@ -113,10 +113,10 @@ const { data: allContestsant, isLoading } = useGetGameContestants(
   useEffect(() => {
     // Initialize audio
     soundRef.current = new Audio("/sounds/show-result.mp3");
-    
+
     // Preload the audio
     soundRef.current.preload = "auto";
-    
+
     // Handle focus events to ensure sound can play
     const handleFocus = () => {
       if (soundRef.current) {
@@ -209,8 +209,8 @@ const { data: allContestsant, isLoading } = useGetGameContestants(
               onAnimationComplete={handleAnimationComplete}
               className="grid grid-cols-[5fr_1fr] items-center gap-3 mb-3"
             >
-              <div 
-                className="flex items-start gap-3 border-[0.3px] w-full p-3 rounded-10" 
+              <div
+                className="flex items-start gap-3 border-[0.3px] w-full p-3 rounded-10"
                 style={{ backgroundColor: styles.bg, borderColor: styles.border }}
               >
                 <div className="relative w-[6.125rem] h-[7.125rem] rounded-[10px] overflow-hidden">
@@ -234,13 +234,13 @@ const { data: allContestsant, isLoading } = useGetGameContestants(
                   <div className="font-sans opacity-75 text-xl text-white truncate   max-w-[400px]">
                     Answer:
                     <span className="font-bold opacity-100 text-xl">
-                      {" "}{data?.answer === "N" ? "No answer": data?.answer}. {getOptionValue(currentQuestion?.question?.questions, String(data?.answer?.toLowerCase()))}  
+                      {" "}{data?.answer === "N" ? "No answer": data?.answer}. {getOptionValue(currentQuestion?.question?.questions, String(data?.answer?.toLowerCase()))}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-x-[10px]">
-                   {showBid&& <div 
-                      className="mt-1 flex justify-center items-center flex-col rounded-[1.5rem] py-2 px-6" 
+                   {showBid&& <div
+                      className="mt-1 flex justify-center items-center flex-col rounded-[1.5rem] py-2 px-6"
                       style={{ backgroundColor: `${styles.text}22` }}
                     >
                       <p className="font-verdana text-2xl text-white">Bid:</p>
@@ -248,25 +248,25 @@ const { data: allContestsant, isLoading } = useGetGameContestants(
                         ₦{(Math.ceil(Number(data?.profit_loss?.bid_amount || 0) / 100) * 100).toLocaleString()}
                       </h2>
                     </div>}
-                    
-                    <div 
-                      className="mt-1 flex justify-center leading-none items-center flex-col rounded-[1.5rem] py-2 px-6" 
+
+                    <div
+                      className="mt-1 flex justify-center leading-none items-center flex-col rounded-[1.5rem] py-2 px-6"
                       style={{ backgroundColor: `${styles.text}22` }}
                     >
                       {data?.is_winner && <p className="font-verdana text-2xl text-white">Won :</p>}
                       {data?.profit_loss?.amount_lost > 0 && <p className="font-gilroyMedium text-2xl text-white">Lost:</p>}
-                      
+
                       {data?.is_correct && (
                         <h2 className="font-verdana block font-extrabold text-2xl" style={{ color: styles.text }}>
                           {/* ₦{formatAmount(Number(data?.profit_loss?.amount_gained) || 0)} */}
                              ₦{(Math.ceil(Number(data?.profit_loss?.amount_gained || 0) / 100) * 100).toLocaleString()}
                         </h2>
                       )}
-                      
+
                       {!data?.is_correct && (
                         <h2 className="font-verdana block font-extrabold text-2xl" style={{ color: styles.text }}>
                           {/* ₦{formatAmount(Number(data?.profit_loss?.amount_lost) || 0)} */}
-                        
+
                          ₦{(Math.ceil(Number(data?.profit_loss?.amount_lost || 0) / 100) * 100).toLocaleString()}
                         </h2>
                       )}
@@ -288,7 +288,7 @@ const { data: allContestsant, isLoading } = useGetGameContestants(
                   >
                     <UserBadge
                       username={data.contestant_name || `Player ${idx + 1}`}
-                      amount={`${String(data.answered_in?.toFixed(2))}s`}
+                      amount={`${String(data.answered_in)}s`}
                       // avatarUrl={data?.profit_loss?.contestant_photo_url??"/"}
                       isOnline={true}
                       isActive={data.is_winner && data?.is_correct}
@@ -301,7 +301,7 @@ const { data: allContestsant, isLoading } = useGetGameContestants(
                       }}
                       textGradient={{
                         startColor: "#FFFFFF",
-                        endColor: "#FFC125",
+                        endColor: "#212121ff",
                         direction: "horizontal",
                       }}
                       color="#FFFFFF"

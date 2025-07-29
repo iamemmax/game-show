@@ -10,19 +10,22 @@ import ViewOnlyQuestionTwoScreen from "../components/statge2/StageTwoQuestionScr
 import Stage3BoardGetReadyPage from "../components/stage3/Stage3GetReadyScreen";
 import RafflePickReveal from "../components/stage4/RafflePickReveal";
 import { GameSynchroniser } from "@/components/gameplay/Heartbeat";
-import { getStageFromStep, UNIVERSAL_GAME_STEPS, UniversalGameStep } from "@/constants";
+import {
+  getStageFromStep,
+  UNIVERSAL_GAME_STEPS,
+  UniversalGameStep,
+} from "@/constants";
 import HustleBoardStageTallyPage from "../components/HustleBoardStageTally";
 import { useMQTT } from "@/hooks/useMqttService";
 import { LastStepStorage } from "@/lib/lastStep";
 import Stage3CardSelectionScreens from "../components/stage3/Stage3CardSelectionScreen";
 import WelcomeUserStory from "../components/WelcomeUserStory";
-
+import RafflePickPathChoices from "../components/stage4/RafflePickPathChoices";
 
 const HustleBoardPage = () => {
   const params = useParams();
   const [isInitialized, setIsInitialized] = useState(false);
   const initializationRef = useRef(false);
-
 
   const gameEpisode = params?.episodeId;
   const { data: allContestants, isLoading } = useGetGameContestants(
@@ -34,15 +37,16 @@ const HustleBoardPage = () => {
     // Add message listener for game sync events
     const handleMQTTMessage = (message: any) => {
       if (message?.topic.includes("/game-sync")) return;
-      if (message.payload.source === "host" && Number(message.payload.game_episode as string) === Number(gameEpisode)) {
-        console.log(
-          "host received message from host:", message
-        )
+      if (
+        message.payload.source === "host" &&
+        Number(message.payload.game_episode as string) === Number(gameEpisode)
+      ) {
+        console.log("host received message from host:", message);
         setGameState((prev) => ({
           ...prev,
           step: message.event as string,
-          stage: getStageFromStep(message.event)
-        }))
+          stage: getStageFromStep(message.event),
+        }));
         LastStepStorage.setLastStep({
           step: message.event,
           gameEpisode: Array.isArray(gameEpisode)
@@ -61,12 +65,6 @@ const HustleBoardPage = () => {
     };
   }, [addMessageListener, removeMessageListener]);
 
-
-
-
-
-
-
   /////////////////////////////////////////////////
   /////////////////////////////////////////////////
   /////////////////////////////////////////////////
@@ -79,8 +77,10 @@ const HustleBoardPage = () => {
   /////////////////////////////////////////////////
   /////////////////////////////////////////////////
   /////////////////////////////////////////////////
-  const { data: contestantsData, isLoading: isLoadingContestants } =
-    useGetGameContestants(Number(gameEpisode));
+  const {
+    data: contestantsData,
+    isLoading: isLoadingContestants,
+  } = useGetGameContestants(Number(gameEpisode));
 
   // Initialize game data when contestants data is loaded
   useEffect(() => {
@@ -91,15 +91,16 @@ const HustleBoardPage = () => {
       initializationRef.current = true;
 
       const savedStep = LastStepStorage.getLastStep();
-      const savedStepStage = getStageFromStep(savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_START);
+      const savedStepStage = getStageFromStep(
+        savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_START
+      );
 
       if (savedStepStage !== contestantsData.game.stage) {
         LastStepStorage.setLastStep({
           step: UNIVERSAL_GAME_STEPS.GAME_SETUP,
           gameEpisode: gameEpisode as string,
         });
-      }
-      else {
+      } else {
         LastStepStorage.setLastStep({
           step: savedStep?.step || UNIVERSAL_GAME_STEPS.GAME_START,
           gameEpisode: gameEpisode as string,
@@ -119,7 +120,6 @@ const HustleBoardPage = () => {
     }
   }, [contestantsData, isLoadingContestants, isLoading, gameEpisode]);
 
-
   const [gameState, setGameState] = useState<TEpisodeInfo>({
     game_episode: Number(gameEpisode),
     game_nick: "",
@@ -129,9 +129,9 @@ const HustleBoardPage = () => {
     lastAction: "",
     showQuestions: false,
     step: UNIVERSAL_GAME_STEPS.GAME_SETUP,
+    finale_type: "GRAND_PRIZE",
+    is_golden_match_active: false,
   });
-
-
 
   if (!isInitialized || gameState.step === null) {
     return (
@@ -143,38 +143,34 @@ const HustleBoardPage = () => {
 
   return (
     <div className="h-full relative">
-
-
+      {/* <div className="z-[500] absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded text-sm">
+        Stage: {gameState.stage}, Step: {gameState.step}
+      </div> */}
       <AnimatePresence mode="wait">
         {gameState.stage.includes("STAGE_ONE") && (
           <>
-            {(
-              gameState.step === UNIVERSAL_GAME_STEPS.GAME_SETUP
-            ) && (
-                <motion.div
-                  key={"welcome-user-story"}
-                  className="h-full"
-                  {...motionProps}
-                >
-                  <WelcomeUserStory />
-                </motion.div>
-              )}
-            {(
-              (
-                gameState.step === UNIVERSAL_GAME_STEPS.GAME_START ||
-                gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_INIT ||
-                gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK ||
-                gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK_TIME_ELAPSE
-              )) && (
-                <motion.div
-                  key={"number-pick"}
-                  className="h-full"
-                  {...motionProps}
-                >
-                  <HustleBoardNumberPicks />
-                </motion.div>
-              )
-            }
+            {gameState.step === UNIVERSAL_GAME_STEPS.GAME_SETUP && (
+              <motion.div
+                key={"welcome-user-story"}
+                className="h-full"
+                {...motionProps}
+              >
+                <WelcomeUserStory />
+              </motion.div>
+            )}
+            {(gameState.step === UNIVERSAL_GAME_STEPS.GAME_START ||
+              gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_INIT ||
+              gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK ||
+              gameState.step ===
+                UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_PICK_TIME_ELAPSE) && (
+              <motion.div
+                key={"number-pick"}
+                className="h-full"
+                {...motionProps}
+              >
+                <HustleBoardNumberPicks />
+              </motion.div>
+            )}
             {gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_HUSTLE_REVEAL && (
               <motion.div
                 key={gameState.step}
@@ -185,25 +181,21 @@ const HustleBoardPage = () => {
               </motion.div>
             )}
 
-            {
-              (
-                (
-                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS_PREP ||
-                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS ||
-                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL ||
-                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING ||
-                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL ||
-                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_RESULT_REVEAL
-                )
-              ) && (
-                <motion.div
-                  key={"question-section"}
-                  className="h-full"
-                  {...motionProps}
-                >
-                  <Stage1QuestionScreen />
-                </motion.div>
-              )}
+            {(gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS_PREP ||
+              gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTIONS ||
+              gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_REVEAL ||
+              gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_TIMER_RUNNING ||
+              gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_BIDS_REVEAL ||
+              gameState.step ===
+                UNIVERSAL_GAME_STEPS.STAGE1_QUESTION_RESULT_REVEAL) && (
+              <motion.div
+                key={"question-section"}
+                className="h-full"
+                {...motionProps}
+              >
+                <Stage1QuestionScreen />
+              </motion.div>
+            )}
             {gameState.step === UNIVERSAL_GAME_STEPS.STAGE1_RESULTS && (
               <motion.div
                 key={gameState.step}
@@ -237,28 +229,26 @@ const HustleBoardPage = () => {
               </motion.div>
             )}
 
-            {(
-              (
-                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_PREP ||
-                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS ||
-                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_REVEAL ||
-                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_TIMER_RUNNING ||
-                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_RESULT_REVEAL ||
-                gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_OPTIONS_SELECT_REVEAL
-              )
-            ) && (
-                <motion.div
-                  key={
-                    gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_PREP
-                      ? "stage-2-prep"
-                      : "question-section"
-                  }
-                  className="h-full"
-                  {...motionProps}
-                >
-                  <ViewOnlyQuestionTwoScreen />
-                </motion.div>
-              )}
+            {(gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_PREP ||
+              gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_QUESTIONS ||
+              gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_REVEAL ||
+              gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_TIMER_RUNNING ||
+              gameState.step ===
+                UNIVERSAL_GAME_STEPS.STAGE2_QUESTION_RESULT_REVEAL ||
+              gameState.step ===
+                UNIVERSAL_GAME_STEPS.STAGE2_OPTIONS_SELECT_REVEAL) && (
+              <motion.div
+                key={
+                  gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_PREP
+                    ? "stage-2-prep"
+                    : "question-section"
+                }
+                className="h-full"
+                {...motionProps}
+              >
+                <ViewOnlyQuestionTwoScreen />
+              </motion.div>
+            )}
             {gameState.step === UNIVERSAL_GAME_STEPS.STAGE2_RESULTS && (
               <motion.div
                 key={"stage-2-results"}
@@ -324,12 +314,36 @@ const HustleBoardPage = () => {
               </motion.div>
             )}
 
-
+            {gameState.step === UNIVERSAL_GAME_STEPS.STAGE3_END &&
+              contestantsData?.game.is_golden_match_active && (
+                <motion.div
+                  key={"HUSTLE-PATH-CHOICE"}
+                  className="h-full"
+                  {...motionProps}
+                >
+                  <RafflePickPathChoices />
+                </motion.div>
+              )}
+            {gameState.step === UNIVERSAL_GAME_STEPS.STAGE3_END &&
+            contestantsData?.game.is_golden_match_active ? (
+              <motion.div
+                key={"HUSTLE-PATH-CHOICE"}
+                className="h-full"
+                {...motionProps}
+              >
+                <RafflePickPathChoices />
+              </motion.div>
+            ) :
+             (
+              <motion.div key="raffle-reveal" className="h-full" {...motionProps}>
+                <RafflePickReveal />
+              </motion.div>
+            )}
           </>
         )}
         {gameState.stage.includes("STAGE_FOUR") && (
           <>
-            <motion.div key="step6" className="h-full" {...motionProps}>
+            <motion.div key="raffle-reveal-2" className="h-full" {...motionProps}>
               <RafflePickReveal />
             </motion.div>
           </>
