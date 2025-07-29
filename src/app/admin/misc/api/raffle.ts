@@ -116,3 +116,12 @@ export const useGetMatchedHustles = (gameEpisode: number, slowRefetch?:boolean) 
         refetchOnWindowFocus: true,
         refetchInterval: slowRefetch ? 60000 : 2000,
     })
+
+
+
+    const getGoldenMatchAmount = async (gameEpisode: number) => {
+
+
+    export useGetGoldenMatchWinAmount = (gameEpisode: number) => {
+
+    }

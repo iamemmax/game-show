@@ -332,10 +332,10 @@ const RafflePickReveal = () => {
               <>
                 <h2 style={{
                 }}
-                  className="text-white font-black font-display text-5xl text-center stroke-[2px] stroke-[#C12B00] text-[#FCF4B9]">
+                  className="font-black font-display text-5xl text-center stroke-[2px] stroke-[#C12B00] text-[#FCF4B9]">
                   GOLDEN MATCH
                 </h2>
-                <GoldenMatchButton className="text-white font-display fomt- text-[#FCF4B9] text-3xl font-black" variant="ORANGE">
+                <GoldenMatchButton className="font-display fomt- text-[#FCF4B9] text-3xl font-black" variant="ORANGE">
                   400,000
                 </GoldenMatchButton>
 
@@ -353,6 +353,7 @@ const RafflePickReveal = () => {
       </div>
 
 
+      {/* CENTER CONTENT */}
       <section className="relative flex flex-col w-full items-center z-[999]"
         style={{
           zIndex: 1,
@@ -542,7 +543,9 @@ const RafflePickReveal = () => {
 
 
       {/* Right Sidebar */}
-      <div className="flex justify-between items-center flex-col py-10 h-full z-[3]">
+      <div className={cn("flex justify-between items-center flex-col py-10 h-full z-[3]",
+        (contestantsData?.game.finale_type == "GOLDEN_MATCH" && contestantsData.game.is_golden_match_active) && "opacity-40"
+      )}>
         <section className="flex flex-col gap-8">
           <h2 className="text-white font-black font-display text-5xl text-center">
             GRAND PRIZE
