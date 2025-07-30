@@ -139,6 +139,10 @@ const config: Config = {
             transform: 'translate(0px, -100%)',
           },
         },
+        'scale-up': {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(3)' },
+        },
         'indeterminate-progress': {
           '0%': {
             transform: 'translateX(0) scaleX(0)',

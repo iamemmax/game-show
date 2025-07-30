@@ -19,6 +19,7 @@ import { useGetLastContestantPick } from "@/app/components/stages/api/stage4/get
 import {
   type MatchedHustle,
   useGetGameContestants,
+  useGetGoldenMatchWinAmount,
   useGetHustleMatches,
   useGetMatchedHustles,
 } from "@/app/admin/misc/api"
@@ -82,8 +83,6 @@ const RafflePickReveal = () => {
   const [showOfferModal, setShowOfferModal] = useState(false)
   const [showMOfferAcceptModal, setShowOfferAcceptModal] = useState(false)
   const [showMOfferRejectModal, setShowOfferRejectModal] = useState(false)
-  const [offerValue, setOfferValue] = useState(0)
-  const [ShowStage4Prep, setShowStage4Prep] = useState(true)
 
   // Fetch hustle matches data (what each ball contains)
   const { data: hustleMatchesData, isLoading: isLoadingMatches } = useGetHustleMatches(episodeId)
@@ -102,6 +101,9 @@ const RafflePickReveal = () => {
     contestant_id: Number(lastContestantId),
     episode_id: episodeId,
   })
+
+  const { data } = useGetGoldenMatchWinAmount(episodeId)
+
 
   const mynumbers = lastPickData && lastPickData[0]?.picks
   const [revealedNumbers, setRevealedNumbers] = useState<number[]>([])
@@ -161,9 +163,6 @@ const RafflePickReveal = () => {
     const handleMQTTMessage = (message: MQTTMessage) => {
 
       const result = message.payload as BallPickedPayload
-      if (message.event === "game_s4_start") {
-        setShowStage4Prep(false)
-      }
       if (message.event === "close_reveal_modal") {
         setShowModal(false)
         setShowOfferModal(false)
@@ -181,23 +180,6 @@ const RafflePickReveal = () => {
         })
         animateBallReveal(hustle_match.number_pick, result)
         refetch()
-      }
-      if (message.event == "game_s4_make_offer") {
-        if (episodeId !== message.payload.game_episode) return
-        setOfferValue(message.payload.amount)
-        setShowOfferModal(true)
-      }
-      if (message.event == "game_s4_reject_offer") {
-        if (episodeId !== message.payload.game_episode) return
-        setOfferValue(message.payload.amount)
-        setShowOfferModal(false)
-        setShowOfferRejectModal(true)
-      }
-      if (message.event == "game_s4_accept_offer") {
-        if (episodeId !== message.payload.game_episode) return
-        setOfferValue(message.payload.amount)
-        setShowOfferModal(false)
-        setShowOfferAcceptModal(true)
       }
       if (message.event === "game_s4_final_result_reveal") {
         refetch()
@@ -283,6 +265,20 @@ const RafflePickReveal = () => {
         return "50% CRYSTAL"
       case "EXTRA_PICK_OPPORTUNITY":
         return "1 EXTRA PICK"
+      case "PLUS_100K":
+        return "+N100,000"
+      case "PLUS_20K":
+      case "PLUS_50K":
+        return "+N50,000"
+      case "PLUS_20K":
+        return "+N20,000"
+      case "MINUS_100K":
+        return "-N100,000"
+      case "PLUS_20K":
+      case "MINUS_50K":
+        return "-N50,000"
+      case "MINUS_20K":
+        return "-N20,000"
       default:
         return null
     }
@@ -294,12 +290,18 @@ const RafflePickReveal = () => {
     switch (ballData.extra_ball_type) {
       case "LIBERTY_LIFE":
         return "bg-[#053F20] border-[#04DA6A] text-[#1FCC3C]"
-      case "WEAK_KILLER":
+          case "WEAK_KILLER":
       case "STRONG_KILLER":
       case "SWEEPER":
+      case "REMOVE_TWENTYK_K":
+      case "REMOVE_FITTHY_K":
+      case "REMOVE_HUNDRED_K":
         return "bg-[#38040A] border-[#EB001B] text-[#EB001B]"
-      case "HIGH_CRYSTAL":
+          case "HIGH_CRYSTAL":
       case "LOW_CRYSTAL":
+      case "ADD_FITTHY_K":
+      case "ADD_TWENTYK_K":
+      case "ADD_HUNDRED_K":
         return "bg-[#2A2000] border-[#FFC125] text-[#FFC125]"
       case "EXTRA_PICK":
         return "bg-[#1B0040] border-[#7E3CE0] text-[#E566FF]"
@@ -318,31 +320,32 @@ const RafflePickReveal = () => {
   }, [revealedNumbers, currentResult])
 
   return (
-    <div className="h-screen grid grid-cols-[1fr_4fr_1fr] items-center justify-center relative">
+    <div className="h-screen grid grid-cols-[1fr_4fr_1fr] gap-8 items-center justify-center relative">
       <div className="absolute bg-black/80 w-full h-full top-0 bottom-0 left-0 right-0" />
       {/* Left Sidebar */}
       <div className="flex flex-col items-center justify-between h-full z-[3] gap-12 pt-10">
         <div className="flex justify-center items-center h-3.5 w-full mb-6">
           <Logo />
         </div>
-        <section className="grow flex flex-col items-center gap-10">
+        <section className={cn("grow flex p-6 flex-col items-center gap-10", (contestantsData?.game.finale_type == "GOLDEN_MATCH" && contestantsData.game.is_golden_match_active) && " animate-scale animate-scale-up")}>
 
           {
             (contestantsData?.game.finale_type == "GOLDEN_MATCH" && contestantsData.game.is_golden_match_active) ?
-              <>
+              <div className="flex flex-col items-center border-[4px] border-[#F2C94C] rounded-xl p-6 shadow-sm max-w-max">
                 <h2 style={{
                 }}
-                  className="font-black font-display text-5xl text-center stroke-[2px] stroke-[#C12B00] text-[#FCF4B9]">
+                  className="font-black font-display py-2 text-5xl text-center stroke-[2px] stroke-[#C12B00] text-[#FCF4B9]">
                   GOLDEN MATCH
                 </h2>
                 <GoldenMatchButton className="font-display fomt- text-[#FCF4B9] text-3xl font-black" variant="ORANGE">
-                  400,000
+                  <NumberFlow
+                    value={data?.amount ?? 0}
+                  />
                 </GoldenMatchButton>
 
-              </>
+              </div>
               :
-
-              <HustleStages />
+              <HustleStages activeStage={4} />
           }
 
         </section>
@@ -392,7 +395,9 @@ const RafflePickReveal = () => {
             {/* Top: Hustle Picks */}
             <div className="flex justify-center items-center gap-6 mt-4">
               <div className="flex items-center justify-center flex-col">
-                <h3 className="text-white text-2xl font-gilroyMedium mb-2">Your pick</h3>
+                <h3 className="text-white text-2xl font-gilroyMedium mb-2">
+                  {contestantsData?.data.find(con => con.id == lastContestantId)?.name}'s initial picks
+                </h3>
                 <div className="flex border-[2px] divide-x shadow-[0_4px_20px_#8700C7] divide-[#4B1874] rounded-[20px] py-[5.35px] px-3 border-[#CE64FF]">
                   {mynumbers?.map((num) => {
                     const { matched, showRed } = getNumberMatchStatus(num, revealedNumbers?.length === 5)
@@ -442,7 +447,7 @@ const RafflePickReveal = () => {
                 </>
               )}
             </div>
-            {/* 60 Ball Grid - Much Bigger */}
+            {/* 60 Ball Grid */}
             <div className="flex justify-center mt-6 w-full ">
               <div className="flex items-center flex-wrap justify-center gap-6  w-full max-w-[1250px] ">
                 {Array.from({ length: 49 }, (_, i) => i + 1).map((ballNumber) => {
@@ -457,7 +462,7 @@ const RafflePickReveal = () => {
                       animate={
                         animatingBall === ballNumber
                           ? {
-                            scale: [1, 2, 1],
+                            scale: [1, 1.5, 1],
                             y: [0, -20, 0],
                           }
                           : {}
@@ -543,8 +548,8 @@ const RafflePickReveal = () => {
 
 
       {/* Right Sidebar */}
-      <div className={cn("flex justify-between items-center flex-col py-10 h-full z-[3]",
-        (contestantsData?.game.finale_type == "GOLDEN_MATCH" && contestantsData.game.is_golden_match_active) && "opacity-40"
+      <div className={cn("flex justify-between items-center flex-col shrink-0 py-10 px-5 h-full z-[3]",
+        (contestantsData?.game.finale_type == "GOLDEN_MATCH" && contestantsData.game.is_golden_match_active) && "opacity-30 blur-[250px]`"
       )}>
         <section className="flex flex-col gap-8">
           <h2 className="text-white font-black font-display text-5xl text-center">
@@ -552,7 +557,7 @@ const RafflePickReveal = () => {
           </h2>
           <div className="flex items-center flex-col gap-3">
             {[
-              { amount: "₦500,000", matches: 2 },
+              { amount: "₦750,000", matches: 2 },
               { amount: "₦3,500,000", matches: 3 },
               { amount: "₦10,000,000", matches: 4 },
               { amount: "₦100,000,000", matches: 5 },
@@ -592,10 +597,10 @@ const RafflePickReveal = () => {
               "relative flex flex-col items-center justify-center max-w-2xl w-full px-4 rounded-2xl h-[70vh]",
             )}
           >
-            {currentResult?.hustle_match.extra_ball_details?.name === "KILLER_BALL" && (
+            {currentResult?.hustle_match.extra_ball_details?.name === "SUBTRATCION_BALL" && (
               <KillerHustlePulledModal isOpen={showModal} setShowModal={setShowModal} data={currentResult} />
             )}
-            {currentResult?.hustle_match.extra_ball_details?.name === "CRYSTAL_BALL" && (
+            {currentResult?.hustle_match.extra_ball_details?.name === "ADDITION_BALL" && (
               <CrystalModal isOpen={true} data={currentResult} setShowModal={setShowModal} />
             )}
             {currentResult?.hustle_match.extra_ball_details?.name === "LIBERTY_LIFE_BALL" && (
@@ -690,12 +695,6 @@ const RafflePickReveal = () => {
         </div>
       )}
 
-
-      <RafflePickRevealBankerOfferModal
-        isOpen={showOfferModal}
-        offerAmount={offerValue}
-        setShowModal={setShowOfferModal}
-      />
       {/* Loading Overlay */}
       {(isLoadingMatches || isLoadingMatched) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 !font-montserrat">
