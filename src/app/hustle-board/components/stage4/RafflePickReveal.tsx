@@ -81,7 +81,6 @@ const RafflePickReveal = () => {
   const [currentResult, setCurrentResult] = useState<BallPickedPayload | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [showOfferModal, setShowOfferModal] = useState(false)
-  const [showMOfferAcceptModal, setShowOfferAcceptModal] = useState(false)
   const [showMOfferRejectModal, setShowOfferRejectModal] = useState(false)
 
   // Fetch hustle matches data (what each ball contains)
@@ -165,9 +164,6 @@ const RafflePickReveal = () => {
       const result = message.payload as BallPickedPayload
       if (message.event === "close_reveal_modal") {
         setShowModal(false)
-        setShowOfferModal(false)
-        setShowOfferAcceptModal(false)
-        setShowOfferRejectModal(false)
         setFinalResult(null)
       }
       if (message.event === "ball_picked") {
@@ -508,7 +504,7 @@ const RafflePickReveal = () => {
                       animate={
                         animatingBall === item?.number_pick
                           ? {
-                            scale: [1, 2, 1],
+                            scale: [1, 1.2, 1],
                             y: [0, -20, 0],
                           }
                           : {}

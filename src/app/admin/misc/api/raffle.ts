@@ -22,6 +22,8 @@ interface BalanceDetails {
   current_balance: number;
 }
 
+
+
 export interface HustleMatch {
   contestant_id?: number;
   number_pick: number;

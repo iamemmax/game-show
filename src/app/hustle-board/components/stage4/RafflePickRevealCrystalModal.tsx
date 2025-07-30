@@ -74,7 +74,7 @@ const CrystalModal = ({ isOpen, data, setShowModal }: CrystalModalProps) => {
             variant={"matched"}
             size="md"
             className={cn("transition-all duration-300 w-32 h-32")}
-            textClassName="!font-bold !text-4xl text-white"
+            textClassName="!font-bold !text-4xl text-black"
           />
           <motion.h2
             className="text-8xl font-anton text-[#04DA6A] mt-5 font-black"
@@ -90,21 +90,15 @@ const CrystalModal = ({ isOpen, data, setShowModal }: CrystalModalProps) => {
                 : {}
             }
           >
-            Bonus Ball!(+
-            {data.hustle_match.extra_ball_effect_action == "PLUS_100K"
+            Bonus Ball!(
+            {data.hustle_match.extra_ball_details?.effect_action == "PLUS_100K"
               ? "+100k"
-              : data.hustle_match.extra_ball_effect_action == "PLUS_50K"
+              : data.hustle_match.extra_ball_details?.effect_action == "PLUS_50K"
               ? "+50k"
               : "20k"}
             )
           </motion.h2>
-          <Ball
-            number={data.hustle_match.number_pick}
-            variant={"regular"}
-            size="md"
-            className={cn("transition-all duration-300 w-20 h-20")}
-            textClassName="!font-semibold !text-3xl "
-          />
+
           {/* Description */}
           <p className="text-lg text-white max-w-xl font-montserrat leading-relaxed">
             {data.hustle_match.extra_ball_effect_desc ||

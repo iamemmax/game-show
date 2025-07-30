@@ -73,9 +73,9 @@ const KillerHustlePulledModal = ({
             }
           >
             Crusher Ball!(-
-            {data.hustle_match.extra_ball_effect_action == "MINUS_100K"
+            {data.hustle_match.extra_ball_details?.effect_action == "MINUS_100K"
               ? "-100k"
-              : data.hustle_match.extra_ball_effect_action == "MINUS_50K"
+              : data.hustle_match.extra_ball_details?.effect_action == "MINUS_50K"
               ? "-50k"
               : "-20k"}
             )
