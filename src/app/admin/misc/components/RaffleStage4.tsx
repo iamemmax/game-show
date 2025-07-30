@@ -225,9 +225,6 @@ const PickView: React.FC<PickViewProps> = ({ onPickResult }) => {
     <div className="h-full flex flex-col w-full justify-center items-center p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <TrapeziumButton onClick={handleStartStageFour}>
-            INIT STAGE 4{isStartingStage && <SmallSpinner className="ml-2" />}
-          </TrapeziumButton>
           <TrapeziumButton
             onClick={handleFinalResultRevealModal}
             variant={"purple"}

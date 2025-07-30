@@ -324,29 +324,16 @@ const HustleBoardPage = () => {
                   <RafflePickPathChoices />
                 </motion.div>
               )}
-            {gameState.step === UNIVERSAL_GAME_STEPS.STAGE3_END &&
-            contestantsData?.game.is_golden_match_active ? (
-              <motion.div
-                key={"HUSTLE-PATH-CHOICE"}
-                className="h-full"
-                {...motionProps}
-              >
-                <RafflePickPathChoices />
-              </motion.div>
-            ) :
-             (
-              <motion.div key="raffle-reveal" className="h-full" {...motionProps}>
-                <RafflePickReveal />
-              </motion.div>
-            )}
           </>
         )}
         {gameState.stage.includes("STAGE_FOUR") && (
-          <>
-            <motion.div key="raffle-reveal-2" className="h-full" {...motionProps}>
+            <motion.div
+              key="stage-four-showdown"
+              className="h-full"
+              {...motionProps}
+            >
               <RafflePickReveal />
             </motion.div>
-          </>
         )}
       </AnimatePresence>
 

@@ -58,6 +58,11 @@ const nextConfig = {
         hostname: '192.168.1.118',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '192.168.1.118',
+        pathname: '/**',
+      },
 
     ],
   },
