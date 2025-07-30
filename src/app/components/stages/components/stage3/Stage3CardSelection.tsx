@@ -65,15 +65,15 @@ const Stage3CardSelection = () => {
     );
     return contestant;
   };
-  const getOtherContestantData = (contestantId: number) => {
-    const contestant = getRemainingContestant()?.find(
-      (c) => c.id !== contestantId
-    );
-    return contestant;
-  };
+  // const getOtherContestantData = (contestantId: number) => {
+  //   const contestant = getRemainingContestant()?.find(
+  //     (c) => c.id !== contestantId
+  //   );
+  //   return contestant;
+  // };
   const [showCountdown, setShowCoundown] = useState(false);
   const [countTimer, setCountdownTimer] = useState(3);
-  const [passFound, setPassFound] = useState(false);
+  // const [passFound, setPassFound] = useState(false);
   const { mutate: handleCardFlip } = useContestantFlipCard();
 
   const cardIcons = [PickCard1, PickCard2, PickCard3];
@@ -107,7 +107,7 @@ const Stage3CardSelection = () => {
   }, [isLoading, data]);
 
   const handleCardClick = (position: number) => {
-    if (data?.who_next.toString() !== user?.contestant_id.toString()) return;
+    if (data?.who_next?.toString() !== user?.contestant_id?.toString()) return;
     handleCardFlip(
       {
         contestant_id: Number(user?.contestant_id),
@@ -132,6 +132,7 @@ const Stage3CardSelection = () => {
         },
       }
     );
+      refetch();
   };
 
   const { addMessageListener, removeMessageListener, isConnected } = useMQTT();
@@ -164,6 +165,7 @@ const Stage3CardSelection = () => {
             countdownIntervalRef.current = setInterval(() => {
               setCountdownTimer((prev) => {
                 if (prev <= 1) {
+                    refetch();
                   // Countdown finished - close both modals
                   clearInterval(countdownIntervalRef.current!);
                   setShowCoundown(false);
@@ -174,6 +176,7 @@ const Stage3CardSelection = () => {
               });
             }, 1000);
           } else {
+             refetch();
             // For PASS type, close after 3 seconds without showing countdown
             setTimeout(() => {
               setShowCardFlipModal(false);
@@ -249,7 +252,7 @@ const Stage3CardSelection = () => {
   const TurnIndicator = () => {
     const isMyTurn = isFetching
       ? cardFlipModalInfo?.next_turn === user?.contestant_id.toString()
-      : data?.who_next.toString() === user?.contestant_id.toString();
+      : data?.who_next?.toString() === user?.contestant_id.toString();
 
     return (
       <div className="max-w-max mx-auto">
@@ -277,7 +280,7 @@ const Stage3CardSelection = () => {
             >
               {isMyTurn
                 ? "Your turn to flip"
-                : `${getContestantData(Number(data?.who_next))?.name}'s turn`}
+                : `${getContestantData(Number(data?.who_next!))?.name}'s turn`}
             </span>
             <div
               className={cn(

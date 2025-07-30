@@ -129,7 +129,7 @@ export const CardFlipRevealModal = ({
         {contestant && (
           <div
             className={cn(
-              "px-6 py-2 rounded-lg inline-block font-medium font-sans rounded-lg border-2",
+              "px-6 py-2 rounded-lg inline-block font-medium font-sans  border-2",
               cardType == CARD_TYPES.FIVE_K ||
                 cardType == CARD_TYPES.TEN_K ||
                 cardType == CARD_TYPES.TWENTY_K

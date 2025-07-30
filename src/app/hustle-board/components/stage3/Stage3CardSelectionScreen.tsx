@@ -126,7 +126,7 @@ const Stage3CardSelectionScreens = () => {
           if (data.type !== CARD_TYPES.PASS) {
             setShowCoundown(true);
             setCountdownTimer(3); // Start countdown from 3
-
+refetchContestantDatat();
             // Step 3: Start 3-second countdown
             countdownIntervalRef.current = setInterval(() => {
               setCountdownTimer((prev) => {
@@ -172,7 +172,7 @@ const Stage3CardSelectionScreens = () => {
   const TurnIndicator = () => {
     // if (data?.who_next?.toString()) return null;
     const getContestant = getRemainingContestant()?.find(
-      (x) => x.id.toString() === data?.who_next.toString()
+      (x) => x.id.toString() === data?.who_next?.toString()
     );
 
     // // Only hide if game actually ended (pass found)
