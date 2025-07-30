@@ -42,7 +42,7 @@ interface prop {
 }[]
 picksByContestant?: Record<number, number[]>
   // mqttAnswerBalanceData?: any;
-  
+
 }
 interface Datum {
   contestant_id: number;
@@ -96,7 +96,7 @@ const useAnimatedBalance = (targetValue: number, duration: number = 1000) => {
   useEffect(() => {
     const prevValue = prevValueRef.current;
     const difference = targetValue - prevValue;
-    
+
     if (difference === 0) return;
 
     // Start playing sound
@@ -109,19 +109,19 @@ const useAnimatedBalance = (targetValue: number, duration: number = 1000) => {
     const animate = (currentTime: number) => {
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / duration, 1);
-      
+
       // Easing function for smooth animation
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
       const currentValue = prevValue + (difference * easeOutQuart);
-      
+
       setDisplayValue(Math.round(currentValue));
-      
+
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate);
       } else {
         // Animation complete
         prevValueRef.current = targetValue;
-        
+
         // Stop sound
         if (audioRef.current) {
           audioRef.current.pause();
@@ -147,13 +147,13 @@ const useAnimatedBalance = (targetValue: number, duration: number = 1000) => {
 };
 
 // Individual contestant card component with animation
-const ContestantCard = ({ 
-  contestant, 
+const ContestantCard = ({
+  contestant,
   originalIndex, // Use original index from backend data
-  contestantInfo, 
-  isMyContestant, 
-  isBoardRoute, 
-  showHustleCardAmt, 
+  contestantInfo,
+  isMyContestant,
+  isBoardRoute,
+  showHustleCardAmt,
   balance,
   name,
   dotColor,
@@ -215,12 +215,12 @@ const ContestantCard = ({
 const findColor = (contestantId: number) => {
     const color = contestantsPicks?.find((contestant) => contestant.id === contestantId)?.color;
     return color || "#666666"; // Default to gray if not found
-  };  
+  };
 const findPicks = (contestantId: number) => {
     const picks = contestantsPicks?.find((contestant) => contestant.id === contestantId)?.picks;
     return picks || "#666666"; // Default to gray if not found
-  };  
-   
+  };
+
 
   return (
     <div
@@ -299,32 +299,32 @@ const findPicks = (contestantId: number) => {
             >
               {name}
             </GlowyStrokeText>
-            
+
 {findPicks(contestantInfo?.id)?.length > 0 && (
   <div className="picks-display">
     {(() => {
       // Find picks for this specific contestant
-      const contestantPicks = hustlePicksData?.data?.find((x) => 
+      const contestantPicks = hustlePicksData?.data?.find((x) =>
         x.contestant_id === (contestantInfo?.contestant_id || contestantInfo?.id)
       );
-      
+
       const pickCount = contestantPicks?.picks?.length || 0;
-      
-      
+
+
       return (
         <GlowyStrokeText
           truncate
           strokeWidth={2}
           strokeColor="#a132b7"
           glowColor="#ce45eb"
-          glowIntensity="low" 
+          glowIntensity="low"
           textclassName={`
             ${findPicks(contestantInfo?.id)?.length === 0 ? "" : ""}
             ${
             isBoardRoute ? "text-[2rem] max-w-[160px]" : "text-[16px] max-w-[110px]"
           } font-extrabold font-gilroyHeavy text-white  transition-all duration-300 ${
             isBalanceChanging ? 'text-shadow-lg' : ''
-            
+
           }`}
           fillColor="#fff"
         >
@@ -332,13 +332,13 @@ const findPicks = (contestantId: number) => {
 
            {picksByContestant?.[contestantInfo?.id]?.length}
         </GlowyStrokeText>
-      );  
+      );
     })()}
   </div>
 )}
 
 
-          
+
           </div>
         </div>
       </div>
@@ -367,7 +367,7 @@ const HustleSideBar = ({
 }: prop) => {
   const user = tokenStorage.getUser();
   const params = useParams();
-const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.episodeId));
+const {data,isLoading:isLoadingAmt,refetch}=useGetStage3WiningAmount(String(params?.episodeId));
 
   const { data: allContestsant, isLoading } = useGetGameContestants(
     !params?.episodeId
@@ -383,7 +383,7 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
   };
 
   // console.log(hustlePicksData);
-  
+
   // Helper function to calculate balance with fallback logic
   const calculateBalance = (contestant: any, contestantInfo: any) => {
     // For non-STAGE_ONE games, prioritize balance data
@@ -430,9 +430,9 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
           (c) => c?.id === contestant.contestant_id
         ) || contestant;
       }
-      
+
       const balance = calculateBalance(contestant, contestantInfo);
-      
+
       return {
         ...contestant,
         contestantInfo,
@@ -448,8 +448,10 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
     );
     return allconstestant;
   };
-  
 
+useEffect(()=>{
+  refetch()
+},[])
 
   const myContestant = getContestantInfo(Number(user?.contestant_id));
 
@@ -470,7 +472,7 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
                 const isBoardRoute = typeof params?.episodeId !== "undefined";
                 const contestant = contestantData;
                 const contestantInfo = contestantData.contestantInfo;
-                
+
                 const isMyContestant =
                   contestantInfo.id === myContestant?.id ||
                   contestant.contestant_id === myContestant?.id;
@@ -504,7 +506,7 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
                {showStage3Reward && <div className="">
            <Stage3Reward data={data} isLoadingAmt={isLoadingAmt}/>
       </div>}
-    
+
             </div>
           )}
         </>
@@ -526,7 +528,7 @@ const {data,isLoading:isLoadingAmt}=useGetStage3WiningAmount(String(params?.epis
           ))}
         </div>
       )}
-      
+
 
       <div className="min-h-[100px] hidden">
         {showJackpot && <JackpotContainer size={80} text="₦100m" />}

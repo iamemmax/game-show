@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import Logo from "@/app/icons/Logo";
 import StartUpIcon from "@/app/icons/StartupIcon";
 import HeaderTitleContainer from "@/app/shared/HeaderContainer";
@@ -10,7 +10,7 @@ import HustleBottomCard from "./HustleBottomCard";
 import { motion } from "framer-motion";
 import InvestCapital from "./InvestCapital";
 import { tokenStorage } from "@/utils/auth";
-import {  useGetHustleReveal } from "../../api/stage1/getHustleReveal";
+import { useGetHustleReveal } from "../../api/stage1/getHustleReveal";
 import { addCommasToNumber } from "@/utils";
 import Salary4LifeTrophy from "@/app/shared/SalaryForLifeTrophy";
 import { useMQTT } from "@/hooks/useMqttService";
@@ -20,8 +20,8 @@ import Trophy from "@/app/icons/Trophy";
 import { useRouter } from "next/navigation";
 import { useGetGameContestants } from "@/app/admin/misc/api/contestants";
 
-interface Prop{
-  onNext: () => void
+interface Prop {
+  onNext: () => void;
 }
 const Hustle = () => {
   const { isConnected, addMessageListener, removeMessageListener } = useMQTT();
@@ -29,9 +29,9 @@ const Hustle = () => {
   const router = useRouter();
   const user = tokenStorage.getUser();
   const [showEliminationModal, setShowEliminationModal] = useState(false);
-  
-  const {data, isLoading} = useGetHustleReveal(user?.game_episode as number);
-  
+
+  const { data, isLoading } = useGetHustleReveal(user?.game_episode as number);
+
   // Get contestants data to check elimination status
   const { data: allContestants } = useGetGameContestants(
     user?.game_episode as number
@@ -52,36 +52,31 @@ const Hustle = () => {
 
   useEffect(() => {
     if (isConnected) {
-     
       const handleMQTTMessage = (receivedMessage: any) => {
         console.log("Main page received message:", receivedMessage);
-        
-        // Handle stage transition events
-    
-        if ( receivedMessage?.event === "game_s1_questions_prep") {
-          // Proceed to the next stage
-          setShowQuestionScreen(true)
-          
-     }
+
+        if (
+          receivedMessage?.event === "game_s1_questions_prep" &&
+          receivedMessage?.payload.game_episode?.toString() ==
+            user?.game_episode?.toString()
+        ) {
+          setShowQuestionScreen(true);
+        }
       };
-      
+
       if (isConnected) {
-      addMessageListener(handleMQTTMessage);
-    }
+        addMessageListener(handleMQTTMessage);
+      }
 
-    return () => {
-      removeMessageListener(handleMQTTMessage);
-    };
-
-
+      return () => {
+        removeMessageListener(handleMQTTMessage);
+      };
     }
   }, [isConnected, addMessageListener, removeMessageListener]);
 
-
-  const  contestant = data?.data?.find((contestant) => contestant.contestant_id === user?.contestant_id);
-
-
-
+  const contestant = data?.data?.find(
+    (contestant) => contestant.contestant_id === user?.contestant_id
+  );
 
   return (
     <>
@@ -106,12 +101,12 @@ const Hustle = () => {
                 </p>
                 <Button
                   onClick={() => {
-                    router.push("/login")
-                    setShowEliminationModal(false)
+                    router.push("/login");
+                    setShowEliminationModal(false);
                   }}
                   className="bg-[#D91FFF] hover:bg-[#b01ad3] text-white"
                 >
-               Continue
+                  Continue
                 </Button>
               </div>
             </div>
@@ -130,8 +125,8 @@ const Hustle = () => {
             <HustleStages />
           </div>
           <div className="pb-4 ">
-              <Salary4LifeTrophy className="max-xl:h-[13.25rem]"/>
-            </div>
+            <Salary4LifeTrophy className="max-xl:h-[13.25rem]" />
+          </div>
         </div>
 
         {/* Center Content */}
@@ -153,9 +148,7 @@ const Hustle = () => {
                 textStrokeWidth={4.4}
               />
             </div>
-            {
-
-            }
+            {}
 
             <div className="relative w-full py-[2.5rem] 2xl:py-[4rem] max-xl:max-w-[46.5rem] 2xl:max-w-[60rem] px-4 -mt-3 rounded-[.875rem] 2xl:px-[3rem] overflow-hidden">
               {/* Animated border */}
@@ -174,16 +167,16 @@ const Hustle = () => {
                     )`,
                   }}
                   animate={{
-                    rotate: [0, 360]
+                    rotate: [0, 360],
                   }}
                   transition={{
                     duration: 4,
                     ease: "linear",
-                    repeat: Infinity
+                    repeat: Infinity,
                   }}
                 />
               </div>
-              
+
               {/* Content container - increased border width from 5px to 8px for bolder appearance */}
               <div className="absolute inset-[8px] bg-[#13051E]  rounded-[.675rem]" />
               <div className="relative">
@@ -193,61 +186,82 @@ const Hustle = () => {
                       Stage 1: Hustle Kick-off
                     </h2>
                     <p className="text-sm font-normal max-w-[23.25rem] text-center text-[#D5B9FF]">
-                    Tap each of the opportunities to determine how much of your start up capital you will like to Risk/Wager
+                      Tap each of the opportunities to determine how much of
+                      your start up capital you will like to Risk/Wager
                     </p>
                   </div>
-  {
-    isLoading? <div className="flex justify-center items-center h-full w-full">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-  </div>:
-  <>
-                <div className="flex mt-4 items-center gap-[1.375rem]">
-                  {/* Player Info */}
-                  <div className="flex bg-black rounded-10 gap-4 px-[1.125rem] pr-[5rem] items-center py-2">
-                    <div className="relative h-[2.8rem] w-[2.8rem] bg-[#bf7222] border-[2px] border-[#dba531] rounded-full overflow-hidden">
-                      <Image
-                        alt="User avatar"
-                        src={String(contestant?.contestant_details?.contestant_photo_url) || "/images/userImage.png"}
-                        fill
-                        className="object-cover"
-                      />
+                  {isLoading ? (
+                    <div className="flex justify-center items-center h-full w-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                     </div>
-                    <div>
-                      <p className="text-white font-normal text-xs font-gilroyMedium">
-                       {contestant?.contestant_details?.name??""}
-                      </p>
-                      <h2 className="text-sm font-medium font-gilroyMedium text-white outline-text-white-2">
-                        Player {user?.contestant_attr ? user?.contestant_attr.split('_')[1] : ''}
-                      </h2>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="flex mt-4 items-center gap-[1.375rem]">
+                        {/* Player Info */}
+                        <div className="flex bg-black rounded-10 gap-4 px-[1.125rem] pr-[5rem] items-center py-2">
+                          <div className="relative h-[2.8rem] w-[2.8rem] bg-[#bf7222] border-[2px] border-[#dba531] rounded-full overflow-hidden">
+                            <Image
+                              alt="User avatar"
+                              src={
+                                String(
+                                  contestant?.contestant_details
+                                    ?.contestant_photo_url
+                                ) || "/images/userImage.png"
+                              }
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className="text-white font-normal text-xs font-gilroyMedium">
+                              {contestant?.contestant_details?.name ?? ""}
+                            </p>
+                            <h2 className="text-sm font-medium font-gilroyMedium text-white outline-text-white-2">
+                              Player{" "}
+                              {user?.contestant_attr
+                                ? user?.contestant_attr.split("_")[1]
+                                : ""}
+                            </h2>
+                          </div>
+                        </div>
 
-                  {/* Startup Capital */}
-                  <div className="flex bg-black rounded-10 gap-4 px-[1.125rem] pr-[4rem] items-center py-2">
-                    <div className="relative h-[2.8rem] w-[2.8rem] flex justify-center items-center bg-[#3C127299] bg-opacity-60 rounded-full overflow-hidden">
-                      <StartUpIcon />
-                    </div>
-                    <div>
-                      <p className="text-white font-normal text-xs font-gilroyMedium">
-                        Startup capital
-                      </p>
-                      <h2 className="text-sm font-medium font-gilroyMedium text-white outline-text-white-2">
-                        ₦{addCommasToNumber(Number(contestant?.reveals?.reduce((sum, reveal) => sum + reveal.hustle_amount, 0)?.toFixed(0)?.toLocaleString()))}
-                      </h2>
-                    </div>
-                  </div>
-                </div>
+                        {/* Startup Capital */}
+                        <div className="flex bg-black rounded-10 gap-4 px-[1.125rem] pr-[4rem] items-center py-2">
+                          <div className="relative h-[2.8rem] w-[2.8rem] flex justify-center items-center bg-[#3C127299] bg-opacity-60 rounded-full overflow-hidden">
+                            <StartUpIcon />
+                          </div>
+                          <div>
+                            <p className="text-white font-normal text-xs font-gilroyMedium">
+                              Startup capital
+                            </p>
+                            <h2 className="text-sm font-medium font-gilroyMedium text-white outline-text-white-2">
+                              ₦
+                              {addCommasToNumber(
+                                Number(
+                                  contestant?.reveals
+                                    ?.reduce(
+                                      (sum, reveal) =>
+                                        sum + reveal.hustle_amount,
+                                      0
+                                    )
+                                    ?.toFixed(0)
+                                    ?.toLocaleString()
+                                )
+                              )}
+                            </h2>
+                          </div>
+                        </div>
+                      </div>
 
-                {/* Tabs */}
-                <div className="mt-6 relative w-full flex justify-center items-center">
-                
-
-                  <InvestCapital setShowQuestionScreen={setShowQuestionScreen} hustleReveal={contestant?.reveals}/>
-
-                 
-                </div>
-  </>
-  }
+                      {/* Tabs */}
+                      <div className="mt-6 relative w-full flex justify-center items-center">
+                        <InvestCapital
+                          setShowQuestionScreen={setShowQuestionScreen}
+                          hustleReveal={contestant?.reveals}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

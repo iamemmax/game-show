@@ -27,6 +27,7 @@ import HustleStages from "@/app/components/stages/components/hustle/HustleStages
 import { useParams } from "next/navigation";
 import VersusIcon from "@/app/icons/Versus";
 import StageThreeWinnerModal from "@/app/components/stages/components/StageThreeWinnerModal";
+import { useGetStage3WiningAmount } from "@/app/components/stages/api/stage3/fetchWInningAmt";
 
 interface DudPassMQTTData {
   type: string;
@@ -51,9 +52,12 @@ const Stage3CardSelectionScreens = () => {
     data: contestantsData,
     isLoading: isLoadingContestants,
     refetch: refetchContestantDatat,
-    isFetching
+    isFetching,
   } = useGetGameContestants(Number(gameEpisode));
 
+  const { refetch: reftechAmount } = useGetStage3WiningAmount(
+    String(gameEpisode)
+  );
   const getRemainingContestantFn = () => {
     const remainingConst = contestantsData?.data?.filter(
       (x) => !x?.is_eliminated
@@ -61,7 +65,11 @@ const Stage3CardSelectionScreens = () => {
     return remainingConst;
   };
 
-  const getRemainingContestant = useCallback(getRemainingContestantFn, [contestantsData, isLoadingContestants, isFetching])
+  const getRemainingContestant = useCallback(getRemainingContestantFn, [
+    contestantsData,
+    isLoadingContestants,
+    isFetching,
+  ]);
   const getContestantData = (contestantId: number) => {
     const contestant = getRemainingContestant()?.find(
       (c) => c.id == contestantId
@@ -110,7 +118,7 @@ const Stage3CardSelectionScreens = () => {
       if (message.event === "dud_pass_picks") {
         refetchContestantDatat();
         const data = message.payload.data as DudPassMQTTData;
-
+        reftechAmount();
         // Clear any existing countdown
         if (countdownIntervalRef.current) {
           clearInterval(countdownIntervalRef.current);
@@ -126,7 +134,8 @@ const Stage3CardSelectionScreens = () => {
           if (data.type !== CARD_TYPES.PASS) {
             setShowCoundown(true);
             setCountdownTimer(3); // Start countdown from 3
-refetchContestantDatat();
+            refetchContestantDatat();
+            reftechAmount();
             // Step 3: Start 3-second countdown
             countdownIntervalRef.current = setInterval(() => {
               setCountdownTimer((prev) => {
@@ -142,6 +151,7 @@ refetchContestantDatat();
             }, 1000);
           } else {
             refetchContestantDatat();
+            reftechAmount();
             // For PASS type, close after 3 seconds without showing countdown
             setTimeout(() => {
               setShowCardFlipModal(false);
@@ -449,7 +459,9 @@ refetchContestantDatat();
               getContestantData(
                 Number(
                   getRemainingContestant()?.find(
-                    (c) => c?.id.toString() === cardFlipModalInfo?.contestant.id.toString()
+                    (c) =>
+                      c?.id.toString() ===
+                      cardFlipModalInfo?.contestant.id.toString()
                   )?.id
                 )
               )?.actual_balance ?? 0
