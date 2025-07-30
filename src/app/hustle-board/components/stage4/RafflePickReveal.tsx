@@ -268,10 +268,9 @@ const RafflePickReveal = () => {
       case "PLUS_100K":
         return "+N100,000"
       case "PLUS_20K":
+        return "+N20,000"
       case "PLUS_50K":
         return "+N50,000"
-      case "PLUS_20K":
-        return "+N20,000"
       case "MINUS_100K":
         return "-N100,000"
       case "PLUS_20K":
@@ -297,7 +296,7 @@ const RafflePickReveal = () => {
       case "REMOVE_FITTHY_K":
       case "REMOVE_HUNDRED_K":
         return "bg-[#38040A] border-[#EB001B] text-[#EB001B]"
-          case "HIGH_CRYSTAL":
+      case "HIGH_CRYSTAL":
       case "LOW_CRYSTAL":
       case "ADD_FITTHY_K":
       case "ADD_TWENTYK_K":

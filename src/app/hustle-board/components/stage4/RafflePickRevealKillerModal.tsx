@@ -23,44 +23,17 @@ const KillerHustlePulledModal = ({
   data,
   setShowModal,
 }: KillerModalProps) => {
-  const [animatedAmount, setAnimatedAmount] = useState(0);
   const [showGlitch, setShowGlitch] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      // Animate the loss amount
-      const targetAmount = data.hustle_match.balance_details?.amount_lost;
-      if (typeof targetAmount !== "number" || isNaN(targetAmount)) return;
-      let current = 0;
-      const increment = targetAmount / 50;
-      const timer = setInterval(() => {
-        current += increment;
-        if (current >= targetAmount) {
-          setAnimatedAmount(targetAmount);
-          clearInterval(timer);
-          // Trigger glitch effect
-          setShowGlitch(true);
-          setTimeout(() => setShowGlitch(false), 500);
-        } else {
-          setAnimatedAmount(Math.floor(current));
-        }
-      }, 30);
-
-      return () => clearInterval(timer);
-    }
-  }, [isOpen, data.hustle_match.balance_details?.amount_lost]);
 
   const [amountToDisplay, setAmountToDisplay] = useState(
     data.hustle_match.balance_details?.previous_balance
   );
   const [isAnimatingAmount, setIsAnimatingAmount] = useState(false);
   useEffect(() => {
+    setIsAnimatingAmount(true);
+    setAmountToDisplay(data.hustle_match.balance_details?.current_balance);
     setTimeout(() => {
-      setAmountToDisplay(data.hustle_match.balance_details?.current_balance);
-      setIsAnimatingAmount(true);
-      setTimeout(() => {
-        setIsAnimatingAmount(false);
-      }, 750);
+      setIsAnimatingAmount(false);
     }, 1000);
   }, []);
 
@@ -99,44 +72,34 @@ const KillerHustlePulledModal = ({
                 : {}
             }
           >
-            SUBTRACTION Ball!(-
-            {data.hustle_match.extra_ball_details?.effect_desc?.includes("20K")
-              ? "20k"
-              : data.hustle_match.extra_ball_details?.effect_desc?.includes(
-                  "50K"
-                )
-              ? "50k"
-              : data.hustle_match.extra_ball_details?.effect_desc?.includes(
-                  "100K"
-                )
-              ? "100k"
-              : "20K"}
+            Crusher Ball!(-
+            {data.hustle_match.extra_ball_effect_action == "MINUS_100K"
+              ? "-100k"
+              : data.hustle_match.extra_ball_effect_action == "MINUS_50K"
+              ? "-50k"
+              : "-20k"}
             )
           </motion.h2>
 
           {/* Description */}
           <p className="text-lg text-white max-w-xl font-montserrat leading-relaxed">
-            {data.hustle_match.extra_ball_details?.effect_desc ||
+            {data.hustle_match.extra_ball_effect_desc ||
               "The hustle turned deadly!. Sometimes the risk doesn't pay off."}
           </p>
 
-          {/* Animated Amount Loss */}
-          <motion.div
-            className="px-8 py-4 bg-red-900/50 rounded-lg border border-red-500/30"
-            // animate={showGlitch ? { scale: [1, 1.1, 1] } : {}}
-          >
+          <motion.div className="px-8 py-4 bg-red-900/50 rounded-lg border border-red-500/30">
             <GlowyStrokeText
               strokeWidth={3}
-              strokeColor={isAnimatingAmount ? "#EB001B" : "#ffffff"}
-              glowColor={isAnimatingAmount ? "#EB001B" : "#ffffff"}
+              strokeColor={isAnimatingAmount ? "#EB001B" : "#de7272ff"}
+              glowColor={isAnimatingAmount ? "#EB001B" : "#de7272ff"}
               glowIntensity="medium"
-              textclassName="text-[3.5rem] font-black font-gilroyHeavy"
+              textclassName="text-[3.25rem] font-black font-gilroyHeavy"
               fillColor="#fff"
             >
               <NumberFlow
                 value={amountToDisplay ?? 0}
                 prefix="₦"
-                transformTiming={{ duration: 750, easing: "linear" }}
+                transformTiming={{ duration: 1200, easing: "linear" }}
               />
             </GlowyStrokeText>
           </motion.div>
