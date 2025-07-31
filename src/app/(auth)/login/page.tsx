@@ -133,7 +133,7 @@ console.log(params);
     handleLoginContestant(transformedData, {
       onSuccess: ({ status }) => {
         if (status) {
-          router.push(`/`);
+          router.replace(`/`);
         }
       },
       onError: (error) => {

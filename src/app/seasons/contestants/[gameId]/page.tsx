@@ -36,7 +36,7 @@ const AllContestants = () => {
     handleLoginContestant(transformedData, {
       onSuccess: ({ status }) => {
         if (status) {
-          router.push(`/`)
+          router.replace(`/`)
         }
       },
       onError: (error) => {

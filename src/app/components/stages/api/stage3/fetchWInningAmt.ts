@@ -1,4 +1,4 @@
-import { salaryAxios } from '@/lib/axios';
+import { salaryAxios, tokenlessAxios } from '@/lib/axios';
 import {  useQuery } from 'react-query';
 
 export interface winninData {
@@ -14,7 +14,7 @@ interface Data {
 
 
 export const getStage3WiningAmount = async (game_episode:string) => {
-  const response = await salaryAxios.get(`api/admin-controller/amount_for_pass?game_episode=${game_episode}`);
+  const response = await tokenlessAxios.get(`api/admin-controller/amount_for_pass?game_episode=${game_episode}`);
   return response?.data as winninData ;
 };
 

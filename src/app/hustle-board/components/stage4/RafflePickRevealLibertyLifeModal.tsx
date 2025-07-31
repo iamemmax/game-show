@@ -87,7 +87,7 @@ const LibertyLifeModal = ({ isOpen, data,setShowModal }: LibertyLifeModalProps) 
                     >
                         Health Insurance Plan
                     </GlowyStrokeText>
-                    <div className="text-blue-300 text-lg mt-2">Liberty Life Ivy Plan worth #00k+</div>
+                    <div className="text-blue-300 text-lg mt-2">Liberty Life Ivy Plan worth 390k+</div>
                 </motion.div>
 
                 {/* Balance (unchanged) */}
